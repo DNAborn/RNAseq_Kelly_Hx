@@ -1,6 +1,8 @@
 ---
 title: "RNA-Seq Kelly all"
-output: html_document
+output: 
+  html_document: 
+    toc: true
 date: "2023-12-14"
 editor_options: 
   chunk_output_type: console
@@ -91,6 +93,11 @@ indexdir="/mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/index/human_ens110_index"
 ```
 
 ## - Download Data
+```{bash}
+
+```
+
+
 ```{bash}
 ## Download data
 
@@ -319,15 +326,12 @@ sample_table$genotype <- sample_table$genotype %>% as.factor() %>% relevel(ref="
 sample_table$sample <- str_remove(sample_table$samplename,pattern="P2041_")
 sample_table$lane <- "L003"
 # RNA_P2041_10632_S41_L003
-sample_table$samplename <- paste("RNA_P3302_",
-                          "S",41:62, sep="")
-
-
-str_extract(string = sample, pattern = c("10621"))
-sample_table$rna_id %in% sample
-
 sample_table$samplename <- paste("RNA_P2041_",
                                  "S",37:58,sep="")
+sample_table$sample_id <- paste("S",37:58,sep="")
+sample_table$repetition <- as.character(sample_table$repetition)
+sample_table$sample_id %in% sample
+sample_table$exp_rep <- paste(sample_table$experiment,sample_table$repetition, sep="_")
 
 # Make table
 sample_table_P2041 <- as.data.frame(sample_table)
@@ -348,8 +352,7 @@ file.exists(Samplepath)
 Samplefile <- read_xlsx(Samplepath)
 
 df <- Samplefile %>% as.data.frame()
-kellys <- df[,1] %>% str_detect(pattern="Kelly")
-sample_table <- df[kellys,]
+sample_table <- df
 head(sample_table)
 sample_table$treatment <- ifelse(str_detect(sample_table$Probe,pattern="Hx"), "Hx","Nx")
 sample_table$treatment %>% as.factor() %>% relevel(ref="Nx")
@@ -364,12 +367,31 @@ sample_table$replicate <-  ifelse(str_detect(sample_table$Probe,pattern="P7"),"P
 sample_table$clone <- ifelse(str_detect(sample_table$Probe,pattern="1.3"),"Hif1a_1.3",
                                 ifelse(str_detect(sample_table$Probe,pattern="2.2"),"Hif2a_2.2","LV_1"))
 sample_table$cellline <- "Kelly"
-sample_table$sample <- paste("RNA",str_split(sample_table$'Sequencing-2_B', pattern="_", simplify = T)[,3],sep="_")
-sample_table$lane <- "001"
+sample_table$lane <- "L001"
 
+Samplepath2 <- filePath(path=dirname(fastqdir3), file="2020_02_13_Sample_list_NGS.xlsx")
+file.exists(Samplepath2)
+Samplefile2 <- read_xlsx(Samplepath2, col_names =c("Probe","Sequencing-2_A","Sequencing-2_B", "path","rna_id"))
+df2 <- Samplefile2 %>% as.data.frame()
+kellys <- df2[,1] %>% str_detect(pattern="Kelly")
+sample_table2 <- df2[kellys,]
+head(sample_table2)
+sample_table2$run_id <- paste("RNA",str_split(sample_table2$'Sequencing-2_B', pattern="_", simplify = T)[,3],sep="_")
+
+sample_table <- sample_table[sample_table$'RNA-Nr.' %in% sample_table2$rna_id,]
 
 sample_table$samplename <- paste("RNA_P557_","S",33:48,sep="")
-
+sample_table$sample_id <- paste("S",33:48,sep="")
+sample_table$run_id <- sample_table2$run_id
+colnames(sample_table)[which(names(sample_table) == "RNA-Nr.")] <- "rna_id"
+colnames(sample_table)[which(names(sample_table) == "Konz.(µg/µl)")] <- "rna_conc"
+sample_table$sample <- sample_table2$sample
+sample_table$experiment <- "Katharina"
+sample_table$experiment_date <- sample_table$Datum
+sample_table$repetition <-  ifelse(str_detect(sample_table$replicate,pattern="P7"),"1",
+                          ifelse(str_detect(sample_table$Probe,pattern="P8"),"2",
+                          ifelse(str_detect(sample_table$Probe,pattern="P13"),"1","2")))
+sample_table$exp_rep <- paste(sample_table$experiment,sample_table$repetition,sep="_")
 # "RNA_P557_077_S33
 
 # Make table
