@@ -1,8 +1,23 @@
+---
+title: "RNAseq Kelly HIF KO - Results"
+author: "Kelterborn"
+date: "`r Sys.Date()`"
+output:
+  md_document:
+    variant: gfm
+always_allow_html: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T,
+                      results = "hide", error=FALSE, warning=FALSE, message=FALSE)
+```
+
 # 0. Load
-
-## - R
-
-``` r
+##  - R 
+```{r librarys}
 #BiocManager::install("GOSemSim")
 
 library(devtools)
@@ -64,4 +79,8 @@ indexdir <- paste(s,"AG/AG-Scholz-NGS/Daten/Salmon/index/human_ens110_index",sep
 dirgenomic <- paste(s,"AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/110",sep="/")
 list.files(dirgenomic) %>% head()
 setwd(gitdir)
+
 ```
+
+
+

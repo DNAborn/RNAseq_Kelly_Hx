@@ -1,9 +1,10 @@
 ---
 title: "RNA-Seq Kelly all"
-output: 
-  html_document: 
-    toc: true
+author: "Kelterborn"
 date: "2023-12-14"
+output:
+  md_document:
+    variant: gfm
 editor_options: 
   chunk_output_type: console
 ---
@@ -25,6 +26,7 @@ library(tximport)
 library(RColorBrewer)
 library(tidyverse)
 library(stringr)
+library(stringi)
 library(BiocFileCache)
 library(SummarizedExperiment)
 library(org.Mm.eg.db)
@@ -50,6 +52,9 @@ library(tximeta)
 library(tximport)
 library(curl)
 library(R.utils)
+library(kableExtra)
+library(knitr)
+library(writexl)
 
 
 ifelse(Sys.info()["sysname"]== "Linux",
@@ -57,6 +62,8 @@ ifelse(Sys.info()["sysname"]== "Linux",
   s <- "S:")
 dir <- paste(s,"AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all",sep="/")
 list.files(dir)
+gitdir <- paste(dir,"git_RNAseq_Kelly_Hx",sep="/")
+list.files(gitdir)
 
 fastqdir <- paste(s,"AG/AG-Scholz-NGS/Daten/RNASeq_Kelly2_P3302",sep="/")
 list.files(fastqdir)
@@ -69,13 +76,13 @@ indexdir <- paste(s,"AG/AG-Scholz-NGS/Daten/Salmon/index/human_ens110_index",sep
 
 dirgenomic <- paste(s,"AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/110",sep="/")
 list.files(dirgenomic)
-setwd(dir)
+setwd(gitdir)
 
 ```
 
 
 ##  - Linux
-```{bash}
+```{bash, eval=FALSE}
 
 fastqdir="/mnt/s/AG/AG-Scholz-NGS/Daten/RNASeq_Kelly2_P3302";
 fastqdir2="/mnt/s/AG/AG-Scholz-NGS/Daten/RNASeq_Kelly";
@@ -93,12 +100,8 @@ indexdir="/mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/index/human_ens110_index"
 ```
 
 ## - Download Data
-```{bash}
 
-```
-
-
-```{bash}
+```{bash, eval=FALSE}
 ## Download data
 
 ```{bash}
@@ -135,7 +138,7 @@ wc -l $log
 
 # 1. Prepare Data
 ## Make Index
-```{bash}
+```{bash, eval=FALSE}
 
 # check newest release http://ftp.ensembl.org/pub/
 release=110
@@ -187,7 +190,7 @@ salmon index -t gentrome_human_ensh38.fa.gz -d decoys_human_ensh38.txt -p 20 -i 
 ```
 
 ## Mapping (Salmon)
-```{bash}
+```{bash, eval=FALSE}
 conda activate salmon
 
 fastqfiles=$(ls $fastqdir/*R1*.fastq.gz)
@@ -269,7 +272,7 @@ quant_file_table <- data.frame(order = seq(1:l),
 ```{r}
 # Get samplelists
 ## P3302
-library(readxl)
+
 Samplepath <- filePath(path=fastqdir, file="samplelist.xlsx")
 list.files(fastqdir, pattern=".xlsx")
 file.exists(Samplepath)
@@ -292,12 +295,20 @@ sample_table$genotype <- str_replace(sample_table$genotype, pattern = "LV1", rep
 sample_table$genotype <- str_replace(sample_table$genotype, pattern = "Hif1", replacement = "HIF1A")
 sample_table$genotype <- str_replace(sample_table$genotype, pattern = "Hif2", replacement = "HIF2A") %>% as.factor() %>% relevel(ref="Kelly")
 sample_table$treatment <- str_split(sample_table$Probe, pattern=" ", simplify = TRUE)[,4] %>% as.factor() %>% relevel(ref="Nx")
-sample_table$sample <- str_remove(sample_table$samplename,pattern="P3302_")                                   
+sample_table$run_id <- str_remove(sample_table$samplename,pattern="P3302_")                                   
 sample_table$sequencing <- "P3302"
 # RNA_P3302_01_S141_L006
 sample_table$samplename <- paste("RNA_P3302_",
                           "S",141:190, sep="")
-          
+sample_table$sample_id <- paste("S",141:190, sep="")         
+sample_table$experiment <- "Ulrike"
+sample_table$experiment_date <- sample_table$Datum
+sample_table$repetition <- as.factor(sample_table$experiment_date)
+levels(sample_table$repetition) <- c("1","2","3","4")
+sample_table$exp_rep <- paste(sample_table$experiment,sample_table$repetition, sep="_")
+
+sample_table$cell_density <- str_split(sample_table$Probe, pattern=" ", simplify = TRUE)[,3] %>% str_remove_all("\\(")  %>% str_remove_all("\\)")
+
 sample_table_P3302 <- as.data.frame(sample_table)
 sample_table_P3302$samplename %in% quant_file_table$samplename %>% summary()
 
@@ -326,11 +337,13 @@ sample_table$genotype <- sample_table$genotype %>% as.factor() %>% relevel(ref="
 sample_table$sample <- str_remove(sample_table$samplename,pattern="P2041_")
 sample_table$lane <- "L003"
 # RNA_P2041_10632_S41_L003
+sample_table$sequencing <- "P2041"
+sample_table$run_id <- paste("RNA",as.character(sample_table$'CUGE-ID'),sep="_")
 sample_table$samplename <- paste("RNA_P2041_",
                                  "S",37:58,sep="")
 sample_table$sample_id <- paste("S",37:58,sep="")
 sample_table$repetition <- as.character(sample_table$repetition)
-sample_table$sample_id %in% sample
+sample_table$sample_id %in% sample %>% summary()
 sample_table$exp_rep <- paste(sample_table$experiment,sample_table$repetition, sep="_")
 
 # Make table
@@ -402,6 +415,7 @@ sample_table_P557$samplename %in% quant_file_table$samplename %>% summary()
 
 ### combine lists
 ```{r}
+sample_table_all <- {}
 sample_table_all <- bind_rows(sample_table_P557, sample_table_P2041, sample_table_P3302)
 head(sample_table_all)
 length(rownames(sample_table_all))
@@ -409,8 +423,15 @@ length(rownames(quant_file_table))
 sample_table_all <- merge(quant_file_table,sample_table_all, by = "samplename")
 class(sample_table)
 sample_table_all <- sample_table_all[order(sample_table_all$order),]
+(sample_table_all$sequencing.x == sample_table_all$sequencing.y) %>% summary()
+colnames(sample_table_all)[which(names(sample_table_all) == "sequencing.x")] <- "sequencing"
+el <- sample_table_all$sequencing=="P3302"
+sample_table_all$lane[el] <- str_split(sample_table_all$file[el], pattern = "_",simplify = T)[,7]
+sample_table_all$run_id[el] <- paste(sample_table_all$run_id[el],sample_table_all$lane[el],sep="_")
+
 dim(sample_table_all)
 head(sample_table_all)
+tail(sample_table_all)
 kable(sample_table_all)
 
 write_xlsx(sample_table_all,
