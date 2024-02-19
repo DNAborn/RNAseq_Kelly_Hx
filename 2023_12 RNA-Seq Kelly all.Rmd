@@ -1,0 +1,1216 @@
+---
+title: "RNA-Seq Kelly all"
+output: html_document
+date: "2023-12-14"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 0. Load
+##  - R 
+```{r, include = FALSE}
+#BiocManager::install("GOSemSim")
+
+library(devtools)
+library(BiocManager)
+
+library(tximeta)
+library(tximport)
+library(RColorBrewer)
+library(tidyverse)
+library(stringr)
+library(BiocFileCache)
+library(SummarizedExperiment)
+library(org.Mm.eg.db)
+library(AnnotationHub)
+library(DESeq2)
+library(vsn)
+library(ggplot2)
+library(pheatmap)
+library(PCAtools)
+library(cowplot)
+library(EnhancedVolcano)
+library(gridExtra)
+library(grid)
+library(readxl)
+library(VennDiagram)
+library(clusterProfiler)
+library(biomaRt)
+library(GOSemSim)
+library(sessioninfo)
+library(data.table)
+library(plyr)
+library(tximeta)
+library(tximport)
+library(curl)
+library(R.utils)
+
+
+ifelse(Sys.info()["sysname"]== "Linux",
+  s <- "/mnt/s",
+  s <- "S:")
+dir <- paste(s,"AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all",sep="/")
+list.files(dir)
+
+fastqdir <- paste(s,"AG/AG-Scholz-NGS/Daten/RNASeq_Kelly2_P3302",sep="/")
+list.files(fastqdir)
+fastqdir2 <- paste(s,"AG/AG-Scholz-NGS/Daten/RNASeq_Kelly",sep="/")
+list.files(fastqdir2)
+fastqdir3 <- paste(s,"AG/AG-Scholz-NGS/Daten/Sequencing-2/Sequencing-2_A/FASTQ",sep="/")
+list.files(fastqdir3)
+
+indexdir <- paste(s,"AG/AG-Scholz-NGS/Daten/Salmon/index/human_ens110_index",sep="/")
+
+dirgenomic <- paste(s,"AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/110",sep="/")
+list.files(dirgenomic)
+setwd(dir)
+
+```
+
+
+##  - Linux
+```{bash}
+
+fastqdir="/mnt/s/AG/AG-Scholz-NGS/Daten/RNASeq_Kelly2_P3302";
+fastqdir2="/mnt/s/AG/AG-Scholz-NGS/Daten/RNASeq_Kelly";
+fastqdir3="/mnt/s/AG/AG-Scholz-NGS/Daten/Sequencing-2/Sequencing-2_A/FASTQ";
+
+# /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq Kelly all
+dir="/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all"
+
+quantdir="$dir/quants"
+
+indexdir="/mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/index/human_ens110_index"
+
+
+
+```
+
+## - Download Data
+```{bash}
+## Download data
+
+```{bash}
+cd $fastqdir;
+lftp
+
+# open -u <user>@<DOMAIN> https://file-exchange.bihealth.org/<file-box-id>/
+open -u kelterbs@CHARITE https://file-exchange.bihealth.org/bd53df77-dd5a-4fb6-b640-4625548c5119/
+
+# [Password]
+
+# Download all data into target folder
+mirror . $fastqdir
+# mirror . /mnt/s/AG/AG-Scholz-NGS/Daten/RNASeq_Kelly2_P3302
+
+# Check data
+cd $fastqdir
+ls $fastqdir | wc -l
+ls $fastqdir/*R1*.fastq.gz | wc -l
+# 150 R1+R2 = 36 fastq.gz files = 18 Samples, 36 files
+
+# Check downloads
+log="$fastqdir/download.log";
+echo "##################
+# $(date +%Y_%m_%d__%T) Check md5 Checksums
+#";
+md5sum -c  *.md5 | tee -a $log;
+wc -l $log
+# 36 files ok
+
+```
+
+
+
+# 1. Prepare Data
+## Make Index
+```{bash}
+
+# check newest release http://ftp.ensembl.org/pub/
+release=110
+echo $release
+gdir="/mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/${release}"
+echo $gdir
+
+# Donwload genomic data: dna
+  wget -P $gdir "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
+
+# Donwload genomic data: cdna (=cds with UTRs without introns)
+  wget -P $gdir "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz"
+  
+ # Donwload genomic data: ncrna
+  wget -P $gdir "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/ncrna/Homo_sapiens.GRCh38.ncrna.fa.gz"
+  
+ # Donwload genomic data: gff3 (for later use)
+  wget -P $gdir "http://ftp.ensembl.org/pub/current_gff3/homo_sapiens/Homo_sapiens.GRCh38.${release}.gff3.gz"
+  
+  
+# create list of chromosomes
+  cd $gdir
+	grep "^>" <(gunzip -c Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz) | cut -d " " -f 1 > decoys_human_ensh38.txt
+
+# to modify, copy to linux partition
+  mkdir ~/decoys
+  cp decoys_human_ensh38.txt ~/decoys
+
+# remove ">"
+  sed -i.bak -e 's/>//g' ~/decoys/decoys_human_ensh38.txt
+
+# Optional: check txt file
+  vim ~/decoys/decoys_human_ensh38.txt
+  # to exit: -press 'ESC', type ":q!", press 'ENTER'
+  
+# copy back
+  cp ~/decoys/decoys_human_ensh38.txt $gdir
+  
+# combine cdna ncdna and dna in one file
+cd $gdir
+
+cat Homo_sapiens.GRCh38.cdna.all.fa.gz Homo_sapiens.GRCh38.ncrna.fa.gz Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz > gentrome_human_ensh38.fa.gz
+
+# make index with salmon
+# is salmon activated?
+cd $gdir
+salmon index -t gentrome_human_ensh38.fa.gz -d decoys_human_ensh38.txt -p 20 -i ../../index/human_ens110_index
+
+```
+
+## Mapping (Salmon)
+```{bash}
+conda activate salmon
+
+fastqfiles=$(ls $fastqdir/*R1*.fastq.gz)
+fastqfiles2=$(ls $fastqdir2/*R1*.fastq.gz)
+fastqfiles3=$(ls $fastqdir3/*R1*.fastq.gz)
+
+fastqfiles_all="${fastqfiles} ${fastqfiles2} ${fastqfiles3}"
+echo $fastqfiles
+echo $fastqfiles2
+echo $fastqfiles3
+echo $fastqfiles_all
+
+
+for fn in $fastqfiles_all;
+	do
+	bfn=$(echo "`basename ${fn}`");
+	samp=${bfn%"_R1_001.fastq.gz"};
+	R1=$fn;
+	R2=$(echo "$R1" | sed 's/R1/R2/');
+	echo "Processing Sample: $samp";
+	test -f $R1 && echo "--> File: $R1 exists"
+	test -f $R2 && echo "--> File: $R2 exists"
+  outquant=${dir}/quants/${samp}_quant
+  echo $outquant
+  echo $indexdir
+
+salmon quant -i $indexdir -l A \
+	-1 $R1 \
+	-2 $R2 \
+	-p 20 --validateMappings --gcBias -o $outquant
+	
+done
+
+
+	
+```
+
+
+## Sample names
+### Extract filenames from quants
+```{r}
+
+# Get Sample table
+
+## Extract Filenames
+
+outdir <- paste(dir,"output",sep="/")
+dir.create(outdir)
+quantdir <- paste(dir,"quants",sep="/")
+
+f <- list.files(path = quantdir)
+files <- as.factor(str_remove(f,pattern ="_quant"))
+# short form
+samplename2 <- files %>% 
+  str_replace(pattern="P3302_01_P3302_RNA_", replacement = "RNA_P3302_") %>%
+  str_replace(pattern="P2041_", replacement = "RNA_P2041_") %>%
+  str_replace(pattern="CH_HS_KK_", replacement = "RNA_P557_") %>%
+  str_remove(pattern="_quant")
+samplename2[c(1,2,31,32,33,34,53,54,55,56,203,204)]
+l <- samplename2 %>% length()
+sequencing <- str_extract(samplename2,"P[0-9]+")
+sample <- str_extract(samplename2,"S[0-9]+")
+samplename <- paste("RNA",
+                    sequencing,
+                    sample,
+                    sep="_")
+  
+quant_file_table <- data.frame(order = seq(1:l),
+                               file = files,
+                               samplename_full = samplename2,
+                               sequencing = sequencing,
+                               samplename = samplename)[17:l,]
+
+
+```
+
+
+### P3302
+```{r}
+# Get samplelists
+## P3302
+library(readxl)
+Samplepath <- filePath(path=fastqdir, file="samplelist.xlsx")
+list.files(fastqdir, pattern=".xlsx")
+file.exists(Samplepath)
+
+Samplefile <- read_xlsx(Samplepath)
+Samplefile
+colnames(Samplefile)
+colnames(Samplefile)[1] <- "order_number"
+colnames(Samplefile)[2] <- "samplename"
+colnames(Samplefile)[3] <- "rna_id"
+colnames(Samplefile)[5] <- "rna_conc"
+
+colnames(Samplefile)
+sample_table <- Samplefile[,c("order_number","samplename","rna_id","Probe","rna_conc","Konz.(µg/µl)","CUGE-ID","Datum")]
+
+sample_table$cellline <- str_split(sample_table$Probe, pattern=" ", simplify = TRUE)[,1] %>% as.factor()
+sample_table$clone <- str_split(sample_table$Probe, pattern=" ", simplify = TRUE)[,2] %>% as.factor() %>% relevel(ref="LV1")
+sample_table$genotype <- str_split(sample_table$clone, pattern="\\.", simplify = TRUE)[,1] %>% as.factor() %>% relevel(ref="LV1")
+sample_table$genotype <- str_replace(sample_table$genotype, pattern = "LV1", replacement = "Kelly")
+sample_table$genotype <- str_replace(sample_table$genotype, pattern = "Hif1", replacement = "HIF1A")
+sample_table$genotype <- str_replace(sample_table$genotype, pattern = "Hif2", replacement = "HIF2A") %>% as.factor() %>% relevel(ref="Kelly")
+sample_table$treatment <- str_split(sample_table$Probe, pattern=" ", simplify = TRUE)[,4] %>% as.factor() %>% relevel(ref="Nx")
+sample_table$sample <- str_remove(sample_table$samplename,pattern="P3302_")                                   
+sample_table$sequencing <- "P3302"
+# RNA_P3302_01_S141_L006
+sample_table$samplename <- paste("RNA_P3302_",
+                          "S",141:190, sep="")
+          
+sample_table_P3302 <- as.data.frame(sample_table)
+sample_table_P3302$samplename %in% quant_file_table$samplename %>% summary()
+
+```
+
+
+### P2041
+```{r}
+## P2041
+list.files(fastqdir2, pattern=".xlsx")
+Samplepath <- filePath(path=fastqdir2, file="Sample_list.xlsx")
+
+file.exists(Samplepath)
+
+Samplefile <- read_xlsx(Samplepath)
+Samplefile
+colnames(Samplefile)
+sample_table <- Samplefile
+
+sample_table$cellline <- "Kelly"
+
+sample_table$treatment <- sample_table$treatment %>% as.factor() %>% relevel(ref="Nx")
+sample_table$genotype <- str_replace(sample_table$genotype, pattern = "LV", replacement = "Kelly")
+sample_table$genotype <- str_replace(sample_table$genotype, pattern = "Hif1b", replacement = "HIF1B")
+sample_table$genotype <- sample_table$genotype %>% as.factor() %>% relevel(ref="Kelly")
+sample_table$sample <- str_remove(sample_table$samplename,pattern="P2041_")
+sample_table$lane <- "L003"
+# RNA_P2041_10632_S41_L003
+sample_table$samplename <- paste("RNA_P3302_",
+                          "S",41:62, sep="")
+
+
+str_extract(string = sample, pattern = c("10621"))
+sample_table$rna_id %in% sample
+
+sample_table$samplename <- paste("RNA_P2041_",
+                                 "S",37:58,sep="")
+
+# Make table
+sample_table_P2041 <- as.data.frame(sample_table)
+
+sample_table_P2041$samplename %in% quant_file_table$samplename %>% summary()
+```
+
+### P557
+```{r}
+## P557
+list.files(dirname(fastqdir3), pattern=".xlsx")
+Samplepath <- filePath(path=dirname(fastqdir3), file="2020_02_13_Sample_list_NGS.xlsx")
+file.exists(Samplepath)
+Samplefile <- read_xlsx(Samplepath, col_names =c("Probe","Sequencing-2_A","Sequencing-2_B", "path","rna_id"))
+
+Samplepath <- filePath(path=dirname(fastqdir3), file="RNA_samples.xlsx")
+file.exists(Samplepath)
+Samplefile <- read_xlsx(Samplepath)
+
+df <- Samplefile %>% as.data.frame()
+kellys <- df[,1] %>% str_detect(pattern="Kelly")
+sample_table <- df[kellys,]
+head(sample_table)
+sample_table$treatment <- ifelse(str_detect(sample_table$Probe,pattern="Hx"), "Hx","Nx")
+sample_table$treatment %>% as.factor() %>% relevel(ref="Nx")
+sample_table$genotype <- ifelse(str_detect(sample_table$Probe,pattern="1.3"),"HIF1A",
+                                ifelse(str_detect(sample_table$Probe,pattern="2.2"),"HIF2A",
+                                       "Kelly"))
+sample_table$genotype %>% as.factor() %>% relevel(ref="Kelly")
+sample_table$sequencing <- "P557"
+sample_table$replicate <-  ifelse(str_detect(sample_table$Probe,pattern="P7"),"P7",
+                          ifelse(str_detect(sample_table$Probe,pattern="P8"),"P8",
+                          ifelse(str_detect(sample_table$Probe,pattern="P13"),"P13","P14")))
+sample_table$clone <- ifelse(str_detect(sample_table$Probe,pattern="1.3"),"Hif1a_1.3",
+                                ifelse(str_detect(sample_table$Probe,pattern="2.2"),"Hif2a_2.2","LV_1"))
+sample_table$cellline <- "Kelly"
+sample_table$sample <- paste("RNA",str_split(sample_table$'Sequencing-2_B', pattern="_", simplify = T)[,3],sep="_")
+sample_table$lane <- "001"
+
+
+sample_table$samplename <- paste("RNA_P557_","S",33:48,sep="")
+
+# "RNA_P557_077_S33
+
+# Make table
+sample_table_P557 <- as.data.frame(sample_table)
+sample_table_P557$samplename %in% quant_file_table$samplename %>% summary()
+
+```
+
+### combine lists
+```{r}
+sample_table_all <- bind_rows(sample_table_P557, sample_table_P2041, sample_table_P3302)
+head(sample_table_all)
+length(rownames(sample_table_all))
+length(rownames(quant_file_table))
+sample_table_all <- merge(quant_file_table,sample_table_all, by = "samplename")
+class(sample_table)
+sample_table_all <- sample_table_all[order(sample_table_all$order),]
+dim(sample_table_all)
+head(sample_table_all)
+kable(sample_table_all)
+
+write_xlsx(sample_table_all,
+           paste("2024_02 Kelly all samples.xlsx",sep="/"))
+
+```
+
+# 2. Process
+## Mapping Rates
+```{r}
+dir
+outdir
+quantdir
+
+list.files(path = outdir)
+list.files(path = dir)
+list.files(path = quantdir)
+
+samplelist <- {}
+mappingrates <- {}
+for (i in list.files(path = quantdir)){
+print(i)
+si <- str_remove(i, pattern="_quant")
+si
+samplelist <- c(samplelist,si)
+f <- readLines(paste(quantdir,i,"logs/salmon_quant.log", sep="/"))
+line <- grep("Mapping rate = ",f,value=TRUE)
+sl <- str_length(line)
+sl
+notime <- substring(line,30,sl)
+notime
+manual <- substring(line,sl-7,sl-1)
+val <- as.numeric(str_extract(notime,"[0-9.]+"))
+val
+valr<-round(val, digits=2)
+print(paste("Mapping rate of ",si," is: ",valr," %"))
+mappingrates <- c(mappingrates,valr)
+}
+
+# Make table
+
+m.table <- data.frame(sample_table_all$samplename,samplelist[17:204],mappingrates[17:204])
+head(m.table)
+sample_table_all$mappingrates <- mappingrates[17:204]
+```
+
+
+### Plot mapping rates
+```{r}
+
+# Colours
+
+# Plot
+plot(sample_table_all$mappingrates)
+# -> boring
+
+# increase margin for longer names
+par(mar=c(4,15,4,4)+.1)
+barplot(height=mappingrates, names=samplename, horiz=T, las=1)
+
+pdf(file="output/Mapping_Rates.pdf", width=10, height=20)
+par(mar=c(4,12,4,4)+.1)
+xx <- barplot(height=mappingrates, names=samplename, horiz=T, las=1, xlim=c(0,100)) #col=col
+text(x = mappingrates, y = xx, label = mappingrates, pos = 4, cex = 0.8, col = "red")
+dev.off()
+
+```
+
+
+## Tximeta
+```{r}
+getwd()
+example.quant <- paste(quantdir,list.files(quantdir)[1],"quant.sf",sep="/")
+
+list.files(quantdir)[1]
+file.exists(example.quant)
+
+# example file:
+example.table <- read.table(example.quant, header=T)
+head(example.table)
+basename(example.quant)
+dirname(example.quant)
+basename(dirname(example.quant))
+
+# generate file list & prepare variables
+files={}
+for (i in list.dirs(path = dirname(dirname(example.quant)), full.names = TRUE, recursive = FALSE)) {
+files <- c(files,paste(i,"/quant.sf",sep=""))
+print(basename(i))
+# print(head(read.table(files[length(files)], header=T)))
+print (files[length(files)])
+}
+head(files)
+
+quantdirs <- dirname(files)
+head(quantdirs)
+head(basename(quantdirs))
+run <- basename(quantdirs)
+head(dir)
+
+tximeta_files <- file.path(quantdir, run, "quant.sf") 
+file.exists(tximeta_files) %>% summary()
+file.exists(files) %>% summary()
+
+# Use table from above "sample_table_all"
+head(sample_table_all)
+sample_table_all
+coldata <- data.frame(files, names = run, stringsAsFactors=FALSE)
+
+
+
+coldata$sample <- str_split(coldata$names, pattern="_S", simplify = T)[,1]
+coldata$lane <- str_split(coldata$names, pattern="_", simplify = T)[,4]
+
+coldata <- merge(coldata,sample.table, by="sample")
+
+colnames(coldata)
+head(coldata$genotype)
+
+# load tximeta
+# with linked Transcriptome
+## Chlamy
+indexdir
+
+dirgenomic
+list.files(dirgenomic)
+fastaPath <- file.path(dirgenomic, "Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz")
+fastaPath
+gtfPath <- file.path(dirgenomic,"Homo_sapiens.GRCh38.110.gff3.gz")
+gtfPath
+
+
+file.exists(indexdir, fastaPath, gtfPath)
+
+makeLinkedTxome(indexDir=indexdir,
+                source="LocalEnsembl",
+                organism="Homo sapiens",
+                release="110",
+                genome="GRCh38",
+                fasta=fastaPath,
+                gtf=gtfPath,
+                write=FALSE)
+
+gtfdata <- readLines(gtfPath)
+head(gtfdata, n=100)
+
+# gene_name info sind in gff3 abder nicht in se?
+
+se <- tximeta(coldata)
+se <- tximeta(coldata, useHub=F)
+se
+
+library(SummarizedExperiment)
+
+colData(se)
+# meta infos sind da (genotype, treatment,...)
+
+# rename Samples
+rownames(colData(se)) <- str_remove(rownames(colData(se)), pattern="_quant")
+
+rowRanges(se)
+# genome info
+seqinfo(se)
+# ?
+head(assays(se)[["counts"]])
+# counts. THE DATA
+
+# Mapping infos:
+names(metadata(se)[["quantInfo"]])
+str(metadata(se)[["quantInfo"]]) # Infos from Salmon Mapping
+metadata(se)[["quantInfo"]]$percent_mapped
+metadata(se)[["quantInfo"]]$num_processed
+
+par(mfrow=c(1,2))
+barplot(metadata(se)[["quantInfo"]]$percent_mapped, main="Mapping Rate")
+barplot(metadata(se)[["quantInfo"]]$num_processed/1000000, main="Mio. Reads")
+
+edb <- retrieveDb(se)
+class(edb)
+genes(edb)
+columns(edb)
+
+
+se.exons <- addExons(se)
+rowRanges(se.exons)[[1]]
+gse <- summarizeToGene(se)
+rowRanges(gse)
+
+head(assays(gse)[["counts"]])[1:5,1:5]
+head(assays(gse)[["abundance"]])[1:5,1:5]
+head(assays(gse)[["length"]])[1:5,1:5]
+
+#### add gene symbol
+columns(retrieveDb(se))
+edb
+metadata(se)$txomeInfo$source
+
+TXNAME <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "TXNAME", keytype = "GENEID", multiVals="first"))
+# select()' returned 1:many mapping between keys and columns = 1 gene has many transcripts...
+TXNAME.list <- (mapIds(edb,keys = mcols(gse)$gene_id, column = "TXNAME", keytype = "GENEID", multiVals="list"))
+head(TXNAME.list)
+# info is already there
+CDSID <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "CDSID", keytype = "GENEID", multiVals="first"))
+head(CDSID)
+# ?
+CDSNAME <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "CDSNAME", keytype = "GENEID", multiVals="first"))
+head(CDSNAME)
+# same as gene_id
+EXONNAME <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "EXONNAME", keytype = "GENEID", multiVals="first"))
+head(EXONNAME)
+TXTYPE <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "TXTYPE", keytype = "GENEID", multiVals="first"))
+head(TXTYPE)
+# no useful info... no gene Symbol!!
+
+# add CDSID
+mcols(gse)$CDSID <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "CDSID", keytype = "GENEID", multiVals="first"))
+
+
+colnames(mcols(gse))
+head(rownames(gse))
+
+getwd()
+save(gse,file=paste(outdir,"tximeta.txm", sep="/"))
+gse <- 1
+load(file=paste(outdir,"tximeta.txm", sep="/"))
+
+
+```
+
+
+```{r, warning=FALSE}
+load(file="Wt1_tximeta_GATA4_removedSample.txm")
+
+dds_redu <- DESeqDataSet(gse, design = ~ morpho) 
+dds_redu <- collapseReplicates(dds_redu, dds_redu$replicates, dds_redu$names)
+
+sample.number <- nrow(colData(dds_redu))
+keep.sn <- rowSums(counts(dds_redu)) >= sample.number
+
+dds_redu <- dds_redu[keep.sn,]
+
+dds_redu <- DESeq(dds_redu)
+
+summary(results(dds_redu, alpha = 0.05))
+plotMA(dds_redu)
+
+plotDispEsts(dds_redu)
+
+resultsNames(dds_redu)
+
+```
+
+
+
+
+# Analysis
+### 4. Data transformations
+```{r, include=FALSE}
+vsd <- vst(dds_redu, blind=FALSE) #Variance stabilized transformation
+rld <- rlog(dds_redu, blind=FALSE) #regularized logarithm
+ntd <- normTransform(dds_redu)
+
+```
+
+```{r, figures-side, fig.show="hold", out.width="33%"}
+meanSdPlot(assay(ntd))
+meanSdPlot(assay(vsd))
+meanSdPlot(assay(rld))
+
+```
+
+### 5. Check sample distance
+```{r}
+sampleDists <- dist(t(assay(vsd)))
+
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(vsd$morpho, vsd$organ, sep="-")
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+```
+
+### 6. Perform principal component analysis
+```{r, warning = FALSE}
+# transform data
+vst_dat <- assay(vst(dds_redu))
+
+ens <- rownames(dds_redu)
+  symbols <- mapIds(org.Mm.eg.db, keys = ens,
+    column = c('SYMBOL'), keytype = 'ENSEMBL')
+  symbols <- symbols[!is.na(symbols)]
+  symbols <- symbols[match(rownames(vst_dat), names(symbols))]
+  rownames(vst_dat) <- symbols
+  keep <- !is.na(rownames(vst_dat))
+  vst_dat <- vst_dat[keep,]
+  keep2 <- rownames(vst_dat)
+  keep2 <- !duplicated(keep2)
+  vst_dat <- vst_dat[keep2,]
+
+### PCA with top 500 genes with highest row variance 
+pcaData <- plotPCA(vsd, intgroup=c("organ", "morpho"), returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, color=organ, shape=morpho)) +
+  geom_point(size=3) +
+  labs(title = "top 500 variance") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  coord_fixed()
+
+# calculate PCA (all data)
+p <- pca(vst_dat, metadata = colData(dds_redu))
+
+biplot(p, showLoadings = TRUE,
+    labSize = 3, pointSize = 5, sizeLoadingsNames = 2.5,
+    title = "biplot containing all datapoints")
+
+# find explaining PCs
+horn <- parallelPCA(vst_dat)
+horn$n
+
+# plot Scree 
+screeplot(p,
+        components = getComponents(p),
+        vline = c(horn$n))+
+        geom_label(aes(x = horn$n, y = 50,
+        label = 'Horn\'s', vjust = -1, size = 8))
+```
+
+```{r, echo=FALSE}
+resultsNames(dds_redu)
+
+res_MO <- results(dds_redu, contrast=c("morpho", "MO", "Mis"))
+
+```
+
+```{r, include=FALSE}
+edb <- retrieveDb(gse)
+
+res_MO$gene_id <- mcols(dds_redu)[["gene_id"]]
+res_MO$SYMBOL <- mcols(dds_redu)[["SYMBOL"]]
+res_MO$ENTREZ <- mcols(dds_redu)[["ENTREZID"]]
+
+res_MO$ENTREZ2 <- as.character(mapIds(edb,keys = rownames(res_MO), column = "ENTREZID", keytype = "GENEID", multiVals="first"))
+res_MO$SYMBOL2 <- as.character(mapIds(edb,keys = rownames(res_MO), column = "SYMBOL", keytype = "GENEID", multiVals="first"))
+res_MO$DESCRIPTION <- as.character(mapIds(edb,keys = rownames(res_MO), column = "DESCRIPTION", keytype = "GENEID", multiVals="first"))
+```
+
+```{r, warning=FALSE}
+EnhancedVolcano((res_MO),
+    lab = res_MO[["SYMBOL"]],
+    x = 'log2FoldChange',
+    y = 'pvalue',
+    #xlim=c(-5,5),
+    title = "MO vs. mis",
+    labSize = 3,
+    #pCutoff = 0.05,
+    maxoverlapsConnectors = 30,
+    drawConnectors = TRUE,
+    widthConnectors = 0.5
+)
+```
+
+
+```{r, include = FALSE}
+#### filter function
+
+# First Argument = wanted filter for padj, second argument = filter for lfc, following arguments are result-dfs
+filter_results <- function(padjusted, lfc, ...){
+  #get list of arguments to iterate
+  for(i in 1:length(list(...))){
+    x <- 3+i
+    #pass argument name as variable
+    original_data <- (as.list(match.call())[[x]])
+    #name the final output according to settings
+    if (padjusted < 0.01){
+    sub_p <- substring(padjusted,3,5)
+    name_p <- paste(original_data,sub_p,sep = "_padj")
+    } else {
+      sub_p <- substring(padjusted,3,4)
+      name_p <- paste(original_data,sub_p,sep = "_padj")
+    }
+    if (lfc == 0){
+      name_lfc <- name_p
+    } else if (lfc < 1) {
+      sub_lfc <- substring(lfc,3,4)
+      name_lfc <- paste(name_p,sub_lfc,sep = "_abs0")
+    } else{
+      name_lfc <- paste(name_p,lfc,sep = "_abs")
+    }
+    final_name <- name_lfc
+    # filter data
+    temp <- get(original_data)
+    sub_data <- subset(temp, temp$padj < padjusted&abs(log2FoldChange)>as.numeric(lfc))
+    # return data
+    rownm <- rownames(sub_data)
+    rownm_var <- paste("names", name_lfc, sep="_")
+    print(paste("results saved as:", final_name, sep=" "))
+    print(paste("names saved as:", rownm_var, sep=" "))
+    assign(rownm_var, rownm, envir=.GlobalEnv)
+    assign(final_name, sub_data, envir=.GlobalEnv)
+  }
+}
+
+```
+
+```{r}
+filter_results(0.05, 1, res_MO)
+
+go_enrich <- enrichGO(gene = names_res_MO_padj05_abs1,
+                      universe = rownames(dds_redu),
+                      OrgDb = "org.Mm.eg.db", 
+                      keyType = 'ENSEMBL',
+                      readable = T,
+                      ont = "BP",
+                      pvalueCutoff = 0.05, 
+                      qvalueCutoff = 0.10)
+
+simplified_GO_BP <- clusterProfiler::simplify(go_enrich)
+
+dotplot(simplified_GO_BP, title = "GO(BP) of Mis vs. MO")
+```
+
+
+```{r, warning=FALSE}
+fc_MO <- res_MO_padj05_abs1$log2FoldChange
+names(fc_MO) <- res_MO_padj05_abs1$gene_id
+
+gl <- sort(fc_MO, decreasing = TRUE)
+
+# perform GSEA
+gse_05 <- gseGO(geneList=gl, 
+             ont ="BP", 
+             keyType = "ENSEMBL", 
+             nPerm = 10000, 
+             minGSSize = 3, 
+             maxGSSize = 800, 
+             pvalueCutoff = 0.05, 
+             verbose = TRUE, 
+             OrgDb = "org.Mm.eg.db",
+             pAdjustMethod = "none")
+
+dotplot(gse_05, showCategory=10, title="MO vs. mis", font.size = 10, split=".sign") + facet_grid(.~.sign)+ scale_y_discrete(labels=function(x) str_wrap(x, width=80))
+
+```
+
+
+### Comparison with MA-10 cells (Bergeron 2015)
+```{r, include=FALSE}
+MA10_dat <- read_excel("/mnt/s/AG/AG-Dame-AG-Scholz-Transfer/Daten/02_Gonaden/Gata4 Gonaden Seq/Verlgeich GonadenMO vs MA-10 siRNA/Bergeron_2015_Supplementary_table_1.xlsx")
+MA10_dat_adj <- MA10_dat[MA10_dat$`p-value (siRNA GATA4/ siRNA control)`<= 0.05 & abs(MA10_dat$`Fold-Change (siRNA GATA4/ siRNA control)`) >= 1,]
+
+common_genes <- res_MO_padj05_abs1[res_MO_padj05_abs1$SYMBOL %in% na.omit(MA10_dat_adj$`Gene Symbol`),]
+
+print(paste(round(length(rownames(common_genes))/length(MA10_dat_adj$`Gene Symbol`)*100), "% of MA-10 loci found in DEGs", sep =""))
+
+common_genes
+```
+
+### Comparison with TM4 cells (Schrade)
+```{r, include = FALSE}
+TM4 <- read_excel("/mnt/s/AG/AG-Dame-AG-Scholz-Transfer/Daten/02_Gonaden/Gata4 Gonaden Seq/Vergleich GonadenMO vs TM4 siGATA4/GSE74471_Matrix_Table_analyzed_final_data_Schrade_TM4_R.xlsx")
+
+### LFC alle positiv? 
+TM4_adj <- TM4[TM4$adj.P.Val <= 0.05,]
+
+common_genes <- res_MO_padj05_abs1[res_MO_padj05_abs1$SYMBOL %in% na.omit(TM4_adj$SYMBOL),]
+
+print(paste(round(length(rownames(common_genes))/length(na.omit(TM4_adj$SYMBOL))*100), "% of TM4 loci found in DEGs", sep =""))
+
+common_genes
+```
+
+##new M15 data
+```{r, include = FALSE}
+dds_M15 <- readRDS("/mnt/s/AG/AG-Scholz-NGS/Daten/M15_GATA4_KO/M15_GATA4_dds.rds")
+
+res_M15 <- results(dds_M15, contrast=c("knockout", "KO", "Ctrl"))
+
+edb <- retrieveDb(gse)
+
+res_M15$gene_id <- mcols(dds_M15)[["gene_id"]]
+res_M15$SYMBOL <- mcols(dds_M15)[["SYMBOL"]]
+res_M15$ENTREZ <- mcols(dds_M15)[["ENTREZID"]]
+
+res_M15$ENTREZ2 <- as.character(mapIds(edb,keys = rownames(res_M15), column = "ENTREZID", keytype = "GENEID", multiVals="first"))
+res_M15$SYMBOL2 <- as.character(mapIds(edb,keys = rownames(res_M15), column = "SYMBOL", keytype = "GENEID", multiVals="first"))
+res_M15$DESCRIPTION <- as.character(mapIds(edb,keys = rownames(res_M15), column = "DESCRIPTION", keytype = "GENEID", multiVals="first"))
+
+filter_results(0.05, 1, res_M15)
+```
+
+```{r}
+ensembl <-  useMart("ensembl", dataset="mmusculus_gene_ensembl")
+values_MA10 <- MA10_dat_adj$RefSeq
+MA10_ens_ids <- getBM(attributes=c("refseq_mrna", "ensembl_gene_id"), filters = "refseq_mrna", values = values_MA10, mart= ensembl)
+
+values_TM4 <- TM4_adj$EntrezID
+TM4_ens_ids <- getBM(attributes=c("entrezgene_id", "ensembl_gene_id"), filters = "entrezgene_id", values = values_TM4, mart= ensembl)
+
+plt <- venn.diagram(
+    x = list(names_res_MO_padj05_abs1, MA10_ens_ids$ensembl_gene_id, TM4_ens_ids$ensembl_gene_id, names_res_M15_padj05_abs1),
+    category.names = c("Gonads" , "MA10", "TM4", "M15"),
+    filename = NULL,
+    lwd = 2,
+        lty = 'blank',
+        fill = c("#999999", "#E69F00", "#009E73", "#ff5a36")
+)
+
+grid.draw(plt)
+
+venn <- list(names_res_MO_padj05_abs1, MA10_ens_ids$ensembl_gene_id, TM4_ens_ids$ensembl_gene_id, names_res_M15_padj05_abs1)
+overlap <- calculate.overlap(venn)
+genes <- overlap$a5
+
+#overlap_gonads <- res_MO_padj05_abs1[rownames(res_MO_padj05_abs1) %in% genes,]
+
+#overlap_gonads$SYMBOL
+
+```
+
+```{r, eval = FALSE}
+#### compare back to entrez ids
+
+MA10_ids <- MA10_ens_ids$ensembl_gene_id
+MA10_ids_en <- getBM(attributes=c("entrezgene_id"), filters = "ensembl_gene_id", values = MA10_ids, mart= ensembl)
+MA10_ids_en <- MA10_ids_en$entrezgene_id
+
+TM4_ids <- TM4_ens_ids$ensembl_gene_id
+TM4_ids_en <- getBM(attributes=c("entrezgene_id"), filters = "ensembl_gene_id", values = TM4_ids, mart= ensembl)
+TM4_ids_en <- TM4_ids_en$entrezgene_id
+
+MO_ids <- names_res_MO_padj05_abs1
+MO_ids_en <- getBM(attributes=c("entrezgene_id"), filters = "ensembl_gene_id", values = MO_ids, mart= ensembl)
+MO_ids_en <- MO_ids_en$entrezgene_id
+
+M15_ids_en <- res_M15_padj05_abs1$ENTREZ
+M15_ids_en <-M15_ids_en[!is.na(M15_ids_en)]
+M15_ids_en <- unname(M15_ids_en)
+
+comp_samples <- list(MO=as.character(MO_ids_en),MA10=as.character(MA10_ids_en),TM4=as.character(TM4_ids_en), M15=as.character(M15_ids_en))
+str(comp_samples)
+
+cc_all <- compareCluster(comp_samples, fun = "enrichGO", 
+             ont ="BP", 
+             minGSSize = 3, 
+             maxGSSize = 800, 
+             pvalueCutoff = 0.05, 
+             OrgDb = "org.Mm.eg.db",
+             pAdjustMethod = "none")
+
+cc_simp <- clusterProfiler::simplify(cc_all)
+saveRDS(cc_simp, "/mnt/s/AG/AG-Scholz-NGS/Daten/embryonic_gonads_GATA4/cc_simp_M15inc.rds")
+
+dotplot(cc_simp, font.size=10, size="rowPercentage", showCategory=overlap$a6)
+
+cc_all_MF <- compareCluster(comp_samples, fun = "enrichGO", 
+             ont ="MF", 
+             minGSSize = 3, 
+             maxGSSize = 800, 
+             pvalueCutoff = 0.05, 
+             OrgDb = "org.Mm.eg.db",
+             pAdjustMethod = "none")
+
+cc_simp_MF <- clusterProfiler::simplify(cc_all_MF)
+saveRDS(cc_simp_MF, "/mnt/s/AG/AG-Scholz-NGS/Daten/embryonic_gonads_GATA4/cc_simp_MF_M15inc.rds")
+
+dotplot(cc_simp_MF, font.size=10, size="rowPercentage")
+
+
+###
+cc_all_CC <- compareCluster(comp_samples, fun = "enrichGO", 
+             ont ="CC", 
+             minGSSize = 3, 
+             maxGSSize = 800, 
+             pvalueCutoff = 0.05, 
+             OrgDb = "org.Mm.eg.db",
+             pAdjustMethod = "none")
+
+cc_simp_CC <- clusterProfiler::simplify(cc_all_CC)
+saveRDS(cc_simp_CC, "/mnt/s/AG/AG-Scholz-NGS/Daten/embryonic_gonads_GATA4/cc_simp_CC.rds")
+
+dotplot(cc_simp_CC, font.size=10, size="rowPercentage")
+
+
+### Kegg
+
+ck <- compareCluster(comp_samples, fun = "enrichKEGG", 
+             organism = "mmu", 
+             minGSSize = 3, 
+             maxGSSize = 800, 
+             pvalueCutoff = 0.05)
+dotplot(ck)
+
+```
+
+```{r, eval = FALSE, include=FALSE}
+# This code looks at semantic similarity of the compareclusters GO analysis of all samples
+
+test <- as.data.frame(cc_simp)
+test_MO <- test[test$Cluster == "MO",]
+test_MA10 <- test[test$Cluster == "MA10",]
+test_TM4 <- test[test$Cluster == "TM4",]
+test_M15 <- test[test$Cluster == "M15",]
+
+ids_MO <- test_MO$ID
+ids_MA10 <- test_MA10$ID
+ids_TM4 <- test_TM4$ID
+ids_M15 <- test_M15$ID
+
+venn <- list(ids_MO, ids_MA10, ids_TM4, ids_M15)
+overlap <- calculate.overlap(venn)
+
+mmGO <- godata("org.Mm.eg.db", ont = "BP")
+
+df <- as.data.frame(overlap$a6)
+
+for (i in 1:length(overlap$a6)){
+  vec <- goSim(overlap$a6, overlap$a6[i], semData=mmGO, measure = "Wang")
+  df <- cbind(df, vec)
+} 
+
+rownames(df) <- df$`overlap$a6`
+df <- df[,2:85]
+colnames(df) <- overlap$a6
+
+sampleDistMatrix <- as.matrix(df)
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix, col=colors, cluster_cols = T, cluster_rows = T)
+
+test <- mgoSim(ids_MO, ids_M15, semData=mmGO, measure = "Wang", combine = "avg")
+
+```
+
+```{r, eval=FALSE, include=FALSE}
+# This chunk is used to get a gene list from our data for a specific GO term
+test <- as.data.frame(cc_simp)
+test2 <- test[test$Description=="autophagy",]
+
+kinase <- test2$geneID
+
+kinase_test <- str_split(kinase, "/")
+
+overlap <- calculate.overlap(kinase_test)
+genes <- overlap$a5
+
+```
+
+### GO analysis (Biological process und Molecular function)
+```{r}
+cc_simp <- readRDS("/mnt/s/AG/AG-Scholz-NGS/Daten/embryonic_gonads_GATA4/cc_simp_M15inc.rds")
+
+dotplot(cc_simp, font.size=10, size="rowPercentage", title="Biological Process")
+
+cc_simp_MF <- readRDS("/mnt/s/AG/AG-Scholz-NGS/Daten/embryonic_gonads_GATA4/cc_simp_MF_M15inc.rds")
+
+dotplot(cc_simp_MF, font.size=10, size="rowPercentage", title="Molecular Function")
+```
+
+```{r, include=FALSE}
+ensembl <-  useMart("ensembl", dataset="mmusculus_gene_ensembl")
+
+values_MA10 <- MA10_dat_adj$`Fold-Change (siRNA GATA4/ siRNA control)`
+names(values_MA10) <- MA10_dat_adj$RefSeq
+MA10_ens_ids <- getBM(attributes=c("refseq_mrna", "ensembl_gene_id", "entrezgene_id"), filters = "refseq_mrna", values = names(values_MA10), mart= ensembl)
+
+names(values_MA10) <- MA10_ens_ids[MA10_ens_ids$refseq_mrna %in% names(values_MA10), "ensembl_gene_id"]
+values_MA10 <- values_MA10[!is.na(names(values_MA10))]
+values_MA10 = sort(values_MA10, decreasing = TRUE)
+
+###
+
+values_TM4 <- TM4_adj$logFC
+names(values_TM4) <- TM4_adj$EntrezID
+TM4_ens_ids <- getBM(attributes=c("ensembl_gene_id", "entrezgene_id"), filters = "entrezgene_id", values = names(values_TM4), mart= ensembl)
+
+names(values_TM4) <- TM4_ens_ids[TM4_ens_ids$entrezgene_id %in% names(values_TM4), "ensembl_gene_id"]
+values_TM4 <- values_TM4[!is.na(names(values_TM4))]
+values_TM4 <- sort(values_TM4, decreasing = TRUE)
+
+### 
+values_MO <- res_MO_padj05_abs1$log2FoldChange
+names(values_MO) <- res_MO_padj05_abs1$gene_id
+
+values_MO = sort(values_MO, decreasing = TRUE)
+
+###
+values_M15 <- res_M15_padj05_abs1$log2FoldChange
+names(values_M15) <- res_M15_padj05_abs1$gene_id
+
+values_M15 = sort(values_M15, decreasing = TRUE)
+
+
+comp_samples_all <- list(MO=values_MO, MA10=values_MA10,TM4=values_TM4, M15=values_M15)
+str(comp_samples_all)
+
+
+gsea <- compareCluster(comp_samples_all, fun = "gseGO", 
+             ont ="BP", 
+             keyType = "ENSEMBL", 
+             nPerm = 10000, 
+             minGSSize = 3, 
+             maxGSSize = 800, 
+             pvalueCutoff = 0.05, 
+             verbose = TRUE, 
+             OrgDb = "org.Mm.eg.db",
+             pAdjustMethod = "none")
+
+dotplot(gsea,showCategory=10, split=".sign") + facet_grid(.~.sign)
+
+dotplot(gsea,showCategory=10, color ="NES")
+
+test <- as.data.frame(gsea)
+
+###nur mo und m15
+comp_samples <- list(MO=values_MO, M15=values_M15)
+str(comp_samples)
+
+
+gsea <- compareCluster(comp_samples, fun = "gseGO", 
+             ont ="BP", 
+             keyType = "ENSEMBL", 
+             nPerm = 10000, 
+             minGSSize = 3, 
+             maxGSSize = 800, 
+             pvalueCutoff = 0.05, 
+             verbose = TRUE, 
+             OrgDb = "org.Mm.eg.db",
+             pAdjustMethod = "none")
+
+dotplot(gsea,showCategory=10, split=".sign") + facet_grid(.~.sign)
+
+dotplot(gsea,showCategory=10, color ="NES")
+
+
+### only positive values
+
+values_MO_pos <- values_MO[values_MO > 0]
+values_MA10_pos <- values_MA10[values_MA10 > 0]
+values_TM4_pos <- values_TM4[values_TM4 > 0]
+values_M15_pos <- values_M15[values_M15 > 0]
+
+comp_samples_pos <- list(MO=values_MO_pos, MA10=values_MA10_pos,TM4=values_TM4_pos, M15=values_M15_pos)
+
+gsea_pos <- compareCluster(comp_samples_pos, fun = "gseGO", 
+             ont ="BP", 
+             keyType = "ENSEMBL", 
+             nPerm = 10000, 
+             minGSSize = 3, 
+             maxGSSize = 800, 
+             pvalueCutoff = 0.05, 
+             verbose = TRUE, 
+             OrgDb = "org.Mm.eg.db",
+             pAdjustMethod = "none")
+
+dotplot(gsea_pos,showCategory=100, color ="NES")
+dotplot(gsea_pos,showCategory=8, split=".sign") + facet_grid(.~.sign)
+
+###### only neg
+values_MO_neg <- values_MO[values_MO < 0]
+values_MA10_neg <- values_MA10[values_MA10 < 0]
+values_TM4_neg <- values_TM4[values_TM4 < 0]
+values_M15_neg <- values_M15[values_M15 < 0]
+
+comp_samples_neg <- list(MO=values_MO_neg, MA10=values_MA10_neg,TM4=values_TM4_neg, M15=values_M15_neg)
+
+gsea_neg <- compareCluster(comp_samples_neg, fun = "gseGO", 
+             ont ="BP", 
+             keyType = "ENSEMBL", 
+             nPerm = 10000, 
+             minGSSize = 3, 
+             maxGSSize = 800, 
+             pvalueCutoff = 0.05, 
+             verbose = TRUE, 
+             OrgDb = "org.Mm.eg.db",
+             pAdjustMethod = "none")
+
+dotplot(gsea_neg,showCategory=100, color ="NES")
+dotplot(gsea_neg,showCategory=8, split=".sign") + facet_grid(.~.sign)
+
+
+pos_nes <- as.data.frame(gsea_pos)
+neg_nes <- as.data.frame(gsea_neg)
+
+all_nes <- rbind(pos_nes,neg_nes)
+
+```
+
+### Gene set enrichment analysis (GSEA of all samples)
+```{r, warning=FALSE}
+comp_samples_all <- list(MO=values_MO, MA10=values_MA10,TM4=values_TM4, M15=values_M15)
+
+gsea <- compareCluster(comp_samples_all, fun = "gseGO", 
+             ont ="BP", 
+             keyType = "ENSEMBL", 
+             nPerm = 10000, 
+             minGSSize = 3, 
+             maxGSSize = 800, 
+             pvalueCutoff = 0.05, 
+             verbose = TRUE, 
+             OrgDb = "org.Mm.eg.db",
+             pAdjustMethod = "none")
+
+dotplot(gsea,showCategory=10, color ="NES", title = "all datasets")
+```
+
+### Gene set enrichment analysis (GSEA of MO and M15)
+```{r, warning=FALSE}
+comp_samples <- list(MO=values_MO, M15=values_M15)
+
+gsea <- compareCluster(comp_samples, fun = "gseGO", 
+             ont ="BP", 
+             keyType = "ENSEMBL", 
+             nPerm = 10000, 
+             minGSSize = 3, 
+             maxGSSize = 800, 
+             pvalueCutoff = 0.05, 
+             verbose = TRUE, 
+             OrgDb = "org.Mm.eg.db",
+             pAdjustMethod = "none")
+
+dotplot(gsea,showCategory=10, color ="NES", title = "MO and M15 datasets")
+```
