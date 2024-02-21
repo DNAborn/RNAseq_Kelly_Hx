@@ -66,11 +66,11 @@ gitdir <- paste(dir,"git_RNAseq_Kelly_Hx",sep="/")
 list.files(gitdir)
 
 fastqdir <- paste(s,"AG/AG-Scholz-NGS/Daten/RNASeq_Kelly2_P3302",sep="/")
-list.files(fastqdir)
+list.files(fastqdir) %>% head()
 fastqdir2 <- paste(s,"AG/AG-Scholz-NGS/Daten/RNASeq_Kelly",sep="/")
-list.files(fastqdir2)
+list.files(fastqdir2) %>% head()
 fastqdir3 <- paste(s,"AG/AG-Scholz-NGS/Daten/Sequencing-2/Sequencing-2_A/FASTQ",sep="/")
-list.files(fastqdir3)
+list.files(fastqdir3) %>% head()
 
 indexdir <- paste(s,"AG/AG-Scholz-NGS/Daten/Salmon/index/human_ens110_index",sep="/")
 
@@ -82,7 +82,7 @@ setwd(gitdir)
 
 
 ##  - Linux
-```{bash, eval=FALSE}
+```{r, eval=FALSE}
 
 fastqdir="/mnt/s/AG/AG-Scholz-NGS/Daten/RNASeq_Kelly2_P3302";
 fastqdir2="/mnt/s/AG/AG-Scholz-NGS/Daten/RNASeq_Kelly";
@@ -235,16 +235,20 @@ done
 
 # Get Sample table
 
-## Extract Filenames
+## Extract Filenames from quant files
 
 outdir <- paste(dir,"output",sep="/")
 dir.create(outdir)
 quantdir <- paste(dir,"quants",sep="/")
 
 f <- list.files(path = quantdir)
-files <- as.factor(str_remove(f,pattern ="_quant"))
+files <- paste(quantdir,f,"quant.sf",sep="/")
+files %>% file.exists()
+
+names <- as.factor(str_remove(f,pattern ="_quant"))
+
 # short form
-samplename2 <- files %>% 
+samplename2 <- names %>% 
   str_replace(pattern="P3302_01_P3302_RNA_", replacement = "RNA_P3302_") %>%
   str_replace(pattern="P2041_", replacement = "RNA_P2041_") %>%
   str_replace(pattern="CH_HS_KK_", replacement = "RNA_P557_") %>%
@@ -253,16 +257,24 @@ samplename2[c(1,2,31,32,33,34,53,54,55,56,203,204)]
 l <- samplename2 %>% length()
 sequencing <- str_extract(samplename2,"P[0-9]+")
 sample <- str_extract(samplename2,"S[0-9]+")
+lane <- str_extract(samplename2,"L[0-9]+") %>% 
+        replace_na("L001")
+
+runname <- paste("RNA",
+                    sequencing,
+                    sample,
+                    lane,
+                    sep="_")
+
 samplename <- paste("RNA",
                     sequencing,
                     sample,
                     sep="_")
-  
-quant_file_table <- data.frame(order = seq(1:l),
-                               file = files,
-                               samplename_full = samplename2,
+
+quant_file_table <- data.frame(files, samplename, order = seq(1:l),
+                               filename = samplename2,
                                sequencing = sequencing,
-                               samplename = samplename)[17:l,]
+                               lane=lane)[17:l,]
 
 
 ```
@@ -420,13 +432,16 @@ sample_table_all <- bind_rows(sample_table_P557, sample_table_P2041, sample_tabl
 head(sample_table_all)
 length(rownames(sample_table_all))
 length(rownames(quant_file_table))
+
+(quant_file_table$samplename == quant_file_table$samplename.1) %>% summary()
+(quant_file_table$files == quant_file_table$file) %>% summary()
 sample_table_all <- merge(quant_file_table,sample_table_all, by = "samplename")
 class(sample_table)
 sample_table_all <- sample_table_all[order(sample_table_all$order),]
 (sample_table_all$sequencing.x == sample_table_all$sequencing.y) %>% summary()
 colnames(sample_table_all)[which(names(sample_table_all) == "sequencing.x")] <- "sequencing"
+colnames(sample_table_all)[which(names(sample_table_all) == "lane.x")] <- "lane"
 el <- sample_table_all$sequencing=="P3302"
-sample_table_all$lane[el] <- str_split(sample_table_all$file[el], pattern = "_",simplify = T)[,7]
 sample_table_all$run_id[el] <- paste(sample_table_all$run_id[el],sample_table_all$lane[el],sep="_")
 
 dim(sample_table_all)
@@ -448,7 +463,7 @@ quantdir
 
 list.files(path = outdir)
 list.files(path = dir)
-list.files(path = quantdir)
+list.files(path = quantdir) %>% head()
 
 samplelist <- {}
 mappingrates <- {}
@@ -538,18 +553,59 @@ file.exists(files) %>% summary()
 
 # Use table from above "sample_table_all"
 head(sample_table_all)
-sample_table_all
 coldata <- data.frame(files, names = run, stringsAsFactors=FALSE)
 
 
 
-coldata$sample <- str_split(coldata$names, pattern="_S", simplify = T)[,1]
-coldata$lane <- str_split(coldata$names, pattern="_", simplify = T)[,4]
+
+
 
 coldata <- merge(coldata,sample.table, by="sample")
 
 colnames(coldata)
 head(coldata$genotype)
+
+
+
+
+# Generate quant file list and combine with sample table
+## Get Sample table II
+
+## Extract Filenames
+
+outdir <- paste(dir,"output",sep="/")
+dir.create(outdir)
+quantdir <- paste(dir,"quants",sep="/")
+
+f <- list.files(path = quantdir)
+files <- as.factor(str_remove(f,pattern ="_quant"))
+# short form
+samplename2 <- files %>% 
+  str_replace(pattern="P3302_01_P3302_RNA_", replacement = "RNA_P3302_") %>%
+  str_replace(pattern="P2041_", replacement = "RNA_P2041_") %>%
+  str_replace(pattern="CH_HS_KK_", replacement = "RNA_P557_") %>%
+  str_remove(pattern="_quant")
+samplename2[c(1,2,31,32,33,34,53,54,55,56,203,204)]
+l <- samplename2 %>% length()
+sequencing <- str_extract(samplename2,"P[0-9]+")
+sample <- str_extract(samplename2,"S[0-9]+")
+lane <- str_extract(samplename2,"L[0-9]+") %>% 
+        replace_na("L001")
+
+samplename <- paste("RNA",
+                    sequencing,
+                    sample,
+                    lane,
+                    sep="_")
+samplename %>% length()
+unique(samplename) %>% length()
+
+quant_file_table <- data.frame(order = seq(1:l),
+                               file = files,
+                               samplename_full = samplename2,
+                               sequencing = sequencing,
+                               samplename = samplename)[17:l,]
+
 
 # load tximeta
 # with linked Transcriptome

@@ -12,7 +12,7 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T,
-                      results = "hide", error=FALSE, warning=FALSE, message=FALSE)
+                      error=FALSE, warning=FALSE, message=FALSE)
 ```
 
 # 0. Load
@@ -487,6 +487,164 @@ barplot(height=mappingrates, names=samplename, horiz=T, las=1)
 
 xx <- barplot(height=mappingrates, names=samplename, horiz=T, las=1, xlim=c(0,100)) #col=col
 text(x = mappingrates, y = xx, label = mappingrates, pos = 4, cex = 0.8, col = "red")
+
+
+```
+
+## Tximeta
+```{r}
+getwd()
+example.quant <- paste(quantdir,list.files(quantdir)[1],"quant.sf",sep="/")
+
+list.files(quantdir)[1]
+file.exists(example.quant)
+
+# example file:
+example.table <- read.table(example.quant, header=T)
+head(example.table)
+basename(example.quant)
+dirname(example.quant)
+basename(dirname(example.quant))
+
+# generate file list & prepare variables
+files={}
+for (i in list.dirs(path = dirname(dirname(example.quant)), full.names = TRUE, recursive = FALSE)) {
+files <- c(files,paste(i,"/quant.sf",sep=""))
+print(basename(i))
+# print(head(read.table(files[length(files)], header=T)))
+# print (files[length(files)])
+}
+head(files)
+
+quantdirs <- dirname(files)
+head(quantdirs)
+head(basename(quantdirs))
+run <- basename(quantdirs)
+head(dir)
+
+tximeta_files <- file.path(quantdir, run, "quant.sf") 
+file.exists(tximeta_files) %>% summary()
+file.exists(files) %>% summary()
+
+# Use table from above "sample_table_all"
+head(sample_table_all)
+sample_table_all$file %in% files
+
+# sample_table_all
+coldata <- data.frame(files, names = run, stringsAsFactors=FALSE)
+coldata$file <- str_split(coldata$names, pattern="_", simplify = T)[,]
+# coldata$lane <- str_split(coldata$names, pattern="_", simplify = T)[,4]
+coldata <- merge(coldata,sample_table_all, by="sample")
+
+colnames(coldata)
+head(coldata$genotype)
+
+# load tximeta
+# with linked Transcriptome
+## Chlamy
+indexdir
+
+dirgenomic
+list.files(dirgenomic)
+fastaPath <- file.path(dirgenomic, "Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz")
+fastaPath
+gtfPath <- file.path(dirgenomic,"Homo_sapiens.GRCh38.110.gff3.gz")
+gtfPath
+
+
+file.exists(indexdir, fastaPath, gtfPath)
+
+makeLinkedTxome(indexDir=indexdir,
+                source="LocalEnsembl",
+                organism="Homo sapiens",
+                release="110",
+                genome="GRCh38",
+                fasta=fastaPath,
+                gtf=gtfPath,
+                write=FALSE)
+
+gtfdata <- readLines(gtfPath)
+head(gtfdata, n=100)
+
+# gene_name info sind in gff3 abder nicht in se?
+
+se <- tximeta(coldata)
+se <- tximeta(coldata, useHub=F)
+se
+
+library(SummarizedExperiment)
+
+colData(se)
+# meta infos sind da (genotype, treatment,...)
+
+# rename Samples
+rownames(colData(se)) <- str_remove(rownames(colData(se)), pattern="_quant")
+
+rowRanges(se)
+# genome info
+seqinfo(se)
+# ?
+head(assays(se)[["counts"]])
+# counts. THE DATA
+
+# Mapping infos:
+names(metadata(se)[["quantInfo"]])
+str(metadata(se)[["quantInfo"]]) # Infos from Salmon Mapping
+metadata(se)[["quantInfo"]]$percent_mapped
+metadata(se)[["quantInfo"]]$num_processed
+
+par(mfrow=c(1,2))
+barplot(metadata(se)[["quantInfo"]]$percent_mapped, main="Mapping Rate")
+barplot(metadata(se)[["quantInfo"]]$num_processed/1000000, main="Mio. Reads")
+
+edb <- retrieveDb(se)
+class(edb)
+genes(edb)
+columns(edb)
+
+
+se.exons <- addExons(se)
+rowRanges(se.exons)[[1]]
+gse <- summarizeToGene(se)
+rowRanges(gse)
+
+head(assays(gse)[["counts"]])[1:5,1:5]
+head(assays(gse)[["abundance"]])[1:5,1:5]
+head(assays(gse)[["length"]])[1:5,1:5]
+
+#### add gene symbol
+columns(retrieveDb(se))
+edb
+metadata(se)$txomeInfo$source
+
+TXNAME <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "TXNAME", keytype = "GENEID", multiVals="first"))
+# select()' returned 1:many mapping between keys and columns = 1 gene has many transcripts...
+TXNAME.list <- (mapIds(edb,keys = mcols(gse)$gene_id, column = "TXNAME", keytype = "GENEID", multiVals="list"))
+head(TXNAME.list)
+# info is already there
+CDSID <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "CDSID", keytype = "GENEID", multiVals="first"))
+head(CDSID)
+# ?
+CDSNAME <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "CDSNAME", keytype = "GENEID", multiVals="first"))
+head(CDSNAME)
+# same as gene_id
+EXONNAME <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "EXONNAME", keytype = "GENEID", multiVals="first"))
+head(EXONNAME)
+TXTYPE <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "TXTYPE", keytype = "GENEID", multiVals="first"))
+head(TXTYPE)
+# no useful info... no gene Symbol!!
+
+# add CDSID
+mcols(gse)$CDSID <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "CDSID", keytype = "GENEID", multiVals="first"))
+
+
+colnames(mcols(gse))
+head(rownames(gse))
+
+getwd()
+save(gse,file=paste(outdir,"tximeta.txm", sep="/"))
+gse <- 1
+load(file=paste(outdir,"tximeta.txm", sep="/"))
 
 
 ```
