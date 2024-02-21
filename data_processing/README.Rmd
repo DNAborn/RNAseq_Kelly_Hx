@@ -1,15 +1,15 @@
 ---
-title: "RNAseq Kelly HIF KO - Results"
+  title: "RNAseq Kelly HIF KO - Results"
 author: "Kelterborn"
 date: "`r Sys.Date()`"
 output:
   md_document:
-    variant: gfm
+  variant: gfm
 always_allow_html: true
 editor_options: 
   chunk_output_type: console
 ---
-
+  
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T,
                       error=FALSE, warning=FALSE, message=FALSE)
@@ -61,8 +61,8 @@ library(writexl)
 
 
 ifelse(Sys.info()["sysname"]== "Linux",
-  s <- "/mnt/s",
-  s <- "S:")
+       s <- "/mnt/s",
+       s <- "S:")
 dir <- paste(s,"AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all",sep="/")
 list.files(dir) %>% head()
 gitdir <- paste(dir,"git_RNAseq_Kelly_Hx",sep="/")
@@ -106,11 +106,11 @@ lftp
 
 # open -u <user>@<DOMAIN> https://file-exchange.bihealth.org/<file-box-id>/
 open -u kelterbs@CHARITE https://file-exchange.bihealth.org/bd53df77-dd5a-4fb6-b640-4625548c5119/
-
-# [Password]
-
-# Download all data into target folder
-mirror . $fastqdir
+  
+  # [Password]
+  
+  # Download all data into target folder
+  mirror . $fastqdir
 # mirror . /mnt/s/AG/AG-Scholz-NGS/Daten/RNASeq_Kelly2_P3302
 
 # Check data
@@ -143,35 +143,35 @@ gdir="/mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/${release}"
 echo $gdir
 
 # Donwload genomic data: dna
-  wget -P $gdir "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
+wget -P $gdir "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
 
 # Donwload genomic data: cdna (=cds with UTRs without introns)
-  wget -P $gdir "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz"
-  
- # Donwload genomic data: ncrna
-  wget -P $gdir "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/ncrna/Homo_sapiens.GRCh38.ncrna.fa.gz"
-  
- # Donwload genomic data: gff3 (for later use)
-  wget -P $gdir "http://ftp.ensembl.org/pub/current_gff3/homo_sapiens/Homo_sapiens.GRCh38.${release}.gff3.gz"
-  
+wget -P $gdir "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz"
+
+# Donwload genomic data: ncrna
+wget -P $gdir "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/ncrna/Homo_sapiens.GRCh38.ncrna.fa.gz"
+
+# Donwload genomic data: gff3 (for later use)
+wget -P $gdir "http://ftp.ensembl.org/pub/current_gff3/homo_sapiens/Homo_sapiens.GRCh38.${release}.gff3.gz"
+
 # create list of chromosomes
-  cd $gdir
-	grep "^>" <(gunzip -c Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz) | cut -d " " -f 1 > decoys_human_ensh38.txt
+cd $gdir
+grep "^>" <(gunzip -c Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz) | cut -d " " -f 1 > decoys_human_ensh38.txt
 
 # to modify, copy to linux partition
-  mkdir ~/decoys
-  cp decoys_human_ensh38.txt ~/decoys
+mkdir ~/decoys
+cp decoys_human_ensh38.txt ~/decoys
 
 # remove ">"
-  sed -i.bak -e 's/>//g' ~/decoys/decoys_human_ensh38.txt
+sed -i.bak -e 's/>//g' ~/decoys/decoys_human_ensh38.txt
 
 # Optional: check txt file
-  vim ~/decoys/decoys_human_ensh38.txt
-  # to exit: -press 'ESC', type ":q!", press 'ENTER'
-  
+vim ~/decoys/decoys_human_ensh38.txt
+# to exit: -press 'ESC', type ":q!", press 'ENTER'
+
 # copy back
-  cp ~/decoys/decoys_human_ensh38.txt $gdir
-  
+cp ~/decoys/decoys_human_ensh38.txt $gdir
+
 # combine cdna ncdna and dna in one file
 cd $gdir
 
@@ -200,25 +200,25 @@ echo $fastqfiles_all
 
 
 for fn in $fastqfiles_all;
-	do
-	bfn=$(echo "`basename ${fn}`");
-	samp=${bfn%"_R1_001.fastq.gz"};
-	R1=$fn;
-	R2=$(echo "$R1" | sed 's/R1/R2/');
-	echo "Processing Sample: $samp";
-	test -f $R1 && echo "--> File: $R1 exists"
-	test -f $R2 && echo "--> File: $R2 exists"
-  outquant=${dir}/quants/${samp}_quant
-  echo $outquant
-  echo $indexdir
+do
+bfn=$(echo "`basename ${fn}`");
+samp=${bfn%"_R1_001.fastq.gz"};
+R1=$fn;
+R2=$(echo "$R1" | sed 's/R1/R2/');
+echo "Processing Sample: $samp";
+test -f $R1 && echo "--> File: $R1 exists"
+test -f $R2 && echo "--> File: $R2 exists"
+outquant=${dir}/quants/${samp}_quant
+echo $outquant
+echo $indexdir
 
 salmon quant -i $indexdir -l A \
-	-1 $R1 \
-	-2 $R2 \
-	-p 20 --validateMappings --gcBias -o $outquant
-	
+-1 $R1 \
+-2 $R2 \
+-p 20 --validateMappings --gcBias -o $outquant
+
 done
-	
+
 ```
 
 
@@ -228,16 +228,20 @@ done
 
 # Get Sample table
 
-## Extract Filenames
+## Extract Filenames from quant files
 
 outdir <- paste(dir,"output",sep="/")
 dir.create(outdir)
 quantdir <- paste(dir,"quants",sep="/")
 
 f <- list.files(path = quantdir)
-files <- as.factor(str_remove(f,pattern ="_quant"))
+files <- paste(quantdir,f,"quant.sf",sep="/")
+files %>% file.exists()
+
+names <- as.factor(str_remove(f,pattern ="_quant"))
+
 # short form
-samplename2 <- files %>% 
+samplename2 <- names %>% 
   str_replace(pattern="P3302_01_P3302_RNA_", replacement = "RNA_P3302_") %>%
   str_replace(pattern="P2041_", replacement = "RNA_P2041_") %>%
   str_replace(pattern="CH_HS_KK_", replacement = "RNA_P557_") %>%
@@ -246,17 +250,26 @@ samplename2[c(1,2,31,32,33,34,53,54,55,56,203,204)]
 l <- samplename2 %>% length()
 sequencing <- str_extract(samplename2,"P[0-9]+")
 sample <- str_extract(samplename2,"S[0-9]+")
+lane <- str_extract(samplename2,"L[0-9]+") %>% 
+  replace_na("L001")
+
+runname <- paste("RNA",
+                 sequencing,
+                 sample,
+                 lane,
+                 sep="_")
+
 samplename <- paste("RNA",
                     sequencing,
                     sample,
                     sep="_")
-  
-quant_file_table <- data.frame(order = seq(1:l),
-                               file = files,
-                               samplename_full = samplename2,
+
+quant_file_table <- data.frame(files, samplename, order = seq(1:l),
+                               filename = samplename2,
                                sequencing = sequencing,
-                               samplename = samplename)[17:l,]
-kable(head(quant_file_table))
+                               lane=lane)[17:l,]
+
+quant_file_table %>% head() %>% kable()
 ```
 
 
@@ -291,7 +304,7 @@ sample_table$run_id <- str_remove(sample_table$samplename,pattern="P3302_")
 sample_table$sequencing <- "P3302"
 # RNA_P3302_01_S141_L006
 sample_table$samplename <- paste("RNA_P3302_",
-                          "S",141:190, sep="")
+                                 "S",141:190, sep="")
 sample_table$sample_id <- paste("S",141:190, sep="")         
 sample_table$experiment <- "Ulrike"
 sample_table$experiment_date <- sample_table$Datum
@@ -303,7 +316,8 @@ sample_table$cell_density <- str_split(sample_table$Probe, pattern=" ", simplify
 
 sample_table_P3302 <- as.data.frame(sample_table)
 sample_table_P3302$samplename %in% quant_file_table$samplename %>% summary()
-kable(head(sample_table_P3302))
+
+sample_table_P3302 %>% head() %>% kable()
 ```
 
 
@@ -340,9 +354,10 @@ sample_table$exp_rep <- paste(sample_table$experiment,sample_table$repetition, s
 
 # Make table
 sample_table_P2041 <- as.data.frame(sample_table)
-sample_table_P2041$samplename %in% quant_file_table$samplename %>% summary()
-kable(head(sample_table_P2041))
 
+sample_table_P2041$samplename %in% quant_file_table$samplename %>% summary()
+
+sample_table_P2041 %>% head() %>% kable()
 ```
 
 ### P557
@@ -368,10 +383,10 @@ sample_table$genotype <- ifelse(str_detect(sample_table$Probe,pattern="1.3"),"HI
 sample_table$genotype %>% as.factor() %>% relevel(ref="Kelly")
 sample_table$sequencing <- "P557"
 sample_table$replicate <-  ifelse(str_detect(sample_table$Probe,pattern="P7"),"P7",
-                          ifelse(str_detect(sample_table$Probe,pattern="P8"),"P8",
-                          ifelse(str_detect(sample_table$Probe,pattern="P13"),"P13","P14")))
+                                  ifelse(str_detect(sample_table$Probe,pattern="P8"),"P8",
+                                         ifelse(str_detect(sample_table$Probe,pattern="P13"),"P13","P14")))
 sample_table$clone <- ifelse(str_detect(sample_table$Probe,pattern="1.3"),"Hif1a_1.3",
-                                ifelse(str_detect(sample_table$Probe,pattern="2.2"),"Hif2a_2.2","LV_1"))
+                             ifelse(str_detect(sample_table$Probe,pattern="2.2"),"Hif2a_2.2","LV_1"))
 sample_table$cellline <- "Kelly"
 sample_table$lane <- "L001"
 
@@ -395,15 +410,16 @@ sample_table$sample <- sample_table2$sample
 sample_table$experiment <- "Katharina"
 sample_table$experiment_date <- sample_table$Datum
 sample_table$repetition <-  ifelse(str_detect(sample_table$replicate,pattern="P7"),"1",
-                          ifelse(str_detect(sample_table$Probe,pattern="P8"),"2",
-                          ifelse(str_detect(sample_table$Probe,pattern="P13"),"1","2")))
+                                   ifelse(str_detect(sample_table$Probe,pattern="P8"),"2",
+                                          ifelse(str_detect(sample_table$Probe,pattern="P13"),"1","2")))
 sample_table$exp_rep <- paste(sample_table$experiment,sample_table$repetition,sep="_")
 # "RNA_P557_077_S33
 
 # Make table
 sample_table_P557 <- as.data.frame(sample_table)
 sample_table_P557$samplename %in% quant_file_table$samplename %>% summary()
-kable(head(sample_table_P557))
+
+sample_table_P557 %>% head() %>% kable()
 ```
 
 ### combine lists
@@ -413,13 +429,16 @@ sample_table_all <- bind_rows(sample_table_P557, sample_table_P2041, sample_tabl
 head(sample_table_all)
 length(rownames(sample_table_all))
 length(rownames(quant_file_table))
+
+(quant_file_table$samplename == quant_file_table$samplename.1) %>% summary()
+(quant_file_table$files == quant_file_table$file) %>% summary()
 sample_table_all <- merge(quant_file_table,sample_table_all, by = "samplename")
 class(sample_table)
 sample_table_all <- sample_table_all[order(sample_table_all$order),]
 (sample_table_all$sequencing.x == sample_table_all$sequencing.y) %>% summary()
 colnames(sample_table_all)[which(names(sample_table_all) == "sequencing.x")] <- "sequencing"
+colnames(sample_table_all)[which(names(sample_table_all) == "lane.x")] <- "lane"
 el <- sample_table_all$sequencing=="P3302"
-sample_table_all$lane[el] <- str_split(sample_table_all$file[el], pattern = "_",simplify = T)[,7]
 sample_table_all$run_id[el] <- paste(sample_table_all$run_id[el],sample_table_all$lane[el],sep="_")
 
 dim(sample_table_all)
@@ -429,43 +448,44 @@ kable(sample_table_all)
 
 write_xlsx(sample_table_all,
            paste("2024_02 Kelly all samples.xlsx",sep="/"))
-kable(head(sample_table_all))
+
+sample_table_P557 %>% head() %>% kable()
+
 ```
 
 # 2. Process
 ## Mapping Rates
-```{r mapping_rates}
+```{r}
 dir
 outdir
 quantdir
 
 list.files(path = outdir)
 list.files(path = dir)
-list.files(path = quantdir)
+list.files(path = quantdir) %>% head()
 
 samplelist <- {}
 mappingrates <- {}
 for (i in list.files(path = quantdir)){
-print(i)
-si <- str_remove(i, pattern="_quant")
-si
-samplelist <- c(samplelist,si)
-f <- readLines(paste(quantdir,i,"logs/salmon_quant.log", sep="/"))
-line <- grep("Mapping rate = ",f,value=TRUE)
-sl <- str_length(line)
-sl
-notime <- substring(line,30,sl)
-notime
-manual <- substring(line,sl-7,sl-1)
-val <- as.numeric(str_extract(notime,"[0-9.]+"))
-val
-valr<-round(val, digits=2)
-# print(paste("Mapping rate of ",si," is: ",valr," %"))
-mappingrates <- c(mappingrates,valr)
+  print(i)
+  si <- str_remove(i, pattern="_quant")
+  samplelist <- c(samplelist,si)
+  f <- readLines(paste(quantdir,i,"logs/salmon_quant.log", sep="/"))
+  line <- grep("Mapping rate = ",f,value=TRUE)
+  sl <- str_length(line)
+  sl
+  notime <- substring(line,30,sl)
+  notime
+  manual <- substring(line,sl-7,sl-1)
+  val <- as.numeric(str_extract(notime,"[0-9.]+"))
+  val
+  valr<-round(val, digits=2)
+  # print(paste("Mapping rate of ",si," is: ",valr," %"))
+  mappingrates <- c(mappingrates,valr)
 }
-summary(mappingrates)
 
 # Make table
+
 m.table <- data.frame(sample_table_all$samplename,samplelist[17:204],mappingrates[17:204])
 head(m.table)
 sample_table_all$mappingrates <- mappingrates[17:204]
@@ -493,64 +513,31 @@ text(x = mappingrates, y = xx, label = mappingrates, pos = 4, cex = 0.8, col = "
 
 ## Tximeta
 ```{r}
-getwd()
-example.quant <- paste(quantdir,list.files(quantdir)[1],"quant.sf",sep="/")
+# prepare coldata table
+quant_file_table %>% head()
+sample_table_all %>% head()
 
-list.files(quantdir)[1]
-file.exists(example.quant)
+sample_table_all$names = paste(sample_table_all$sequencing,
+                               sample_table_all$genotype,
+                               sample_table_all$treatment,
+                               sample_table_all$order,
+                               sep="_")
+head(sample_table_all$names)
 
-# example file:
-example.table <- read.table(example.quant, header=T)
-head(example.table)
-basename(example.quant)
-dirname(example.quant)
-basename(dirname(example.quant))
-
-# generate file list & prepare variables
-files={}
-for (i in list.dirs(path = dirname(dirname(example.quant)), full.names = TRUE, recursive = FALSE)) {
-files <- c(files,paste(i,"/quant.sf",sep=""))
-print(basename(i))
-# print(head(read.table(files[length(files)], header=T)))
-# print (files[length(files)])
-}
-head(files)
-
-quantdirs <- dirname(files)
-head(quantdirs)
-head(basename(quantdirs))
-run <- basename(quantdirs)
-head(dir)
-
-tximeta_files <- file.path(quantdir, run, "quant.sf") 
-file.exists(tximeta_files) %>% summary()
-file.exists(files) %>% summary()
-
-# Use table from above "sample_table_all"
-head(sample_table_all)
-sample_table_all$file %in% files
-
-# sample_table_all
-coldata <- data.frame(files, names = run, stringsAsFactors=FALSE)
-coldata$file <- str_split(coldata$names, pattern="_", simplify = T)[,]
-# coldata$lane <- str_split(coldata$names, pattern="_", simplify = T)[,4]
-coldata <- merge(coldata,sample_table_all, by="sample")
-
-colnames(coldata)
-head(coldata$genotype)
+coldata <- data.frame(files = sample_table_all$files,
+                      names = sample_table_all$names, 
+                      sample_table_all[,-c(2)])
 
 # load tximeta
-# with linked Transcriptome
-## Chlamy
-indexdir
 
+# make linked Transcriptome (local offline mode)
+indexdir
 dirgenomic
 list.files(dirgenomic)
 fastaPath <- file.path(dirgenomic, "Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz")
 fastaPath
 gtfPath <- file.path(dirgenomic,"Homo_sapiens.GRCh38.110.gff3.gz")
 gtfPath
-
 
 file.exists(indexdir, fastaPath, gtfPath)
 
@@ -564,16 +551,13 @@ makeLinkedTxome(indexDir=indexdir,
                 write=FALSE)
 
 gtfdata <- readLines(gtfPath)
-head(gtfdata, n=100)
+head(gtfdata, n=20)
 
 # gene_name info sind in gff3 abder nicht in se?
 
-se <- tximeta(coldata)
-se <- tximeta(coldata, useHub=F)
+se <- tximeta(coldata, useHub=T)
+# se <- tximeta(coldata, useHub=F)
 se
-
-library(SummarizedExperiment)
-
 colData(se)
 # meta infos sind da (genotype, treatment,...)
 
@@ -648,5 +632,4 @@ load(file=paste(outdir,"tximeta.txm", sep="/"))
 
 
 ```
-
 
