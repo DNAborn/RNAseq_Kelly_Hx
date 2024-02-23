@@ -5,6 +5,7 @@ date: "2024-02-21"
 output:
   md_document:
     variant: gfm
+always_allow_html: true
 editor_options: 
   chunk_output_type: console
 ---
@@ -18,7 +19,7 @@ knitr::opts_chunk$set(echo = T,
 ##  - R 
 BiocManager::install()
 BiocManager::install("GOSemSim")
-```{r librarys}
+```{r librarys, include=FALSE}
 
 library(devtools)
 library(BiocManager)
@@ -57,7 +58,7 @@ library(R.utils)
 library(kableExtra)
 library(knitr)
 library(writexl)
-
+library(viridis)
 
 ifelse(Sys.info()["sysname"]== "Linux",
        s <- "/mnt/s",
@@ -135,7 +136,7 @@ wc -l $log
 
 
 # 1. Prepare Data
-## Make Index
+## - Make Index
 ```{bash index, eval=FALSE}
 
 # check newest release http://ftp.ensembl.org/pub/
@@ -186,7 +187,7 @@ salmon index -t gentrome_human_ensh38.fa.gz -d decoys_human_ensh38.txt -p 20 -i 
 
 ```
 
-## Mapping (Salmon)
+## - Mapping (Salmon)
 ```{bash salmon, eval=FALSE}
 conda activate salmon
 
@@ -224,7 +225,7 @@ done
 ```
 
 
-## Sample names
+## - Sample names
 ### Extract filenames from quants
 ```{r read_quant_files}
 
@@ -248,7 +249,7 @@ samplename2 <- names %>%
   str_replace(pattern="P2041_", replacement = "RNA_P2041_") %>%
   str_replace(pattern="CH_HS_KK_", replacement = "RNA_P557_") %>%
   str_remove(pattern="_quant")
-samplename2[c(1,2,31,32,33,34,53,54,55,56,203,204)]
+# samplename2[c(1,2,31,32,33,34,53,54,55,56,203,204)]
 l <- samplename2 %>% length()
 sequencing <- str_extract(samplename2,"P[0-9]+")
 sample <- str_extract(samplename2,"S[0-9]+")
@@ -270,8 +271,8 @@ quant_file_table <- data.frame(files, samplename, order = seq(1:l),
                                filename = samplename2,
                                sequencing = sequencing,
                                lane=lane)[17:l,]
-
-quant_file_table %>% head() %>% kable()
+dim(quant_file_table)
+quant_file_table[c(1,2,31,32,33,34,53,54,55,56,187,188),] %>% kable() %>% kable_styling("striped", full_width = F)
 ```
 
 
@@ -285,8 +286,8 @@ list.files(fastqdir, pattern=".xlsx")
 file.exists(Samplepath)
 
 Samplefile <- read_xlsx(Samplepath)
-Samplefile
-colnames(Samplefile)
+# Samplefile[c(1,2,49,50),] %>% kable() %>% kable_styling("striped", full_width = F)
+# colnames(Samplefile)
 colnames(Samplefile)[1] <- "order_number"
 colnames(Samplefile)[2] <- "samplename"
 colnames(Samplefile)[3] <- "rna_id"
@@ -320,7 +321,7 @@ sample_table$cell_density <- str_split(sample_table$Probe, pattern=" ", simplify
 sample_table_P3302 <- as.data.frame(sample_table)
 sample_table_P3302$samplename %in% quant_file_table$samplename %>% summary()
 
-sample_table_P3302 %>% head() %>% kable()
+sample_table_P3302[c(1,2,49,50),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
 
@@ -333,12 +334,11 @@ Samplepath <- filePath(path=fastqdir2, file="Sample_list.xlsx")
 file.exists(Samplepath)
 
 Samplefile <- read_xlsx(Samplepath)
-Samplefile
-colnames(Samplefile)
+# Samplefile
+# colnames(Samplefile)
 sample_table <- Samplefile
 
 sample_table$cellline <- "Kelly"
-
 sample_table$treatment <- sample_table$treatment %>% as.factor() %>% relevel(ref="Nx")
 sample_table$genotype <- str_replace(sample_table$genotype, pattern = "LV", replacement = "Kelly")
 sample_table$genotype <- str_replace(sample_table$genotype, pattern = "Hif1b", replacement = "HIF1B")
@@ -363,30 +363,33 @@ sample_table_P2041 <- as.data.frame(sample_table)
 
 sample_table_P2041$samplename %in% quant_file_table$samplename %>% summary()
 
-sample_table_P2041 %>% head() %>% kable()
+sample_table_P2041[c(1,2,21,22),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
 ### P557
 ```{r P557}
 ## P557
-list.files(dirname(fastqdir3), pattern=".xlsx")
+# list.files(dirname(fastqdir3), pattern=".xlsx")
+
+# Table 1
 Samplepath <- filePath(path=dirname(fastqdir3), file="2020_02_13_Sample_list_NGS.xlsx")
 file.exists(Samplepath)
 Samplefile <- read_xlsx(Samplepath, col_names =c("Probe","Sequencing-2_A","Sequencing-2_B", "path","rna_id"))
 
+# Table 2
 Samplepath <- filePath(path=dirname(fastqdir3), file="RNA_samples.xlsx")
 file.exists(Samplepath)
 Samplefile <- read_xlsx(Samplepath)
 
 df <- Samplefile %>% as.data.frame()
 sample_table <- df
-head(sample_table)
+sample_table[c(1,2,23,24),]  %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 sample_table$treatment <- ifelse(str_detect(sample_table$Probe,pattern="Hx"), "Hx","Nx")
-sample_table$treatment %>% as.factor() %>% relevel(ref="Nx")
+sample_table$treatment <- sample_table$treatment %>% as.factor() %>% relevel(ref="Nx")
 sample_table$genotype <- ifelse(str_detect(sample_table$Probe,pattern="1.3"),"HIF1A",
                                 ifelse(str_detect(sample_table$Probe,pattern="2.2"),"HIF2A",
                                        "Kelly"))
-sample_table$genotype %>% as.factor() %>% relevel(ref="Kelly")
+sample_table$genotype <- sample_table$genotype %>% as.factor() %>% relevel(ref="Kelly")
 sample_table$sequencing <- "P557"
 sample_table$replicate <-  ifelse(str_detect(sample_table$Probe,pattern="P7"),"P7",
                                   ifelse(str_detect(sample_table$Probe,pattern="P8"),"P8",
@@ -402,7 +405,7 @@ Samplefile2 <- read_xlsx(Samplepath2, col_names =c("Probe","Sequencing-2_A","Seq
 df2 <- Samplefile2 %>% as.data.frame()
 kellys <- df2[,1] %>% str_detect(pattern="Kelly")
 sample_table2 <- df2[kellys,]
-head(sample_table2)
+head(sample_table2) %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 sample_table2$run_id <- paste("RNA",str_split(sample_table2$'Sequencing-2_B', pattern="_", simplify = T)[,3],sep="_")
 
 sample_table <- sample_table[sample_table$'RNA-Nr.' %in% sample_table2$rna_id,]
@@ -425,14 +428,14 @@ sample_table$exp_rep <- paste(sample_table$experiment,sample_table$repetition,se
 sample_table_P557 <- as.data.frame(sample_table)
 sample_table_P557$samplename %in% quant_file_table$samplename %>% summary()
 
-sample_table_P557 %>% head() %>% kable()
+sample_table_P557[c(1,2,15,16),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
 ### combine lists
 ```{r comb_sample_table}
 sample_table_all <- {}
 sample_table_all <- bind_rows(sample_table_P557, sample_table_P2041, sample_table_P3302)
-head(sample_table_all)
+head(sample_table_all) %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 length(rownames(sample_table_all))
 length(rownames(quant_file_table))
 
@@ -441,7 +444,7 @@ length(rownames(quant_file_table))
 sample_table_all <- merge(quant_file_table,sample_table_all, by = "samplename")
 class(sample_table)
 sample_table_all <- sample_table_all[order(sample_table_all$order),]
-(sample_table_all$sequencing.x == sample_table_all$sequencing.y) %>% summary()
+(sample_table_all$sequencing == sample_table_all$sequencing.y) %>% summary()
 colnames(sample_table_all)[which(names(sample_table_all) == "sequencing.x")] <- "sequencing"
 colnames(sample_table_all)[which(names(sample_table_all) == "lane.x")] <- "lane"
 el <- sample_table_all$sequencing=="P3302"
@@ -451,16 +454,14 @@ sample_table_all$condition <- paste(sample_table_all$genotype,sample_table_all$t
 sample_table_all$condition[order(sample_table_all$condition)]
 sample_table_all$condition <- sample_table_all$condition %>% factor(levels=c("Kelly_Nx", "Kelly_Hx","HIF1A_Nx","HIF1A_Hx","HIF2A_Nx","HIF2A_Hx","HIF1B_Nx","HIF1B_Hx"))
 dim(sample_table_all)
-head(sample_table_all)
-tail(sample_table_all)
-kable(sample_table_all)
+sample_table_all[c(1,2,187,188),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 
 sample_table_all <- sample_table_all[order(sample_table_all$condition,sample_table_all$clone,sample_table_all$exp_rep),]
 
 write_xlsx(sample_table_all,
            paste("2024_02 Kelly all samples.xlsx",sep="/"))
 
-sample_table_all %>% head() %>% kable()
+sample_table_all %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 levels(sample_table_all$genotype)
 levels(sample_table_all$clone %>% as.factor())
 
@@ -468,8 +469,8 @@ levels(sample_table_all$clone %>% as.factor())
 ```
 
 # 2. Process
-## Mapping Rates
-```{r mappingrates}
+## - Mapping Rates
+```{r mappingrates, include=FALSE}
 dir
 outdir
 quantdir
@@ -506,31 +507,32 @@ sample_table_all$mappingrates <- mappingrates[17:204]
 
 
 ### Plot mapping rates
-```{r plot_mappingr, fig.height=12}
+```{r plot_mappingr, fig.height=15}
 
 # Colours
 
 # Plot
-plot(sample_table_all$mappingrates)
+par(mar=c(2,4,0,0)+.1)
+# plot(sample_table_all$mappingrates)
 # -> boring
 
 # increase margin for longer names
-par(mar=c(4,15,4,4)+.1)
-barplot(height=mappingrates, names=samplename, horiz=T, las=1)
+par(mar=c(2,6,2,2)+.1)
+# barplot(height=mappingrates, names=samplename, horiz=T, las=1)
 
-xx <- barplot(height=mappingrates, names=samplename, horiz=T, las=1, xlim=c(0,100)) #col=col
+xx <- barplot(height=mappingrates, names=samplename, horiz=T, las=1, xlim=c(0,100))
 text(x = mappingrates, y = xx, label = mappingrates, pos = 4, cex = 0.8, col = "red")
 
-par(mar=c(1,1,1,1)+.1)
+par(mar=c(4,4,4,4)+.1)
 
 
 ```
 
-## Tximeta
+## - Tximeta
 ```{r tximeta}
 # prepare coldata table
-quant_file_table %>% head()
-sample_table_all %>% head()
+# quant_file_table %>% head() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
+# sample_table_all %>% head() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 
 sample_table_all$names = paste(sample_table_all$sequencing,
                                sample_table_all$genotype,
@@ -546,14 +548,15 @@ coldata <- data.frame(files = sample_table_all$files,
 # load tximeta
 
 # make linked Transcriptome (local offline mode)
-indexdir
-dirgenomic
+# indexdir
+# dirgenomic
 list.files(dirgenomic)
 fastaPath <- file.path(dirgenomic, "Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz")
-fastaPath
+# fastaPath
 gtfPath <- file.path(dirgenomic,"Homo_sapiens.GRCh38.110.gff3.gz")
-gtfPath
+# gtfPath
 
+cat(indexdir,dirgenomic,fastaPath,gtfPath, sep="\n")
 file.exists(indexdir, fastaPath, gtfPath)
 
 # makeLinkedTxome(indexDir=indexdir,
@@ -572,15 +575,16 @@ file.exists(indexdir, fastaPath, gtfPath)
 
 se <- tximeta(coldata, useHub=T)
 se
-colData(se)
+colData(se)[c(1,2,87,88),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
+mcols(se)[c(1,2,87,88),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 # meta infos sind da (genotype, treatment,...)
 
 # rename Samples
 # rownames(colData(se)) <- str_remove(rownames(colData(se)), pattern="_quant")
 
-rowRanges(se)
+rowRanges(se)[c(1,10,100,1000,10000),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 # genome info
-seqinfo(se)
+# seqinfo(se) %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 # ?
 assays(se)[["counts"]][1:5,1:5] %>% kable()
 # counts. THE DATA
@@ -588,30 +592,30 @@ assays(se)[["counts"]][1:5,1:5] %>% kable()
 # Mapping infos:
 # names(metadata(se)[["quantInfo"]])
 # str(metadata(se)[["quantInfo"]]) # Infos from Salmon Mapping
-metadata(se)[["quantInfo"]]$percent_mapped %>% head() %>% kable()
-metadata(se)[["quantInfo"]]$num_processed %>% head() %>% kable()
+metadata(se)[["quantInfo"]][c("percent_mapped","num_processed")] %>% data.frame() %>% head() %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 
-par(mfrow=c(1,1))
-barplot(metadata(se)[["quantInfo"]]$percent_mapped, main="Mapping Rate")
-barplot(metadata(se)[["quantInfo"]]$num_processed/1000000, main="Mio. Reads")
-
+par(mfrow=c(1,2), mar=c(3,3,3,3))
+barplot(metadata(se)[["quantInfo"]]$percent_mapped, main="Mapping Rate", 
+        horiz=T,las=1)
+barplot(metadata(se)[["quantInfo"]]$num_processed/1000000, main="Mio. Reads", 
+        names.arg=colData(se)$exp_rep, horiz=T,las=1)
+colData(se) %>% head() %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 edb <- retrieveDb(se)
-class(edb)
-genes(edb)
+# class(edb)
+genes(edb) %>% head() %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
+# no symbols!
 columns(edb)
 
 se.exons <- addExons(se)
-rowRanges(se.exons)[[1]]
+# rowRanges(se.exons)[[1]]
 gse <- summarizeToGene(se)
-rowRanges(gse)
+rowRanges(gse) %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 
-head(assays(gse)[["counts"]])[1:5,1:5]
-head(assays(gse)[["abundance"]])[1:5,1:5]
-head(assays(gse)[["length"]])[1:5,1:5]
+head(assays(gse)[["counts"]])[1:5,1:5] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
+head(assays(gse)[["abundance"]])[1:5,1:5] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
+head(assays(gse)[["length"]])[1:5,1:5] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 
 #### add gene symbol
-columns(retrieveDb(se))
-edb
 metadata(se)$txomeInfo$source
 
 TXNAME <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "TXNAME", keytype = "GENEID", multiVals="first"))
@@ -661,7 +665,7 @@ mcols(gse)$GENEBIOTYPE <- mapIds(edb, keys = mcols(gse)$gene_id, column = "GENEB
 mcols(gse)$UNIPROTID <- mapIds(edb, keys = mcols(gse)$gene_id, column = "UNIPROTID", keytype = "GENEID")
 
 for (i in columns(edb)[c(-10)]){
-  print(i)
+  # print(i)
   mapIds(edb, keys = mcols(gse)$gene_id[1:10], column = i, keytype = "GENEID") # %>% print()
 }
 # include tryCatch
@@ -670,16 +674,16 @@ save(gse,file=paste(data,"tximeta.txm", sep="/"))
 
 ```
 
-## DESeq2
+## - DESeq2
 ```{r deseq2, warning=FALSE}
 
 load(file=paste(data,"tximeta.txm", sep="/"))
-colData(gse)$genotype
+colData(gse)$genotype %>% levels()
 design = ~genotype+treatment+treatment:genotype
 dds <- DESeqDataSet(gse, design = design)
 dds <- collapseReplicates(dds, dds$samplename, dds$names)
 
-sample.number <- nrow(colData(dds))
+sample.number <- nrow(colData(dds)) / colData(gse)$genotype %>% levels() %>% length()
 keep.sn <- rowSums(counts(dds)) >= sample.number
 keep.sn %>% summary()
 dds <- dds[keep.sn,]
@@ -693,45 +697,43 @@ plotDispEsts(dds)
 
 resultsNames(dds)
 
-
-
 ```
 
 # 3. Pre-Analysis
-### 4. Data transformations
-```{r, include=FALSE}
+### - Data transformations
+```{r pre_trans, include=FALSE}
 vsd <- vst(dds, blind=FALSE) #Variance stabilized transformation
 rld <- rlog(dds, blind=FALSE) #regularized logarithm
 ntd <- normTransform(dds)
 
 ```
 
-```{r, figures-side, fig.show="hold", out.width="33%"}
+```{r pre_trans_fig, figures-side, fig.show="hold", out.width="33%"}
 meanSdPlot(assay(ntd))
 meanSdPlot(assay(vsd))
 meanSdPlot(assay(rld))
 
 ```
 
-### 5. Check sample distance
-```{r}
+### - Check sample distance
+```{r pre_sample_dist, fig.height=12}
 sampleDists <- dist(t(assay(vsd)))
 
 sampleDistMatrix <- as.matrix(sampleDists)
-rownames(sampleDistMatrix) <- paste(vsd$morpho, vsd$organ, sep="-")
+rownames(sampleDistMatrix) <- vsd$names
 colnames(sampleDistMatrix) <- NULL
 colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
 pheatmap(sampleDistMatrix,
          clustering_distance_rows=sampleDists,
          clustering_distance_cols=sampleDists,
-         col=colors)
+         col=viridis(20))
 ```
 
-### 6. Perform principal component analysis
-```{r, warning = FALSE}
+### - Perform principal component analysis
+```{r pca, warning = FALSE}
 # transform data
 vst_dat <- assay(vst(dds))
-colData(dds)
+colData(dds) %>% head() %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 
 ens <- rownames(dds)
   symbols <- mcols(dds)$SYMBOL
@@ -745,23 +747,30 @@ ens <- rownames(dds)
   vst_dat <- vst_dat[keep2,]
 
 ### PCA with top 500 genes with highest row variance 
-pcaData <- plotPCA(vsd, intgroup=c("genotype", "treatment","exp_rep","condition","clone"), returnData=TRUE)
+pcaData <- plotPCA(vsd, intgroup=colnames(colData(vsd)), returnData=TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
-ggplot(pcaData, aes(PC1, PC2, color=clone, shape=treatment)) +
-  geom_point(size=3) +
+g1 <- ggplot(pcaData, aes(PC1, PC2, color=treatment, shape=genotype)) +
+  geom_point(size=5, alpha=0.7) +
   labs(title = "top 500 variance") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  scale_color_manual(values = c("lightcoral","skyblue1")) +
   coord_fixed()
 
-ggplot(pcaData, aes(PC1, PC2, color=exp_rep, shape=treatment)) +
-  geom_point(size=3) +
-  geom_text()+
+g2 <- ggplot(pcaData, aes(PC1, PC2, label=names,color=experiment, shape=genotype)) +
+  geom_text_repel(data         = subset(pcaData, experiment == "Simon"),
+                  segment.color = 'grey50',
+                  max.overlaps = 40,
+                  color="grey30",
+                  size          = 2.5) +
+  geom_point(size=3, alpha=0.7) +
   labs(title = "top 500 variance") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) +
   scale_color_viridis_d(option ="viridis") +
   coord_fixed()
+
+g1+g2
 
 # calculate PCA (all data)
 p <- pca(vst_dat, metadata = colData(dds))
@@ -781,6 +790,61 @@ screeplot(p,
         vline = c(horn$n))+
         geom_label(aes(x = horn$n, y = 50,
         label = 'Horn\'s', vjust = -1, size = 8))
+```
+
+### - Plot example counts
+```{r example_counts, eval=FALSE}
+# CA9 & EPO
+
+goi <- c("CA9","EPO")
+
+(mcols(dds)$SYMBOL == "CA9") %>% summary()
+
+mcols(dds)$gene_id %>% length()
+mcols(dds)$SYMBOL %>% length()
+SYMBOLs <- mcols(dds)$SYMBOL %>% unique() %>% na.omit()
+SYMBOLs %>% length()
+SYMBOLs <- SYMBOLs[!(SYMBOLs == "")]
+SYMBOLs %>% length()
+ENSEMBLE <- as.character(mapIds(edb,keys = SYMBOLs, column = "GENEID", keytype = "SYMBOL", multiVals="first"))
+ENTREZ <- as.character(mapIds(edb,keys = SYMBOLs, column = "ENTREZID", keytype = "SYMBOL", multiVals="first"))
+s2e <- data.frame(symbol=SYMBOLs,
+                  ensemble=ENSEMBLS,
+                  entrez=ENTREZ)
+
+
+(SYMBOLs== "") %>% summary()
+
+SYMBOLs <- data.frame(SYMBOL = SYMBOLs,
+                      ENSEMBL = mapIds())
+rownames(SYMBOLs) <- SYMBOLs
+
+  
+s2e <- data.frame(mcols(dds)[,c("gene_id","SYMBOL")])
+s2e %>% dplyr::filter(complete.cases(.)) %>% na.omit()
+rownames(s2e) <- s2e$SYMBOL
+
+SYMBOLs <- s2e$SYMBOL %>% unique() %>% na.omit()
+SYMBOLs <- SYMBOLs[!(SYMBOLs == "")]
+s2e
+
+plotCounts(dds,gene="CA9")
+
+all_counts <- {}
+for (i in 1:l){
+  d <-  plotCounts(dds, gene=goi[i,"gene_id"], intgroup="condition",main=res$SYMBOL[i],returnData=TRUE)
+  d$Gene <- rep(goi[i,"geneSymbol"],length(rownames(d)))
+  d$sample <- rownames(d)
+  rownames(d) <- {}
+  all_counts <- bind_rows(all_counts,d)
+  }
+
+gcounts <- ggplot(all_counts, aes(x = Gene, y = count, fill=condition)) +
+  geom_boxplot(fatten = 1) +
+  scale_fill_manual(values = group.colors) +
+  scale_y_continuous(trans = "log2")
+gcounts
+
 ```
 
 
