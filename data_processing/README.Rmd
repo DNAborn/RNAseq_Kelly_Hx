@@ -1,11 +1,10 @@
 ---
-  title: "RNAseq Kelly HIF KO - Results"
+title: "RNA-Seq Kelly all"
 author: "Kelterborn"
-date: "`r Sys.Date()`"
+date: "2024-02-21"
 output:
   md_document:
-  variant: gfm
-always_allow_html: true
+    variant: gfm
 editor_options: 
   chunk_output_type: console
 ---
@@ -81,11 +80,14 @@ dirgenomic <- paste(s,"AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/110",s
 list.files(dirgenomic) %>% head()
 # setwd(gitdir)
 
+data <- paste(dir,"data",sep="/")
+dir.create(data)
+
 ```
 
 
 ##  - Linux
-```{bash}
+```{bash linux_folders}
 fastqdir="/mnt/s/AG/AG-Scholz-NGS/Daten/RNASeq_Kelly2_P3302";
 fastqdir2="/mnt/s/AG/AG-Scholz-NGS/Daten/RNASeq_Kelly";
 fastqdir3="/mnt/s/AG/AG-Scholz-NGS/Daten/Sequencing-2/Sequencing-2_A/FASTQ";
@@ -224,7 +226,7 @@ done
 
 ## Sample names
 ### Extract filenames from quants
-```{r}
+```{r read_quant_files}
 
 # Get Sample table
 
@@ -274,7 +276,7 @@ quant_file_table %>% head() %>% kable()
 
 
 ### P3302
-```{r}
+```{r P3302}
 # Get samplelists
 ## P3302
 
@@ -296,6 +298,7 @@ sample_table <- Samplefile[,c("order_number","samplename","rna_id","Probe","rna_
 sample_table$cellline <- str_split(sample_table$Probe, pattern=" ", simplify = TRUE)[,1] %>% as.factor()
 sample_table$clone <- str_split(sample_table$Probe, pattern=" ", simplify = TRUE)[,2] %>% as.factor() %>% relevel(ref="LV1")
 sample_table$genotype <- str_split(sample_table$clone, pattern="\\.", simplify = TRUE)[,1] %>% as.factor() %>% relevel(ref="LV1")
+sample_table$clone <- revalue(sample_table$clone, c("Hif1.3"="Hif1a_1.3", "Hif2.2"="Hif2a_2.2"))
 sample_table$genotype <- str_replace(sample_table$genotype, pattern = "LV1", replacement = "Kelly")
 sample_table$genotype <- str_replace(sample_table$genotype, pattern = "Hif1", replacement = "HIF1A")
 sample_table$genotype <- str_replace(sample_table$genotype, pattern = "Hif2", replacement = "HIF2A") %>% as.factor() %>% relevel(ref="Kelly")
@@ -322,7 +325,7 @@ sample_table_P3302 %>% head() %>% kable()
 
 
 ### P2041
-```{r}
+```{r P2041}
 ## P2041
 list.files(fastqdir2, pattern=".xlsx")
 Samplepath <- filePath(path=fastqdir2, file="Sample_list.xlsx")
@@ -339,6 +342,7 @@ sample_table$cellline <- "Kelly"
 sample_table$treatment <- sample_table$treatment %>% as.factor() %>% relevel(ref="Nx")
 sample_table$genotype <- str_replace(sample_table$genotype, pattern = "LV", replacement = "Kelly")
 sample_table$genotype <- str_replace(sample_table$genotype, pattern = "Hif1b", replacement = "HIF1B")
+sample_table$genotype <- str_replace(sample_table$genotype, pattern = "Hif1a", replacement = "HIF1A")
 sample_table$genotype <- sample_table$genotype %>% as.factor() %>% relevel(ref="Kelly")
 sample_table$sample <- str_remove(sample_table$samplename,pattern="P2041_")
 sample_table$lane <- "L003"
@@ -352,6 +356,8 @@ sample_table$repetition <- as.character(sample_table$repetition)
 sample_table$sample_id %in% sample %>% summary()
 sample_table$exp_rep <- paste(sample_table$experiment,sample_table$repetition, sep="_")
 
+sample_table$clone <- sample_table$clone%>% factor
+
 # Make table
 sample_table_P2041 <- as.data.frame(sample_table)
 
@@ -361,7 +367,7 @@ sample_table_P2041 %>% head() %>% kable()
 ```
 
 ### P557
-```{r}
+```{r P557}
 ## P557
 list.files(dirname(fastqdir3), pattern=".xlsx")
 Samplepath <- filePath(path=dirname(fastqdir3), file="2020_02_13_Sample_list_NGS.xlsx")
@@ -386,7 +392,7 @@ sample_table$replicate <-  ifelse(str_detect(sample_table$Probe,pattern="P7"),"P
                                   ifelse(str_detect(sample_table$Probe,pattern="P8"),"P8",
                                          ifelse(str_detect(sample_table$Probe,pattern="P13"),"P13","P14")))
 sample_table$clone <- ifelse(str_detect(sample_table$Probe,pattern="1.3"),"Hif1a_1.3",
-                             ifelse(str_detect(sample_table$Probe,pattern="2.2"),"Hif2a_2.2","LV_1"))
+                             ifelse(str_detect(sample_table$Probe,pattern="2.2"),"Hif2a_2.2","LV1"))
 sample_table$cellline <- "Kelly"
 sample_table$lane <- "L001"
 
@@ -423,7 +429,7 @@ sample_table_P557 %>% head() %>% kable()
 ```
 
 ### combine lists
-```{r}
+```{r comb_sample_table}
 sample_table_all <- {}
 sample_table_all <- bind_rows(sample_table_P557, sample_table_P2041, sample_table_P3302)
 head(sample_table_all)
@@ -440,22 +446,30 @@ colnames(sample_table_all)[which(names(sample_table_all) == "sequencing.x")] <- 
 colnames(sample_table_all)[which(names(sample_table_all) == "lane.x")] <- "lane"
 el <- sample_table_all$sequencing=="P3302"
 sample_table_all$run_id[el] <- paste(sample_table_all$run_id[el],sample_table_all$lane[el],sep="_")
-
+sample_table_all$genotype <- sample_table_all$genotype %>% as.factor() %>% relevel(ref="Kelly")
+sample_table_all$condition <- paste(sample_table_all$genotype,sample_table_all$treatment,sep="_")
+sample_table_all$condition[order(sample_table_all$condition)]
+sample_table_all$condition <- sample_table_all$condition %>% factor(levels=c("Kelly_Nx", "Kelly_Hx","HIF1A_Nx","HIF1A_Hx","HIF2A_Nx","HIF2A_Hx","HIF1B_Nx","HIF1B_Hx"))
 dim(sample_table_all)
 head(sample_table_all)
 tail(sample_table_all)
 kable(sample_table_all)
 
+sample_table_all <- sample_table_all[order(sample_table_all$condition,sample_table_all$clone,sample_table_all$exp_rep),]
+
 write_xlsx(sample_table_all,
            paste("2024_02 Kelly all samples.xlsx",sep="/"))
 
-sample_table_P557 %>% head() %>% kable()
+sample_table_all %>% head() %>% kable()
+levels(sample_table_all$genotype)
+levels(sample_table_all$clone %>% as.factor())
+
 
 ```
 
 # 2. Process
 ## Mapping Rates
-```{r}
+```{r mappingrates}
 dir
 outdir
 quantdir
@@ -467,7 +481,6 @@ list.files(path = quantdir) %>% head()
 samplelist <- {}
 mappingrates <- {}
 for (i in list.files(path = quantdir)){
-  print(i)
   si <- str_remove(i, pattern="_quant")
   samplelist <- c(samplelist,si)
   f <- readLines(paste(quantdir,i,"logs/salmon_quant.log", sep="/"))
@@ -493,7 +506,7 @@ sample_table_all$mappingrates <- mappingrates[17:204]
 
 
 ### Plot mapping rates
-```{r fig.height=12}
+```{r plot_mappingr, fig.height=12}
 
 # Colours
 
@@ -508,11 +521,13 @@ barplot(height=mappingrates, names=samplename, horiz=T, las=1)
 xx <- barplot(height=mappingrates, names=samplename, horiz=T, las=1, xlim=c(0,100)) #col=col
 text(x = mappingrates, y = xx, label = mappingrates, pos = 4, cex = 0.8, col = "red")
 
+par(mar=c(1,1,1,1)+.1)
+
 
 ```
 
 ## Tximeta
-```{r}
+```{r tximeta}
 # prepare coldata table
 quant_file_table %>% head()
 sample_table_all %>% head()
@@ -541,43 +556,42 @@ gtfPath
 
 file.exists(indexdir, fastaPath, gtfPath)
 
-makeLinkedTxome(indexDir=indexdir,
-                source="LocalEnsembl",
-                organism="Homo sapiens",
-                release="110",
-                genome="GRCh38",
-                fasta=fastaPath,
-                gtf=gtfPath,
-                write=FALSE)
+# makeLinkedTxome(indexDir=indexdir,
+#                 source="LocalEnsembl",
+#                 organism="Homo sapiens",
+#                 release="110",
+#                 genome="GRCh38",
+#                 fasta=fastaPath,
+#                 gtf=gtfPath,
+#                 write=FALSE)
 
-gtfdata <- readLines(gtfPath)
-head(gtfdata, n=20)
+# gtfdata <- readLines(gtfPath)
+# head(gtfdata, n=20)
 
 # gene_name info sind in gff3 abder nicht in se?
 
 se <- tximeta(coldata, useHub=T)
-# se <- tximeta(coldata, useHub=F)
 se
 colData(se)
 # meta infos sind da (genotype, treatment,...)
 
 # rename Samples
-rownames(colData(se)) <- str_remove(rownames(colData(se)), pattern="_quant")
+# rownames(colData(se)) <- str_remove(rownames(colData(se)), pattern="_quant")
 
 rowRanges(se)
 # genome info
 seqinfo(se)
 # ?
-head(assays(se)[["counts"]])
+assays(se)[["counts"]][1:5,1:5] %>% kable()
 # counts. THE DATA
 
 # Mapping infos:
-names(metadata(se)[["quantInfo"]])
-str(metadata(se)[["quantInfo"]]) # Infos from Salmon Mapping
-metadata(se)[["quantInfo"]]$percent_mapped
-metadata(se)[["quantInfo"]]$num_processed
+# names(metadata(se)[["quantInfo"]])
+# str(metadata(se)[["quantInfo"]]) # Infos from Salmon Mapping
+metadata(se)[["quantInfo"]]$percent_mapped %>% head() %>% kable()
+metadata(se)[["quantInfo"]]$num_processed %>% head() %>% kable()
 
-par(mfrow=c(1,2))
+par(mfrow=c(1,1))
 barplot(metadata(se)[["quantInfo"]]$percent_mapped, main="Mapping Rate")
 barplot(metadata(se)[["quantInfo"]]$num_processed/1000000, main="Mio. Reads")
 
@@ -585,7 +599,6 @@ edb <- retrieveDb(se)
 class(edb)
 genes(edb)
 columns(edb)
-
 
 se.exons <- addExons(se)
 rowRanges(se.exons)[[1]]
@@ -626,10 +639,148 @@ colnames(mcols(gse))
 head(rownames(gse))
 
 getwd()
-save(gse,file=paste(outdir,"tximeta.txm", sep="/"))
+save(gse,file=paste(data,"tximeta.txm", sep="/"))
 gse <- 1
-load(file=paste(outdir,"tximeta.txm", sep="/"))
+load(file=paste(data,"tximeta.txm", sep="/"))
+
+```
+
+### add gene symbols
+```{r annotationhub}
+ah = AnnotationHub()
+query(ah, c("EnsDb", "homo"))
+edb <- ah[["AH116291"]]
+load(file=paste(data,"tximeta.txm", sep="/"))
+columns(edb)
+
+mcols(gse)$SYMBOL <- mapIds(edb, keys = mcols(gse)$gene_id, column = "SYMBOL", keytype = "GENEID")
+mcols(gse)$ENTREZID <- mapIds(edb, keys = mcols(gse)$gene_id, column = "ENTREZID", keytype = "GENEID")
+mcols(gse)$CANONICALTRANSCRIPT <- mapIds(edb, keys = mcols(gse)$gene_id, column = "CANONICALTRANSCRIPT", keytype = "GENEID")
+mcols(gse)$DESCRIPTION <- mapIds(edb, keys = mcols(gse)$gene_id, column = "DESCRIPTION", keytype = "GENEID")
+mcols(gse)$GENEBIOTYPE <- mapIds(edb, keys = mcols(gse)$gene_id, column = "GENEBIOTYPE", keytype = "GENEID")
+mcols(gse)$UNIPROTID <- mapIds(edb, keys = mcols(gse)$gene_id, column = "UNIPROTID", keytype = "GENEID")
+
+for (i in columns(edb)[c(-10)]){
+  print(i)
+  mapIds(edb, keys = mcols(gse)$gene_id[1:10], column = i, keytype = "GENEID") # %>% print()
+}
+# include tryCatch
+
+save(gse,file=paste(data,"tximeta.txm", sep="/"))
+
+```
+
+## DESeq2
+```{r deseq2, warning=FALSE}
+
+load(file=paste(data,"tximeta.txm", sep="/"))
+colData(gse)$genotype
+design = ~genotype+treatment+treatment:genotype
+dds <- DESeqDataSet(gse, design = design)
+dds <- collapseReplicates(dds, dds$samplename, dds$names)
+
+sample.number <- nrow(colData(dds))
+keep.sn <- rowSums(counts(dds)) >= sample.number
+keep.sn %>% summary()
+dds <- dds[keep.sn,]
+
+dds <- DESeq(dds)
+
+summary(results(dds, alpha = 0.05))
+plotMA(dds)
+
+plotDispEsts(dds)
+
+resultsNames(dds)
+
 
 
 ```
+
+# 3. Pre-Analysis
+### 4. Data transformations
+```{r, include=FALSE}
+vsd <- vst(dds, blind=FALSE) #Variance stabilized transformation
+rld <- rlog(dds, blind=FALSE) #regularized logarithm
+ntd <- normTransform(dds)
+
+```
+
+```{r, figures-side, fig.show="hold", out.width="33%"}
+meanSdPlot(assay(ntd))
+meanSdPlot(assay(vsd))
+meanSdPlot(assay(rld))
+
+```
+
+### 5. Check sample distance
+```{r}
+sampleDists <- dist(t(assay(vsd)))
+
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(vsd$morpho, vsd$organ, sep="-")
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+```
+
+### 6. Perform principal component analysis
+```{r, warning = FALSE}
+# transform data
+vst_dat <- assay(vst(dds))
+colData(dds)
+
+ens <- rownames(dds)
+  symbols <- mcols(dds)$SYMBOL
+  symbols <- symbols[!is.na(symbols)]
+  symbols <- symbols[match(rownames(vst_dat), names(symbols))]
+  rownames(vst_dat) <- symbols
+  keep <- !is.na(rownames(vst_dat))
+  vst_dat <- vst_dat[keep,]
+  keep2 <- rownames(vst_dat)
+  keep2 <- !duplicated(keep2)
+  vst_dat <- vst_dat[keep2,]
+
+### PCA with top 500 genes with highest row variance 
+pcaData <- plotPCA(vsd, intgroup=c("genotype", "treatment","exp_rep","condition","clone"), returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, color=clone, shape=treatment)) +
+  geom_point(size=3) +
+  labs(title = "top 500 variance") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  coord_fixed()
+
+ggplot(pcaData, aes(PC1, PC2, color=exp_rep, shape=treatment)) +
+  geom_point(size=3) +
+  geom_text()+
+  labs(title = "top 500 variance") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  scale_color_viridis_d(option ="viridis") +
+  coord_fixed()
+
+# calculate PCA (all data)
+p <- pca(vst_dat, metadata = colData(dds))
+
+biplot(p, showLoadings = TRUE,
+    labSize = 3, pointSize = 5, sizeLoadingsNames = 2.5,
+    
+    title = "biplot containing all datapoints")
+
+# find explaining PCs
+horn <- parallelPCA(vst_dat)
+horn$n
+
+# plot Scree 
+screeplot(p,
+        components = getComponents(p),
+        vline = c(horn$n))+
+        geom_label(aes(x = horn$n, y = 50,
+        label = 'Horn\'s', vjust = -1, size = 8))
+```
+
 
