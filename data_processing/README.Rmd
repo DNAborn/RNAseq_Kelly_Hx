@@ -1,5 +1,5 @@
 ---
-title: "RNA-Seq Kelly all"
+title: "RNA-Seq Kelly all (original sample names)"
 author: "Kelterborn"
 date: "2024-02-21"
 output:
