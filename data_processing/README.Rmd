@@ -773,11 +773,17 @@ g2 <- ggplot(pcaData, aes(PC1, PC2, label=names,color=experiment, shape=genotype
 g1+g2
 
 # calculate PCA (all data)
+## https://www.bioconductor.org/packages/devel/bioc/vignettes/PCAtools/inst/doc/PCAtools.html#modify-bi-plots
+
 p <- pca(vst_dat, metadata = colData(dds))
 
 biplot(p, showLoadings = TRUE,
     labSize = 3, pointSize = 5, sizeLoadingsNames = 2.5,
-    
+    colby ='experiment',
+    lab=p$metadata$names,
+    shape='genotype',
+    # encircle = TRUE,
+    legendPosition = 'right',
     title = "biplot containing all datapoints")
 
 # find explaining PCs
@@ -811,24 +817,13 @@ ENTREZ <- as.character(mapIds(edb,keys = SYMBOLs, column = "ENTREZID", keytype =
 s2e <- data.frame(symbol=SYMBOLs,
                   ensemble=ENSEMBLS,
                   entrez=ENTREZ)
+rownames(s2e) <- s2e$symbol
+s2e %>% head() %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
+s2e["CA9",2]
+
+plotCounts(dds,gene=s2e["CA9",2],intgroup="condition",main=)
 
 
-(SYMBOLs== "") %>% summary()
-
-SYMBOLs <- data.frame(SYMBOL = SYMBOLs,
-                      ENSEMBL = mapIds())
-rownames(SYMBOLs) <- SYMBOLs
-
-  
-s2e <- data.frame(mcols(dds)[,c("gene_id","SYMBOL")])
-s2e %>% dplyr::filter(complete.cases(.)) %>% na.omit()
-rownames(s2e) <- s2e$SYMBOL
-
-SYMBOLs <- s2e$SYMBOL %>% unique() %>% na.omit()
-SYMBOLs <- SYMBOLs[!(SYMBOLs == "")]
-s2e
-
-plotCounts(dds,gene="CA9")
 
 all_counts <- {}
 for (i in 1:l){
