@@ -1,128 +1,36 @@
+- [0. Load](#load)
+  - [- R](#r)
+  - [- Linux](#linux)
+  - [- Download Data](#download-data)
+- [1. Prepare Data](#prepare-data)
+  - [- Make Index](#make-index)
+  - [- Mapping (Salmon)](#mapping-salmon)
+  - [- Sample names](#sample-names)
+    - [Extract filenames from quants](#extract-filenames-from-quants)
+    - [P3302](#p3302)
+    - [P2041](#p2041)
+    - [P557](#p557)
+    - [combine lists](#combine-lists)
+- [2. Process](#process)
+  - [- Mapping Rates](#mapping-rates)
+    - [Plot mapping rates](#plot-mapping-rates)
+  - [- Tximeta](#tximeta)
+    - [add gene symbols](#add-gene-symbols)
+  - [- DESeq2](#deseq2)
+- [3. Pre-Analysis](#pre-analysis)
+  - [- Data transformations](#data-transformations)
+  - [- Check sample distance](#check-sample-distance)
+  - [- Perform principal component
+    analysis](#perform-principal-component-analysis)
+  - [- Plot example counts](#plot-example-counts)
+
 # 0. Load
 
 ## - R
 
-BiocManager::install() BiocManager::install(“GOSemSim”)
+BiocManager::install()
 
-``` r
-library(devtools)
-library(BiocManager)
-
-library(tximeta)
-library(tximport)
-library(RColorBrewer)
-library(tidyverse)
-library(stringr)
-library(stringi)
-library(BiocFileCache)
-library(SummarizedExperiment)
-library(org.Mm.eg.db)
-library(AnnotationHub)
-library(DESeq2)
-library(vsn)
-library(ggplot2)
-library(pheatmap)
-library(PCAtools)
-library(cowplot)
-library(EnhancedVolcano)
-library(gridExtra)
-library(grid)
-library(readxl)
-library(VennDiagram)
-library(clusterProfiler)
-library(biomaRt)
-library(GOSemSim)
-library(sessioninfo)
-library(data.table)
-library(plyr)
-library(tximeta)
-library(tximport)
-library(curl)
-library(R.utils)
-library(kableExtra)
-library(knitr)
-library(writexl)
-
-
-ifelse(Sys.info()["sysname"]== "Linux",
-       s <- "/mnt/s",
-       s <- "S:")
-```
-
-    ##  sysname 
-    ## "/mnt/s"
-
-``` r
-dir <- paste(s,"AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all",sep="/")
-list.files(dir) %>% head()
-```
-
-    ## [1] "2024_02 Kelly all samples.xlsx" "data"                          
-    ## [3] "git_RNAseq_Kelly_Hx"            "output"                        
-    ## [5] "quants"
-
-``` r
-gitdir <- paste(dir,"git_RNAseq_Kelly_Hx",sep="/")
-list.files(gitdir) %>% head()
-```
-
-    ## [1] "2023_08 Chlamy RNA-Seq P3044-3.Rmd"   
-    ## [2] "2023_12 RNA-Seq Kelly all.Rmd"        
-    ## [3] "2023_12 RNA-Seq Kelly2 P3302 (TS).Rmd"
-    ## [4] "2023_12 RNA-Seq Kelly2 P3302.Rmd"     
-    ## [5] "2024_02 Kelly all samples_simple.xlsx"
-    ## [6] "2024_02 Kelly all samples.xlsx"
-
-``` r
-fastqdir <- paste(s,"AG/AG-Scholz-NGS/Daten/RNASeq_Kelly2_P3302",sep="/")
-list.files(fastqdir) %>% head()
-```
-
-    ## [1] "demux_config.json"                                
-    ## [2] "download data.sh"                                 
-    ## [3] "download.log"                                     
-    ## [4] "html_report_101T10B10B101T.tar.gz"                
-    ## [5] "html_report_101T8B2S8B2S101T.tar.gz"              
-    ## [6] "illumina_basesmask_101T10B10B101T_SampleSheet.csv"
-
-``` r
-fastqdir2 <- paste(s,"AG/AG-Scholz-NGS/Daten/RNASeq_Kelly",sep="/")
-list.files(fastqdir2) %>% head()
-```
-
-    ## [1] "~$230413_Results_Kelly.pptx" "~$Contrast_matrix.pptx"     
-    ## [3] "~$DEG_Hif1b_Hx_vs_Nx.xlsx"   "~$Sample_list.xlsx"         
-    ## [5] "20230406_Kelly_Seq.Rmd"      "20230424_Kelly_Seq_RUN.Rmd"
-
-``` r
-fastqdir3 <- paste(s,"AG/AG-Scholz-NGS/Daten/Sequencing-2/Sequencing-2_A/FASTQ",sep="/")
-list.files(fastqdir3) %>% head()
-```
-
-    ## [1] "CH_HS_KK_061_S17_R1_001.fastq.gz" "CH_HS_KK_061_S17_R2_001.fastq.gz"
-    ## [3] "CH_HS_KK_062_S18_R1_001.fastq.gz" "CH_HS_KK_062_S18_R2_001.fastq.gz"
-    ## [5] "CH_HS_KK_063_S19_R1_001.fastq.gz" "CH_HS_KK_063_S19_R2_001.fastq.gz"
-
-``` r
-indexdir <- paste(s,"AG/AG-Scholz-NGS/Daten/Salmon/index/human_ens110_index",sep="/")
-
-dirgenomic <- paste(s,"AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/110",sep="/")
-list.files(dirgenomic) %>% head()
-```
-
-    ## [1] "decoys_human_ensh38.txt"                       
-    ## [2] "gentrome_human_ensh38.fa.gz"                   
-    ## [3] "Homo_sapiens.GRCh38.110.gff3.gz"               
-    ## [4] "Homo_sapiens.GRCh38.cdna.all.fa.gz"            
-    ## [5] "Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
-    ## [6] "Homo_sapiens.GRCh38.ncrna.fa.gz"
-
-``` r
-# setwd(gitdir)
-
-data <- paste(dir,"data",sep="/")
-dir.create(data)
-```
+BiocManager::install(“GOSemSim”)
 
 ## - Linux
 
@@ -173,7 +81,7 @@ wc -l $log
 
 # 1. Prepare Data
 
-## Make Index
+## - Make Index
 
 ``` bash
 
@@ -224,7 +132,7 @@ cd $gdir
 salmon index -t gentrome_human_ensh38.fa.gz -d decoys_human_ensh38.txt -p 20 -i ../../index/human_ens110_index
 ```
 
-## Mapping (Salmon)
+## - Mapping (Salmon)
 
 ``` bash
 conda activate salmon
@@ -261,7 +169,7 @@ salmon quant -i $indexdir -l A \
 done
 ```
 
-## Sample names
+## - Sample names
 
 ### Extract filenames from quants
 
@@ -276,23 +184,11 @@ quantdir <- paste(dir,"quants",sep="/")
 
 f <- list.files(path = quantdir)
 files <- paste(quantdir,f,"quant.sf",sep="/")
-files %>% file.exists()
+files %>% file.exists() %>% summary()
 ```
 
-    ##   [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-    ##  [16] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-    ##  [31] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-    ##  [46] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-    ##  [61] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-    ##  [76] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-    ##  [91] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-    ## [106] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-    ## [121] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-    ## [136] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-    ## [151] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-    ## [166] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-    ## [181] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-    ## [196] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+    ##    Mode    TRUE 
+    ## logical     204
 
 ``` r
 names <- as.factor(str_remove(f,pattern ="_quant"))
@@ -303,17 +199,7 @@ samplename2 <- names %>%
   str_replace(pattern="P2041_", replacement = "RNA_P2041_") %>%
   str_replace(pattern="CH_HS_KK_", replacement = "RNA_P557_") %>%
   str_remove(pattern="_quant")
-samplename2[c(1,2,31,32,33,34,53,54,55,56,203,204)]
-```
-
-    ##  [1] "RNA_P557_061_S17"         "RNA_P557_062_S18"        
-    ##  [3] "RNA_P557_091_S47"         "RNA_P557_092_S48"        
-    ##  [5] "RNA_P2041_10619_S37_L003" "RNA_P2041_10621_S38_L003"
-    ##  [7] "RNA_P2041_10754_S57_L003" "RNA_P2041_10755_S58_L003"
-    ##  [9] "RNA_P3302_01_S141_L006"   "RNA_P3302_01_S141_L007"  
-    ## [11] "RNA_P3302_50_S190_L007"   "RNA_P3302_50_S190_L008"
-
-``` r
+# samplename2[c(1,2,31,32,33,34,53,54,55,56,203,204)]
 l <- samplename2 %>% length()
 sequencing <- str_extract(samplename2,"P[0-9]+")
 sample <- str_extract(samplename2,"S[0-9]+")
@@ -335,18 +221,319 @@ quant_file_table <- data.frame(files, samplename, order = seq(1:l),
                                filename = samplename2,
                                sequencing = sequencing,
                                lane=lane)[17:l,]
-
-quant_file_table %>% head() %>% kable()
+dim(quant_file_table)
 ```
 
-|     | files                                                                                        | samplename   | order | filename         | sequencing | lane |
-|:----|:---------------------------------------------------------------------------------------------|:-------------|------:|:-----------------|:-----------|:-----|
-| 17  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_077_S33_quant/quant.sf | RNA_P557_S33 |    17 | RNA_P557_077_S33 | P557       | L001 |
-| 18  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_078_S34_quant/quant.sf | RNA_P557_S34 |    18 | RNA_P557_078_S34 | P557       | L001 |
-| 19  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_079_S35_quant/quant.sf | RNA_P557_S35 |    19 | RNA_P557_079_S35 | P557       | L001 |
-| 20  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_080_S36_quant/quant.sf | RNA_P557_S36 |    20 | RNA_P557_080_S36 | P557       | L001 |
-| 21  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_081_S37_quant/quant.sf | RNA_P557_S37 |    21 | RNA_P557_081_S37 | P557       | L001 |
-| 22  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_082_S38_quant/quant.sf | RNA_P557_S38 |    22 | RNA_P557_082_S38 | P557       | L001 |
+    ## [1] 188   6
+
+``` r
+quant_file_table[c(1,2,31,32,33,34,53,54,55,56,187,188),] %>% kable() %>% kable_styling("striped", full_width = F)
+```
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+files
+</th>
+<th style="text-align:left;">
+samplename
+</th>
+<th style="text-align:right;">
+order
+</th>
+<th style="text-align:left;">
+filename
+</th>
+<th style="text-align:left;">
+sequencing
+</th>
+<th style="text-align:left;">
+lane
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+17
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_077_S33_quant/quant.sf
+</td>
+<td style="text-align:left;">
+RNA_P557_S33
+</td>
+<td style="text-align:right;">
+17
+</td>
+<td style="text-align:left;">
+RNA_P557_077_S33
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+18
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_078_S34_quant/quant.sf
+</td>
+<td style="text-align:left;">
+RNA_P557_S34
+</td>
+<td style="text-align:right;">
+18
+</td>
+<td style="text-align:left;">
+RNA_P557_078_S34
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+47
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10748_S51_L003_quant/quant.sf
+</td>
+<td style="text-align:left;">
+RNA_P2041_S51
+</td>
+<td style="text-align:right;">
+47
+</td>
+<td style="text-align:left;">
+RNA_P2041_10748_S51_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+48
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10749_S52_L003_quant/quant.sf
+</td>
+<td style="text-align:left;">
+RNA_P2041_S52
+</td>
+<td style="text-align:right;">
+48
+</td>
+<td style="text-align:left;">
+RNA_P2041_10749_S52_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+49
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10750_S53_L003_quant/quant.sf
+</td>
+<td style="text-align:left;">
+RNA_P2041_S53
+</td>
+<td style="text-align:right;">
+49
+</td>
+<td style="text-align:left;">
+RNA_P2041_10750_S53_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+50
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10751_S54_L003_quant/quant.sf
+</td>
+<td style="text-align:left;">
+RNA_P2041_S54
+</td>
+<td style="text-align:right;">
+50
+</td>
+<td style="text-align:left;">
+RNA_P2041_10751_S54_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+69
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_05_S145_L008_quant/quant.sf
+</td>
+<td style="text-align:left;">
+RNA_P3302_S145
+</td>
+<td style="text-align:right;">
+69
+</td>
+<td style="text-align:left;">
+RNA_P3302_05_S145_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+70
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_06_S146_L006_quant/quant.sf
+</td>
+<td style="text-align:left;">
+RNA_P3302_S146
+</td>
+<td style="text-align:right;">
+70
+</td>
+<td style="text-align:left;">
+RNA_P3302_06_S146_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+71
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_06_S146_L007_quant/quant.sf
+</td>
+<td style="text-align:left;">
+RNA_P3302_S146
+</td>
+<td style="text-align:right;">
+71
+</td>
+<td style="text-align:left;">
+RNA_P3302_06_S146_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+72
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_06_S146_L008_quant/quant.sf
+</td>
+<td style="text-align:left;">
+RNA_P3302_S146
+</td>
+<td style="text-align:right;">
+72
+</td>
+<td style="text-align:left;">
+RNA_P3302_06_S146_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+203
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_50_S190_L007_quant/quant.sf
+</td>
+<td style="text-align:left;">
+RNA_P3302_S190
+</td>
+<td style="text-align:right;">
+203
+</td>
+<td style="text-align:left;">
+RNA_P3302_50_S190_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+204
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_50_S190_L008_quant/quant.sf
+</td>
+<td style="text-align:left;">
+RNA_P3302_S190
+</td>
+<td style="text-align:right;">
+204
+</td>
+<td style="text-align:left;">
+RNA_P3302_50_S190_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+</tr>
+</tbody>
+</table>
 
 ### P3302
 
@@ -369,55 +556,8 @@ file.exists(Samplepath)
 
 ``` r
 Samplefile <- read_xlsx(Samplepath)
-Samplefile
-```
-
-    ## # A tibble: 50 × 19
-    ##    `Sample order number` Sample name [example: P1000_RN…¹ Sample name [user de…²
-    ##                    <dbl> <chr>                                             <dbl>
-    ##  1                    53 P3302_RNA_01                                      10897
-    ##  2                    54 P3302_RNA_02                                      10898
-    ##  3                    55 P3302_RNA_03                                      10899
-    ##  4                    56 P3302_RNA_04                                      10900
-    ##  5                    57 P3302_RNA_05                                      10901
-    ##  6                    58 P3302_RNA_06                                      10902
-    ##  7                    59 P3302_RNA_07                                      10903
-    ##  8                    60 P3302_RNA_08                                      10904
-    ##  9                    61 P3302_RNA_09                                      10905
-    ## 10                    62 P3302_RNA_10                                      10906
-    ## # ℹ 40 more rows
-    ## # ℹ abbreviated names: ¹​`Sample name [example: P1000_RNA_01]`,
-    ## #   ²​`Sample name [user defined]`
-    ## # ℹ 16 more variables:
-    ## #   `how was the concentration measured (Qubit, Nanodrop, etc.)` <chr>,
-    ## #   `RNA conc. [ng/µl]` <dbl>, `delivered volume [µl]` <dbl>,
-    ## #   `RNA origin (organism)` <chr>, …
-
-``` r
-colnames(Samplefile)
-```
-
-    ##  [1] "Sample order number"                                       
-    ##  [2] "Sample name [example: P1000_RNA_01]"                       
-    ##  [3] "Sample name [user defined]"                                
-    ##  [4] "how was the concentration measured (Qubit, Nanodrop, etc.)"
-    ##  [5] "RNA conc. [ng/µl]"                                         
-    ##  [6] "delivered volume [µl]"                                     
-    ##  [7] "RNA origin (organism)"                                     
-    ##  [8] "RNA source (muscle, cell line, etc.)"                      
-    ##  [9] "RNA source state (fresh, snap-frozen, FFPE, etc.)"         
-    ## [10] "RNA Isolation method"                                      
-    ## [11] "CUGE-ID"                                                   
-    ## [12] "...12"                                                     
-    ## [13] "RNA"                                                       
-    ## [14] "Datum"                                                     
-    ## [15] "Probe"                                                     
-    ## [16] "Konz.(µg/µl)"                                              
-    ## [17] "Volumen(µl)"                                               
-    ## [18] "Methode"                                                   
-    ## [19] "Probe von"
-
-``` r
+# Samplefile[c(1,2,49,50),] %>% kable() %>% kable_styling("striped", full_width = F)
+# colnames(Samplefile)
 colnames(Samplefile)[1] <- "order_number"
 colnames(Samplefile)[2] <- "samplename"
 colnames(Samplefile)[3] <- "rna_id"
@@ -479,17 +619,343 @@ sample_table_P3302$samplename %in% quant_file_table$samplename %>% summary()
     ## logical      50
 
 ``` r
-sample_table_P3302 %>% head() %>% kable()
+sample_table_P3302[c(1,2,49,50),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-| order_number | samplename     | rna_id | Probe                      | rna_conc | Konz.(µg/µl) | CUGE-ID | Datum      | cellline | clone     | genotype | treatment | run_id | sequencing | sample_id | experiment | experiment_date | repetition | exp_rep  | cell_density |
-|-------------:|:---------------|-------:|:---------------------------|---------:|-------------:|--------:|:-----------|:---------|:----------|:---------|:----------|:-------|:-----------|:----------|:-----------|:----------------|:-----------|:---------|:-------------|
-|           53 | RNA_P3302_S141 |  10897 | Kelly LV1 (1:4) Nx 24 h    |    43.94 |    0.6341333 |   11691 | 2023-06-02 | Kelly    | LV1       | Kelly    | Nx        | RNA_01 | P3302      | S141      | Ulrike     | 2023-06-02      | 1          | Ulrike_1 | 1:4          |
-|           54 | RNA_P3302_S142 |  10898 | Kelly LV1 (1:5) Nx 24 h    |    39.08 |    0.5348000 |   11692 | 2023-06-02 | Kelly    | LV1       | Kelly    | Nx        | RNA_02 | P3302      | S142      | Ulrike     | 2023-06-02      | 1          | Ulrike_1 | 1:5          |
-|           55 | RNA_P3302_S143 |  10899 | Kelly Hif1.3 (1:4) Nx 24 h |    38.28 |    0.9412000 |   11693 | 2023-06-02 | Kelly    | Hif1a_1.3 | HIF1A    | Nx        | RNA_03 | P3302      | S143      | Ulrike     | 2023-06-02      | 1          | Ulrike_1 | 1:4          |
-|           56 | RNA_P3302_S144 |  10900 | Kelly Hif1.3 (1:5) Nx 24 h |    47.48 |    0.6804000 |   11694 | 2023-06-02 | Kelly    | Hif1a_1.3 | HIF1A    | Nx        | RNA_04 | P3302      | S144      | Ulrike     | 2023-06-02      | 1          | Ulrike_1 | 1:5          |
-|           57 | RNA_P3302_S145 |  10901 | Kelly Hif2.2 (1:5) Nx 24 h |    54.88 |    1.6428000 |   11695 | 2023-06-02 | Kelly    | Hif2a_2.2 | HIF2A    | Nx        | RNA_05 | P3302      | S145      | Ulrike     | 2023-06-02      | 1          | Ulrike_1 | 1:5          |
-|           58 | RNA_P3302_S146 |  10902 | Kelly Hif2.2 (1:6) Nx 24 h |    42.76 |    1.0744000 |   11696 | 2023-06-02 | Kelly    | Hif2a_2.2 | HIF2A    | Nx        | RNA_06 | P3302      | S146      | Ulrike     | 2023-06-02      | 1          | Ulrike_1 | 1:6          |
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+order_number
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Probe
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_conc
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Konz.(µg/µl)
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+CUGE-ID
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Datum
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cellline
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+clone
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+genotype
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+treatment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+run_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sequencing
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment_date
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+repetition
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+exp_rep
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cell_density
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:right;">
+53
+</td>
+<td style="text-align:left;">
+RNA_P3302_S141
+</td>
+<td style="text-align:right;">
+10897
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+43.94
+</td>
+<td style="text-align:right;">
+0.6341333
+</td>
+<td style="text-align:right;">
+11691
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+RNA_01
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+S141
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:right;">
+54
+</td>
+<td style="text-align:left;">
+RNA_P3302_S142
+</td>
+<td style="text-align:right;">
+10898
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:5) Nx 24 h
+</td>
+<td style="text-align:right;">
+39.08
+</td>
+<td style="text-align:right;">
+0.5348000
+</td>
+<td style="text-align:right;">
+11692
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+RNA_02
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+S142
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+49
+</td>
+<td style="text-align:right;">
+101
+</td>
+<td style="text-align:left;">
+RNA_P3302_S189
+</td>
+<td style="text-align:right;">
+11004
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+54.78
+</td>
+<td style="text-align:right;">
+1.2554000
+</td>
+<td style="text-align:right;">
+11739
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+RNA_49
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+S189
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:left;">
+600000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+50
+</td>
+<td style="text-align:right;">
+102
+</td>
+<td style="text-align:left;">
+RNA_P3302_S190
+</td>
+<td style="text-align:right;">
+11005
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+54.28
+</td>
+<td style="text-align:right;">
+1.3440000
+</td>
+<td style="text-align:right;">
+11740
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+RNA_50
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+S190
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:left;">
+600000
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ### P2041
 
@@ -518,41 +984,11 @@ file.exists(Samplepath)
 
 ``` r
 Samplefile <- read_xlsx(Samplepath)
-Samplefile
-```
-
-    ## # A tibble: 22 × 14
-    ##    samplename   `CUGE-ID` rna_id Datum               experiment
-    ##    <chr>            <dbl>  <dbl> <dttm>              <chr>     
-    ##  1 P2041_RNA_01     10619   6952 2017-05-04 00:00:00 Control   
-    ##  2 P2041_RNA_03     10621  10185 2021-06-16 00:00:00 Simon     
-    ##  3 P2041_RNA_04     10744  10186 2021-06-16 00:00:00 Simon     
-    ##  4 P2041_RNA_05     10745  10189 2021-06-16 00:00:00 Simon     
-    ##  5 P2041_RNA_11     10754  10268 2021-08-25 00:00:00 Simon     
-    ##  6 P2041_RNA_12     10755  10269 2021-08-25 00:00:00 Simon     
-    ##  7 P2041_RNA_15     10625  10276 2021-08-25 00:00:00 Simon     
-    ##  8 P2041_RNA_21     10631  10284 2021-08-25 00:00:00 Simon     
-    ##  9 P2041_RNA_22     10632  10285 2021-08-25 00:00:00 Simon     
-    ## 10 P2041_RNA_25     10635  10292 2021-08-27 00:00:00 Simon     
-    ## # ℹ 12 more rows
-    ## # ℹ 9 more variables: experiment_date <dttm>, repetition <dbl>, exp_rep <lgl>,
-    ## #   Probe <chr>, treatment <chr>, genotype <chr>, clone <chr>, Nx <chr>,
-    ## #   HX <chr>
-
-``` r
-colnames(Samplefile)
-```
-
-    ##  [1] "samplename"      "CUGE-ID"         "rna_id"          "Datum"          
-    ##  [5] "experiment"      "experiment_date" "repetition"      "exp_rep"        
-    ##  [9] "Probe"           "treatment"       "genotype"        "clone"          
-    ## [13] "Nx"              "HX"
-
-``` r
+# Samplefile
+# colnames(Samplefile)
 sample_table <- Samplefile
 
 sample_table$cellline <- "Kelly"
-
 sample_table$treatment <- sample_table$treatment %>% as.factor() %>% relevel(ref="Nx")
 sample_table$genotype <- str_replace(sample_table$genotype, pattern = "LV", replacement = "Kelly")
 sample_table$genotype <- str_replace(sample_table$genotype, pattern = "Hif1b", replacement = "HIF1B")
@@ -576,6 +1012,8 @@ sample_table$sample_id %in% sample %>% summary()
 ``` r
 sample_table$exp_rep <- paste(sample_table$experiment,sample_table$repetition, sep="_")
 
+sample_table$clone <- sample_table$clone%>% factor
+
 # Make table
 sample_table_P2041 <- as.data.frame(sample_table)
 
@@ -586,28 +1024,351 @@ sample_table_P2041$samplename %in% quant_file_table$samplename %>% summary()
     ## logical      22
 
 ``` r
-sample_table_P2041 %>% head() %>% kable()
+sample_table_P2041[c(1,2,21,22),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-| samplename    | CUGE-ID | rna_id | Datum      | experiment | experiment_date | repetition | exp_rep   | Probe                           | treatment | genotype | clone    | Nx           | HX           | cellline | sample | lane | sequencing | run_id    | sample_id |
-|:--------------|--------:|-------:|:-----------|:-----------|:----------------|:-----------|:----------|:--------------------------------|:----------|:---------|:---------|:-------------|:-------------|:---------|:-------|:-----|:-----------|:----------|:----------|
-| RNA_P2041_S37 |   10619 |   6952 | 2017-05-04 | Control    | 2017-05-04      | 0          | Control_0 | Kelly CRISPR Cas Hif LV1 Nx 24h | Nx        | Kelly    | LV_1     | LV           | NA           | Kelly    | RNA_01 | L003 | P2041      | RNA_10619 | S37       |
-| RNA_P2041_S38 |   10621 |  10185 | 2021-06-16 | Simon      | 2021-06-16      | 1          | Simon_1   | Kelly Hif1b.sg1+2 Klon 9 Nx     | Nx        | HIF1B    | Hif1b_9  | LV           | LV           | Kelly    | RNA_03 | L003 | P2041      | RNA_10621 | S38       |
-| RNA_P2041_S39 |   10744 |  10186 | 2021-06-16 | Simon      | 2021-06-16      | 1          | Simon_1   | Kelly Hif1b.sg1+2 Klon 9 Hx     | Hx        | HIF1B    | Hif1b_9  | LV           | LV           | Kelly    | RNA_04 | L003 | P2041      | RNA_10744 | S39       |
-| RNA_P2041_S40 |   10745 |  10189 | 2021-06-16 | Simon      | 2021-06-16      | 1          | Simon_1   | Kelly Hif1b.sg1+2 Klon 15 Nx    | Nx        | HIF1B    | Hif1b_15 | NA           | NA           | Kelly    | RNA_05 | L003 | P2041      | RNA_10745 | S40       |
-| RNA_P2041_S41 |   10754 |  10268 | 2021-08-25 | Simon      | 2021-08-25      | 4          | Simon_4   | Kelly LV.1 Nx                   | Nx        | Kelly    | LV_1     | del_Hif1a1.3 | del_Hif1a1.3 | Kelly    | RNA_11 | L003 | P2041      | RNA_10754 | S41       |
-| RNA_P2041_S42 |   10755 |  10269 | 2021-08-25 | Simon      | 2021-08-25      | 4          | Simon_4   | Kelly LV.1 Hx                   | Hx        | Kelly    | LV_1     | NA           | del_Hif1a1.6 | Kelly    | RNA_12 | L003 | P2041      | RNA_10755 | S42       |
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+CUGE-ID
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Datum
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment_date
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+repetition
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+exp_rep
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Probe
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+treatment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+genotype
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+clone
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Nx
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+HX
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cellline
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+lane
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sequencing
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+run_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample_id
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:right;">
+10619
+</td>
+<td style="text-align:right;">
+6952
+</td>
+<td style="text-align:left;">
+2017-05-04
+</td>
+<td style="text-align:left;">
+Control
+</td>
+<td style="text-align:left;">
+2017-05-04
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+Control_0
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Cas Hif LV1 Nx 24h
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+LV_1
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+RNA_01
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+RNA_10619
+</td>
+<td style="text-align:left;">
+S37
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+RNA_P2041_S38
+</td>
+<td style="text-align:right;">
+10621
+</td>
+<td style="text-align:right;">
+10185
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Simon_1
+</td>
+<td style="text-align:left;">
+Kelly Hif1b.sg1+2 Klon 9 Nx
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+Hif1b_9
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+RNA_03
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+RNA_10621
+</td>
+<td style="text-align:left;">
+S38
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+21
+</td>
+<td style="text-align:left;">
+RNA_P2041_S57
+</td>
+<td style="text-align:right;">
+10752
+</td>
+<td style="text-align:right;">
+10306
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 10.1 Nx
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+Hif1b_10
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+RNA_39
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+RNA_10752
+</td>
+<td style="text-align:left;">
+S57
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+22
+</td>
+<td style="text-align:left;">
+RNA_P2041_S58
+</td>
+<td style="text-align:right;">
+10753
+</td>
+<td style="text-align:right;">
+10307
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 10.1 Hx
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+Hif1b_10
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+RNA_40
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+RNA_10753
+</td>
+<td style="text-align:left;">
+S58
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ### P557
 
 ``` r
 ## P557
-list.files(dirname(fastqdir3), pattern=".xlsx")
-```
+# list.files(dirname(fastqdir3), pattern=".xlsx")
 
-    ## [1] "2020_02_13_Sample_list_NGS.xlsx" "RNA_samples.xlsx"
-
-``` r
+# Table 1
 Samplepath <- filePath(path=dirname(fastqdir3), file="2020_02_13_Sample_list_NGS.xlsx")
 file.exists(Samplepath)
 ```
@@ -617,6 +1378,7 @@ file.exists(Samplepath)
 ``` r
 Samplefile <- read_xlsx(Samplepath, col_names =c("Probe","Sequencing-2_A","Sequencing-2_B", "path","rna_id"))
 
+# Table 2
 Samplepath <- filePath(path=dirname(fastqdir3), file="RNA_samples.xlsx")
 file.exists(Samplepath)
 ```
@@ -628,37 +1390,111 @@ Samplefile <- read_xlsx(Samplepath)
 
 df <- Samplefile %>% as.data.frame()
 sample_table <- df
-head(sample_table)
+sample_table[c(1,2,23,24),]  %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-    ##   RNA-Nr.      Datum                           Probe Konz.(µg/µl)
-    ## 1    7693 2018-09-13  Kelly CRISPR Hif LV1 P7 Nx 24h       830.48
-    ## 2    7694 2018-09-13  Kelly CRISPR Hif1.3 P13 Nx 24h      1004.16
-    ## 3    7695 2018-09-13 Kelly CRISPR HifL2.2 P13 Nx 24h      1109.66
-    ## 4    7696 2018-09-13   Kelly CRISPR HifLV1 P7 Hx 24h       626.12
-    ## 5    7697 2018-09-13  Kelly CRISPR Hif1.3 P13 Hx 24h       782.00
-    ## 6    7698 2018-09-13 Kelly CRISPR HifL2.2 P13 Hx 24h       777.38
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+RNA-Nr.
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Datum
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Probe
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Konz.(µg/µl)
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:right;">
+7693
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif LV1 P7 Nx 24h
+</td>
+<td style="text-align:right;">
+830.48
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:right;">
+7694
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif1.3 P13 Nx 24h
+</td>
+<td style="text-align:right;">
+1004.16
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+23
+</td>
+<td style="text-align:right;">
+7715
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif1.3 P14 Hx 24h
+</td>
+<td style="text-align:right;">
+583.24
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+24
+</td>
+<td style="text-align:right;">
+7716
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifL2.2 P14 Hx 24h
+</td>
+<td style="text-align:right;">
+644.24
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ``` r
 sample_table$treatment <- ifelse(str_detect(sample_table$Probe,pattern="Hx"), "Hx","Nx")
-sample_table$treatment %>% as.factor() %>% relevel(ref="Nx")
-```
-
-    ##  [1] Nx Nx Nx Hx Hx Hx Nx Nx Nx Hx Hx Hx Nx Nx Nx Hx Hx Hx Nx Nx Nx Hx Hx Hx
-    ## Levels: Nx Hx
-
-``` r
+sample_table$treatment <- sample_table$treatment %>% as.factor() %>% relevel(ref="Nx")
 sample_table$genotype <- ifelse(str_detect(sample_table$Probe,pattern="1.3"),"HIF1A",
                                 ifelse(str_detect(sample_table$Probe,pattern="2.2"),"HIF2A",
                                        "Kelly"))
-sample_table$genotype %>% as.factor() %>% relevel(ref="Kelly")
-```
-
-    ##  [1] Kelly HIF1A HIF2A Kelly HIF1A HIF2A Kelly HIF1A HIF2A Kelly HIF1A HIF2A
-    ## [13] Kelly HIF1A HIF2A Kelly HIF1A HIF2A Kelly HIF1A HIF2A Kelly HIF1A HIF2A
-    ## Levels: Kelly HIF1A HIF2A
-
-``` r
+sample_table$genotype <- sample_table$genotype %>% as.factor() %>% relevel(ref="Kelly")
 sample_table$sequencing <- "P557"
 sample_table$replicate <-  ifelse(str_detect(sample_table$Probe,pattern="P7"),"P7",
                                   ifelse(str_detect(sample_table$Probe,pattern="P8"),"P8",
@@ -679,23 +1515,158 @@ Samplefile2 <- read_xlsx(Samplepath2, col_names =c("Probe","Sequencing-2_A","Seq
 df2 <- Samplefile2 %>% as.data.frame()
 kellys <- df2[,1] %>% str_detect(pattern="Kelly")
 sample_table2 <- df2[kellys,]
-head(sample_table2)
+head(sample_table2) %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-    ##                              Probe Sequencing-2_A Sequencing-2_B
-    ## 33  Kelly CRISPR Hif LV1 P7 Nx 24h       HS_KK_17       HS_KK_77
-    ## 34   Kelly CRISPR HifLV1 P7 Hx 24h       HS_KK_18       HS_KK_78
-    ## 35  Kelly CRISPR Hif1.3 P13 Hx 24h       HS_KK_19       HS_KK_79
-    ## 36 Kelly CRISPR HifL2.2 P13 Hx 24h       HS_KK_20       HS_KK_80
-    ## 37  Kelly CRISPR Hif LV1 P7 Nx 24h       HS_KK_21       HS_KK_81
-    ## 38   Kelly CRISPR HifLV1 P7 Hx 24h       HS_KK_22       HS_KK_82
-    ##                   path rna_id
-    ## 33 auf S:AG-Scholz-NGS   7693
-    ## 34 auf S:AG-Scholz-NGS   7696
-    ## 35 auf S:AG-Scholz-NGS   7697
-    ## 36 auf S:AG-Scholz-NGS   7698
-    ## 37 auf S:AG-Scholz-NGS   7699
-    ## 38 auf S:AG-Scholz-NGS   7702
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Probe
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Sequencing-2_A
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Sequencing-2_B
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+path
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_id
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+33
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif LV1 P7 Nx 24h
+</td>
+<td style="text-align:left;">
+HS_KK_17
+</td>
+<td style="text-align:left;">
+HS_KK_77
+</td>
+<td style="text-align:left;">
+auf S:AG-Scholz-NGS
+</td>
+<td style="text-align:right;">
+7693
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+34
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifLV1 P7 Hx 24h
+</td>
+<td style="text-align:left;">
+HS_KK_18
+</td>
+<td style="text-align:left;">
+HS_KK_78
+</td>
+<td style="text-align:left;">
+auf S:AG-Scholz-NGS
+</td>
+<td style="text-align:right;">
+7696
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+35
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif1.3 P13 Hx 24h
+</td>
+<td style="text-align:left;">
+HS_KK_19
+</td>
+<td style="text-align:left;">
+HS_KK_79
+</td>
+<td style="text-align:left;">
+auf S:AG-Scholz-NGS
+</td>
+<td style="text-align:right;">
+7697
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+36
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifL2.2 P13 Hx 24h
+</td>
+<td style="text-align:left;">
+HS_KK_20
+</td>
+<td style="text-align:left;">
+HS_KK_80
+</td>
+<td style="text-align:left;">
+auf S:AG-Scholz-NGS
+</td>
+<td style="text-align:right;">
+7698
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+37
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif LV1 P7 Nx 24h
+</td>
+<td style="text-align:left;">
+HS_KK_21
+</td>
+<td style="text-align:left;">
+HS_KK_81
+</td>
+<td style="text-align:left;">
+auf S:AG-Scholz-NGS
+</td>
+<td style="text-align:right;">
+7699
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+38
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifLV1 P7 Hx 24h
+</td>
+<td style="text-align:left;">
+HS_KK_22
+</td>
+<td style="text-align:left;">
+HS_KK_82
+</td>
+<td style="text-align:left;">
+auf S:AG-Scholz-NGS
+</td>
+<td style="text-align:right;">
+7702
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ``` r
 sample_table2$run_id <- paste("RNA",str_split(sample_table2$'Sequencing-2_B', pattern="_", simplify = T)[,3],sep="_")
@@ -725,54 +1696,871 @@ sample_table_P557$samplename %in% quant_file_table$samplename %>% summary()
     ## logical      16
 
 ``` r
-sample_table_P557 %>% head() %>% kable()
+sample_table_P557[c(1,2,15,16),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-|     | rna_id | Datum      | Probe                           | rna_conc | treatment | genotype | sequencing | replicate | clone     | cellline | lane | samplename   | sample_id | run_id | experiment | experiment_date | repetition | exp_rep     |
-|:----|-------:|:-----------|:--------------------------------|---------:|:----------|:---------|:-----------|:----------|:----------|:---------|:-----|:-------------|:----------|:-------|:-----------|:----------------|:-----------|:------------|
-| 1   |   7693 | 2018-09-13 | Kelly CRISPR Hif LV1 P7 Nx 24h  |   830.48 | Nx        | Kelly    | P557       | P7        | LV1       | Kelly    | L001 | RNA_P557_S33 | S33       | RNA_77 | Katharina  | 2018-09-13      | 1          | Katharina_1 |
-| 4   |   7696 | 2018-09-13 | Kelly CRISPR HifLV1 P7 Hx 24h   |   626.12 | Hx        | Kelly    | P557       | P7        | LV1       | Kelly    | L001 | RNA_P557_S34 | S34       | RNA_78 | Katharina  | 2018-09-13      | 1          | Katharina_1 |
-| 5   |   7697 | 2018-09-13 | Kelly CRISPR Hif1.3 P13 Hx 24h  |   782.00 | Hx        | HIF1A    | P557       | P13       | Hif1a_1.3 | Kelly    | L001 | RNA_P557_S35 | S35       | RNA_79 | Katharina  | 2018-09-13      | 1          | Katharina_1 |
-| 6   |   7698 | 2018-09-13 | Kelly CRISPR HifL2.2 P13 Hx 24h |   777.38 | Hx        | HIF2A    | P557       | P13       | Hif2a_2.2 | Kelly    | L001 | RNA_P557_S36 | S36       | RNA_80 | Katharina  | 2018-09-13      | 1          | Katharina_1 |
-| 7   |   7699 | 2018-09-13 | Kelly CRISPR Hif LV1 P7 Nx 24h  |   603.48 | Nx        | Kelly    | P557       | P7        | LV1       | Kelly    | L001 | RNA_P557_S37 | S37       | RNA_81 | Katharina  | 2018-09-13      | 1          | Katharina_1 |
-| 10  |   7702 | 2018-09-13 | Kelly CRISPR HifLV1 P7 Hx 24h   |   457.44 | Hx        | Kelly    | P557       | P7        | LV1       | Kelly    | L001 | RNA_P557_S38 | S38       | RNA_82 | Katharina  | 2018-09-13      | 1          | Katharina_1 |
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Datum
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Probe
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_conc
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+treatment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+genotype
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sequencing
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+replicate
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+clone
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cellline
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+lane
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+run_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment_date
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+repetition
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+exp_rep
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:right;">
+7693
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif LV1 P7 Nx 24h
+</td>
+<td style="text-align:right;">
+830.48
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P7
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+RNA_P557_S33
+</td>
+<td style="text-align:left;">
+S33
+</td>
+<td style="text-align:left;">
+RNA_77
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:right;">
+7696
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifLV1 P7 Hx 24h
+</td>
+<td style="text-align:right;">
+626.12
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P7
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+RNA_P557_S34
+</td>
+<td style="text-align:left;">
+S34
+</td>
+<td style="text-align:left;">
+RNA_78
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+23
+</td>
+<td style="text-align:right;">
+7715
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif1.3 P14 Hx 24h
+</td>
+<td style="text-align:right;">
+583.24
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P14
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+RNA_P557_S47
+</td>
+<td style="text-align:left;">
+S47
+</td>
+<td style="text-align:left;">
+RNA_91
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Katharina_2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+24
+</td>
+<td style="text-align:right;">
+7716
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifL2.2 P14 Hx 24h
+</td>
+<td style="text-align:right;">
+644.24
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P14
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+RNA_P557_S48
+</td>
+<td style="text-align:left;">
+S48
+</td>
+<td style="text-align:left;">
+RNA_92
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Katharina_2
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ### combine lists
 
 ``` r
 sample_table_all <- {}
 sample_table_all <- bind_rows(sample_table_P557, sample_table_P2041, sample_table_P3302)
-head(sample_table_all)
+head(sample_table_all) %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-    ##   rna_id      Datum                           Probe rna_conc treatment genotype
-    ## 1   7693 2018-09-13  Kelly CRISPR Hif LV1 P7 Nx 24h   830.48        Nx    Kelly
-    ## 2   7696 2018-09-13   Kelly CRISPR HifLV1 P7 Hx 24h   626.12        Hx    Kelly
-    ## 3   7697 2018-09-13  Kelly CRISPR Hif1.3 P13 Hx 24h   782.00        Hx    HIF1A
-    ## 4   7698 2018-09-13 Kelly CRISPR HifL2.2 P13 Hx 24h   777.38        Hx    HIF2A
-    ## 5   7699 2018-09-13  Kelly CRISPR Hif LV1 P7 Nx 24h   603.48        Nx    Kelly
-    ## 6   7702 2018-09-13   Kelly CRISPR HifLV1 P7 Hx 24h   457.44        Hx    Kelly
-    ##   sequencing replicate     clone cellline lane   samplename sample_id run_id
-    ## 1       P557        P7       LV1    Kelly L001 RNA_P557_S33       S33 RNA_77
-    ## 2       P557        P7       LV1    Kelly L001 RNA_P557_S34       S34 RNA_78
-    ## 3       P557       P13 Hif1a_1.3    Kelly L001 RNA_P557_S35       S35 RNA_79
-    ## 4       P557       P13 Hif2a_2.2    Kelly L001 RNA_P557_S36       S36 RNA_80
-    ## 5       P557        P7       LV1    Kelly L001 RNA_P557_S37       S37 RNA_81
-    ## 6       P557        P7       LV1    Kelly L001 RNA_P557_S38       S38 RNA_82
-    ##   experiment experiment_date repetition     exp_rep CUGE-ID   Nx   HX sample
-    ## 1  Katharina      2018-09-13          1 Katharina_1      NA <NA> <NA>   <NA>
-    ## 2  Katharina      2018-09-13          1 Katharina_1      NA <NA> <NA>   <NA>
-    ## 3  Katharina      2018-09-13          1 Katharina_1      NA <NA> <NA>   <NA>
-    ## 4  Katharina      2018-09-13          1 Katharina_1      NA <NA> <NA>   <NA>
-    ## 5  Katharina      2018-09-13          1 Katharina_1      NA <NA> <NA>   <NA>
-    ## 6  Katharina      2018-09-13          1 Katharina_1      NA <NA> <NA>   <NA>
-    ##   order_number Konz.(µg/µl) cell_density
-    ## 1           NA           NA         <NA>
-    ## 2           NA           NA         <NA>
-    ## 3           NA           NA         <NA>
-    ## 4           NA           NA         <NA>
-    ## 5           NA           NA         <NA>
-    ## 6           NA           NA         <NA>
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Datum
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Probe
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_conc
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+treatment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+genotype
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sequencing
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+replicate
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+clone
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cellline
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+lane
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+run_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment_date
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+repetition
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+exp_rep
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+CUGE-ID
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Nx
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+HX
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+order_number
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Konz.(µg/µl)
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cell_density
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+7693
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif LV1 P7 Nx 24h
+</td>
+<td style="text-align:right;">
+830.48
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P7
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+RNA_P557_S33
+</td>
+<td style="text-align:left;">
+S33
+</td>
+<td style="text-align:left;">
+RNA_77
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+7696
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifLV1 P7 Hx 24h
+</td>
+<td style="text-align:right;">
+626.12
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P7
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+RNA_P557_S34
+</td>
+<td style="text-align:left;">
+S34
+</td>
+<td style="text-align:left;">
+RNA_78
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+7697
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif1.3 P13 Hx 24h
+</td>
+<td style="text-align:right;">
+782.00
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P13
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+RNA_P557_S35
+</td>
+<td style="text-align:left;">
+S35
+</td>
+<td style="text-align:left;">
+RNA_79
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+7698
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifL2.2 P13 Hx 24h
+</td>
+<td style="text-align:right;">
+777.38
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P13
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+RNA_P557_S36
+</td>
+<td style="text-align:left;">
+S36
+</td>
+<td style="text-align:left;">
+RNA_80
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+7699
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif LV1 P7 Nx 24h
+</td>
+<td style="text-align:right;">
+603.48
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P7
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+RNA_P557_S37
+</td>
+<td style="text-align:left;">
+S37
+</td>
+<td style="text-align:left;">
+RNA_81
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+7702
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifLV1 P7 Hx 24h
+</td>
+<td style="text-align:right;">
+457.44
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P7
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+RNA_P557_S38
+</td>
+<td style="text-align:left;">
+S38
+</td>
+<td style="text-align:left;">
+RNA_82
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ``` r
 length(rownames(sample_table_all))
@@ -809,11 +2597,11 @@ class(sample_table)
 
 ``` r
 sample_table_all <- sample_table_all[order(sample_table_all$order),]
-(sample_table_all$sequencing.x == sample_table_all$sequencing.y) %>% summary()
+(sample_table_all$sequencing == sample_table_all$sequencing.y) %>% summary()
 ```
 
-    ##    Mode    TRUE 
-    ## logical     188
+    ##    Mode 
+    ## logical
 
 ``` r
 colnames(sample_table_all)[which(names(sample_table_all) == "sequencing.x")] <- "sequencing"
@@ -860,313 +2648,517 @@ sample_table_all$condition[order(sample_table_all$condition)]
 
 ``` r
 sample_table_all$condition <- sample_table_all$condition %>% factor(levels=c("Kelly_Nx", "Kelly_Hx","HIF1A_Nx","HIF1A_Hx","HIF2A_Nx","HIF2A_Hx","HIF1B_Nx","HIF1B_Hx"))
+sample_table_all$experiment <- sample_table_all$experiment %>% as.factor()
+
+
 dim(sample_table_all)
 ```
 
     ## [1] 188  31
 
 ``` r
-head(sample_table_all)
+sample_table_all[c(1,2,187,188),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-    ##       samplename
-    ## 173 RNA_P557_S33
-    ## 174 RNA_P557_S34
-    ## 175 RNA_P557_S35
-    ## 176 RNA_P557_S36
-    ## 177 RNA_P557_S37
-    ## 178 RNA_P557_S38
-    ##                                                                                            files
-    ## 173 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_077_S33_quant/quant.sf
-    ## 174 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_078_S34_quant/quant.sf
-    ## 175 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_079_S35_quant/quant.sf
-    ## 176 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_080_S36_quant/quant.sf
-    ## 177 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_081_S37_quant/quant.sf
-    ## 178 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_082_S38_quant/quant.sf
-    ##     order         filename sequencing lane rna_id      Datum
-    ## 173    17 RNA_P557_077_S33       P557 L001   7693 2018-09-13
-    ## 174    18 RNA_P557_078_S34       P557 L001   7696 2018-09-13
-    ## 175    19 RNA_P557_079_S35       P557 L001   7697 2018-09-13
-    ## 176    20 RNA_P557_080_S36       P557 L001   7698 2018-09-13
-    ## 177    21 RNA_P557_081_S37       P557 L001   7699 2018-09-13
-    ## 178    22 RNA_P557_082_S38       P557 L001   7702 2018-09-13
-    ##                               Probe rna_conc treatment genotype sequencing.y
-    ## 173  Kelly CRISPR Hif LV1 P7 Nx 24h   830.48        Nx    Kelly         P557
-    ## 174   Kelly CRISPR HifLV1 P7 Hx 24h   626.12        Hx    Kelly         P557
-    ## 175  Kelly CRISPR Hif1.3 P13 Hx 24h   782.00        Hx    HIF1A         P557
-    ## 176 Kelly CRISPR HifL2.2 P13 Hx 24h   777.38        Hx    HIF2A         P557
-    ## 177  Kelly CRISPR Hif LV1 P7 Nx 24h   603.48        Nx    Kelly         P557
-    ## 178   Kelly CRISPR HifLV1 P7 Hx 24h   457.44        Hx    Kelly         P557
-    ##     replicate     clone cellline lane.y sample_id run_id experiment
-    ## 173        P7       LV1    Kelly   L001       S33 RNA_77  Katharina
-    ## 174        P7       LV1    Kelly   L001       S34 RNA_78  Katharina
-    ## 175       P13 Hif1a_1.3    Kelly   L001       S35 RNA_79  Katharina
-    ## 176       P13 Hif2a_2.2    Kelly   L001       S36 RNA_80  Katharina
-    ## 177        P7       LV1    Kelly   L001       S37 RNA_81  Katharina
-    ## 178        P7       LV1    Kelly   L001       S38 RNA_82  Katharina
-    ##     experiment_date repetition     exp_rep CUGE-ID   Nx   HX sample
-    ## 173      2018-09-13          1 Katharina_1      NA <NA> <NA>   <NA>
-    ## 174      2018-09-13          1 Katharina_1      NA <NA> <NA>   <NA>
-    ## 175      2018-09-13          1 Katharina_1      NA <NA> <NA>   <NA>
-    ## 176      2018-09-13          1 Katharina_1      NA <NA> <NA>   <NA>
-    ## 177      2018-09-13          1 Katharina_1      NA <NA> <NA>   <NA>
-    ## 178      2018-09-13          1 Katharina_1      NA <NA> <NA>   <NA>
-    ##     order_number Konz.(µg/µl) cell_density condition
-    ## 173           NA           NA         <NA>  Kelly_Nx
-    ## 174           NA           NA         <NA>  Kelly_Hx
-    ## 175           NA           NA         <NA>  HIF1A_Hx
-    ## 176           NA           NA         <NA>  HIF2A_Hx
-    ## 177           NA           NA         <NA>  Kelly_Nx
-    ## 178           NA           NA         <NA>  Kelly_Hx
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
 
-``` r
-tail(sample_table_all)
-```
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+files
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+order
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+filename
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sequencing
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+lane
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Datum
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Probe
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_conc
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+treatment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+genotype
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sequencing.y
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+replicate
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+clone
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cellline
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+lane.y
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+run_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment_date
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+repetition
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+exp_rep
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+CUGE-ID
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Nx
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+HX
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+order_number
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Konz.(µg/µl)
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cell_density
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+condition
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+173
+</td>
+<td style="text-align:left;">
+RNA_P557_S33
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_077_S33_quant/quant.sf
+</td>
+<td style="text-align:right;">
+17
+</td>
+<td style="text-align:left;">
+RNA_P557_077_S33
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7693
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif LV1 P7 Nx 24h
+</td>
+<td style="text-align:right;">
+830.48
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P7
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S33
+</td>
+<td style="text-align:left;">
+RNA_77
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+174
+</td>
+<td style="text-align:left;">
+RNA_P557_S34
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_078_S34_quant/quant.sf
+</td>
+<td style="text-align:right;">
+18
+</td>
+<td style="text-align:left;">
+RNA_P557_078_S34
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7696
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifLV1 P7 Hx 24h
+</td>
+<td style="text-align:right;">
+626.12
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P7
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S34
+</td>
+<td style="text-align:left;">
+RNA_78
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+171
+</td>
+<td style="text-align:left;">
+RNA_P3302_S190
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_50_S190_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+203
+</td>
+<td style="text-align:left;">
+RNA_P3302_50_S190_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+11005
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+54.28
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S190
+</td>
+<td style="text-align:left;">
+RNA_50_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11740
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+102
+</td>
+<td style="text-align:right;">
+1.344
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+172
+</td>
+<td style="text-align:left;">
+RNA_P3302_S190
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_50_S190_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+204
+</td>
+<td style="text-align:left;">
+RNA_P3302_50_S190_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+11005
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+54.28
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S190
+</td>
+<td style="text-align:left;">
+RNA_50_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11740
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+102
+</td>
+<td style="text-align:right;">
+1.344
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+</tbody>
+</table>
 
-    ##         samplename
-    ## 167 RNA_P3302_S189
-    ## 168 RNA_P3302_S189
-    ## 169 RNA_P3302_S189
-    ## 170 RNA_P3302_S190
-    ## 171 RNA_P3302_S190
-    ## 172 RNA_P3302_S190
-    ##                                                                                                           files
-    ## 167 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_49_S189_L006_quant/quant.sf
-    ## 168 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_49_S189_L007_quant/quant.sf
-    ## 169 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_49_S189_L008_quant/quant.sf
-    ## 170 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_50_S190_L006_quant/quant.sf
-    ## 171 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_50_S190_L007_quant/quant.sf
-    ## 172 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_50_S190_L008_quant/quant.sf
-    ##     order               filename sequencing lane rna_id      Datum
-    ## 167   199 RNA_P3302_49_S189_L006      P3302 L006  11004 2023-06-28
-    ## 168   200 RNA_P3302_49_S189_L007      P3302 L007  11004 2023-06-28
-    ## 169   201 RNA_P3302_49_S189_L008      P3302 L008  11004 2023-06-28
-    ## 170   202 RNA_P3302_50_S190_L006      P3302 L006  11005 2023-06-28
-    ## 171   203 RNA_P3302_50_S190_L007      P3302 L007  11005 2023-06-28
-    ## 172   204 RNA_P3302_50_S190_L008      P3302 L008  11005 2023-06-28
-    ##                             Probe rna_conc treatment genotype sequencing.y
-    ## 167 Kelly Hif2.2 (600000) Hx 24 h    54.78        Hx    HIF2A        P3302
-    ## 168 Kelly Hif2.2 (600000) Hx 24 h    54.78        Hx    HIF2A        P3302
-    ## 169 Kelly Hif2.2 (600000) Hx 24 h    54.78        Hx    HIF2A        P3302
-    ## 170 Kelly Hif2.2 (600000) Hx 24 h    54.28        Hx    HIF2A        P3302
-    ## 171 Kelly Hif2.2 (600000) Hx 24 h    54.28        Hx    HIF2A        P3302
-    ## 172 Kelly Hif2.2 (600000) Hx 24 h    54.28        Hx    HIF2A        P3302
-    ##     replicate     clone cellline lane.y sample_id      run_id experiment
-    ## 167      <NA> Hif2a_2.2    Kelly   <NA>      S189 RNA_49_L006     Ulrike
-    ## 168      <NA> Hif2a_2.2    Kelly   <NA>      S189 RNA_49_L007     Ulrike
-    ## 169      <NA> Hif2a_2.2    Kelly   <NA>      S189 RNA_49_L008     Ulrike
-    ## 170      <NA> Hif2a_2.2    Kelly   <NA>      S190 RNA_50_L006     Ulrike
-    ## 171      <NA> Hif2a_2.2    Kelly   <NA>      S190 RNA_50_L007     Ulrike
-    ## 172      <NA> Hif2a_2.2    Kelly   <NA>      S190 RNA_50_L008     Ulrike
-    ##     experiment_date repetition  exp_rep CUGE-ID   Nx   HX sample order_number
-    ## 167      2023-06-28          4 Ulrike_4   11739 <NA> <NA>   <NA>          101
-    ## 168      2023-06-28          4 Ulrike_4   11739 <NA> <NA>   <NA>          101
-    ## 169      2023-06-28          4 Ulrike_4   11739 <NA> <NA>   <NA>          101
-    ## 170      2023-06-28          4 Ulrike_4   11740 <NA> <NA>   <NA>          102
-    ## 171      2023-06-28          4 Ulrike_4   11740 <NA> <NA>   <NA>          102
-    ## 172      2023-06-28          4 Ulrike_4   11740 <NA> <NA>   <NA>          102
-    ##     Konz.(µg/µl) cell_density condition
-    ## 167       1.2554       600000  HIF2A_Hx
-    ## 168       1.2554       600000  HIF2A_Hx
-    ## 169       1.2554       600000  HIF2A_Hx
-    ## 170       1.3440       600000  HIF2A_Hx
-    ## 171       1.3440       600000  HIF2A_Hx
-    ## 172       1.3440       600000  HIF2A_Hx
-
-``` r
-kable(sample_table_all)
-```
-
-|     | samplename     | files                                                                                                       | order | filename                 | sequencing | lane | rna_id | Datum      | Probe                           | rna_conc | treatment | genotype | sequencing.y | replicate | clone     | cellline | lane.y | sample_id | run_id      | experiment | experiment_date | repetition | exp_rep     | CUGE-ID | Nx                           | HX                          | sample | order_number | Konz.(µg/µl) | cell_density | condition |
-|:----|:---------------|:------------------------------------------------------------------------------------------------------------|------:|:-------------------------|:-----------|:-----|-------:|:-----------|:--------------------------------|---------:|:----------|:---------|:-------------|:----------|:----------|:---------|:-------|:----------|:------------|:-----------|:----------------|:-----------|:------------|--------:|:-----------------------------|:----------------------------|:-------|-------------:|-------------:|:-------------|:----------|
-| 173 | RNA_P557_S33   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_077_S33_quant/quant.sf                |    17 | RNA_P557_077_S33         | P557       | L001 |   7693 | 2018-09-13 | Kelly CRISPR Hif LV1 P7 Nx 24h  |   830.48 | Nx        | Kelly    | P557         | P7        | LV1       | Kelly    | L001   | S33       | RNA_77      | Katharina  | 2018-09-13      | 1          | Katharina_1 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | Kelly_Nx  |
-| 174 | RNA_P557_S34   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_078_S34_quant/quant.sf                |    18 | RNA_P557_078_S34         | P557       | L001 |   7696 | 2018-09-13 | Kelly CRISPR HifLV1 P7 Hx 24h   |   626.12 | Hx        | Kelly    | P557         | P7        | LV1       | Kelly    | L001   | S34       | RNA_78      | Katharina  | 2018-09-13      | 1          | Katharina_1 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | Kelly_Hx  |
-| 175 | RNA_P557_S35   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_079_S35_quant/quant.sf                |    19 | RNA_P557_079_S35         | P557       | L001 |   7697 | 2018-09-13 | Kelly CRISPR Hif1.3 P13 Hx 24h  |   782.00 | Hx        | HIF1A    | P557         | P13       | Hif1a_1.3 | Kelly    | L001   | S35       | RNA_79      | Katharina  | 2018-09-13      | 1          | Katharina_1 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | HIF1A_Hx  |
-| 176 | RNA_P557_S36   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_080_S36_quant/quant.sf                |    20 | RNA_P557_080_S36         | P557       | L001 |   7698 | 2018-09-13 | Kelly CRISPR HifL2.2 P13 Hx 24h |   777.38 | Hx        | HIF2A    | P557         | P13       | Hif2a_2.2 | Kelly    | L001   | S36       | RNA_80      | Katharina  | 2018-09-13      | 1          | Katharina_1 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | HIF2A_Hx  |
-| 177 | RNA_P557_S37   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_081_S37_quant/quant.sf                |    21 | RNA_P557_081_S37         | P557       | L001 |   7699 | 2018-09-13 | Kelly CRISPR Hif LV1 P7 Nx 24h  |   603.48 | Nx        | Kelly    | P557         | P7        | LV1       | Kelly    | L001   | S37       | RNA_81      | Katharina  | 2018-09-13      | 1          | Katharina_1 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | Kelly_Nx  |
-| 178 | RNA_P557_S38   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_082_S38_quant/quant.sf                |    22 | RNA_P557_082_S38         | P557       | L001 |   7702 | 2018-09-13 | Kelly CRISPR HifLV1 P7 Hx 24h   |   457.44 | Hx        | Kelly    | P557         | P7        | LV1       | Kelly    | L001   | S38       | RNA_82      | Katharina  | 2018-09-13      | 1          | Katharina_1 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | Kelly_Hx  |
-| 179 | RNA_P557_S39   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_083_S39_quant/quant.sf                |    23 | RNA_P557_083_S39         | P557       | L001 |   7703 | 2018-09-13 | Kelly CRISPR Hif1.3 P13 Hx 24h  |   684.96 | Hx        | HIF1A    | P557         | P13       | Hif1a_1.3 | Kelly    | L001   | S39       | RNA_83      | Katharina  | 2018-09-13      | 1          | Katharina_1 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | HIF1A_Hx  |
-| 180 | RNA_P557_S40   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_084_S40_quant/quant.sf                |    24 | RNA_P557_084_S40         | P557       | L001 |   7704 | 2018-09-13 | Kelly CRISPR HifL2.2 P13 Hx 24h |   622.00 | Hx        | HIF2A    | P557         | P13       | Hif2a_2.2 | Kelly    | L001   | S40       | RNA_84      | Katharina  | 2018-09-13      | 1          | Katharina_1 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | HIF2A_Hx  |
-| 181 | RNA_P557_S41   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_085_S41_quant/quant.sf                |    25 | RNA_P557_085_S41         | P557       | L001 |   7705 | 2018-09-14 | Kelly CRISPR Hif LV1 P8 Nx 24h  |   807.66 | Nx        | Kelly    | P557         | P8        | LV1       | Kelly    | L001   | S41       | RNA_85      | Katharina  | 2018-09-14      | 2          | Katharina_2 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | Kelly_Nx  |
-| 182 | RNA_P557_S42   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_086_S42_quant/quant.sf                |    26 | RNA_P557_086_S42         | P557       | L001 |   7708 | 2018-09-14 | Kelly CRISPR HifLV1 P8 Hx 24h   |   462.32 | Hx        | Kelly    | P557         | P8        | LV1       | Kelly    | L001   | S42       | RNA_86      | Katharina  | 2018-09-14      | 2          | Katharina_2 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | Kelly_Hx  |
-| 183 | RNA_P557_S43   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_087_S43_quant/quant.sf                |    27 | RNA_P557_087_S43         | P557       | L001 |   7709 | 2018-09-14 | Kelly CRISPR Hif1.3 P14 Hx 24h  |   846.04 | Hx        | HIF1A    | P557         | P14       | Hif1a_1.3 | Kelly    | L001   | S43       | RNA_87      | Katharina  | 2018-09-14      | 2          | Katharina_2 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | HIF1A_Hx  |
-| 184 | RNA_P557_S44   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_088_S44_quant/quant.sf                |    28 | RNA_P557_088_S44         | P557       | L001 |   7710 | 2018-09-14 | Kelly CRISPR HifL2.2 P14 Hx 24h |   885.16 | Hx        | HIF2A    | P557         | P14       | Hif2a_2.2 | Kelly    | L001   | S44       | RNA_88      | Katharina  | 2018-09-14      | 2          | Katharina_2 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | HIF2A_Hx  |
-| 185 | RNA_P557_S45   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_089_S45_quant/quant.sf                |    29 | RNA_P557_089_S45         | P557       | L001 |   7711 | 2018-09-14 | Kelly CRISPR Hif LV1 P8 Nx 24h  |   694.64 | Nx        | Kelly    | P557         | P8        | LV1       | Kelly    | L001   | S45       | RNA_89      | Katharina  | 2018-09-14      | 2          | Katharina_2 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | Kelly_Nx  |
-| 186 | RNA_P557_S46   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_090_S46_quant/quant.sf                |    30 | RNA_P557_090_S46         | P557       | L001 |   7714 | 2018-09-14 | Kelly CRISPR HifLV1 P8 Hx 24h   |   349.06 | Hx        | Kelly    | P557         | P8        | LV1       | Kelly    | L001   | S46       | RNA_90      | Katharina  | 2018-09-14      | 2          | Katharina_2 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | Kelly_Hx  |
-| 187 | RNA_P557_S47   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_091_S47_quant/quant.sf                |    31 | RNA_P557_091_S47         | P557       | L001 |   7715 | 2018-09-14 | Kelly CRISPR Hif1.3 P14 Hx 24h  |   583.24 | Hx        | HIF1A    | P557         | P14       | Hif1a_1.3 | Kelly    | L001   | S47       | RNA_91      | Katharina  | 2018-09-14      | 2          | Katharina_2 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | HIF1A_Hx  |
-| 188 | RNA_P557_S48   | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_092_S48_quant/quant.sf                |    32 | RNA_P557_092_S48         | P557       | L001 |   7716 | 2018-09-14 | Kelly CRISPR HifL2.2 P14 Hx 24h |   644.24 | Hx        | HIF2A    | P557         | P14       | Hif2a_2.2 | Kelly    | L001   | S48       | RNA_92      | Katharina  | 2018-09-14      | 2          | Katharina_2 |      NA | NA                           | NA                          | NA     |           NA |           NA | NA           | HIF2A_Hx  |
-| 1   | RNA_P2041_S37  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10619_S37_L003_quant/quant.sf            |    33 | RNA_P2041_10619_S37_L003 | P2041      | L003 |   6952 | 2017-05-04 | Kelly CRISPR Cas Hif LV1 Nx 24h |       NA | Nx        | Kelly    | P2041        | NA        | LV_1      | Kelly    | L003   | S37       | RNA_10619   | Control    | 2017-05-04      | 0          | Control_0   |   10619 | LV                           | NA                          | RNA_01 |           NA |           NA | NA           | Kelly_Nx  |
-| 2   | RNA_P2041_S38  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10621_S38_L003_quant/quant.sf            |    34 | RNA_P2041_10621_S38_L003 | P2041      | L003 |  10185 | 2021-06-16 | Kelly Hif1b.sg1+2 Klon 9 Nx     |       NA | Nx        | HIF1B    | P2041        | NA        | Hif1b_9   | Kelly    | L003   | S38       | RNA_10621   | Simon      | 2021-06-16      | 1          | Simon_1     |   10621 | LV                           | LV                          | RNA_03 |           NA |           NA | NA           | HIF1B_Nx  |
-| 3   | RNA_P2041_S39  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10625_S39_L003_quant/quant.sf            |    35 | RNA_P2041_10625_S39_L003 | P2041      | L003 |  10186 | 2021-06-16 | Kelly Hif1b.sg1+2 Klon 9 Hx     |       NA | Hx        | HIF1B    | P2041        | NA        | Hif1b_9   | Kelly    | L003   | S39       | RNA_10744   | Simon      | 2021-06-16      | 1          | Simon_1     |   10744 | LV                           | LV                          | RNA_04 |           NA |           NA | NA           | HIF1B_Hx  |
-| 4   | RNA_P2041_S40  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10631_S40_L003_quant/quant.sf            |    36 | RNA_P2041_10631_S40_L003 | P2041      | L003 |  10189 | 2021-06-16 | Kelly Hif1b.sg1+2 Klon 15 Nx    |       NA | Nx        | HIF1B    | P2041        | NA        | Hif1b_15  | Kelly    | L003   | S40       | RNA_10745   | Simon      | 2021-06-16      | 1          | Simon_1     |   10745 | NA                           | NA                          | RNA_05 |           NA |           NA | NA           | HIF1B_Nx  |
-| 5   | RNA_P2041_S41  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10632_S41_L003_quant/quant.sf            |    37 | RNA_P2041_10632_S41_L003 | P2041      | L003 |  10268 | 2021-08-25 | Kelly LV.1 Nx                   |       NA | Nx        | Kelly    | P2041        | NA        | LV_1      | Kelly    | L003   | S41       | RNA_10754   | Simon      | 2021-08-25      | 4          | Simon_4     |   10754 | del_Hif1a1.3                 | del_Hif1a1.3                | RNA_11 |           NA |           NA | NA           | Kelly_Nx  |
-| 6   | RNA_P2041_S42  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10635_S42_L003_quant/quant.sf            |    38 | RNA_P2041_10635_S42_L003 | P2041      | L003 |  10269 | 2021-08-25 | Kelly LV.1 Hx                   |       NA | Hx        | Kelly    | P2041        | NA        | LV_1      | Kelly    | L003   | S42       | RNA_10755   | Simon      | 2021-08-25      | 4          | Simon_4     |   10755 | NA                           | del_Hif1a1.6                | RNA_12 |           NA |           NA | NA           | Kelly_Hx  |
-| 7   | RNA_P2041_S43  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10636_S43_L003_quant/quant.sf            |    39 | RNA_P2041_10636_S43_L003 | P2041      | L003 |  10276 | 2021-08-25 | Kelly Hif1b 4.1 Nx              |       NA | Nx        | HIF1B    | P2041        | NA        | Hif1b_4   | Kelly    | L003   | S43       | RNA_10625   | Simon      | 2021-08-25      | 4          | Simon_4     |   10625 | NA                           | NA                          | RNA_15 |           NA |           NA | NA           | HIF1B_Nx  |
-| 8   | RNA_P2041_S44  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10637_S44_L003_quant/quant.sf            |    40 | RNA_P2041_10637_S44_L003 | P2041      | L003 |  10284 | 2021-08-25 | Kelly Hif1b 15.1 Nx             |       NA | Nx        | HIF1B    | P2041        | NA        | Hif1b_15  | Kelly    | L003   | S44       | RNA_10631   | Simon      | 2021-08-25      | 4          | Simon_4     |   10631 | delHif1b4.1                  | delHif1b4.1                 | RNA_21 |           NA |           NA | NA           | HIF1B_Nx  |
-| 9   | RNA_P2041_S45  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10638_S45_L003_quant/quant.sf            |    41 | RNA_P2041_10638_S45_L003 | P2041      | L003 |  10285 | 2021-08-25 | Kelly Hif1b 15.1 Hx             |       NA | Hx        | HIF1B    | P2041        | NA        | Hif1b_15  | Kelly    | L003   | S45       | RNA_10632   | Simon      | 2021-08-25      | 4          | Simon_4     |   10632 | delHif1b4.1                  | NA                          | RNA_22 |           NA |           NA | NA           | HIF1B_Hx  |
-| 10  | RNA_P2041_S46  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10640_S46_L003_quant/quant.sf            |    42 | RNA_P2041_10640_S46_L003 | P2041      | L003 |  10292 | 2021-08-27 | Kelly LV.1 Nx                   |       NA | Nx        | Kelly    | P2041        | NA        | LV_1      | Kelly    | L003   | S46       | RNA_10635   | Simon      | 2021-08-27      | 5          | Simon_5     |   10635 | delHif1b6.1                  | delHif1b6.1                 | RNA_25 |           NA |           NA | NA           | Kelly_Nx  |
-| 11  | RNA_P2041_S47  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10744_S47_L003_quant/quant.sf            |    43 | RNA_P2041_10744_S47_L003 | P2041      | L003 |  10293 | 2021-08-27 | Kelly LV.1 Hx                   |       NA | Hx        | Kelly    | P2041        | NA        | LV_1      | Kelly    | L003   | S47       | RNA_10636   | Simon      | 2021-08-27      | 5          | Simon_5     |   10636 | delHif1b9.1                  | delHif1b9.1                 | RNA_26 |           NA |           NA | NA           | Kelly_Hx  |
-| 12  | RNA_P2041_S48  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10745_S48_L003_quant/quant.sf            |    44 | RNA_P2041_10745_S48_L003 | P2041      | L003 |  10294 | 2021-08-27 | Kelly Hif1a 1.3 Nx              |       NA | Nx        | HIF1A    | P2041        | NA        | Hif1a_1.3 | Kelly    | L003   | S48       | RNA_10637   | Simon      | 2021-08-27      | 5          | Simon_5     |   10637 | Kelly Hif1b.sg1+2 Klon 9 Nx  | Kelly Hif1b.sg1+2 Klon 9 Hx | RNA_27 |           NA |           NA | NA           | HIF1A_Nx  |
-| 13  | RNA_P2041_S49  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10746_S49_L003_quant/quant.sf            |    45 | RNA_P2041_10746_S49_L003 | P2041      | L003 |  10295 | 2021-08-27 | Kelly Hif1a 1.3 Hx              |       NA | Hx        | HIF1A    | P2041        | NA        | Hif1a_1.3 | Kelly    | L003   | S49       | RNA_10638   | Simon      | 2021-08-27      | 5          | Simon_5     |   10638 | delHif1b10.1                 | delHif1b10.1                | RNA_28 |           NA |           NA | NA           | HIF1A_Hx  |
-| 14  | RNA_P2041_S50  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10747_S50_L003_quant/quant.sf            |    46 | RNA_P2041_10747_S50_L003 | P2041      | L003 |  10297 | 2021-08-27 | Kelly Hif1a 1.6 Hx              |       NA | Hx        | HIF1A    | P2041        | NA        | Hif1a_1.6 | Kelly    | L003   | S50       | RNA_10640   | Simon      | 2021-08-27      | 5          | Simon_5     |   10640 | delHif1b15.1                 | delHif1b15.1                | RNA_30 |           NA |           NA | NA           | HIF1A_Hx  |
-| 15  | RNA_P2041_S51  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10748_S51_L003_quant/quant.sf            |    47 | RNA_P2041_10748_S51_L003 | P2041      | L003 |  10300 | 2021-08-27 | Kelly Hif1b 4.1 Nx              |       NA | Nx        | HIF1B    | P2041        | NA        | Hif1b_4   | Kelly    | L003   | S51       | RNA_10746   | Simon      | 2021-08-27      | 5          | Simon_5     |   10746 | Kelly Hif1b.sg1+2 Klon 15 Nx | NA                          | RNA_33 |           NA |           NA | NA           | HIF1B_Nx  |
-| 16  | RNA_P2041_S52  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10749_S52_L003_quant/quant.sf            |    48 | RNA_P2041_10749_S52_L003 | P2041      | L003 |  10301 | 2021-08-27 | Kelly Hif1b 4.1 Hx              |       NA | Hx        | HIF1B    | P2041        | NA        | Hif1b_4   | Kelly    | L003   | S52       | RNA_10747   | Simon      | 2021-08-27      | 5          | Simon_5     |   10747 | NA                           | NA                          | RNA_34 |           NA |           NA | NA           | HIF1B_Hx  |
-| 17  | RNA_P2041_S53  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10750_S53_L003_quant/quant.sf            |    49 | RNA_P2041_10750_S53_L003 | P2041      | L003 |  10302 | 2021-08-27 | Kelly Hif1b 6.1 Nx              |       NA | Nx        | HIF1B    | P2041        | NA        | Hif1b_6   | Kelly    | L003   | S53       | RNA_10748   | Simon      | 2021-08-27      | 5          | Simon_5     |   10748 | NA                           | NA                          | RNA_35 |           NA |           NA | NA           | HIF1B_Nx  |
-| 18  | RNA_P2041_S54  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10751_S54_L003_quant/quant.sf            |    50 | RNA_P2041_10751_S54_L003 | P2041      | L003 |  10303 | 2021-08-27 | Kelly Hif1b 6.1 Hx              |       NA | Hx        | HIF1B    | P2041        | NA        | Hif1b_6   | Kelly    | L003   | S54       | RNA_10749   | Simon      | 2021-08-27      | 5          | Simon_5     |   10749 | NA                           | NA                          | RNA_36 |           NA |           NA | NA           | HIF1B_Hx  |
-| 19  | RNA_P2041_S55  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10752_S55_L003_quant/quant.sf            |    51 | RNA_P2041_10752_S55_L003 | P2041      | L003 |  10304 | 2021-08-27 | Kelly Hif1b 9.1 Nx              |       NA | Nx        | HIF1B    | P2041        | NA        | Hif1b_9   | Kelly    | L003   | S55       | RNA_10750   | Simon      | 2021-08-27      | 5          | Simon_5     |   10750 | NA                           | NA                          | RNA_37 |           NA |           NA | NA           | HIF1B_Nx  |
-| 20  | RNA_P2041_S56  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10753_S56_L003_quant/quant.sf            |    52 | RNA_P2041_10753_S56_L003 | P2041      | L003 |  10305 | 2021-08-27 | Kelly Hif1b 9.1 Hx              |       NA | Hx        | HIF1B    | P2041        | NA        | Hif1b_9   | Kelly    | L003   | S56       | RNA_10751   | Simon      | 2021-08-27      | 5          | Simon_5     |   10751 | NA                           | NA                          | RNA_38 |           NA |           NA | NA           | HIF1B_Hx  |
-| 21  | RNA_P2041_S57  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10754_S57_L003_quant/quant.sf            |    53 | RNA_P2041_10754_S57_L003 | P2041      | L003 |  10306 | 2021-08-27 | Kelly Hif1b 10.1 Nx             |       NA | Nx        | HIF1B    | P2041        | NA        | Hif1b_10  | Kelly    | L003   | S57       | RNA_10752   | Simon      | 2021-08-27      | 5          | Simon_5     |   10752 | NA                           | NA                          | RNA_39 |           NA |           NA | NA           | HIF1B_Nx  |
-| 22  | RNA_P2041_S58  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10755_S58_L003_quant/quant.sf            |    54 | RNA_P2041_10755_S58_L003 | P2041      | L003 |  10307 | 2021-08-27 | Kelly Hif1b 10.1 Hx             |       NA | Hx        | HIF1B    | P2041        | NA        | Hif1b_10  | Kelly    | L003   | S58       | RNA_10753   | Simon      | 2021-08-27      | 5          | Simon_5     |   10753 | NA                           | NA                          | RNA_40 |           NA |           NA | NA           | HIF1B_Hx  |
-| 23  | RNA_P3302_S141 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_01_S141_L006_quant/quant.sf |    55 | RNA_P3302_01_S141_L006   | P3302      | L006 |  10897 | 2023-06-02 | Kelly LV1 (1:4) Nx 24 h         |    43.94 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S141      | RNA_01_L006 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11691 | NA                           | NA                          | NA     |           53 |    0.6341333 | 1:4          | Kelly_Nx  |
-| 24  | RNA_P3302_S141 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_01_S141_L007_quant/quant.sf |    56 | RNA_P3302_01_S141_L007   | P3302      | L007 |  10897 | 2023-06-02 | Kelly LV1 (1:4) Nx 24 h         |    43.94 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S141      | RNA_01_L007 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11691 | NA                           | NA                          | NA     |           53 |    0.6341333 | 1:4          | Kelly_Nx  |
-| 25  | RNA_P3302_S141 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_01_S141_L008_quant/quant.sf |    57 | RNA_P3302_01_S141_L008   | P3302      | L008 |  10897 | 2023-06-02 | Kelly LV1 (1:4) Nx 24 h         |    43.94 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S141      | RNA_01_L008 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11691 | NA                           | NA                          | NA     |           53 |    0.6341333 | 1:4          | Kelly_Nx  |
-| 26  | RNA_P3302_S142 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_02_S142_L006_quant/quant.sf |    58 | RNA_P3302_02_S142_L006   | P3302      | L006 |  10898 | 2023-06-02 | Kelly LV1 (1:5) Nx 24 h         |    39.08 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S142      | RNA_02_L006 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11692 | NA                           | NA                          | NA     |           54 |    0.5348000 | 1:5          | Kelly_Nx  |
-| 27  | RNA_P3302_S142 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_02_S142_L007_quant/quant.sf |    59 | RNA_P3302_02_S142_L007   | P3302      | L007 |  10898 | 2023-06-02 | Kelly LV1 (1:5) Nx 24 h         |    39.08 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S142      | RNA_02_L007 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11692 | NA                           | NA                          | NA     |           54 |    0.5348000 | 1:5          | Kelly_Nx  |
-| 28  | RNA_P3302_S142 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_02_S142_L008_quant/quant.sf |    60 | RNA_P3302_02_S142_L008   | P3302      | L008 |  10898 | 2023-06-02 | Kelly LV1 (1:5) Nx 24 h         |    39.08 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S142      | RNA_02_L008 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11692 | NA                           | NA                          | NA     |           54 |    0.5348000 | 1:5          | Kelly_Nx  |
-| 29  | RNA_P3302_S143 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_03_S143_L006_quant/quant.sf |    61 | RNA_P3302_03_S143_L006   | P3302      | L006 |  10899 | 2023-06-02 | Kelly Hif1.3 (1:4) Nx 24 h      |    38.28 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S143      | RNA_03_L006 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11693 | NA                           | NA                          | NA     |           55 |    0.9412000 | 1:4          | HIF1A_Nx  |
-| 30  | RNA_P3302_S143 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_03_S143_L007_quant/quant.sf |    62 | RNA_P3302_03_S143_L007   | P3302      | L007 |  10899 | 2023-06-02 | Kelly Hif1.3 (1:4) Nx 24 h      |    38.28 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S143      | RNA_03_L007 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11693 | NA                           | NA                          | NA     |           55 |    0.9412000 | 1:4          | HIF1A_Nx  |
-| 31  | RNA_P3302_S143 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_03_S143_L008_quant/quant.sf |    63 | RNA_P3302_03_S143_L008   | P3302      | L008 |  10899 | 2023-06-02 | Kelly Hif1.3 (1:4) Nx 24 h      |    38.28 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S143      | RNA_03_L008 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11693 | NA                           | NA                          | NA     |           55 |    0.9412000 | 1:4          | HIF1A_Nx  |
-| 32  | RNA_P3302_S144 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_04_S144_L006_quant/quant.sf |    64 | RNA_P3302_04_S144_L006   | P3302      | L006 |  10900 | 2023-06-02 | Kelly Hif1.3 (1:5) Nx 24 h      |    47.48 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S144      | RNA_04_L006 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11694 | NA                           | NA                          | NA     |           56 |    0.6804000 | 1:5          | HIF1A_Nx  |
-| 33  | RNA_P3302_S144 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_04_S144_L007_quant/quant.sf |    65 | RNA_P3302_04_S144_L007   | P3302      | L007 |  10900 | 2023-06-02 | Kelly Hif1.3 (1:5) Nx 24 h      |    47.48 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S144      | RNA_04_L007 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11694 | NA                           | NA                          | NA     |           56 |    0.6804000 | 1:5          | HIF1A_Nx  |
-| 34  | RNA_P3302_S144 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_04_S144_L008_quant/quant.sf |    66 | RNA_P3302_04_S144_L008   | P3302      | L008 |  10900 | 2023-06-02 | Kelly Hif1.3 (1:5) Nx 24 h      |    47.48 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S144      | RNA_04_L008 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11694 | NA                           | NA                          | NA     |           56 |    0.6804000 | 1:5          | HIF1A_Nx  |
-| 35  | RNA_P3302_S145 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_05_S145_L006_quant/quant.sf |    67 | RNA_P3302_05_S145_L006   | P3302      | L006 |  10901 | 2023-06-02 | Kelly Hif2.2 (1:5) Nx 24 h      |    54.88 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S145      | RNA_05_L006 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11695 | NA                           | NA                          | NA     |           57 |    1.6428000 | 1:5          | HIF2A_Nx  |
-| 36  | RNA_P3302_S145 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_05_S145_L007_quant/quant.sf |    68 | RNA_P3302_05_S145_L007   | P3302      | L007 |  10901 | 2023-06-02 | Kelly Hif2.2 (1:5) Nx 24 h      |    54.88 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S145      | RNA_05_L007 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11695 | NA                           | NA                          | NA     |           57 |    1.6428000 | 1:5          | HIF2A_Nx  |
-| 37  | RNA_P3302_S145 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_05_S145_L008_quant/quant.sf |    69 | RNA_P3302_05_S145_L008   | P3302      | L008 |  10901 | 2023-06-02 | Kelly Hif2.2 (1:5) Nx 24 h      |    54.88 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S145      | RNA_05_L008 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11695 | NA                           | NA                          | NA     |           57 |    1.6428000 | 1:5          | HIF2A_Nx  |
-| 38  | RNA_P3302_S146 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_06_S146_L006_quant/quant.sf |    70 | RNA_P3302_06_S146_L006   | P3302      | L006 |  10902 | 2023-06-02 | Kelly Hif2.2 (1:6) Nx 24 h      |    42.76 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S146      | RNA_06_L006 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11696 | NA                           | NA                          | NA     |           58 |    1.0744000 | 1:6          | HIF2A_Nx  |
-| 39  | RNA_P3302_S146 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_06_S146_L007_quant/quant.sf |    71 | RNA_P3302_06_S146_L007   | P3302      | L007 |  10902 | 2023-06-02 | Kelly Hif2.2 (1:6) Nx 24 h      |    42.76 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S146      | RNA_06_L007 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11696 | NA                           | NA                          | NA     |           58 |    1.0744000 | 1:6          | HIF2A_Nx  |
-| 40  | RNA_P3302_S146 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_06_S146_L008_quant/quant.sf |    72 | RNA_P3302_06_S146_L008   | P3302      | L008 |  10902 | 2023-06-02 | Kelly Hif2.2 (1:6) Nx 24 h      |    42.76 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S146      | RNA_06_L008 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11696 | NA                           | NA                          | NA     |           58 |    1.0744000 | 1:6          | HIF2A_Nx  |
-| 41  | RNA_P3302_S147 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_07_S147_L006_quant/quant.sf |    73 | RNA_P3302_07_S147_L006   | P3302      | L006 |  10903 | 2023-06-02 | Kelly LV1 (1:4) Hx 24 h         |    44.04 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S147      | RNA_07_L006 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11697 | NA                           | NA                          | NA     |           59 |    0.5322000 | 1:4          | Kelly_Hx  |
-| 42  | RNA_P3302_S147 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_07_S147_L007_quant/quant.sf |    74 | RNA_P3302_07_S147_L007   | P3302      | L007 |  10903 | 2023-06-02 | Kelly LV1 (1:4) Hx 24 h         |    44.04 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S147      | RNA_07_L007 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11697 | NA                           | NA                          | NA     |           59 |    0.5322000 | 1:4          | Kelly_Hx  |
-| 43  | RNA_P3302_S147 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_07_S147_L008_quant/quant.sf |    75 | RNA_P3302_07_S147_L008   | P3302      | L008 |  10903 | 2023-06-02 | Kelly LV1 (1:4) Hx 24 h         |    44.04 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S147      | RNA_07_L008 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11697 | NA                           | NA                          | NA     |           59 |    0.5322000 | 1:4          | Kelly_Hx  |
-| 44  | RNA_P3302_S148 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_08_S148_L006_quant/quant.sf |    76 | RNA_P3302_08_S148_L006   | P3302      | L006 |  10904 | 2023-06-02 | Kelly LV1 (1:5) Hx 24 h         |    39.04 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S148      | RNA_08_L006 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11698 | NA                           | NA                          | NA     |           60 |    0.5182000 | 1:5          | Kelly_Hx  |
-| 45  | RNA_P3302_S148 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_08_S148_L007_quant/quant.sf |    77 | RNA_P3302_08_S148_L007   | P3302      | L007 |  10904 | 2023-06-02 | Kelly LV1 (1:5) Hx 24 h         |    39.04 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S148      | RNA_08_L007 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11698 | NA                           | NA                          | NA     |           60 |    0.5182000 | 1:5          | Kelly_Hx  |
-| 46  | RNA_P3302_S148 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_08_S148_L008_quant/quant.sf |    78 | RNA_P3302_08_S148_L008   | P3302      | L008 |  10904 | 2023-06-02 | Kelly LV1 (1:5) Hx 24 h         |    39.04 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S148      | RNA_08_L008 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11698 | NA                           | NA                          | NA     |           60 |    0.5182000 | 1:5          | Kelly_Hx  |
-| 47  | RNA_P3302_S149 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_09_S149_L006_quant/quant.sf |    79 | RNA_P3302_09_S149_L006   | P3302      | L006 |  10905 | 2023-06-02 | Kelly Hif1.3 (1:4) Hx 24 h      |    32.72 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S149      | RNA_09_L006 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11699 | NA                           | NA                          | NA     |           61 |    0.7236000 | 1:4          | HIF1A_Hx  |
-| 48  | RNA_P3302_S149 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_09_S149_L007_quant/quant.sf |    80 | RNA_P3302_09_S149_L007   | P3302      | L007 |  10905 | 2023-06-02 | Kelly Hif1.3 (1:4) Hx 24 h      |    32.72 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S149      | RNA_09_L007 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11699 | NA                           | NA                          | NA     |           61 |    0.7236000 | 1:4          | HIF1A_Hx  |
-| 49  | RNA_P3302_S149 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_09_S149_L008_quant/quant.sf |    81 | RNA_P3302_09_S149_L008   | P3302      | L008 |  10905 | 2023-06-02 | Kelly Hif1.3 (1:4) Hx 24 h      |    32.72 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S149      | RNA_09_L008 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11699 | NA                           | NA                          | NA     |           61 |    0.7236000 | 1:4          | HIF1A_Hx  |
-| 50  | RNA_P3302_S150 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_10_S150_L006_quant/quant.sf |    82 | RNA_P3302_10_S150_L006   | P3302      | L006 |  10906 | 2023-06-02 | Kelly Hif1.3 (1:5) Hx 24 h      |    37.90 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S150      | RNA_10_L006 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11700 | NA                           | NA                          | NA     |           62 |    0.6082000 | 1:5          | HIF1A_Hx  |
-| 51  | RNA_P3302_S150 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_10_S150_L007_quant/quant.sf |    83 | RNA_P3302_10_S150_L007   | P3302      | L007 |  10906 | 2023-06-02 | Kelly Hif1.3 (1:5) Hx 24 h      |    37.90 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S150      | RNA_10_L007 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11700 | NA                           | NA                          | NA     |           62 |    0.6082000 | 1:5          | HIF1A_Hx  |
-| 52  | RNA_P3302_S150 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_10_S150_L008_quant/quant.sf |    84 | RNA_P3302_10_S150_L008   | P3302      | L008 |  10906 | 2023-06-02 | Kelly Hif1.3 (1:5) Hx 24 h      |    37.90 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S150      | RNA_10_L008 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11700 | NA                           | NA                          | NA     |           62 |    0.6082000 | 1:5          | HIF1A_Hx  |
-| 53  | RNA_P3302_S151 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_11_S151_L006_quant/quant.sf |    85 | RNA_P3302_11_S151_L006   | P3302      | L006 |  10907 | 2023-06-02 | Kelly Hif2.2 (1:5) Hx 24 h      |    44.60 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S151      | RNA_11_L006 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11701 | NA                           | NA                          | NA     |           63 |    0.9692000 | 1:5          | HIF2A_Hx  |
-| 54  | RNA_P3302_S151 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_11_S151_L007_quant/quant.sf |    86 | RNA_P3302_11_S151_L007   | P3302      | L007 |  10907 | 2023-06-02 | Kelly Hif2.2 (1:5) Hx 24 h      |    44.60 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S151      | RNA_11_L007 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11701 | NA                           | NA                          | NA     |           63 |    0.9692000 | 1:5          | HIF2A_Hx  |
-| 55  | RNA_P3302_S151 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_11_S151_L008_quant/quant.sf |    87 | RNA_P3302_11_S151_L008   | P3302      | L008 |  10907 | 2023-06-02 | Kelly Hif2.2 (1:5) Hx 24 h      |    44.60 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S151      | RNA_11_L008 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11701 | NA                           | NA                          | NA     |           63 |    0.9692000 | 1:5          | HIF2A_Hx  |
-| 56  | RNA_P3302_S152 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_12_S152_L006_quant/quant.sf |    88 | RNA_P3302_12_S152_L006   | P3302      | L006 |  10908 | 2023-06-02 | Kelly Hif2.2 (1:6) Hx 24 h      |    42.68 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S152      | RNA_12_L006 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11702 | NA                           | NA                          | NA     |           64 |    0.7742000 | 1:6          | HIF2A_Hx  |
-| 57  | RNA_P3302_S152 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_12_S152_L007_quant/quant.sf |    89 | RNA_P3302_12_S152_L007   | P3302      | L007 |  10908 | 2023-06-02 | Kelly Hif2.2 (1:6) Hx 24 h      |    42.68 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S152      | RNA_12_L007 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11702 | NA                           | NA                          | NA     |           64 |    0.7742000 | 1:6          | HIF2A_Hx  |
-| 58  | RNA_P3302_S152 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_12_S152_L008_quant/quant.sf |    90 | RNA_P3302_12_S152_L008   | P3302      | L008 |  10908 | 2023-06-02 | Kelly Hif2.2 (1:6) Hx 24 h      |    42.68 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S152      | RNA_12_L008 | Ulrike     | 2023-06-02      | 1          | Ulrike_1    |   11702 | NA                           | NA                          | NA     |           64 |    0.7742000 | 1:6          | HIF2A_Hx  |
-| 59  | RNA_P3302_S153 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_13_S153_L006_quant/quant.sf |    91 | RNA_P3302_13_S153_L006   | P3302      | L006 |  10958 | 2023-06-08 | Kelly LV1 (1:3) Nx 24 h         |    50.80 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S153      | RNA_13_L006 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11703 | NA                           | NA                          | NA     |           65 |    1.1364000 | 1:3          | Kelly_Nx  |
-| 60  | RNA_P3302_S153 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_13_S153_L007_quant/quant.sf |    92 | RNA_P3302_13_S153_L007   | P3302      | L007 |  10958 | 2023-06-08 | Kelly LV1 (1:3) Nx 24 h         |    50.80 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S153      | RNA_13_L007 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11703 | NA                           | NA                          | NA     |           65 |    1.1364000 | 1:3          | Kelly_Nx  |
-| 61  | RNA_P3302_S153 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_13_S153_L008_quant/quant.sf |    93 | RNA_P3302_13_S153_L008   | P3302      | L008 |  10958 | 2023-06-08 | Kelly LV1 (1:3) Nx 24 h         |    50.80 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S153      | RNA_13_L008 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11703 | NA                           | NA                          | NA     |           65 |    1.1364000 | 1:3          | Kelly_Nx  |
-| 62  | RNA_P3302_S154 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_14_S154_L006_quant/quant.sf |    94 | RNA_P3302_14_S154_L006   | P3302      | L006 |  10959 | 2023-06-08 | Kelly LV1 (1:4) Nx 24 h         |    38.36 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S154      | RNA_14_L006 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11704 | NA                           | NA                          | NA     |           66 |    1.1176000 | 1:4          | Kelly_Nx  |
-| 63  | RNA_P3302_S154 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_14_S154_L007_quant/quant.sf |    95 | RNA_P3302_14_S154_L007   | P3302      | L007 |  10959 | 2023-06-08 | Kelly LV1 (1:4) Nx 24 h         |    38.36 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S154      | RNA_14_L007 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11704 | NA                           | NA                          | NA     |           66 |    1.1176000 | 1:4          | Kelly_Nx  |
-| 64  | RNA_P3302_S154 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_14_S154_L008_quant/quant.sf |    96 | RNA_P3302_14_S154_L008   | P3302      | L008 |  10959 | 2023-06-08 | Kelly LV1 (1:4) Nx 24 h         |    38.36 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S154      | RNA_14_L008 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11704 | NA                           | NA                          | NA     |           66 |    1.1176000 | 1:4          | Kelly_Nx  |
-| 65  | RNA_P3302_S155 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_15_S155_L006_quant/quant.sf |    97 | RNA_P3302_15_S155_L006   | P3302      | L006 |  10960 | 2023-06-08 | Kelly Hif1.3 (1:4) Nx 24 h      |    44.96 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S155      | RNA_15_L006 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11705 | NA                           | NA                          | NA     |           67 |    1.8268000 | 1:4          | HIF1A_Nx  |
-| 66  | RNA_P3302_S155 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_15_S155_L007_quant/quant.sf |    98 | RNA_P3302_15_S155_L007   | P3302      | L007 |  10960 | 2023-06-08 | Kelly Hif1.3 (1:4) Nx 24 h      |    44.96 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S155      | RNA_15_L007 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11705 | NA                           | NA                          | NA     |           67 |    1.8268000 | 1:4          | HIF1A_Nx  |
-| 67  | RNA_P3302_S155 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_15_S155_L008_quant/quant.sf |    99 | RNA_P3302_15_S155_L008   | P3302      | L008 |  10960 | 2023-06-08 | Kelly Hif1.3 (1:4) Nx 24 h      |    44.96 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S155      | RNA_15_L008 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11705 | NA                           | NA                          | NA     |           67 |    1.8268000 | 1:4          | HIF1A_Nx  |
-| 68  | RNA_P3302_S156 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_16_S156_L006_quant/quant.sf |   100 | RNA_P3302_16_S156_L006   | P3302      | L006 |  10962 | 2023-06-08 | Kelly Hif2.2 (1:4) Nx 24 h      |    51.34 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S156      | RNA_16_L006 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11706 | NA                           | NA                          | NA     |           68 |    1.4206000 | 1:4          | HIF2A_Nx  |
-| 69  | RNA_P3302_S156 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_16_S156_L007_quant/quant.sf |   101 | RNA_P3302_16_S156_L007   | P3302      | L007 |  10962 | 2023-06-08 | Kelly Hif2.2 (1:4) Nx 24 h      |    51.34 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S156      | RNA_16_L007 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11706 | NA                           | NA                          | NA     |           68 |    1.4206000 | 1:4          | HIF2A_Nx  |
-| 70  | RNA_P3302_S156 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_16_S156_L008_quant/quant.sf |   102 | RNA_P3302_16_S156_L008   | P3302      | L008 |  10962 | 2023-06-08 | Kelly Hif2.2 (1:4) Nx 24 h      |    51.34 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S156      | RNA_16_L008 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11706 | NA                           | NA                          | NA     |           68 |    1.4206000 | 1:4          | HIF2A_Nx  |
-| 71  | RNA_P3302_S157 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_17_S157_L006_quant/quant.sf |   103 | RNA_P3302_17_S157_L006   | P3302      | L006 |  10964 | 2023-06-08 | Kelly LV1 (1:3) Hx 24 h         |    43.90 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S157      | RNA_17_L006 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11707 | NA                           | NA                          | NA     |           69 |    0.9176000 | 1:3          | Kelly_Hx  |
-| 72  | RNA_P3302_S157 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_17_S157_L007_quant/quant.sf |   104 | RNA_P3302_17_S157_L007   | P3302      | L007 |  10964 | 2023-06-08 | Kelly LV1 (1:3) Hx 24 h         |    43.90 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S157      | RNA_17_L007 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11707 | NA                           | NA                          | NA     |           69 |    0.9176000 | 1:3          | Kelly_Hx  |
-| 73  | RNA_P3302_S157 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_17_S157_L008_quant/quant.sf |   105 | RNA_P3302_17_S157_L008   | P3302      | L008 |  10964 | 2023-06-08 | Kelly LV1 (1:3) Hx 24 h         |    43.90 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S157      | RNA_17_L008 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11707 | NA                           | NA                          | NA     |           69 |    0.9176000 | 1:3          | Kelly_Hx  |
-| 74  | RNA_P3302_S158 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_18_S158_L006_quant/quant.sf |   106 | RNA_P3302_18_S158_L006   | P3302      | L006 |  10965 | 2023-06-08 | Kelly LV1 (1:4) Hx 24 h         |    36.62 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S158      | RNA_18_L006 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11708 | NA                           | NA                          | NA     |           70 |    0.9226000 | 1:4          | Kelly_Hx  |
-| 75  | RNA_P3302_S158 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_18_S158_L007_quant/quant.sf |   107 | RNA_P3302_18_S158_L007   | P3302      | L007 |  10965 | 2023-06-08 | Kelly LV1 (1:4) Hx 24 h         |    36.62 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S158      | RNA_18_L007 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11708 | NA                           | NA                          | NA     |           70 |    0.9226000 | 1:4          | Kelly_Hx  |
-| 76  | RNA_P3302_S158 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_18_S158_L008_quant/quant.sf |   108 | RNA_P3302_18_S158_L008   | P3302      | L008 |  10965 | 2023-06-08 | Kelly LV1 (1:4) Hx 24 h         |    36.62 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S158      | RNA_18_L008 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11708 | NA                           | NA                          | NA     |           70 |    0.9226000 | 1:4          | Kelly_Hx  |
-| 77  | RNA_P3302_S159 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_19_S159_L006_quant/quant.sf |   109 | RNA_P3302_19_S159_L006   | P3302      | L006 |  10966 | 2023-06-08 | Kelly Hif1.3 (1:4) Hx 24 h      |    46.80 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S159      | RNA_19_L006 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11709 | NA                           | NA                          | NA     |           71 |    1.0704000 | 1:4          | HIF1A_Hx  |
-| 78  | RNA_P3302_S159 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_19_S159_L007_quant/quant.sf |   110 | RNA_P3302_19_S159_L007   | P3302      | L007 |  10966 | 2023-06-08 | Kelly Hif1.3 (1:4) Hx 24 h      |    46.80 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S159      | RNA_19_L007 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11709 | NA                           | NA                          | NA     |           71 |    1.0704000 | 1:4          | HIF1A_Hx  |
-| 79  | RNA_P3302_S159 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_19_S159_L008_quant/quant.sf |   111 | RNA_P3302_19_S159_L008   | P3302      | L008 |  10966 | 2023-06-08 | Kelly Hif1.3 (1:4) Hx 24 h      |    46.80 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S159      | RNA_19_L008 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11709 | NA                           | NA                          | NA     |           71 |    1.0704000 | 1:4          | HIF1A_Hx  |
-| 80  | RNA_P3302_S160 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_20_S160_L006_quant/quant.sf |   112 | RNA_P3302_20_S160_L006   | P3302      | L006 |  10968 | 2023-06-08 | Kelly Hif2.2 (1:4) Hx 24 h      |    44.30 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S160      | RNA_20_L006 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11710 | NA                           | NA                          | NA     |           72 |    1.0128000 | 1:4          | HIF2A_Hx  |
-| 81  | RNA_P3302_S160 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_20_S160_L007_quant/quant.sf |   113 | RNA_P3302_20_S160_L007   | P3302      | L007 |  10968 | 2023-06-08 | Kelly Hif2.2 (1:4) Hx 24 h      |    44.30 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S160      | RNA_20_L007 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11710 | NA                           | NA                          | NA     |           72 |    1.0128000 | 1:4          | HIF2A_Hx  |
-| 82  | RNA_P3302_S160 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_20_S160_L008_quant/quant.sf |   114 | RNA_P3302_20_S160_L008   | P3302      | L008 |  10968 | 2023-06-08 | Kelly Hif2.2 (1:4) Hx 24 h      |    44.30 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S160      | RNA_20_L008 | Ulrike     | 2023-06-08      | 2          | Ulrike_2    |   11710 | NA                           | NA                          | NA     |           72 |    1.0128000 | 1:4          | HIF2A_Hx  |
-| 83  | RNA_P3302_S161 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_21_S161_L006_quant/quant.sf |   115 | RNA_P3302_21_S161_L006   | P3302      | L006 |  10970 | 2023-06-15 | Kelly LV1 (1:3) Nx 24 h         |    45.34 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S161      | RNA_21_L006 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11711 | NA                           | NA                          | NA     |           73 |    0.7006000 | 1:3          | Kelly_Nx  |
-| 84  | RNA_P3302_S161 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_21_S161_L007_quant/quant.sf |   116 | RNA_P3302_21_S161_L007   | P3302      | L007 |  10970 | 2023-06-15 | Kelly LV1 (1:3) Nx 24 h         |    45.34 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S161      | RNA_21_L007 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11711 | NA                           | NA                          | NA     |           73 |    0.7006000 | 1:3          | Kelly_Nx  |
-| 85  | RNA_P3302_S161 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_21_S161_L008_quant/quant.sf |   117 | RNA_P3302_21_S161_L008   | P3302      | L008 |  10970 | 2023-06-15 | Kelly LV1 (1:3) Nx 24 h         |    45.34 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S161      | RNA_21_L008 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11711 | NA                           | NA                          | NA     |           73 |    0.7006000 | 1:3          | Kelly_Nx  |
-| 86  | RNA_P3302_S162 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_22_S162_L006_quant/quant.sf |   118 | RNA_P3302_22_S162_L006   | P3302      | L006 |  10971 | 2023-06-15 | Kelly LV1 (1:2) Nx 24 h         |    52.00 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S162      | RNA_22_L006 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11712 | NA                           | NA                          | NA     |           74 |    1.0708000 | 1:2          | Kelly_Nx  |
-| 87  | RNA_P3302_S162 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_22_S162_L007_quant/quant.sf |   119 | RNA_P3302_22_S162_L007   | P3302      | L007 |  10971 | 2023-06-15 | Kelly LV1 (1:2) Nx 24 h         |    52.00 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S162      | RNA_22_L007 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11712 | NA                           | NA                          | NA     |           74 |    1.0708000 | 1:2          | Kelly_Nx  |
-| 88  | RNA_P3302_S162 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_22_S162_L008_quant/quant.sf |   120 | RNA_P3302_22_S162_L008   | P3302      | L008 |  10971 | 2023-06-15 | Kelly LV1 (1:2) Nx 24 h         |    52.00 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S162      | RNA_22_L008 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11712 | NA                           | NA                          | NA     |           74 |    1.0708000 | 1:2          | Kelly_Nx  |
-| 89  | RNA_P3302_S163 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_23_S163_L006_quant/quant.sf |   121 | RNA_P3302_23_S163_L006   | P3302      | L006 |  10973 | 2023-06-15 | Kelly Hif1.3 (1:2,5) Nx 24 h    |    50.60 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S163      | RNA_23_L006 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11713 | NA                           | NA                          | NA     |           75 |    1.0078000 | 1:2,5        | HIF1A_Nx  |
-| 90  | RNA_P3302_S163 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_23_S163_L007_quant/quant.sf |   122 | RNA_P3302_23_S163_L007   | P3302      | L007 |  10973 | 2023-06-15 | Kelly Hif1.3 (1:2,5) Nx 24 h    |    50.60 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S163      | RNA_23_L007 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11713 | NA                           | NA                          | NA     |           75 |    1.0078000 | 1:2,5        | HIF1A_Nx  |
-| 91  | RNA_P3302_S163 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_23_S163_L008_quant/quant.sf |   123 | RNA_P3302_23_S163_L008   | P3302      | L008 |  10973 | 2023-06-15 | Kelly Hif1.3 (1:2,5) Nx 24 h    |    50.60 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S163      | RNA_23_L008 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11713 | NA                           | NA                          | NA     |           75 |    1.0078000 | 1:2,5        | HIF1A_Nx  |
-| 92  | RNA_P3302_S164 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_24_S164_L006_quant/quant.sf |   124 | RNA_P3302_24_S164_L006   | P3302      | L006 |  10975 | 2023-06-15 | Kelly Hif2.2 (1:1,5) Nx 24 h    |    38.72 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S164      | RNA_24_L006 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11714 | NA                           | NA                          | NA     |           76 |    0.3678800 | 1:1,5        | HIF2A_Nx  |
-| 93  | RNA_P3302_S164 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_24_S164_L007_quant/quant.sf |   125 | RNA_P3302_24_S164_L007   | P3302      | L007 |  10975 | 2023-06-15 | Kelly Hif2.2 (1:1,5) Nx 24 h    |    38.72 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S164      | RNA_24_L007 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11714 | NA                           | NA                          | NA     |           76 |    0.3678800 | 1:1,5        | HIF2A_Nx  |
-| 94  | RNA_P3302_S164 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_24_S164_L008_quant/quant.sf |   126 | RNA_P3302_24_S164_L008   | P3302      | L008 |  10975 | 2023-06-15 | Kelly Hif2.2 (1:1,5) Nx 24 h    |    38.72 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S164      | RNA_24_L008 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11714 | NA                           | NA                          | NA     |           76 |    0.3678800 | 1:1,5        | HIF2A_Nx  |
-| 95  | RNA_P3302_S165 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_25_S165_L006_quant/quant.sf |   127 | RNA_P3302_25_S165_L006   | P3302      | L006 |  10976 | 2023-06-15 | Kelly LV1 (1:3) Hx 24 h         |    43.44 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S165      | RNA_25_L006 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11715 | NA                           | NA                          | NA     |           77 |    0.5788000 | 1:3          | Kelly_Hx  |
-| 96  | RNA_P3302_S165 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_25_S165_L007_quant/quant.sf |   128 | RNA_P3302_25_S165_L007   | P3302      | L007 |  10976 | 2023-06-15 | Kelly LV1 (1:3) Hx 24 h         |    43.44 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S165      | RNA_25_L007 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11715 | NA                           | NA                          | NA     |           77 |    0.5788000 | 1:3          | Kelly_Hx  |
-| 97  | RNA_P3302_S165 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_25_S165_L008_quant/quant.sf |   129 | RNA_P3302_25_S165_L008   | P3302      | L008 |  10976 | 2023-06-15 | Kelly LV1 (1:3) Hx 24 h         |    43.44 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S165      | RNA_25_L008 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11715 | NA                           | NA                          | NA     |           77 |    0.5788000 | 1:3          | Kelly_Hx  |
-| 98  | RNA_P3302_S166 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_26_S166_L006_quant/quant.sf |   130 | RNA_P3302_26_S166_L006   | P3302      | L006 |  10977 | 2023-06-15 | Kelly LV1 (1:2) Hx 24 h         |    42.80 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S166      | RNA_26_L006 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11716 | NA                           | NA                          | NA     |           78 |    0.8558000 | 1:2          | Kelly_Hx  |
-| 99  | RNA_P3302_S166 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_26_S166_L007_quant/quant.sf |   131 | RNA_P3302_26_S166_L007   | P3302      | L007 |  10977 | 2023-06-15 | Kelly LV1 (1:2) Hx 24 h         |    42.80 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S166      | RNA_26_L007 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11716 | NA                           | NA                          | NA     |           78 |    0.8558000 | 1:2          | Kelly_Hx  |
-| 100 | RNA_P3302_S166 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_26_S166_L008_quant/quant.sf |   132 | RNA_P3302_26_S166_L008   | P3302      | L008 |  10977 | 2023-06-15 | Kelly LV1 (1:2) Hx 24 h         |    42.80 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S166      | RNA_26_L008 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11716 | NA                           | NA                          | NA     |           78 |    0.8558000 | 1:2          | Kelly_Hx  |
-| 101 | RNA_P3302_S167 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_27_S167_L006_quant/quant.sf |   133 | RNA_P3302_27_S167_L006   | P3302      | L006 |  10979 | 2023-06-15 | Kelly Hif1.3 (1:2,5) Hx 24 h    |    43.48 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S167      | RNA_27_L006 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11717 | NA                           | NA                          | NA     |           79 |    0.8950000 | 1:2,5        | HIF1A_Hx  |
-| 102 | RNA_P3302_S167 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_27_S167_L007_quant/quant.sf |   134 | RNA_P3302_27_S167_L007   | P3302      | L007 |  10979 | 2023-06-15 | Kelly Hif1.3 (1:2,5) Hx 24 h    |    43.48 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S167      | RNA_27_L007 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11717 | NA                           | NA                          | NA     |           79 |    0.8950000 | 1:2,5        | HIF1A_Hx  |
-| 103 | RNA_P3302_S167 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_27_S167_L008_quant/quant.sf |   135 | RNA_P3302_27_S167_L008   | P3302      | L008 |  10979 | 2023-06-15 | Kelly Hif1.3 (1:2,5) Hx 24 h    |    43.48 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S167      | RNA_27_L008 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11717 | NA                           | NA                          | NA     |           79 |    0.8950000 | 1:2,5        | HIF1A_Hx  |
-| 104 | RNA_P3302_S168 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_28_S168_L006_quant/quant.sf |   136 | RNA_P3302_28_S168_L006   | P3302      | L006 |  10981 | 2023-06-15 | Kelly Hif2.2 (1:1,5) Hx 24 h    |    41.82 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S168      | RNA_28_L006 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11718 | NA                           | NA                          | NA     |           80 |    0.3785600 | 1:1,5        | HIF2A_Hx  |
-| 105 | RNA_P3302_S168 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_28_S168_L007_quant/quant.sf |   137 | RNA_P3302_28_S168_L007   | P3302      | L007 |  10981 | 2023-06-15 | Kelly Hif2.2 (1:1,5) Hx 24 h    |    41.82 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S168      | RNA_28_L007 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11718 | NA                           | NA                          | NA     |           80 |    0.3785600 | 1:1,5        | HIF2A_Hx  |
-| 106 | RNA_P3302_S168 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_28_S168_L008_quant/quant.sf |   138 | RNA_P3302_28_S168_L008   | P3302      | L008 |  10981 | 2023-06-15 | Kelly Hif2.2 (1:1,5) Hx 24 h    |    41.82 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S168      | RNA_28_L008 | Ulrike     | 2023-06-15      | 3          | Ulrike_3    |   11718 | NA                           | NA                          | NA     |           80 |    0.3785600 | 1:1,5        | HIF2A_Hx  |
-| 107 | RNA_P3302_S169 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_29_S169_L006_quant/quant.sf |   139 | RNA_P3302_29_S169_L006   | P3302      | L006 |  10982 | 2023-06-28 | Kelly LV1 (300000) Nx 24 h      |    43.62 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S169      | RNA_29_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11719 | NA                           | NA                          | NA     |           81 |    1.2068000 | 300000       | Kelly_Nx  |
-| 108 | RNA_P3302_S169 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_29_S169_L007_quant/quant.sf |   140 | RNA_P3302_29_S169_L007   | P3302      | L007 |  10982 | 2023-06-28 | Kelly LV1 (300000) Nx 24 h      |    43.62 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S169      | RNA_29_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11719 | NA                           | NA                          | NA     |           81 |    1.2068000 | 300000       | Kelly_Nx  |
-| 109 | RNA_P3302_S169 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_29_S169_L008_quant/quant.sf |   141 | RNA_P3302_29_S169_L008   | P3302      | L008 |  10982 | 2023-06-28 | Kelly LV1 (300000) Nx 24 h      |    43.62 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S169      | RNA_29_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11719 | NA                           | NA                          | NA     |           81 |    1.2068000 | 300000       | Kelly_Nx  |
-| 110 | RNA_P3302_S170 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_30_S170_L006_quant/quant.sf |   142 | RNA_P3302_30_S170_L006   | P3302      | L006 |  10983 | 2023-06-28 | Kelly LV1 (300000) Nx 24 h      |    47.26 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S170      | RNA_30_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11720 | NA                           | NA                          | NA     |           82 |    1.0424000 | 300000       | Kelly_Nx  |
-| 111 | RNA_P3302_S170 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_30_S170_L007_quant/quant.sf |   143 | RNA_P3302_30_S170_L007   | P3302      | L007 |  10983 | 2023-06-28 | Kelly LV1 (300000) Nx 24 h      |    47.26 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S170      | RNA_30_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11720 | NA                           | NA                          | NA     |           82 |    1.0424000 | 300000       | Kelly_Nx  |
-| 112 | RNA_P3302_S170 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_30_S170_L008_quant/quant.sf |   144 | RNA_P3302_30_S170_L008   | P3302      | L008 |  10983 | 2023-06-28 | Kelly LV1 (300000) Nx 24 h      |    47.26 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S170      | RNA_30_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11720 | NA                           | NA                          | NA     |           82 |    1.0424000 | 300000       | Kelly_Nx  |
-| 113 | RNA_P3302_S171 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_31_S171_L006_quant/quant.sf |   145 | RNA_P3302_31_S171_L006   | P3302      | L006 |  10984 | 2023-06-28 | Kelly Hif1.3 (300000) Nx 24 h   |    40.36 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S171      | RNA_31_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11721 | NA                           | NA                          | NA     |           83 |    0.7122000 | 300000       | HIF1A_Nx  |
-| 114 | RNA_P3302_S171 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_31_S171_L007_quant/quant.sf |   146 | RNA_P3302_31_S171_L007   | P3302      | L007 |  10984 | 2023-06-28 | Kelly Hif1.3 (300000) Nx 24 h   |    40.36 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S171      | RNA_31_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11721 | NA                           | NA                          | NA     |           83 |    0.7122000 | 300000       | HIF1A_Nx  |
-| 115 | RNA_P3302_S171 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_31_S171_L008_quant/quant.sf |   147 | RNA_P3302_31_S171_L008   | P3302      | L008 |  10984 | 2023-06-28 | Kelly Hif1.3 (300000) Nx 24 h   |    40.36 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S171      | RNA_31_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11721 | NA                           | NA                          | NA     |           83 |    0.7122000 | 300000       | HIF1A_Nx  |
-| 116 | RNA_P3302_S172 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_32_S172_L006_quant/quant.sf |   148 | RNA_P3302_32_S172_L006   | P3302      | L006 |  10985 | 2023-06-28 | Kelly Hif1.3 (300000) Nx 24 h   |    44.40 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S172      | RNA_32_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11722 | NA                           | NA                          | NA     |           84 |    0.6078000 | 300000       | HIF1A_Nx  |
-| 117 | RNA_P3302_S172 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_32_S172_L007_quant/quant.sf |   149 | RNA_P3302_32_S172_L007   | P3302      | L007 |  10985 | 2023-06-28 | Kelly Hif1.3 (300000) Nx 24 h   |    44.40 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S172      | RNA_32_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11722 | NA                           | NA                          | NA     |           84 |    0.6078000 | 300000       | HIF1A_Nx  |
-| 118 | RNA_P3302_S172 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_32_S172_L008_quant/quant.sf |   150 | RNA_P3302_32_S172_L008   | P3302      | L008 |  10985 | 2023-06-28 | Kelly Hif1.3 (300000) Nx 24 h   |    44.40 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S172      | RNA_32_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11722 | NA                           | NA                          | NA     |           84 |    0.6078000 | 300000       | HIF1A_Nx  |
-| 119 | RNA_P3302_S173 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_33_S173_L006_quant/quant.sf |   151 | RNA_P3302_33_S173_L006   | P3302      | L006 |  10986 | 2023-06-28 | Kelly Hif2.2 (300000) Nx 24 h   |    46.68 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S173      | RNA_33_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11723 | NA                           | NA                          | NA     |           85 |    0.9514000 | 300000       | HIF2A_Nx  |
-| 120 | RNA_P3302_S173 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_33_S173_L007_quant/quant.sf |   152 | RNA_P3302_33_S173_L007   | P3302      | L007 |  10986 | 2023-06-28 | Kelly Hif2.2 (300000) Nx 24 h   |    46.68 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S173      | RNA_33_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11723 | NA                           | NA                          | NA     |           85 |    0.9514000 | 300000       | HIF2A_Nx  |
-| 121 | RNA_P3302_S173 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_33_S173_L008_quant/quant.sf |   153 | RNA_P3302_33_S173_L008   | P3302      | L008 |  10986 | 2023-06-28 | Kelly Hif2.2 (300000) Nx 24 h   |    46.68 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S173      | RNA_33_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11723 | NA                           | NA                          | NA     |           85 |    0.9514000 | 300000       | HIF2A_Nx  |
-| 122 | RNA_P3302_S174 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_34_S174_L006_quant/quant.sf |   154 | RNA_P3302_34_S174_L006   | P3302      | L006 |  10987 | 2023-06-28 | Kelly Hif2.2 (300000) Nx 24 h   |    41.78 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S174      | RNA_34_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11724 | NA                           | NA                          | NA     |           86 |    1.0252000 | 300000       | HIF2A_Nx  |
-| 123 | RNA_P3302_S174 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_34_S174_L007_quant/quant.sf |   155 | RNA_P3302_34_S174_L007   | P3302      | L007 |  10987 | 2023-06-28 | Kelly Hif2.2 (300000) Nx 24 h   |    41.78 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S174      | RNA_34_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11724 | NA                           | NA                          | NA     |           86 |    1.0252000 | 300000       | HIF2A_Nx  |
-| 124 | RNA_P3302_S174 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_34_S174_L008_quant/quant.sf |   156 | RNA_P3302_34_S174_L008   | P3302      | L008 |  10987 | 2023-06-28 | Kelly Hif2.2 (300000) Nx 24 h   |    41.78 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S174      | RNA_34_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11724 | NA                           | NA                          | NA     |           86 |    1.0252000 | 300000       | HIF2A_Nx  |
-| 125 | RNA_P3302_S175 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_35_S175_L006_quant/quant.sf |   157 | RNA_P3302_35_S175_L006   | P3302      | L006 |  10988 | 2023-06-28 | Kelly LV1 (600000) Nx 24 h      |    40.30 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S175      | RNA_35_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11725 | NA                           | NA                          | NA     |           87 |    0.6426000 | 600000       | Kelly_Nx  |
-| 126 | RNA_P3302_S175 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_35_S175_L007_quant/quant.sf |   158 | RNA_P3302_35_S175_L007   | P3302      | L007 |  10988 | 2023-06-28 | Kelly LV1 (600000) Nx 24 h      |    40.30 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S175      | RNA_35_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11725 | NA                           | NA                          | NA     |           87 |    0.6426000 | 600000       | Kelly_Nx  |
-| 127 | RNA_P3302_S175 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_35_S175_L008_quant/quant.sf |   159 | RNA_P3302_35_S175_L008   | P3302      | L008 |  10988 | 2023-06-28 | Kelly LV1 (600000) Nx 24 h      |    40.30 | Nx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S175      | RNA_35_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11725 | NA                           | NA                          | NA     |           87 |    0.6426000 | 600000       | Kelly_Nx  |
-| 128 | RNA_P3302_S176 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_36_S176_L006_quant/quant.sf |   160 | RNA_P3302_36_S176_L006   | P3302      | L006 |  10990 | 2023-06-28 | Kelly Hif1.3 (600000) Nx 24 h   |    57.14 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S176      | RNA_36_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11726 | NA                           | NA                          | NA     |           88 |    1.3212000 | 600000       | HIF1A_Nx  |
-| 129 | RNA_P3302_S176 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_36_S176_L007_quant/quant.sf |   161 | RNA_P3302_36_S176_L007   | P3302      | L007 |  10990 | 2023-06-28 | Kelly Hif1.3 (600000) Nx 24 h   |    57.14 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S176      | RNA_36_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11726 | NA                           | NA                          | NA     |           88 |    1.3212000 | 600000       | HIF1A_Nx  |
-| 130 | RNA_P3302_S176 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_36_S176_L008_quant/quant.sf |   162 | RNA_P3302_36_S176_L008   | P3302      | L008 |  10990 | 2023-06-28 | Kelly Hif1.3 (600000) Nx 24 h   |    57.14 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S176      | RNA_36_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11726 | NA                           | NA                          | NA     |           88 |    1.3212000 | 600000       | HIF1A_Nx  |
-| 131 | RNA_P3302_S177 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_37_S177_L006_quant/quant.sf |   163 | RNA_P3302_37_S177_L006   | P3302      | L006 |  10991 | 2023-06-28 | Kelly Hif1.3 (600000) Nx 24 h   |    57.84 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S177      | RNA_37_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11727 | NA                           | NA                          | NA     |           89 |    1.2904000 | 600000       | HIF1A_Nx  |
-| 132 | RNA_P3302_S177 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_37_S177_L007_quant/quant.sf |   164 | RNA_P3302_37_S177_L007   | P3302      | L007 |  10991 | 2023-06-28 | Kelly Hif1.3 (600000) Nx 24 h   |    57.84 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S177      | RNA_37_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11727 | NA                           | NA                          | NA     |           89 |    1.2904000 | 600000       | HIF1A_Nx  |
-| 133 | RNA_P3302_S177 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_37_S177_L008_quant/quant.sf |   165 | RNA_P3302_37_S177_L008   | P3302      | L008 |  10991 | 2023-06-28 | Kelly Hif1.3 (600000) Nx 24 h   |    57.84 | Nx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S177      | RNA_37_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11727 | NA                           | NA                          | NA     |           89 |    1.2904000 | 600000       | HIF1A_Nx  |
-| 134 | RNA_P3302_S178 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_38_S178_L006_quant/quant.sf |   166 | RNA_P3302_38_S178_L006   | P3302      | L006 |  10992 | 2023-06-28 | Kelly Hif2.2 (600000) Nx 24 h   |    58.74 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S178      | RNA_38_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11728 | NA                           | NA                          | NA     |           90 |    1.6632000 | 600000       | HIF2A_Nx  |
-| 135 | RNA_P3302_S178 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_38_S178_L007_quant/quant.sf |   167 | RNA_P3302_38_S178_L007   | P3302      | L007 |  10992 | 2023-06-28 | Kelly Hif2.2 (600000) Nx 24 h   |    58.74 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S178      | RNA_38_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11728 | NA                           | NA                          | NA     |           90 |    1.6632000 | 600000       | HIF2A_Nx  |
-| 136 | RNA_P3302_S178 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_38_S178_L008_quant/quant.sf |   168 | RNA_P3302_38_S178_L008   | P3302      | L008 |  10992 | 2023-06-28 | Kelly Hif2.2 (600000) Nx 24 h   |    58.74 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S178      | RNA_38_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11728 | NA                           | NA                          | NA     |           90 |    1.6632000 | 600000       | HIF2A_Nx  |
-| 137 | RNA_P3302_S179 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_39_S179_L006_quant/quant.sf |   169 | RNA_P3302_39_S179_L006   | P3302      | L006 |  10993 | 2023-06-28 | Kelly Hif2.2 (600000) Nx 24 h   |    58.12 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S179      | RNA_39_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11729 | NA                           | NA                          | NA     |           91 |    1.6054000 | 600000       | HIF2A_Nx  |
-| 138 | RNA_P3302_S179 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_39_S179_L007_quant/quant.sf |   170 | RNA_P3302_39_S179_L007   | P3302      | L007 |  10993 | 2023-06-28 | Kelly Hif2.2 (600000) Nx 24 h   |    58.12 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S179      | RNA_39_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11729 | NA                           | NA                          | NA     |           91 |    1.6054000 | 600000       | HIF2A_Nx  |
-| 139 | RNA_P3302_S179 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_39_S179_L008_quant/quant.sf |   171 | RNA_P3302_39_S179_L008   | P3302      | L008 |  10993 | 2023-06-28 | Kelly Hif2.2 (600000) Nx 24 h   |    58.12 | Nx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S179      | RNA_39_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11729 | NA                           | NA                          | NA     |           91 |    1.6054000 | 600000       | HIF2A_Nx  |
-| 140 | RNA_P3302_S180 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_40_S180_L006_quant/quant.sf |   172 | RNA_P3302_40_S180_L006   | P3302      | L006 |  10994 | 2023-06-28 | Kelly LV1 (300000) Hx 24 h      |    41.96 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S180      | RNA_40_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11730 | NA                           | NA                          | NA     |           92 |    0.9614667 | 300000       | Kelly_Hx  |
-| 141 | RNA_P3302_S180 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_40_S180_L007_quant/quant.sf |   173 | RNA_P3302_40_S180_L007   | P3302      | L007 |  10994 | 2023-06-28 | Kelly LV1 (300000) Hx 24 h      |    41.96 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S180      | RNA_40_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11730 | NA                           | NA                          | NA     |           92 |    0.9614667 | 300000       | Kelly_Hx  |
-| 142 | RNA_P3302_S180 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_40_S180_L008_quant/quant.sf |   174 | RNA_P3302_40_S180_L008   | P3302      | L008 |  10994 | 2023-06-28 | Kelly LV1 (300000) Hx 24 h      |    41.96 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S180      | RNA_40_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11730 | NA                           | NA                          | NA     |           92 |    0.9614667 | 300000       | Kelly_Hx  |
-| 143 | RNA_P3302_S181 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_41_S181_L006_quant/quant.sf |   175 | RNA_P3302_41_S181_L006   | P3302      | L006 |  10995 | 2023-06-28 | Kelly LV1 (300000) Hx 24 h      |    38.12 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S181      | RNA_41_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11731 | NA                           | NA                          | NA     |           93 |    0.8358000 | 300000       | Kelly_Hx  |
-| 144 | RNA_P3302_S181 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_41_S181_L007_quant/quant.sf |   176 | RNA_P3302_41_S181_L007   | P3302      | L007 |  10995 | 2023-06-28 | Kelly LV1 (300000) Hx 24 h      |    38.12 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S181      | RNA_41_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11731 | NA                           | NA                          | NA     |           93 |    0.8358000 | 300000       | Kelly_Hx  |
-| 145 | RNA_P3302_S181 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_41_S181_L008_quant/quant.sf |   177 | RNA_P3302_41_S181_L008   | P3302      | L008 |  10995 | 2023-06-28 | Kelly LV1 (300000) Hx 24 h      |    38.12 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S181      | RNA_41_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11731 | NA                           | NA                          | NA     |           93 |    0.8358000 | 300000       | Kelly_Hx  |
-| 146 | RNA_P3302_S182 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_42_S182_L006_quant/quant.sf |   178 | RNA_P3302_42_S182_L006   | P3302      | L006 |  10996 | 2023-06-28 | Kelly Hif1.3 (300000) Hx 24 h   |    40.54 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S182      | RNA_42_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11732 | NA                           | NA                          | NA     |           94 |    0.4784000 | 300000       | HIF1A_Hx  |
-| 147 | RNA_P3302_S182 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_42_S182_L007_quant/quant.sf |   179 | RNA_P3302_42_S182_L007   | P3302      | L007 |  10996 | 2023-06-28 | Kelly Hif1.3 (300000) Hx 24 h   |    40.54 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S182      | RNA_42_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11732 | NA                           | NA                          | NA     |           94 |    0.4784000 | 300000       | HIF1A_Hx  |
-| 148 | RNA_P3302_S182 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_42_S182_L008_quant/quant.sf |   180 | RNA_P3302_42_S182_L008   | P3302      | L008 |  10996 | 2023-06-28 | Kelly Hif1.3 (300000) Hx 24 h   |    40.54 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S182      | RNA_42_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11732 | NA                           | NA                          | NA     |           94 |    0.4784000 | 300000       | HIF1A_Hx  |
-| 149 | RNA_P3302_S183 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_43_S183_L006_quant/quant.sf |   181 | RNA_P3302_43_S183_L006   | P3302      | L006 |  10997 | 2023-06-28 | Kelly Hif1.3 (300000) Hx 24 h   |    37.76 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S183      | RNA_43_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11733 | NA                           | NA                          | NA     |           95 |    0.5528000 | 300000       | HIF1A_Hx  |
-| 150 | RNA_P3302_S183 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_43_S183_L007_quant/quant.sf |   182 | RNA_P3302_43_S183_L007   | P3302      | L007 |  10997 | 2023-06-28 | Kelly Hif1.3 (300000) Hx 24 h   |    37.76 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S183      | RNA_43_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11733 | NA                           | NA                          | NA     |           95 |    0.5528000 | 300000       | HIF1A_Hx  |
-| 151 | RNA_P3302_S183 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_43_S183_L008_quant/quant.sf |   183 | RNA_P3302_43_S183_L008   | P3302      | L008 |  10997 | 2023-06-28 | Kelly Hif1.3 (300000) Hx 24 h   |    37.76 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S183      | RNA_43_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11733 | NA                           | NA                          | NA     |           95 |    0.5528000 | 300000       | HIF1A_Hx  |
-| 152 | RNA_P3302_S184 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_44_S184_L006_quant/quant.sf |   184 | RNA_P3302_44_S184_L006   | P3302      | L006 |  10998 | 2023-06-28 | Kelly Hif2.2 (300000) Hx 24 h   |    38.72 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S184      | RNA_44_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11734 | NA                           | NA                          | NA     |           96 |    0.8372000 | 300000       | HIF2A_Hx  |
-| 153 | RNA_P3302_S184 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_44_S184_L007_quant/quant.sf |   185 | RNA_P3302_44_S184_L007   | P3302      | L007 |  10998 | 2023-06-28 | Kelly Hif2.2 (300000) Hx 24 h   |    38.72 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S184      | RNA_44_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11734 | NA                           | NA                          | NA     |           96 |    0.8372000 | 300000       | HIF2A_Hx  |
-| 154 | RNA_P3302_S184 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_44_S184_L008_quant/quant.sf |   186 | RNA_P3302_44_S184_L008   | P3302      | L008 |  10998 | 2023-06-28 | Kelly Hif2.2 (300000) Hx 24 h   |    38.72 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S184      | RNA_44_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11734 | NA                           | NA                          | NA     |           96 |    0.8372000 | 300000       | HIF2A_Hx  |
-| 155 | RNA_P3302_S185 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_45_S185_L006_quant/quant.sf |   187 | RNA_P3302_45_S185_L006   | P3302      | L006 |  10999 | 2023-06-28 | Kelly Hif2.2 (300000) Hx 24 h   |    41.78 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S185      | RNA_45_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11735 | NA                           | NA                          | NA     |           97 |    0.7554000 | 300000       | HIF2A_Hx  |
-| 156 | RNA_P3302_S185 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_45_S185_L007_quant/quant.sf |   188 | RNA_P3302_45_S185_L007   | P3302      | L007 |  10999 | 2023-06-28 | Kelly Hif2.2 (300000) Hx 24 h   |    41.78 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S185      | RNA_45_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11735 | NA                           | NA                          | NA     |           97 |    0.7554000 | 300000       | HIF2A_Hx  |
-| 157 | RNA_P3302_S185 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_45_S185_L008_quant/quant.sf |   189 | RNA_P3302_45_S185_L008   | P3302      | L008 |  10999 | 2023-06-28 | Kelly Hif2.2 (300000) Hx 24 h   |    41.78 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S185      | RNA_45_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11735 | NA                           | NA                          | NA     |           97 |    0.7554000 | 300000       | HIF2A_Hx  |
-| 158 | RNA_P3302_S186 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_46_S186_L006_quant/quant.sf |   190 | RNA_P3302_46_S186_L006   | P3302      | L006 |  11000 | 2023-06-28 | Kelly LV1 (600000) Hx 24 h      |    40.14 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S186      | RNA_46_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11736 | NA                           | NA                          | NA     |           98 |    0.3842400 | 600000       | Kelly_Hx  |
-| 159 | RNA_P3302_S186 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_46_S186_L007_quant/quant.sf |   191 | RNA_P3302_46_S186_L007   | P3302      | L007 |  11000 | 2023-06-28 | Kelly LV1 (600000) Hx 24 h      |    40.14 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S186      | RNA_46_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11736 | NA                           | NA                          | NA     |           98 |    0.3842400 | 600000       | Kelly_Hx  |
-| 160 | RNA_P3302_S186 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_46_S186_L008_quant/quant.sf |   192 | RNA_P3302_46_S186_L008   | P3302      | L008 |  11000 | 2023-06-28 | Kelly LV1 (600000) Hx 24 h      |    40.14 | Hx        | Kelly    | P3302        | NA        | LV1       | Kelly    | NA     | S186      | RNA_46_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11736 | NA                           | NA                          | NA     |           98 |    0.3842400 | 600000       | Kelly_Hx  |
-| 161 | RNA_P3302_S187 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_47_S187_L006_quant/quant.sf |   193 | RNA_P3302_47_S187_L006   | P3302      | L006 |  11002 | 2023-06-28 | Kelly Hif1.3 (600000) Hx 24 h   |    47.74 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S187      | RNA_47_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11737 | NA                           | NA                          | NA     |           99 |    0.9032000 | 600000       | HIF1A_Hx  |
-| 162 | RNA_P3302_S187 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_47_S187_L007_quant/quant.sf |   194 | RNA_P3302_47_S187_L007   | P3302      | L007 |  11002 | 2023-06-28 | Kelly Hif1.3 (600000) Hx 24 h   |    47.74 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S187      | RNA_47_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11737 | NA                           | NA                          | NA     |           99 |    0.9032000 | 600000       | HIF1A_Hx  |
-| 163 | RNA_P3302_S187 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_47_S187_L008_quant/quant.sf |   195 | RNA_P3302_47_S187_L008   | P3302      | L008 |  11002 | 2023-06-28 | Kelly Hif1.3 (600000) Hx 24 h   |    47.74 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S187      | RNA_47_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11737 | NA                           | NA                          | NA     |           99 |    0.9032000 | 600000       | HIF1A_Hx  |
-| 164 | RNA_P3302_S188 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_48_S188_L006_quant/quant.sf |   196 | RNA_P3302_48_S188_L006   | P3302      | L006 |  11003 | 2023-06-28 | Kelly Hif1.3 (600000) Hx 24 h   |    45.46 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S188      | RNA_48_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11738 | NA                           | NA                          | NA     |          100 |    0.9468000 | 600000       | HIF1A_Hx  |
-| 165 | RNA_P3302_S188 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_48_S188_L007_quant/quant.sf |   197 | RNA_P3302_48_S188_L007   | P3302      | L007 |  11003 | 2023-06-28 | Kelly Hif1.3 (600000) Hx 24 h   |    45.46 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S188      | RNA_48_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11738 | NA                           | NA                          | NA     |          100 |    0.9468000 | 600000       | HIF1A_Hx  |
-| 166 | RNA_P3302_S188 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_48_S188_L008_quant/quant.sf |   198 | RNA_P3302_48_S188_L008   | P3302      | L008 |  11003 | 2023-06-28 | Kelly Hif1.3 (600000) Hx 24 h   |    45.46 | Hx        | HIF1A    | P3302        | NA        | Hif1a_1.3 | Kelly    | NA     | S188      | RNA_48_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11738 | NA                           | NA                          | NA     |          100 |    0.9468000 | 600000       | HIF1A_Hx  |
-| 167 | RNA_P3302_S189 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_49_S189_L006_quant/quant.sf |   199 | RNA_P3302_49_S189_L006   | P3302      | L006 |  11004 | 2023-06-28 | Kelly Hif2.2 (600000) Hx 24 h   |    54.78 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S189      | RNA_49_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11739 | NA                           | NA                          | NA     |          101 |    1.2554000 | 600000       | HIF2A_Hx  |
-| 168 | RNA_P3302_S189 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_49_S189_L007_quant/quant.sf |   200 | RNA_P3302_49_S189_L007   | P3302      | L007 |  11004 | 2023-06-28 | Kelly Hif2.2 (600000) Hx 24 h   |    54.78 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S189      | RNA_49_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11739 | NA                           | NA                          | NA     |          101 |    1.2554000 | 600000       | HIF2A_Hx  |
-| 169 | RNA_P3302_S189 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_49_S189_L008_quant/quant.sf |   201 | RNA_P3302_49_S189_L008   | P3302      | L008 |  11004 | 2023-06-28 | Kelly Hif2.2 (600000) Hx 24 h   |    54.78 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S189      | RNA_49_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11739 | NA                           | NA                          | NA     |          101 |    1.2554000 | 600000       | HIF2A_Hx  |
-| 170 | RNA_P3302_S190 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_50_S190_L006_quant/quant.sf |   202 | RNA_P3302_50_S190_L006   | P3302      | L006 |  11005 | 2023-06-28 | Kelly Hif2.2 (600000) Hx 24 h   |    54.28 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S190      | RNA_50_L006 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11740 | NA                           | NA                          | NA     |          102 |    1.3440000 | 600000       | HIF2A_Hx  |
-| 171 | RNA_P3302_S190 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_50_S190_L007_quant/quant.sf |   203 | RNA_P3302_50_S190_L007   | P3302      | L007 |  11005 | 2023-06-28 | Kelly Hif2.2 (600000) Hx 24 h   |    54.28 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S190      | RNA_50_L007 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11740 | NA                           | NA                          | NA     |          102 |    1.3440000 | 600000       | HIF2A_Hx  |
-| 172 | RNA_P3302_S190 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_50_S190_L008_quant/quant.sf |   204 | RNA_P3302_50_S190_L008   | P3302      | L008 |  11005 | 2023-06-28 | Kelly Hif2.2 (600000) Hx 24 h   |    54.28 | Hx        | HIF2A    | P3302        | NA        | Hif2a_2.2 | Kelly    | NA     | S190      | RNA_50_L008 | Ulrike     | 2023-06-28      | 4          | Ulrike_4    |   11740 | NA                           | NA                          | NA     |          102 |    1.3440000 | 600000       | HIF2A_Hx  |
+</div>
 
 ``` r
 sample_table_all <- sample_table_all[order(sample_table_all$condition,sample_table_all$clone,sample_table_all$exp_rep),]
@@ -1174,43 +3166,18557 @@ sample_table_all <- sample_table_all[order(sample_table_all$condition,sample_tab
 write_xlsx(sample_table_all,
            paste("2024_02 Kelly all samples.xlsx",sep="/"))
 
-sample_table_all %>% head() %>% kable()
+sample_table_all %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-|     | samplename    | files                                                                                            | order | filename                 | sequencing | lane | rna_id | Datum      | Probe                           | rna_conc | treatment | genotype | sequencing.y | replicate | clone | cellline | lane.y | sample_id | run_id    | experiment | experiment_date | repetition | exp_rep     | CUGE-ID | Nx           | HX           | sample | order_number | Konz.(µg/µl) | cell_density | condition |
-|:----|:--------------|:-------------------------------------------------------------------------------------------------|------:|:-------------------------|:-----------|:-----|-------:|:-----------|:--------------------------------|---------:|:----------|:---------|:-------------|:----------|:------|:---------|:-------|:----------|:----------|:-----------|:----------------|:-----------|:------------|--------:|:-------------|:-------------|:-------|-------------:|-------------:|:-------------|:----------|
-| 1   | RNA_P2041_S37 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10619_S37_L003_quant/quant.sf |    33 | RNA_P2041_10619_S37_L003 | P2041      | L003 |   6952 | 2017-05-04 | Kelly CRISPR Cas Hif LV1 Nx 24h |       NA | Nx        | Kelly    | P2041        | NA        | LV_1  | Kelly    | L003   | S37       | RNA_10619 | Control    | 2017-05-04      | 0          | Control_0   |   10619 | LV           | NA           | RNA_01 |           NA |           NA | NA           | Kelly_Nx  |
-| 5   | RNA_P2041_S41 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10632_S41_L003_quant/quant.sf |    37 | RNA_P2041_10632_S41_L003 | P2041      | L003 |  10268 | 2021-08-25 | Kelly LV.1 Nx                   |       NA | Nx        | Kelly    | P2041        | NA        | LV_1  | Kelly    | L003   | S41       | RNA_10754 | Simon      | 2021-08-25      | 4          | Simon_4     |   10754 | del_Hif1a1.3 | del_Hif1a1.3 | RNA_11 |           NA |           NA | NA           | Kelly_Nx  |
-| 10  | RNA_P2041_S46 | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10640_S46_L003_quant/quant.sf |    42 | RNA_P2041_10640_S46_L003 | P2041      | L003 |  10292 | 2021-08-27 | Kelly LV.1 Nx                   |       NA | Nx        | Kelly    | P2041        | NA        | LV_1  | Kelly    | L003   | S46       | RNA_10635 | Simon      | 2021-08-27      | 5          | Simon_5     |   10635 | delHif1b6.1  | delHif1b6.1  | RNA_25 |           NA |           NA | NA           | Kelly_Nx  |
-| 173 | RNA_P557_S33  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_077_S33_quant/quant.sf     |    17 | RNA_P557_077_S33         | P557       | L001 |   7693 | 2018-09-13 | Kelly CRISPR Hif LV1 P7 Nx 24h  |   830.48 | Nx        | Kelly    | P557         | P7        | LV1   | Kelly    | L001   | S33       | RNA_77    | Katharina  | 2018-09-13      | 1          | Katharina_1 |      NA | NA           | NA           | NA     |           NA |           NA | NA           | Kelly_Nx  |
-| 177 | RNA_P557_S37  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_081_S37_quant/quant.sf     |    21 | RNA_P557_081_S37         | P557       | L001 |   7699 | 2018-09-13 | Kelly CRISPR Hif LV1 P7 Nx 24h  |   603.48 | Nx        | Kelly    | P557         | P7        | LV1   | Kelly    | L001   | S37       | RNA_81    | Katharina  | 2018-09-13      | 1          | Katharina_1 |      NA | NA           | NA           | NA     |           NA |           NA | NA           | Kelly_Nx  |
-| 181 | RNA_P557_S41  | /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_085_S41_quant/quant.sf     |    25 | RNA_P557_085_S41         | P557       | L001 |   7705 | 2018-09-14 | Kelly CRISPR Hif LV1 P8 Nx 24h  |   807.66 | Nx        | Kelly    | P557         | P8        | LV1   | Kelly    | L001   | S41       | RNA_85    | Katharina  | 2018-09-14      | 2          | Katharina_2 |      NA | NA           | NA           | NA     |           NA |           NA | NA           | Kelly_Nx  |
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+files
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+order
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+filename
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sequencing
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+lane
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Datum
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Probe
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_conc
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+treatment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+genotype
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sequencing.y
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+replicate
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+clone
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cellline
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+lane.y
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+run_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment_date
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+repetition
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+exp_rep
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+CUGE-ID
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Nx
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+HX
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+order_number
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Konz.(µg/µl)
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cell_density
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+condition
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10619_S37_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:left;">
+RNA_P2041_10619_S37_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+6952
+</td>
+<td style="text-align:left;">
+2017-05-04
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Cas Hif LV1 Nx 24h
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV_1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S37
+</td>
+<td style="text-align:left;">
+RNA_10619
+</td>
+<td style="text-align:left;">
+Control
+</td>
+<td style="text-align:left;">
+2017-05-04
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+Control_0
+</td>
+<td style="text-align:right;">
+10619
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10632_S41_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:left;">
+RNA_P2041_10632_S41_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10268
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+Kelly LV.1 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV_1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S41
+</td>
+<td style="text-align:left;">
+RNA_10754
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Simon_4
+</td>
+<td style="text-align:right;">
+10754
+</td>
+<td style="text-align:left;">
+del_Hif1a1.3
+</td>
+<td style="text-align:left;">
+del_Hif1a1.3
+</td>
+<td style="text-align:left;">
+RNA_11
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+10
+</td>
+<td style="text-align:left;">
+RNA_P2041_S46
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10640_S46_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+42
+</td>
+<td style="text-align:left;">
+RNA_P2041_10640_S46_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10292
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Kelly LV.1 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV_1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S46
+</td>
+<td style="text-align:left;">
+RNA_10635
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:right;">
+10635
+</td>
+<td style="text-align:left;">
+delHif1b6.1
+</td>
+<td style="text-align:left;">
+delHif1b6.1
+</td>
+<td style="text-align:left;">
+RNA_25
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+173
+</td>
+<td style="text-align:left;">
+RNA_P557_S33
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_077_S33_quant/quant.sf
+</td>
+<td style="text-align:right;">
+17
+</td>
+<td style="text-align:left;">
+RNA_P557_077_S33
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7693
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif LV1 P7 Nx 24h
+</td>
+<td style="text-align:right;">
+830.48
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P7
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S33
+</td>
+<td style="text-align:left;">
+RNA_77
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+177
+</td>
+<td style="text-align:left;">
+RNA_P557_S37
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_081_S37_quant/quant.sf
+</td>
+<td style="text-align:right;">
+21
+</td>
+<td style="text-align:left;">
+RNA_P557_081_S37
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7699
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif LV1 P7 Nx 24h
+</td>
+<td style="text-align:right;">
+603.48
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P7
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S37
+</td>
+<td style="text-align:left;">
+RNA_81
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+181
+</td>
+<td style="text-align:left;">
+RNA_P557_S41
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_085_S41_quant/quant.sf
+</td>
+<td style="text-align:right;">
+25
+</td>
+<td style="text-align:left;">
+RNA_P557_085_S41
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7705
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif LV1 P8 Nx 24h
+</td>
+<td style="text-align:right;">
+807.66
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P8
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S41
+</td>
+<td style="text-align:left;">
+RNA_85
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Katharina_2
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+185
+</td>
+<td style="text-align:left;">
+RNA_P557_S45
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_089_S45_quant/quant.sf
+</td>
+<td style="text-align:right;">
+29
+</td>
+<td style="text-align:left;">
+RNA_P557_089_S45
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7711
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif LV1 P8 Nx 24h
+</td>
+<td style="text-align:right;">
+694.64
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P8
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S45
+</td>
+<td style="text-align:left;">
+RNA_89
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Katharina_2
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+23
+</td>
+<td style="text-align:left;">
+RNA_P3302_S141
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_01_S141_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:left;">
+RNA_P3302_01_S141_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10897
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+43.94
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S141
+</td>
+<td style="text-align:left;">
+RNA_01_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11691
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+53
+</td>
+<td style="text-align:right;">
+0.6341333
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+24
+</td>
+<td style="text-align:left;">
+RNA_P3302_S141
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_01_S141_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+56
+</td>
+<td style="text-align:left;">
+RNA_P3302_01_S141_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10897
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+43.94
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S141
+</td>
+<td style="text-align:left;">
+RNA_01_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11691
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+53
+</td>
+<td style="text-align:right;">
+0.6341333
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+25
+</td>
+<td style="text-align:left;">
+RNA_P3302_S141
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_01_S141_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+57
+</td>
+<td style="text-align:left;">
+RNA_P3302_01_S141_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10897
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+43.94
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S141
+</td>
+<td style="text-align:left;">
+RNA_01_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11691
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+53
+</td>
+<td style="text-align:right;">
+0.6341333
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+26
+</td>
+<td style="text-align:left;">
+RNA_P3302_S142
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_02_S142_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+58
+</td>
+<td style="text-align:left;">
+RNA_P3302_02_S142_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10898
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:5) Nx 24 h
+</td>
+<td style="text-align:right;">
+39.08
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S142
+</td>
+<td style="text-align:left;">
+RNA_02_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11692
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+54
+</td>
+<td style="text-align:right;">
+0.5348000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+27
+</td>
+<td style="text-align:left;">
+RNA_P3302_S142
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_02_S142_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+59
+</td>
+<td style="text-align:left;">
+RNA_P3302_02_S142_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10898
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:5) Nx 24 h
+</td>
+<td style="text-align:right;">
+39.08
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S142
+</td>
+<td style="text-align:left;">
+RNA_02_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11692
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+54
+</td>
+<td style="text-align:right;">
+0.5348000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+28
+</td>
+<td style="text-align:left;">
+RNA_P3302_S142
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_02_S142_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+60
+</td>
+<td style="text-align:left;">
+RNA_P3302_02_S142_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10898
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:5) Nx 24 h
+</td>
+<td style="text-align:right;">
+39.08
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S142
+</td>
+<td style="text-align:left;">
+RNA_02_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11692
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+54
+</td>
+<td style="text-align:right;">
+0.5348000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+59
+</td>
+<td style="text-align:left;">
+RNA_P3302_S153
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_13_S153_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+91
+</td>
+<td style="text-align:left;">
+RNA_P3302_13_S153_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10958
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:3) Nx 24 h
+</td>
+<td style="text-align:right;">
+50.80
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S153
+</td>
+<td style="text-align:left;">
+RNA_13_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11703
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+65
+</td>
+<td style="text-align:right;">
+1.1364000
+</td>
+<td style="text-align:left;">
+1:3
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+60
+</td>
+<td style="text-align:left;">
+RNA_P3302_S153
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_13_S153_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+92
+</td>
+<td style="text-align:left;">
+RNA_P3302_13_S153_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10958
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:3) Nx 24 h
+</td>
+<td style="text-align:right;">
+50.80
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S153
+</td>
+<td style="text-align:left;">
+RNA_13_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11703
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+65
+</td>
+<td style="text-align:right;">
+1.1364000
+</td>
+<td style="text-align:left;">
+1:3
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+61
+</td>
+<td style="text-align:left;">
+RNA_P3302_S153
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_13_S153_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+93
+</td>
+<td style="text-align:left;">
+RNA_P3302_13_S153_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10958
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:3) Nx 24 h
+</td>
+<td style="text-align:right;">
+50.80
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S153
+</td>
+<td style="text-align:left;">
+RNA_13_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11703
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+65
+</td>
+<td style="text-align:right;">
+1.1364000
+</td>
+<td style="text-align:left;">
+1:3
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+62
+</td>
+<td style="text-align:left;">
+RNA_P3302_S154
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_14_S154_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+94
+</td>
+<td style="text-align:left;">
+RNA_P3302_14_S154_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10959
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+38.36
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S154
+</td>
+<td style="text-align:left;">
+RNA_14_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11704
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+66
+</td>
+<td style="text-align:right;">
+1.1176000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+63
+</td>
+<td style="text-align:left;">
+RNA_P3302_S154
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_14_S154_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+95
+</td>
+<td style="text-align:left;">
+RNA_P3302_14_S154_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10959
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+38.36
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S154
+</td>
+<td style="text-align:left;">
+RNA_14_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11704
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+66
+</td>
+<td style="text-align:right;">
+1.1176000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+64
+</td>
+<td style="text-align:left;">
+RNA_P3302_S154
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_14_S154_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+96
+</td>
+<td style="text-align:left;">
+RNA_P3302_14_S154_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10959
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+38.36
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S154
+</td>
+<td style="text-align:left;">
+RNA_14_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11704
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+66
+</td>
+<td style="text-align:right;">
+1.1176000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+83
+</td>
+<td style="text-align:left;">
+RNA_P3302_S161
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_21_S161_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+115
+</td>
+<td style="text-align:left;">
+RNA_P3302_21_S161_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10970
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:3) Nx 24 h
+</td>
+<td style="text-align:right;">
+45.34
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S161
+</td>
+<td style="text-align:left;">
+RNA_21_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11711
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+73
+</td>
+<td style="text-align:right;">
+0.7006000
+</td>
+<td style="text-align:left;">
+1:3
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+84
+</td>
+<td style="text-align:left;">
+RNA_P3302_S161
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_21_S161_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+116
+</td>
+<td style="text-align:left;">
+RNA_P3302_21_S161_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10970
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:3) Nx 24 h
+</td>
+<td style="text-align:right;">
+45.34
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S161
+</td>
+<td style="text-align:left;">
+RNA_21_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11711
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+73
+</td>
+<td style="text-align:right;">
+0.7006000
+</td>
+<td style="text-align:left;">
+1:3
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+85
+</td>
+<td style="text-align:left;">
+RNA_P3302_S161
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_21_S161_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+117
+</td>
+<td style="text-align:left;">
+RNA_P3302_21_S161_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10970
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:3) Nx 24 h
+</td>
+<td style="text-align:right;">
+45.34
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S161
+</td>
+<td style="text-align:left;">
+RNA_21_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11711
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+73
+</td>
+<td style="text-align:right;">
+0.7006000
+</td>
+<td style="text-align:left;">
+1:3
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+86
+</td>
+<td style="text-align:left;">
+RNA_P3302_S162
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_22_S162_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+118
+</td>
+<td style="text-align:left;">
+RNA_P3302_22_S162_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10971
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:2) Nx 24 h
+</td>
+<td style="text-align:right;">
+52.00
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S162
+</td>
+<td style="text-align:left;">
+RNA_22_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11712
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+74
+</td>
+<td style="text-align:right;">
+1.0708000
+</td>
+<td style="text-align:left;">
+1:2
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+87
+</td>
+<td style="text-align:left;">
+RNA_P3302_S162
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_22_S162_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+119
+</td>
+<td style="text-align:left;">
+RNA_P3302_22_S162_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10971
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:2) Nx 24 h
+</td>
+<td style="text-align:right;">
+52.00
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S162
+</td>
+<td style="text-align:left;">
+RNA_22_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11712
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+74
+</td>
+<td style="text-align:right;">
+1.0708000
+</td>
+<td style="text-align:left;">
+1:2
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+88
+</td>
+<td style="text-align:left;">
+RNA_P3302_S162
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_22_S162_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+120
+</td>
+<td style="text-align:left;">
+RNA_P3302_22_S162_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10971
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:2) Nx 24 h
+</td>
+<td style="text-align:right;">
+52.00
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S162
+</td>
+<td style="text-align:left;">
+RNA_22_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11712
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+74
+</td>
+<td style="text-align:right;">
+1.0708000
+</td>
+<td style="text-align:left;">
+1:2
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+107
+</td>
+<td style="text-align:left;">
+RNA_P3302_S169
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_29_S169_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+139
+</td>
+<td style="text-align:left;">
+RNA_P3302_29_S169_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10982
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+43.62
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S169
+</td>
+<td style="text-align:left;">
+RNA_29_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11719
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+81
+</td>
+<td style="text-align:right;">
+1.2068000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+108
+</td>
+<td style="text-align:left;">
+RNA_P3302_S169
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_29_S169_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+140
+</td>
+<td style="text-align:left;">
+RNA_P3302_29_S169_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10982
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+43.62
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S169
+</td>
+<td style="text-align:left;">
+RNA_29_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11719
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+81
+</td>
+<td style="text-align:right;">
+1.2068000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+109
+</td>
+<td style="text-align:left;">
+RNA_P3302_S169
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_29_S169_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+141
+</td>
+<td style="text-align:left;">
+RNA_P3302_29_S169_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10982
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+43.62
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S169
+</td>
+<td style="text-align:left;">
+RNA_29_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11719
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+81
+</td>
+<td style="text-align:right;">
+1.2068000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+110
+</td>
+<td style="text-align:left;">
+RNA_P3302_S170
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_30_S170_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+142
+</td>
+<td style="text-align:left;">
+RNA_P3302_30_S170_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10983
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+47.26
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S170
+</td>
+<td style="text-align:left;">
+RNA_30_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11720
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+82
+</td>
+<td style="text-align:right;">
+1.0424000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+111
+</td>
+<td style="text-align:left;">
+RNA_P3302_S170
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_30_S170_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+143
+</td>
+<td style="text-align:left;">
+RNA_P3302_30_S170_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10983
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+47.26
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S170
+</td>
+<td style="text-align:left;">
+RNA_30_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11720
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+82
+</td>
+<td style="text-align:right;">
+1.0424000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+112
+</td>
+<td style="text-align:left;">
+RNA_P3302_S170
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_30_S170_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+144
+</td>
+<td style="text-align:left;">
+RNA_P3302_30_S170_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10983
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+47.26
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S170
+</td>
+<td style="text-align:left;">
+RNA_30_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11720
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+82
+</td>
+<td style="text-align:right;">
+1.0424000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+125
+</td>
+<td style="text-align:left;">
+RNA_P3302_S175
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_35_S175_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+157
+</td>
+<td style="text-align:left;">
+RNA_P3302_35_S175_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10988
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+40.30
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S175
+</td>
+<td style="text-align:left;">
+RNA_35_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11725
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+87
+</td>
+<td style="text-align:right;">
+0.6426000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+126
+</td>
+<td style="text-align:left;">
+RNA_P3302_S175
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_35_S175_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+158
+</td>
+<td style="text-align:left;">
+RNA_P3302_35_S175_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10988
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+40.30
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S175
+</td>
+<td style="text-align:left;">
+RNA_35_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11725
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+87
+</td>
+<td style="text-align:right;">
+0.6426000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+127
+</td>
+<td style="text-align:left;">
+RNA_P3302_S175
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_35_S175_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+159
+</td>
+<td style="text-align:left;">
+RNA_P3302_35_S175_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10988
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+40.30
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S175
+</td>
+<td style="text-align:left;">
+RNA_35_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11725
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+87
+</td>
+<td style="text-align:right;">
+0.6426000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+6
+</td>
+<td style="text-align:left;">
+RNA_P2041_S42
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10635_S42_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+38
+</td>
+<td style="text-align:left;">
+RNA_P2041_10635_S42_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10269
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+Kelly LV.1 Hx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV_1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S42
+</td>
+<td style="text-align:left;">
+RNA_10755
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Simon_4
+</td>
+<td style="text-align:right;">
+10755
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+del_Hif1a1.6
+</td>
+<td style="text-align:left;">
+RNA_12
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+11
+</td>
+<td style="text-align:left;">
+RNA_P2041_S47
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10744_S47_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+43
+</td>
+<td style="text-align:left;">
+RNA_P2041_10744_S47_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10293
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Kelly LV.1 Hx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV_1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S47
+</td>
+<td style="text-align:left;">
+RNA_10636
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:right;">
+10636
+</td>
+<td style="text-align:left;">
+delHif1b9.1
+</td>
+<td style="text-align:left;">
+delHif1b9.1
+</td>
+<td style="text-align:left;">
+RNA_26
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+174
+</td>
+<td style="text-align:left;">
+RNA_P557_S34
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_078_S34_quant/quant.sf
+</td>
+<td style="text-align:right;">
+18
+</td>
+<td style="text-align:left;">
+RNA_P557_078_S34
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7696
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifLV1 P7 Hx 24h
+</td>
+<td style="text-align:right;">
+626.12
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P7
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S34
+</td>
+<td style="text-align:left;">
+RNA_78
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+178
+</td>
+<td style="text-align:left;">
+RNA_P557_S38
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_082_S38_quant/quant.sf
+</td>
+<td style="text-align:right;">
+22
+</td>
+<td style="text-align:left;">
+RNA_P557_082_S38
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7702
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifLV1 P7 Hx 24h
+</td>
+<td style="text-align:right;">
+457.44
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P7
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S38
+</td>
+<td style="text-align:left;">
+RNA_82
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+182
+</td>
+<td style="text-align:left;">
+RNA_P557_S42
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_086_S42_quant/quant.sf
+</td>
+<td style="text-align:right;">
+26
+</td>
+<td style="text-align:left;">
+RNA_P557_086_S42
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7708
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifLV1 P8 Hx 24h
+</td>
+<td style="text-align:right;">
+462.32
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P8
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S42
+</td>
+<td style="text-align:left;">
+RNA_86
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Katharina_2
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+186
+</td>
+<td style="text-align:left;">
+RNA_P557_S46
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_090_S46_quant/quant.sf
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:left;">
+RNA_P557_090_S46
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7714
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifLV1 P8 Hx 24h
+</td>
+<td style="text-align:right;">
+349.06
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P8
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S46
+</td>
+<td style="text-align:left;">
+RNA_90
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Katharina_2
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+41
+</td>
+<td style="text-align:left;">
+RNA_P3302_S147
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_07_S147_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+73
+</td>
+<td style="text-align:left;">
+RNA_P3302_07_S147_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10903
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+44.04
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S147
+</td>
+<td style="text-align:left;">
+RNA_07_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11697
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+59
+</td>
+<td style="text-align:right;">
+0.5322000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+42
+</td>
+<td style="text-align:left;">
+RNA_P3302_S147
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_07_S147_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+74
+</td>
+<td style="text-align:left;">
+RNA_P3302_07_S147_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10903
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+44.04
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S147
+</td>
+<td style="text-align:left;">
+RNA_07_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11697
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+59
+</td>
+<td style="text-align:right;">
+0.5322000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+43
+</td>
+<td style="text-align:left;">
+RNA_P3302_S147
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_07_S147_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+75
+</td>
+<td style="text-align:left;">
+RNA_P3302_07_S147_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10903
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+44.04
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S147
+</td>
+<td style="text-align:left;">
+RNA_07_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11697
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+59
+</td>
+<td style="text-align:right;">
+0.5322000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+44
+</td>
+<td style="text-align:left;">
+RNA_P3302_S148
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_08_S148_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+76
+</td>
+<td style="text-align:left;">
+RNA_P3302_08_S148_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10904
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:5) Hx 24 h
+</td>
+<td style="text-align:right;">
+39.04
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S148
+</td>
+<td style="text-align:left;">
+RNA_08_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11698
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+60
+</td>
+<td style="text-align:right;">
+0.5182000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+45
+</td>
+<td style="text-align:left;">
+RNA_P3302_S148
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_08_S148_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+77
+</td>
+<td style="text-align:left;">
+RNA_P3302_08_S148_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10904
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:5) Hx 24 h
+</td>
+<td style="text-align:right;">
+39.04
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S148
+</td>
+<td style="text-align:left;">
+RNA_08_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11698
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+60
+</td>
+<td style="text-align:right;">
+0.5182000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+46
+</td>
+<td style="text-align:left;">
+RNA_P3302_S148
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_08_S148_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+78
+</td>
+<td style="text-align:left;">
+RNA_P3302_08_S148_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10904
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:5) Hx 24 h
+</td>
+<td style="text-align:right;">
+39.04
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S148
+</td>
+<td style="text-align:left;">
+RNA_08_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11698
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+60
+</td>
+<td style="text-align:right;">
+0.5182000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+71
+</td>
+<td style="text-align:left;">
+RNA_P3302_S157
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_17_S157_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+103
+</td>
+<td style="text-align:left;">
+RNA_P3302_17_S157_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10964
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:3) Hx 24 h
+</td>
+<td style="text-align:right;">
+43.90
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S157
+</td>
+<td style="text-align:left;">
+RNA_17_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11707
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+69
+</td>
+<td style="text-align:right;">
+0.9176000
+</td>
+<td style="text-align:left;">
+1:3
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+72
+</td>
+<td style="text-align:left;">
+RNA_P3302_S157
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_17_S157_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+104
+</td>
+<td style="text-align:left;">
+RNA_P3302_17_S157_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10964
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:3) Hx 24 h
+</td>
+<td style="text-align:right;">
+43.90
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S157
+</td>
+<td style="text-align:left;">
+RNA_17_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11707
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+69
+</td>
+<td style="text-align:right;">
+0.9176000
+</td>
+<td style="text-align:left;">
+1:3
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+73
+</td>
+<td style="text-align:left;">
+RNA_P3302_S157
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_17_S157_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+105
+</td>
+<td style="text-align:left;">
+RNA_P3302_17_S157_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10964
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:3) Hx 24 h
+</td>
+<td style="text-align:right;">
+43.90
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S157
+</td>
+<td style="text-align:left;">
+RNA_17_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11707
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+69
+</td>
+<td style="text-align:right;">
+0.9176000
+</td>
+<td style="text-align:left;">
+1:3
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+74
+</td>
+<td style="text-align:left;">
+RNA_P3302_S158
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_18_S158_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+106
+</td>
+<td style="text-align:left;">
+RNA_P3302_18_S158_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10965
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+36.62
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S158
+</td>
+<td style="text-align:left;">
+RNA_18_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11708
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+70
+</td>
+<td style="text-align:right;">
+0.9226000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+75
+</td>
+<td style="text-align:left;">
+RNA_P3302_S158
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_18_S158_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+107
+</td>
+<td style="text-align:left;">
+RNA_P3302_18_S158_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10965
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+36.62
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S158
+</td>
+<td style="text-align:left;">
+RNA_18_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11708
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+70
+</td>
+<td style="text-align:right;">
+0.9226000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+76
+</td>
+<td style="text-align:left;">
+RNA_P3302_S158
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_18_S158_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+108
+</td>
+<td style="text-align:left;">
+RNA_P3302_18_S158_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10965
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+36.62
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S158
+</td>
+<td style="text-align:left;">
+RNA_18_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11708
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+70
+</td>
+<td style="text-align:right;">
+0.9226000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+95
+</td>
+<td style="text-align:left;">
+RNA_P3302_S165
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_25_S165_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+127
+</td>
+<td style="text-align:left;">
+RNA_P3302_25_S165_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10976
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:3) Hx 24 h
+</td>
+<td style="text-align:right;">
+43.44
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S165
+</td>
+<td style="text-align:left;">
+RNA_25_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11715
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+77
+</td>
+<td style="text-align:right;">
+0.5788000
+</td>
+<td style="text-align:left;">
+1:3
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+96
+</td>
+<td style="text-align:left;">
+RNA_P3302_S165
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_25_S165_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+128
+</td>
+<td style="text-align:left;">
+RNA_P3302_25_S165_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10976
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:3) Hx 24 h
+</td>
+<td style="text-align:right;">
+43.44
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S165
+</td>
+<td style="text-align:left;">
+RNA_25_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11715
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+77
+</td>
+<td style="text-align:right;">
+0.5788000
+</td>
+<td style="text-align:left;">
+1:3
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+97
+</td>
+<td style="text-align:left;">
+RNA_P3302_S165
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_25_S165_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+129
+</td>
+<td style="text-align:left;">
+RNA_P3302_25_S165_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10976
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:3) Hx 24 h
+</td>
+<td style="text-align:right;">
+43.44
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S165
+</td>
+<td style="text-align:left;">
+RNA_25_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11715
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+77
+</td>
+<td style="text-align:right;">
+0.5788000
+</td>
+<td style="text-align:left;">
+1:3
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+98
+</td>
+<td style="text-align:left;">
+RNA_P3302_S166
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_26_S166_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+130
+</td>
+<td style="text-align:left;">
+RNA_P3302_26_S166_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10977
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:2) Hx 24 h
+</td>
+<td style="text-align:right;">
+42.80
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S166
+</td>
+<td style="text-align:left;">
+RNA_26_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11716
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+78
+</td>
+<td style="text-align:right;">
+0.8558000
+</td>
+<td style="text-align:left;">
+1:2
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+99
+</td>
+<td style="text-align:left;">
+RNA_P3302_S166
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_26_S166_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+131
+</td>
+<td style="text-align:left;">
+RNA_P3302_26_S166_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10977
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:2) Hx 24 h
+</td>
+<td style="text-align:right;">
+42.80
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S166
+</td>
+<td style="text-align:left;">
+RNA_26_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11716
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+78
+</td>
+<td style="text-align:right;">
+0.8558000
+</td>
+<td style="text-align:left;">
+1:2
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+100
+</td>
+<td style="text-align:left;">
+RNA_P3302_S166
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_26_S166_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+132
+</td>
+<td style="text-align:left;">
+RNA_P3302_26_S166_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10977
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly LV1 (1:2) Hx 24 h
+</td>
+<td style="text-align:right;">
+42.80
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S166
+</td>
+<td style="text-align:left;">
+RNA_26_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11716
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+78
+</td>
+<td style="text-align:right;">
+0.8558000
+</td>
+<td style="text-align:left;">
+1:2
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+140
+</td>
+<td style="text-align:left;">
+RNA_P3302_S180
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_40_S180_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+172
+</td>
+<td style="text-align:left;">
+RNA_P3302_40_S180_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10994
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+41.96
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S180
+</td>
+<td style="text-align:left;">
+RNA_40_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11730
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+92
+</td>
+<td style="text-align:right;">
+0.9614667
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+141
+</td>
+<td style="text-align:left;">
+RNA_P3302_S180
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_40_S180_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+173
+</td>
+<td style="text-align:left;">
+RNA_P3302_40_S180_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10994
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+41.96
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S180
+</td>
+<td style="text-align:left;">
+RNA_40_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11730
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+92
+</td>
+<td style="text-align:right;">
+0.9614667
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+142
+</td>
+<td style="text-align:left;">
+RNA_P3302_S180
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_40_S180_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+174
+</td>
+<td style="text-align:left;">
+RNA_P3302_40_S180_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10994
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+41.96
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S180
+</td>
+<td style="text-align:left;">
+RNA_40_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11730
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+92
+</td>
+<td style="text-align:right;">
+0.9614667
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+143
+</td>
+<td style="text-align:left;">
+RNA_P3302_S181
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_41_S181_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+175
+</td>
+<td style="text-align:left;">
+RNA_P3302_41_S181_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10995
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+38.12
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S181
+</td>
+<td style="text-align:left;">
+RNA_41_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11731
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+93
+</td>
+<td style="text-align:right;">
+0.8358000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+144
+</td>
+<td style="text-align:left;">
+RNA_P3302_S181
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_41_S181_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+176
+</td>
+<td style="text-align:left;">
+RNA_P3302_41_S181_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10995
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+38.12
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S181
+</td>
+<td style="text-align:left;">
+RNA_41_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11731
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+93
+</td>
+<td style="text-align:right;">
+0.8358000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+145
+</td>
+<td style="text-align:left;">
+RNA_P3302_S181
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_41_S181_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+177
+</td>
+<td style="text-align:left;">
+RNA_P3302_41_S181_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10995
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+38.12
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S181
+</td>
+<td style="text-align:left;">
+RNA_41_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11731
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+93
+</td>
+<td style="text-align:right;">
+0.8358000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+158
+</td>
+<td style="text-align:left;">
+RNA_P3302_S186
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_46_S186_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+190
+</td>
+<td style="text-align:left;">
+RNA_P3302_46_S186_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+11000
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+40.14
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S186
+</td>
+<td style="text-align:left;">
+RNA_46_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11736
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+98
+</td>
+<td style="text-align:right;">
+0.3842400
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+159
+</td>
+<td style="text-align:left;">
+RNA_P3302_S186
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_46_S186_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+191
+</td>
+<td style="text-align:left;">
+RNA_P3302_46_S186_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+11000
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+40.14
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S186
+</td>
+<td style="text-align:left;">
+RNA_46_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11736
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+98
+</td>
+<td style="text-align:right;">
+0.3842400
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+160
+</td>
+<td style="text-align:left;">
+RNA_P3302_S186
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_46_S186_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+192
+</td>
+<td style="text-align:left;">
+RNA_P3302_46_S186_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+11000
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly LV1 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+40.14
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S186
+</td>
+<td style="text-align:left;">
+RNA_46_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11736
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+98
+</td>
+<td style="text-align:right;">
+0.3842400
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+12
+</td>
+<td style="text-align:left;">
+RNA_P2041_S48
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10745_S48_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:left;">
+RNA_P2041_10745_S48_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10294
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Kelly Hif1a 1.3 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S48
+</td>
+<td style="text-align:left;">
+RNA_10637
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:right;">
+10637
+</td>
+<td style="text-align:left;">
+Kelly Hif1b.sg1+2 Klon 9 Nx
+</td>
+<td style="text-align:left;">
+Kelly Hif1b.sg1+2 Klon 9 Hx
+</td>
+<td style="text-align:left;">
+RNA_27
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+29
+</td>
+<td style="text-align:left;">
+RNA_P3302_S143
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_03_S143_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+61
+</td>
+<td style="text-align:left;">
+RNA_P3302_03_S143_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10899
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+38.28
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S143
+</td>
+<td style="text-align:left;">
+RNA_03_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11693
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:right;">
+0.9412000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+30
+</td>
+<td style="text-align:left;">
+RNA_P3302_S143
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_03_S143_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+62
+</td>
+<td style="text-align:left;">
+RNA_P3302_03_S143_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10899
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+38.28
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S143
+</td>
+<td style="text-align:left;">
+RNA_03_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11693
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:right;">
+0.9412000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+31
+</td>
+<td style="text-align:left;">
+RNA_P3302_S143
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_03_S143_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+63
+</td>
+<td style="text-align:left;">
+RNA_P3302_03_S143_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10899
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+38.28
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S143
+</td>
+<td style="text-align:left;">
+RNA_03_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11693
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:right;">
+0.9412000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+32
+</td>
+<td style="text-align:left;">
+RNA_P3302_S144
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_04_S144_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+64
+</td>
+<td style="text-align:left;">
+RNA_P3302_04_S144_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10900
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:5) Nx 24 h
+</td>
+<td style="text-align:right;">
+47.48
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S144
+</td>
+<td style="text-align:left;">
+RNA_04_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11694
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+56
+</td>
+<td style="text-align:right;">
+0.6804000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+33
+</td>
+<td style="text-align:left;">
+RNA_P3302_S144
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_04_S144_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+65
+</td>
+<td style="text-align:left;">
+RNA_P3302_04_S144_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10900
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:5) Nx 24 h
+</td>
+<td style="text-align:right;">
+47.48
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S144
+</td>
+<td style="text-align:left;">
+RNA_04_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11694
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+56
+</td>
+<td style="text-align:right;">
+0.6804000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+34
+</td>
+<td style="text-align:left;">
+RNA_P3302_S144
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_04_S144_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+66
+</td>
+<td style="text-align:left;">
+RNA_P3302_04_S144_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10900
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:5) Nx 24 h
+</td>
+<td style="text-align:right;">
+47.48
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S144
+</td>
+<td style="text-align:left;">
+RNA_04_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11694
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+56
+</td>
+<td style="text-align:right;">
+0.6804000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+65
+</td>
+<td style="text-align:left;">
+RNA_P3302_S155
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_15_S155_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+97
+</td>
+<td style="text-align:left;">
+RNA_P3302_15_S155_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10960
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+44.96
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S155
+</td>
+<td style="text-align:left;">
+RNA_15_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11705
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+67
+</td>
+<td style="text-align:right;">
+1.8268000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+66
+</td>
+<td style="text-align:left;">
+RNA_P3302_S155
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_15_S155_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+98
+</td>
+<td style="text-align:left;">
+RNA_P3302_15_S155_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10960
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+44.96
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S155
+</td>
+<td style="text-align:left;">
+RNA_15_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11705
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+67
+</td>
+<td style="text-align:right;">
+1.8268000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+67
+</td>
+<td style="text-align:left;">
+RNA_P3302_S155
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_15_S155_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+99
+</td>
+<td style="text-align:left;">
+RNA_P3302_15_S155_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10960
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+44.96
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S155
+</td>
+<td style="text-align:left;">
+RNA_15_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11705
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+67
+</td>
+<td style="text-align:right;">
+1.8268000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+89
+</td>
+<td style="text-align:left;">
+RNA_P3302_S163
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_23_S163_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+121
+</td>
+<td style="text-align:left;">
+RNA_P3302_23_S163_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10973
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:2,5) Nx 24 h
+</td>
+<td style="text-align:right;">
+50.60
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S163
+</td>
+<td style="text-align:left;">
+RNA_23_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11713
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+75
+</td>
+<td style="text-align:right;">
+1.0078000
+</td>
+<td style="text-align:left;">
+1:2,5
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+90
+</td>
+<td style="text-align:left;">
+RNA_P3302_S163
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_23_S163_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+122
+</td>
+<td style="text-align:left;">
+RNA_P3302_23_S163_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10973
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:2,5) Nx 24 h
+</td>
+<td style="text-align:right;">
+50.60
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S163
+</td>
+<td style="text-align:left;">
+RNA_23_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11713
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+75
+</td>
+<td style="text-align:right;">
+1.0078000
+</td>
+<td style="text-align:left;">
+1:2,5
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+91
+</td>
+<td style="text-align:left;">
+RNA_P3302_S163
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_23_S163_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+123
+</td>
+<td style="text-align:left;">
+RNA_P3302_23_S163_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10973
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:2,5) Nx 24 h
+</td>
+<td style="text-align:right;">
+50.60
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S163
+</td>
+<td style="text-align:left;">
+RNA_23_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11713
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+75
+</td>
+<td style="text-align:right;">
+1.0078000
+</td>
+<td style="text-align:left;">
+1:2,5
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+113
+</td>
+<td style="text-align:left;">
+RNA_P3302_S171
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_31_S171_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+145
+</td>
+<td style="text-align:left;">
+RNA_P3302_31_S171_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10984
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+40.36
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S171
+</td>
+<td style="text-align:left;">
+RNA_31_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11721
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+83
+</td>
+<td style="text-align:right;">
+0.7122000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+114
+</td>
+<td style="text-align:left;">
+RNA_P3302_S171
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_31_S171_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+146
+</td>
+<td style="text-align:left;">
+RNA_P3302_31_S171_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10984
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+40.36
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S171
+</td>
+<td style="text-align:left;">
+RNA_31_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11721
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+83
+</td>
+<td style="text-align:right;">
+0.7122000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+115
+</td>
+<td style="text-align:left;">
+RNA_P3302_S171
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_31_S171_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+147
+</td>
+<td style="text-align:left;">
+RNA_P3302_31_S171_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10984
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+40.36
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S171
+</td>
+<td style="text-align:left;">
+RNA_31_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11721
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+83
+</td>
+<td style="text-align:right;">
+0.7122000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+116
+</td>
+<td style="text-align:left;">
+RNA_P3302_S172
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_32_S172_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+148
+</td>
+<td style="text-align:left;">
+RNA_P3302_32_S172_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10985
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+44.40
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S172
+</td>
+<td style="text-align:left;">
+RNA_32_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11722
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+84
+</td>
+<td style="text-align:right;">
+0.6078000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+117
+</td>
+<td style="text-align:left;">
+RNA_P3302_S172
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_32_S172_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+149
+</td>
+<td style="text-align:left;">
+RNA_P3302_32_S172_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10985
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+44.40
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S172
+</td>
+<td style="text-align:left;">
+RNA_32_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11722
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+84
+</td>
+<td style="text-align:right;">
+0.6078000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+118
+</td>
+<td style="text-align:left;">
+RNA_P3302_S172
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_32_S172_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+150
+</td>
+<td style="text-align:left;">
+RNA_P3302_32_S172_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10985
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+44.40
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S172
+</td>
+<td style="text-align:left;">
+RNA_32_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11722
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+84
+</td>
+<td style="text-align:right;">
+0.6078000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+128
+</td>
+<td style="text-align:left;">
+RNA_P3302_S176
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_36_S176_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+160
+</td>
+<td style="text-align:left;">
+RNA_P3302_36_S176_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10990
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+57.14
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S176
+</td>
+<td style="text-align:left;">
+RNA_36_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11726
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+88
+</td>
+<td style="text-align:right;">
+1.3212000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+129
+</td>
+<td style="text-align:left;">
+RNA_P3302_S176
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_36_S176_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+161
+</td>
+<td style="text-align:left;">
+RNA_P3302_36_S176_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10990
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+57.14
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S176
+</td>
+<td style="text-align:left;">
+RNA_36_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11726
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+88
+</td>
+<td style="text-align:right;">
+1.3212000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+130
+</td>
+<td style="text-align:left;">
+RNA_P3302_S176
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_36_S176_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+162
+</td>
+<td style="text-align:left;">
+RNA_P3302_36_S176_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10990
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+57.14
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S176
+</td>
+<td style="text-align:left;">
+RNA_36_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11726
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+88
+</td>
+<td style="text-align:right;">
+1.3212000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+131
+</td>
+<td style="text-align:left;">
+RNA_P3302_S177
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_37_S177_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+163
+</td>
+<td style="text-align:left;">
+RNA_P3302_37_S177_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10991
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+57.84
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S177
+</td>
+<td style="text-align:left;">
+RNA_37_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11727
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+89
+</td>
+<td style="text-align:right;">
+1.2904000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+132
+</td>
+<td style="text-align:left;">
+RNA_P3302_S177
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_37_S177_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+164
+</td>
+<td style="text-align:left;">
+RNA_P3302_37_S177_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10991
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+57.84
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S177
+</td>
+<td style="text-align:left;">
+RNA_37_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11727
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+89
+</td>
+<td style="text-align:right;">
+1.2904000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+133
+</td>
+<td style="text-align:left;">
+RNA_P3302_S177
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_37_S177_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+165
+</td>
+<td style="text-align:left;">
+RNA_P3302_37_S177_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10991
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+57.84
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S177
+</td>
+<td style="text-align:left;">
+RNA_37_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11727
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+89
+</td>
+<td style="text-align:right;">
+1.2904000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+175
+</td>
+<td style="text-align:left;">
+RNA_P557_S35
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_079_S35_quant/quant.sf
+</td>
+<td style="text-align:right;">
+19
+</td>
+<td style="text-align:left;">
+RNA_P557_079_S35
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7697
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif1.3 P13 Hx 24h
+</td>
+<td style="text-align:right;">
+782.00
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P13
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S35
+</td>
+<td style="text-align:left;">
+RNA_79
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+179
+</td>
+<td style="text-align:left;">
+RNA_P557_S39
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_083_S39_quant/quant.sf
+</td>
+<td style="text-align:right;">
+23
+</td>
+<td style="text-align:left;">
+RNA_P557_083_S39
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7703
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif1.3 P13 Hx 24h
+</td>
+<td style="text-align:right;">
+684.96
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P13
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S39
+</td>
+<td style="text-align:left;">
+RNA_83
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+183
+</td>
+<td style="text-align:left;">
+RNA_P557_S43
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_087_S43_quant/quant.sf
+</td>
+<td style="text-align:right;">
+27
+</td>
+<td style="text-align:left;">
+RNA_P557_087_S43
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7709
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif1.3 P14 Hx 24h
+</td>
+<td style="text-align:right;">
+846.04
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P14
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S43
+</td>
+<td style="text-align:left;">
+RNA_87
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Katharina_2
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+187
+</td>
+<td style="text-align:left;">
+RNA_P557_S47
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_091_S47_quant/quant.sf
+</td>
+<td style="text-align:right;">
+31
+</td>
+<td style="text-align:left;">
+RNA_P557_091_S47
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7715
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif1.3 P14 Hx 24h
+</td>
+<td style="text-align:right;">
+583.24
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P14
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S47
+</td>
+<td style="text-align:left;">
+RNA_91
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Katharina_2
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+13
+</td>
+<td style="text-align:left;">
+RNA_P2041_S49
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10746_S49_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:left;">
+RNA_P2041_10746_S49_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10295
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Kelly Hif1a 1.3 Hx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S49
+</td>
+<td style="text-align:left;">
+RNA_10638
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:right;">
+10638
+</td>
+<td style="text-align:left;">
+delHif1b10.1
+</td>
+<td style="text-align:left;">
+delHif1b10.1
+</td>
+<td style="text-align:left;">
+RNA_28
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+47
+</td>
+<td style="text-align:left;">
+RNA_P3302_S149
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_09_S149_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+79
+</td>
+<td style="text-align:left;">
+RNA_P3302_09_S149_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10905
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+32.72
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S149
+</td>
+<td style="text-align:left;">
+RNA_09_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11699
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+61
+</td>
+<td style="text-align:right;">
+0.7236000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+48
+</td>
+<td style="text-align:left;">
+RNA_P3302_S149
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_09_S149_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+80
+</td>
+<td style="text-align:left;">
+RNA_P3302_09_S149_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10905
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+32.72
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S149
+</td>
+<td style="text-align:left;">
+RNA_09_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11699
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+61
+</td>
+<td style="text-align:right;">
+0.7236000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+49
+</td>
+<td style="text-align:left;">
+RNA_P3302_S149
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_09_S149_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+81
+</td>
+<td style="text-align:left;">
+RNA_P3302_09_S149_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10905
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+32.72
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S149
+</td>
+<td style="text-align:left;">
+RNA_09_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11699
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+61
+</td>
+<td style="text-align:right;">
+0.7236000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+50
+</td>
+<td style="text-align:left;">
+RNA_P3302_S150
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_10_S150_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+82
+</td>
+<td style="text-align:left;">
+RNA_P3302_10_S150_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10906
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:5) Hx 24 h
+</td>
+<td style="text-align:right;">
+37.90
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S150
+</td>
+<td style="text-align:left;">
+RNA_10_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11700
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+62
+</td>
+<td style="text-align:right;">
+0.6082000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+51
+</td>
+<td style="text-align:left;">
+RNA_P3302_S150
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_10_S150_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+83
+</td>
+<td style="text-align:left;">
+RNA_P3302_10_S150_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10906
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:5) Hx 24 h
+</td>
+<td style="text-align:right;">
+37.90
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S150
+</td>
+<td style="text-align:left;">
+RNA_10_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11700
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+62
+</td>
+<td style="text-align:right;">
+0.6082000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+52
+</td>
+<td style="text-align:left;">
+RNA_P3302_S150
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_10_S150_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+84
+</td>
+<td style="text-align:left;">
+RNA_P3302_10_S150_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10906
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:5) Hx 24 h
+</td>
+<td style="text-align:right;">
+37.90
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S150
+</td>
+<td style="text-align:left;">
+RNA_10_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11700
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+62
+</td>
+<td style="text-align:right;">
+0.6082000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+77
+</td>
+<td style="text-align:left;">
+RNA_P3302_S159
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_19_S159_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+109
+</td>
+<td style="text-align:left;">
+RNA_P3302_19_S159_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10966
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+46.80
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S159
+</td>
+<td style="text-align:left;">
+RNA_19_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11709
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+71
+</td>
+<td style="text-align:right;">
+1.0704000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+78
+</td>
+<td style="text-align:left;">
+RNA_P3302_S159
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_19_S159_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+110
+</td>
+<td style="text-align:left;">
+RNA_P3302_19_S159_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10966
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+46.80
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S159
+</td>
+<td style="text-align:left;">
+RNA_19_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11709
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+71
+</td>
+<td style="text-align:right;">
+1.0704000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+79
+</td>
+<td style="text-align:left;">
+RNA_P3302_S159
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_19_S159_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+111
+</td>
+<td style="text-align:left;">
+RNA_P3302_19_S159_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10966
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+46.80
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S159
+</td>
+<td style="text-align:left;">
+RNA_19_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11709
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+71
+</td>
+<td style="text-align:right;">
+1.0704000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+101
+</td>
+<td style="text-align:left;">
+RNA_P3302_S167
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_27_S167_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+133
+</td>
+<td style="text-align:left;">
+RNA_P3302_27_S167_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10979
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:2,5) Hx 24 h
+</td>
+<td style="text-align:right;">
+43.48
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S167
+</td>
+<td style="text-align:left;">
+RNA_27_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11717
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+79
+</td>
+<td style="text-align:right;">
+0.8950000
+</td>
+<td style="text-align:left;">
+1:2,5
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+102
+</td>
+<td style="text-align:left;">
+RNA_P3302_S167
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_27_S167_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+134
+</td>
+<td style="text-align:left;">
+RNA_P3302_27_S167_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10979
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:2,5) Hx 24 h
+</td>
+<td style="text-align:right;">
+43.48
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S167
+</td>
+<td style="text-align:left;">
+RNA_27_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11717
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+79
+</td>
+<td style="text-align:right;">
+0.8950000
+</td>
+<td style="text-align:left;">
+1:2,5
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+103
+</td>
+<td style="text-align:left;">
+RNA_P3302_S167
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_27_S167_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+135
+</td>
+<td style="text-align:left;">
+RNA_P3302_27_S167_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10979
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (1:2,5) Hx 24 h
+</td>
+<td style="text-align:right;">
+43.48
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S167
+</td>
+<td style="text-align:left;">
+RNA_27_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11717
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+79
+</td>
+<td style="text-align:right;">
+0.8950000
+</td>
+<td style="text-align:left;">
+1:2,5
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+146
+</td>
+<td style="text-align:left;">
+RNA_P3302_S182
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_42_S182_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+178
+</td>
+<td style="text-align:left;">
+RNA_P3302_42_S182_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10996
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+40.54
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S182
+</td>
+<td style="text-align:left;">
+RNA_42_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11732
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+94
+</td>
+<td style="text-align:right;">
+0.4784000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+147
+</td>
+<td style="text-align:left;">
+RNA_P3302_S182
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_42_S182_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+179
+</td>
+<td style="text-align:left;">
+RNA_P3302_42_S182_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10996
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+40.54
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S182
+</td>
+<td style="text-align:left;">
+RNA_42_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11732
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+94
+</td>
+<td style="text-align:right;">
+0.4784000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+148
+</td>
+<td style="text-align:left;">
+RNA_P3302_S182
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_42_S182_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+180
+</td>
+<td style="text-align:left;">
+RNA_P3302_42_S182_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10996
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+40.54
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S182
+</td>
+<td style="text-align:left;">
+RNA_42_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11732
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+94
+</td>
+<td style="text-align:right;">
+0.4784000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+149
+</td>
+<td style="text-align:left;">
+RNA_P3302_S183
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_43_S183_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+181
+</td>
+<td style="text-align:left;">
+RNA_P3302_43_S183_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10997
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+37.76
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S183
+</td>
+<td style="text-align:left;">
+RNA_43_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11733
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+95
+</td>
+<td style="text-align:right;">
+0.5528000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+150
+</td>
+<td style="text-align:left;">
+RNA_P3302_S183
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_43_S183_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+182
+</td>
+<td style="text-align:left;">
+RNA_P3302_43_S183_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10997
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+37.76
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S183
+</td>
+<td style="text-align:left;">
+RNA_43_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11733
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+95
+</td>
+<td style="text-align:right;">
+0.5528000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+151
+</td>
+<td style="text-align:left;">
+RNA_P3302_S183
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_43_S183_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+183
+</td>
+<td style="text-align:left;">
+RNA_P3302_43_S183_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10997
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+37.76
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S183
+</td>
+<td style="text-align:left;">
+RNA_43_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11733
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+95
+</td>
+<td style="text-align:right;">
+0.5528000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+161
+</td>
+<td style="text-align:left;">
+RNA_P3302_S187
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_47_S187_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+193
+</td>
+<td style="text-align:left;">
+RNA_P3302_47_S187_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+11002
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+47.74
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S187
+</td>
+<td style="text-align:left;">
+RNA_47_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11737
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+99
+</td>
+<td style="text-align:right;">
+0.9032000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+162
+</td>
+<td style="text-align:left;">
+RNA_P3302_S187
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_47_S187_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+194
+</td>
+<td style="text-align:left;">
+RNA_P3302_47_S187_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+11002
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+47.74
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S187
+</td>
+<td style="text-align:left;">
+RNA_47_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11737
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+99
+</td>
+<td style="text-align:right;">
+0.9032000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+163
+</td>
+<td style="text-align:left;">
+RNA_P3302_S187
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_47_S187_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+195
+</td>
+<td style="text-align:left;">
+RNA_P3302_47_S187_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+11002
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+47.74
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S187
+</td>
+<td style="text-align:left;">
+RNA_47_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11737
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+99
+</td>
+<td style="text-align:right;">
+0.9032000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+164
+</td>
+<td style="text-align:left;">
+RNA_P3302_S188
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_48_S188_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+196
+</td>
+<td style="text-align:left;">
+RNA_P3302_48_S188_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+11003
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+45.46
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S188
+</td>
+<td style="text-align:left;">
+RNA_48_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11738
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+100
+</td>
+<td style="text-align:right;">
+0.9468000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+165
+</td>
+<td style="text-align:left;">
+RNA_P3302_S188
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_48_S188_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+197
+</td>
+<td style="text-align:left;">
+RNA_P3302_48_S188_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+11003
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+45.46
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S188
+</td>
+<td style="text-align:left;">
+RNA_48_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11738
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+100
+</td>
+<td style="text-align:right;">
+0.9468000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+166
+</td>
+<td style="text-align:left;">
+RNA_P3302_S188
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_48_S188_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+198
+</td>
+<td style="text-align:left;">
+RNA_P3302_48_S188_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+11003
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+45.46
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S188
+</td>
+<td style="text-align:left;">
+RNA_48_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11738
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+100
+</td>
+<td style="text-align:right;">
+0.9468000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+14
+</td>
+<td style="text-align:left;">
+RNA_P2041_S50
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10747_S50_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+46
+</td>
+<td style="text-align:left;">
+RNA_P2041_10747_S50_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10297
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Kelly Hif1a 1.6 Hx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.6
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S50
+</td>
+<td style="text-align:left;">
+RNA_10640
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:right;">
+10640
+</td>
+<td style="text-align:left;">
+delHif1b15.1
+</td>
+<td style="text-align:left;">
+delHif1b15.1
+</td>
+<td style="text-align:left;">
+RNA_30
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+35
+</td>
+<td style="text-align:left;">
+RNA_P3302_S145
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_05_S145_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+67
+</td>
+<td style="text-align:left;">
+RNA_P3302_05_S145_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10901
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:5) Nx 24 h
+</td>
+<td style="text-align:right;">
+54.88
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S145
+</td>
+<td style="text-align:left;">
+RNA_05_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11695
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+57
+</td>
+<td style="text-align:right;">
+1.6428000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+36
+</td>
+<td style="text-align:left;">
+RNA_P3302_S145
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_05_S145_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+68
+</td>
+<td style="text-align:left;">
+RNA_P3302_05_S145_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10901
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:5) Nx 24 h
+</td>
+<td style="text-align:right;">
+54.88
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S145
+</td>
+<td style="text-align:left;">
+RNA_05_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11695
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+57
+</td>
+<td style="text-align:right;">
+1.6428000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+37
+</td>
+<td style="text-align:left;">
+RNA_P3302_S145
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_05_S145_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+69
+</td>
+<td style="text-align:left;">
+RNA_P3302_05_S145_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10901
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:5) Nx 24 h
+</td>
+<td style="text-align:right;">
+54.88
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S145
+</td>
+<td style="text-align:left;">
+RNA_05_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11695
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+57
+</td>
+<td style="text-align:right;">
+1.6428000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+38
+</td>
+<td style="text-align:left;">
+RNA_P3302_S146
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_06_S146_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+70
+</td>
+<td style="text-align:left;">
+RNA_P3302_06_S146_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10902
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:6) Nx 24 h
+</td>
+<td style="text-align:right;">
+42.76
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S146
+</td>
+<td style="text-align:left;">
+RNA_06_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11696
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+58
+</td>
+<td style="text-align:right;">
+1.0744000
+</td>
+<td style="text-align:left;">
+1:6
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+39
+</td>
+<td style="text-align:left;">
+RNA_P3302_S146
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_06_S146_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+71
+</td>
+<td style="text-align:left;">
+RNA_P3302_06_S146_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10902
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:6) Nx 24 h
+</td>
+<td style="text-align:right;">
+42.76
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S146
+</td>
+<td style="text-align:left;">
+RNA_06_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11696
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+58
+</td>
+<td style="text-align:right;">
+1.0744000
+</td>
+<td style="text-align:left;">
+1:6
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+40
+</td>
+<td style="text-align:left;">
+RNA_P3302_S146
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_06_S146_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+72
+</td>
+<td style="text-align:left;">
+RNA_P3302_06_S146_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10902
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:6) Nx 24 h
+</td>
+<td style="text-align:right;">
+42.76
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S146
+</td>
+<td style="text-align:left;">
+RNA_06_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11696
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+58
+</td>
+<td style="text-align:right;">
+1.0744000
+</td>
+<td style="text-align:left;">
+1:6
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+68
+</td>
+<td style="text-align:left;">
+RNA_P3302_S156
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_16_S156_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+100
+</td>
+<td style="text-align:left;">
+RNA_P3302_16_S156_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10962
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+51.34
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S156
+</td>
+<td style="text-align:left;">
+RNA_16_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11706
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+68
+</td>
+<td style="text-align:right;">
+1.4206000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+69
+</td>
+<td style="text-align:left;">
+RNA_P3302_S156
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_16_S156_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+101
+</td>
+<td style="text-align:left;">
+RNA_P3302_16_S156_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10962
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+51.34
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S156
+</td>
+<td style="text-align:left;">
+RNA_16_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11706
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+68
+</td>
+<td style="text-align:right;">
+1.4206000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+70
+</td>
+<td style="text-align:left;">
+RNA_P3302_S156
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_16_S156_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+102
+</td>
+<td style="text-align:left;">
+RNA_P3302_16_S156_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10962
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:4) Nx 24 h
+</td>
+<td style="text-align:right;">
+51.34
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S156
+</td>
+<td style="text-align:left;">
+RNA_16_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11706
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+68
+</td>
+<td style="text-align:right;">
+1.4206000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+92
+</td>
+<td style="text-align:left;">
+RNA_P3302_S164
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_24_S164_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+124
+</td>
+<td style="text-align:left;">
+RNA_P3302_24_S164_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10975
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:1,5) Nx 24 h
+</td>
+<td style="text-align:right;">
+38.72
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S164
+</td>
+<td style="text-align:left;">
+RNA_24_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11714
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+76
+</td>
+<td style="text-align:right;">
+0.3678800
+</td>
+<td style="text-align:left;">
+1:1,5
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+93
+</td>
+<td style="text-align:left;">
+RNA_P3302_S164
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_24_S164_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+125
+</td>
+<td style="text-align:left;">
+RNA_P3302_24_S164_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10975
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:1,5) Nx 24 h
+</td>
+<td style="text-align:right;">
+38.72
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S164
+</td>
+<td style="text-align:left;">
+RNA_24_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11714
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+76
+</td>
+<td style="text-align:right;">
+0.3678800
+</td>
+<td style="text-align:left;">
+1:1,5
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+94
+</td>
+<td style="text-align:left;">
+RNA_P3302_S164
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_24_S164_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+126
+</td>
+<td style="text-align:left;">
+RNA_P3302_24_S164_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10975
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:1,5) Nx 24 h
+</td>
+<td style="text-align:right;">
+38.72
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S164
+</td>
+<td style="text-align:left;">
+RNA_24_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11714
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+76
+</td>
+<td style="text-align:right;">
+0.3678800
+</td>
+<td style="text-align:left;">
+1:1,5
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+119
+</td>
+<td style="text-align:left;">
+RNA_P3302_S173
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_33_S173_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+151
+</td>
+<td style="text-align:left;">
+RNA_P3302_33_S173_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10986
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+46.68
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S173
+</td>
+<td style="text-align:left;">
+RNA_33_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11723
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+85
+</td>
+<td style="text-align:right;">
+0.9514000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+120
+</td>
+<td style="text-align:left;">
+RNA_P3302_S173
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_33_S173_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+152
+</td>
+<td style="text-align:left;">
+RNA_P3302_33_S173_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10986
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+46.68
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S173
+</td>
+<td style="text-align:left;">
+RNA_33_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11723
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+85
+</td>
+<td style="text-align:right;">
+0.9514000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+121
+</td>
+<td style="text-align:left;">
+RNA_P3302_S173
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_33_S173_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+153
+</td>
+<td style="text-align:left;">
+RNA_P3302_33_S173_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10986
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+46.68
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S173
+</td>
+<td style="text-align:left;">
+RNA_33_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11723
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+85
+</td>
+<td style="text-align:right;">
+0.9514000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+122
+</td>
+<td style="text-align:left;">
+RNA_P3302_S174
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_34_S174_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+154
+</td>
+<td style="text-align:left;">
+RNA_P3302_34_S174_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10987
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+41.78
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S174
+</td>
+<td style="text-align:left;">
+RNA_34_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11724
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+86
+</td>
+<td style="text-align:right;">
+1.0252000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+123
+</td>
+<td style="text-align:left;">
+RNA_P3302_S174
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_34_S174_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+155
+</td>
+<td style="text-align:left;">
+RNA_P3302_34_S174_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10987
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+41.78
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S174
+</td>
+<td style="text-align:left;">
+RNA_34_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11724
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+86
+</td>
+<td style="text-align:right;">
+1.0252000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+124
+</td>
+<td style="text-align:left;">
+RNA_P3302_S174
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_34_S174_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+156
+</td>
+<td style="text-align:left;">
+RNA_P3302_34_S174_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10987
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (300000) Nx 24 h
+</td>
+<td style="text-align:right;">
+41.78
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S174
+</td>
+<td style="text-align:left;">
+RNA_34_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11724
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+86
+</td>
+<td style="text-align:right;">
+1.0252000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+134
+</td>
+<td style="text-align:left;">
+RNA_P3302_S178
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_38_S178_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+166
+</td>
+<td style="text-align:left;">
+RNA_P3302_38_S178_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10992
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+58.74
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S178
+</td>
+<td style="text-align:left;">
+RNA_38_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11728
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+90
+</td>
+<td style="text-align:right;">
+1.6632000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+135
+</td>
+<td style="text-align:left;">
+RNA_P3302_S178
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_38_S178_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+167
+</td>
+<td style="text-align:left;">
+RNA_P3302_38_S178_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10992
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+58.74
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S178
+</td>
+<td style="text-align:left;">
+RNA_38_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11728
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+90
+</td>
+<td style="text-align:right;">
+1.6632000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+136
+</td>
+<td style="text-align:left;">
+RNA_P3302_S178
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_38_S178_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+168
+</td>
+<td style="text-align:left;">
+RNA_P3302_38_S178_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10992
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+58.74
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S178
+</td>
+<td style="text-align:left;">
+RNA_38_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11728
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+90
+</td>
+<td style="text-align:right;">
+1.6632000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+137
+</td>
+<td style="text-align:left;">
+RNA_P3302_S179
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_39_S179_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+169
+</td>
+<td style="text-align:left;">
+RNA_P3302_39_S179_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10993
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+58.12
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S179
+</td>
+<td style="text-align:left;">
+RNA_39_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11729
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+91
+</td>
+<td style="text-align:right;">
+1.6054000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+138
+</td>
+<td style="text-align:left;">
+RNA_P3302_S179
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_39_S179_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+170
+</td>
+<td style="text-align:left;">
+RNA_P3302_39_S179_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10993
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+58.12
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S179
+</td>
+<td style="text-align:left;">
+RNA_39_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11729
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+91
+</td>
+<td style="text-align:right;">
+1.6054000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+139
+</td>
+<td style="text-align:left;">
+RNA_P3302_S179
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_39_S179_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+171
+</td>
+<td style="text-align:left;">
+RNA_P3302_39_S179_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10993
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+58.12
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S179
+</td>
+<td style="text-align:left;">
+RNA_39_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11729
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+91
+</td>
+<td style="text-align:right;">
+1.6054000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF2A_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+176
+</td>
+<td style="text-align:left;">
+RNA_P557_S36
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_080_S36_quant/quant.sf
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:left;">
+RNA_P557_080_S36
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7698
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifL2.2 P13 Hx 24h
+</td>
+<td style="text-align:right;">
+777.38
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P13
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S36
+</td>
+<td style="text-align:left;">
+RNA_80
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+180
+</td>
+<td style="text-align:left;">
+RNA_P557_S40
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_084_S40_quant/quant.sf
+</td>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:left;">
+RNA_P557_084_S40
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7704
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifL2.2 P13 Hx 24h
+</td>
+<td style="text-align:right;">
+622.00
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P13
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S40
+</td>
+<td style="text-align:left;">
+RNA_84
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+184
+</td>
+<td style="text-align:left;">
+RNA_P557_S44
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_088_S44_quant/quant.sf
+</td>
+<td style="text-align:right;">
+28
+</td>
+<td style="text-align:left;">
+RNA_P557_088_S44
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7710
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifL2.2 P14 Hx 24h
+</td>
+<td style="text-align:right;">
+885.16
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P14
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S44
+</td>
+<td style="text-align:left;">
+RNA_88
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Katharina_2
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+188
+</td>
+<td style="text-align:left;">
+RNA_P557_S48
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_092_S48_quant/quant.sf
+</td>
+<td style="text-align:right;">
+32
+</td>
+<td style="text-align:left;">
+RNA_P557_092_S48
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7716
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+Kelly CRISPR HifL2.2 P14 Hx 24h
+</td>
+<td style="text-align:right;">
+644.24
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P14
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S48
+</td>
+<td style="text-align:left;">
+RNA_92
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Katharina_2
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+53
+</td>
+<td style="text-align:left;">
+RNA_P3302_S151
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_11_S151_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+85
+</td>
+<td style="text-align:left;">
+RNA_P3302_11_S151_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10907
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:5) Hx 24 h
+</td>
+<td style="text-align:right;">
+44.60
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S151
+</td>
+<td style="text-align:left;">
+RNA_11_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11701
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+63
+</td>
+<td style="text-align:right;">
+0.9692000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+54
+</td>
+<td style="text-align:left;">
+RNA_P3302_S151
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_11_S151_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+86
+</td>
+<td style="text-align:left;">
+RNA_P3302_11_S151_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10907
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:5) Hx 24 h
+</td>
+<td style="text-align:right;">
+44.60
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S151
+</td>
+<td style="text-align:left;">
+RNA_11_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11701
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+63
+</td>
+<td style="text-align:right;">
+0.9692000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+55
+</td>
+<td style="text-align:left;">
+RNA_P3302_S151
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_11_S151_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+87
+</td>
+<td style="text-align:left;">
+RNA_P3302_11_S151_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10907
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:5) Hx 24 h
+</td>
+<td style="text-align:right;">
+44.60
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S151
+</td>
+<td style="text-align:left;">
+RNA_11_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11701
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+63
+</td>
+<td style="text-align:right;">
+0.9692000
+</td>
+<td style="text-align:left;">
+1:5
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+56
+</td>
+<td style="text-align:left;">
+RNA_P3302_S152
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_12_S152_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+88
+</td>
+<td style="text-align:left;">
+RNA_P3302_12_S152_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10908
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:6) Hx 24 h
+</td>
+<td style="text-align:right;">
+42.68
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S152
+</td>
+<td style="text-align:left;">
+RNA_12_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11702
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+64
+</td>
+<td style="text-align:right;">
+0.7742000
+</td>
+<td style="text-align:left;">
+1:6
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+57
+</td>
+<td style="text-align:left;">
+RNA_P3302_S152
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_12_S152_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+89
+</td>
+<td style="text-align:left;">
+RNA_P3302_12_S152_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10908
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:6) Hx 24 h
+</td>
+<td style="text-align:right;">
+42.68
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S152
+</td>
+<td style="text-align:left;">
+RNA_12_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11702
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+64
+</td>
+<td style="text-align:right;">
+0.7742000
+</td>
+<td style="text-align:left;">
+1:6
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+58
+</td>
+<td style="text-align:left;">
+RNA_P3302_S152
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_12_S152_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+90
+</td>
+<td style="text-align:left;">
+RNA_P3302_12_S152_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10908
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:6) Hx 24 h
+</td>
+<td style="text-align:right;">
+42.68
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S152
+</td>
+<td style="text-align:left;">
+RNA_12_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-02
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Ulrike_1
+</td>
+<td style="text-align:right;">
+11702
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+64
+</td>
+<td style="text-align:right;">
+0.7742000
+</td>
+<td style="text-align:left;">
+1:6
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+80
+</td>
+<td style="text-align:left;">
+RNA_P3302_S160
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_20_S160_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+112
+</td>
+<td style="text-align:left;">
+RNA_P3302_20_S160_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10968
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+44.30
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S160
+</td>
+<td style="text-align:left;">
+RNA_20_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11710
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+72
+</td>
+<td style="text-align:right;">
+1.0128000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+81
+</td>
+<td style="text-align:left;">
+RNA_P3302_S160
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_20_S160_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:left;">
+RNA_P3302_20_S160_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10968
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+44.30
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S160
+</td>
+<td style="text-align:left;">
+RNA_20_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11710
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+72
+</td>
+<td style="text-align:right;">
+1.0128000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+82
+</td>
+<td style="text-align:left;">
+RNA_P3302_S160
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_20_S160_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+114
+</td>
+<td style="text-align:left;">
+RNA_P3302_20_S160_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10968
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:4) Hx 24 h
+</td>
+<td style="text-align:right;">
+44.30
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S160
+</td>
+<td style="text-align:left;">
+RNA_20_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-08
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Ulrike_2
+</td>
+<td style="text-align:right;">
+11710
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+72
+</td>
+<td style="text-align:right;">
+1.0128000
+</td>
+<td style="text-align:left;">
+1:4
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+104
+</td>
+<td style="text-align:left;">
+RNA_P3302_S168
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_28_S168_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+136
+</td>
+<td style="text-align:left;">
+RNA_P3302_28_S168_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10981
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:1,5) Hx 24 h
+</td>
+<td style="text-align:right;">
+41.82
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S168
+</td>
+<td style="text-align:left;">
+RNA_28_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11718
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+80
+</td>
+<td style="text-align:right;">
+0.3785600
+</td>
+<td style="text-align:left;">
+1:1,5
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+105
+</td>
+<td style="text-align:left;">
+RNA_P3302_S168
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_28_S168_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+137
+</td>
+<td style="text-align:left;">
+RNA_P3302_28_S168_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10981
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:1,5) Hx 24 h
+</td>
+<td style="text-align:right;">
+41.82
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S168
+</td>
+<td style="text-align:left;">
+RNA_28_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11718
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+80
+</td>
+<td style="text-align:right;">
+0.3785600
+</td>
+<td style="text-align:left;">
+1:1,5
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+106
+</td>
+<td style="text-align:left;">
+RNA_P3302_S168
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_28_S168_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+138
+</td>
+<td style="text-align:left;">
+RNA_P3302_28_S168_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10981
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (1:1,5) Hx 24 h
+</td>
+<td style="text-align:right;">
+41.82
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S168
+</td>
+<td style="text-align:left;">
+RNA_28_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-15
+</td>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+Ulrike_3
+</td>
+<td style="text-align:right;">
+11718
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+80
+</td>
+<td style="text-align:right;">
+0.3785600
+</td>
+<td style="text-align:left;">
+1:1,5
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+152
+</td>
+<td style="text-align:left;">
+RNA_P3302_S184
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_44_S184_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+184
+</td>
+<td style="text-align:left;">
+RNA_P3302_44_S184_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10998
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+38.72
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S184
+</td>
+<td style="text-align:left;">
+RNA_44_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11734
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+96
+</td>
+<td style="text-align:right;">
+0.8372000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+153
+</td>
+<td style="text-align:left;">
+RNA_P3302_S184
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_44_S184_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+185
+</td>
+<td style="text-align:left;">
+RNA_P3302_44_S184_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10998
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+38.72
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S184
+</td>
+<td style="text-align:left;">
+RNA_44_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11734
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+96
+</td>
+<td style="text-align:right;">
+0.8372000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+154
+</td>
+<td style="text-align:left;">
+RNA_P3302_S184
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_44_S184_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+186
+</td>
+<td style="text-align:left;">
+RNA_P3302_44_S184_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10998
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+38.72
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S184
+</td>
+<td style="text-align:left;">
+RNA_44_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11734
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+96
+</td>
+<td style="text-align:right;">
+0.8372000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+155
+</td>
+<td style="text-align:left;">
+RNA_P3302_S185
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_45_S185_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+187
+</td>
+<td style="text-align:left;">
+RNA_P3302_45_S185_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10999
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+41.78
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S185
+</td>
+<td style="text-align:left;">
+RNA_45_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11735
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+97
+</td>
+<td style="text-align:right;">
+0.7554000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+156
+</td>
+<td style="text-align:left;">
+RNA_P3302_S185
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_45_S185_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+188
+</td>
+<td style="text-align:left;">
+RNA_P3302_45_S185_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10999
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+41.78
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S185
+</td>
+<td style="text-align:left;">
+RNA_45_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11735
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+97
+</td>
+<td style="text-align:right;">
+0.7554000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+157
+</td>
+<td style="text-align:left;">
+RNA_P3302_S185
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_45_S185_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+189
+</td>
+<td style="text-align:left;">
+RNA_P3302_45_S185_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+10999
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (300000) Hx 24 h
+</td>
+<td style="text-align:right;">
+41.78
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S185
+</td>
+<td style="text-align:left;">
+RNA_45_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11735
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+97
+</td>
+<td style="text-align:right;">
+0.7554000
+</td>
+<td style="text-align:left;">
+300000
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+167
+</td>
+<td style="text-align:left;">
+RNA_P3302_S189
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_49_S189_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+199
+</td>
+<td style="text-align:left;">
+RNA_P3302_49_S189_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+11004
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+54.78
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S189
+</td>
+<td style="text-align:left;">
+RNA_49_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11739
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+101
+</td>
+<td style="text-align:right;">
+1.2554000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+168
+</td>
+<td style="text-align:left;">
+RNA_P3302_S189
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_49_S189_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+200
+</td>
+<td style="text-align:left;">
+RNA_P3302_49_S189_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+11004
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+54.78
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S189
+</td>
+<td style="text-align:left;">
+RNA_49_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11739
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+101
+</td>
+<td style="text-align:right;">
+1.2554000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+169
+</td>
+<td style="text-align:left;">
+RNA_P3302_S189
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_49_S189_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+201
+</td>
+<td style="text-align:left;">
+RNA_P3302_49_S189_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+11004
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+54.78
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S189
+</td>
+<td style="text-align:left;">
+RNA_49_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11739
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+101
+</td>
+<td style="text-align:right;">
+1.2554000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+170
+</td>
+<td style="text-align:left;">
+RNA_P3302_S190
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_50_S190_L006_quant/quant.sf
+</td>
+<td style="text-align:right;">
+202
+</td>
+<td style="text-align:left;">
+RNA_P3302_50_S190_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+11005
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+54.28
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S190
+</td>
+<td style="text-align:left;">
+RNA_50_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11740
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+102
+</td>
+<td style="text-align:right;">
+1.3440000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+171
+</td>
+<td style="text-align:left;">
+RNA_P3302_S190
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_50_S190_L007_quant/quant.sf
+</td>
+<td style="text-align:right;">
+203
+</td>
+<td style="text-align:left;">
+RNA_P3302_50_S190_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+11005
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+54.28
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S190
+</td>
+<td style="text-align:left;">
+RNA_50_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11740
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+102
+</td>
+<td style="text-align:right;">
+1.3440000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+172
+</td>
+<td style="text-align:left;">
+RNA_P3302_S190
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P3302_01_P3302_RNA_50_S190_L008_quant/quant.sf
+</td>
+<td style="text-align:right;">
+204
+</td>
+<td style="text-align:left;">
+RNA_P3302_50_S190_L008
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L008
+</td>
+<td style="text-align:right;">
+11005
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif2.2 (600000) Hx 24 h
+</td>
+<td style="text-align:right;">
+54.28
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF2A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif2a_2.2
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S190
+</td>
+<td style="text-align:left;">
+RNA_50_L008
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11740
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+102
+</td>
+<td style="text-align:right;">
+1.3440000
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF2A_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+21
+</td>
+<td style="text-align:left;">
+RNA_P2041_S57
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10754_S57_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+53
+</td>
+<td style="text-align:left;">
+RNA_P2041_10754_S57_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10306
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 10.1 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_10
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S57
+</td>
+<td style="text-align:left;">
+RNA_10752
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:right;">
+10752
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_39
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+RNA_P2041_S40
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10631_S40_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+36
+</td>
+<td style="text-align:left;">
+RNA_P2041_10631_S40_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10189
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+Kelly Hif1b.sg1+2 Klon 15 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_15
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S40
+</td>
+<td style="text-align:left;">
+RNA_10745
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Simon_1
+</td>
+<td style="text-align:right;">
+10745
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_05
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+8
+</td>
+<td style="text-align:left;">
+RNA_P2041_S44
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10637_S44_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+40
+</td>
+<td style="text-align:left;">
+RNA_P2041_10637_S44_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10284
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 15.1 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_15
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S44
+</td>
+<td style="text-align:left;">
+RNA_10631
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Simon_4
+</td>
+<td style="text-align:right;">
+10631
+</td>
+<td style="text-align:left;">
+delHif1b4.1
+</td>
+<td style="text-align:left;">
+delHif1b4.1
+</td>
+<td style="text-align:left;">
+RNA_21
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+7
+</td>
+<td style="text-align:left;">
+RNA_P2041_S43
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10636_S43_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:left;">
+RNA_P2041_10636_S43_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10276
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 4.1 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_4
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S43
+</td>
+<td style="text-align:left;">
+RNA_10625
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Simon_4
+</td>
+<td style="text-align:right;">
+10625
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_15
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+15
+</td>
+<td style="text-align:left;">
+RNA_P2041_S51
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10748_S51_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+47
+</td>
+<td style="text-align:left;">
+RNA_P2041_10748_S51_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10300
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 4.1 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_4
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S51
+</td>
+<td style="text-align:left;">
+RNA_10746
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:right;">
+10746
+</td>
+<td style="text-align:left;">
+Kelly Hif1b.sg1+2 Klon 15 Nx
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_33
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+17
+</td>
+<td style="text-align:left;">
+RNA_P2041_S53
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10750_S53_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+49
+</td>
+<td style="text-align:left;">
+RNA_P2041_10750_S53_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10302
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 6.1 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_6
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S53
+</td>
+<td style="text-align:left;">
+RNA_10748
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:right;">
+10748
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_35
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+RNA_P2041_S38
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10621_S38_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+34
+</td>
+<td style="text-align:left;">
+RNA_P2041_10621_S38_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10185
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+Kelly Hif1b.sg1+2 Klon 9 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_9
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S38
+</td>
+<td style="text-align:left;">
+RNA_10621
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Simon_1
+</td>
+<td style="text-align:right;">
+10621
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+RNA_03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+19
+</td>
+<td style="text-align:left;">
+RNA_P2041_S55
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10752_S55_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+51
+</td>
+<td style="text-align:left;">
+RNA_P2041_10752_S55_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10304
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 9.1 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_9
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S55
+</td>
+<td style="text-align:left;">
+RNA_10750
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:right;">
+10750
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_37
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Nx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+22
+</td>
+<td style="text-align:left;">
+RNA_P2041_S58
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10755_S58_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+54
+</td>
+<td style="text-align:left;">
+RNA_P2041_10755_S58_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10307
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 10.1 Hx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_10
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S58
+</td>
+<td style="text-align:left;">
+RNA_10753
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:right;">
+10753
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_40
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+9
+</td>
+<td style="text-align:left;">
+RNA_P2041_S45
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10638_S45_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+41
+</td>
+<td style="text-align:left;">
+RNA_P2041_10638_S45_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10285
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 15.1 Hx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_15
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S45
+</td>
+<td style="text-align:left;">
+RNA_10632
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Simon_4
+</td>
+<td style="text-align:right;">
+10632
+</td>
+<td style="text-align:left;">
+delHif1b4.1
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_22
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+16
+</td>
+<td style="text-align:left;">
+RNA_P2041_S52
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10749_S52_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+48
+</td>
+<td style="text-align:left;">
+RNA_P2041_10749_S52_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10301
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 4.1 Hx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_4
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S52
+</td>
+<td style="text-align:left;">
+RNA_10747
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:right;">
+10747
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_34
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+18
+</td>
+<td style="text-align:left;">
+RNA_P2041_S54
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10751_S54_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+50
+</td>
+<td style="text-align:left;">
+RNA_P2041_10751_S54_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10303
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 6.1 Hx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_6
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S54
+</td>
+<td style="text-align:left;">
+RNA_10749
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:right;">
+10749
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_36
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:left;">
+RNA_P2041_S39
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10625_S39_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+35
+</td>
+<td style="text-align:left;">
+RNA_P2041_10625_S39_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10186
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+Kelly Hif1b.sg1+2 Klon 9 Hx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_9
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S39
+</td>
+<td style="text-align:left;">
+RNA_10744
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Simon_1
+</td>
+<td style="text-align:right;">
+10744
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+RNA_04
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Hx
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+20
+</td>
+<td style="text-align:left;">
+RNA_P2041_S56
+</td>
+<td style="text-align:left;">
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10753_S56_L003_quant/quant.sf
+</td>
+<td style="text-align:right;">
+52
+</td>
+<td style="text-align:left;">
+RNA_P2041_10753_S56_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10305
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 9.1 Hx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_9
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S56
+</td>
+<td style="text-align:left;">
+RNA_10751
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:right;">
+10751
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_38
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Hx
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ``` r
-sample_table_all$genotype
+levels(sample_table_all$genotype)
 ```
 
-    ##   [1] Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly
-    ##  [13] Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly
-    ##  [25] Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly
-    ##  [37] Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly
-    ##  [49] Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly
-    ##  [61] Kelly Kelly Kelly Kelly Kelly Kelly Kelly HIF1A HIF1A HIF1A HIF1A HIF1A
-    ##  [73] HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A
-    ##  [85] HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A
-    ##  [97] HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A
-    ## [109] HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A
-    ## [121] HIF1A HIF1A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A
-    ## [133] HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A
-    ## [145] HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A
-    ## [157] HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A
-    ## [169] HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF1B HIF1B HIF1B HIF1B HIF1B HIF1B
-    ## [181] HIF1B HIF1B HIF1B HIF1B HIF1B HIF1B HIF1B HIF1B
-    ## Levels: Kelly HIF1A HIF1B HIF2A
+    ## [1] "Kelly" "HIF1A" "HIF2A" "HIF1B"
+
+``` r
+levels(sample_table_all$clone %>% as.factor())
+```
+
+    ##  [1] "Hif1a_1.3" "Hif1a_1.6" "Hif1b_10"  "Hif1b_15"  "Hif1b_4"   "Hif1b_6"  
+    ##  [7] "Hif1b_9"   "Hif2a_2.2" "LV_1"      "LV1"
 
 # 2. Process
 
-## Mapping Rates
+## - Mapping Rates
 
 ``` r
 dir
@@ -1295,109 +21801,31 @@ sample_table_all$mappingrates <- mappingrates[17:204]
 # Colours
 
 # Plot
-plot(sample_table_all$mappingrates)
+par(mar=c(2,4,0,0)+.1)
+# plot(sample_table_all$mappingrates)
+# -> boring
+
+# increase margin for longer names
+par(mar=c(2,6,2,2)+.1)
+# barplot(height=mappingrates, names=samplename, horiz=T, las=1)
+
+xx <- barplot(height=mappingrates, names=samplename, horiz=T, las=1, xlim=c(0,100))
+text(x = mappingrates, y = xx, label = mappingrates, pos = 4, cex = 0.8, col = "red")
 ```
 
 ![](README_files/figure-gfm/plot_mappingr-1.png)<!-- -->
 
 ``` r
-# -> boring
-
-# increase margin for longer names
-par(mar=c(4,15,4,4)+.1)
-barplot(height=mappingrates, names=samplename, horiz=T, las=1)
+par(mar=c(4,4,4,4)+.1)
 ```
 
-![](README_files/figure-gfm/plot_mappingr-2.png)<!-- -->
-
-``` r
-xx <- barplot(height=mappingrates, names=samplename, horiz=T, las=1, xlim=c(0,100)) #col=col
-text(x = mappingrates, y = xx, label = mappingrates, pos = 4, cex = 0.8, col = "red")
-```
-
-![](README_files/figure-gfm/plot_mappingr-3.png)<!-- -->
-
-``` r
-par(mar=c(1,1,1,1)+.1)
-```
-
-## Tximeta
+## - Tximeta
 
 ``` r
 # prepare coldata table
-quant_file_table %>% head()
-```
+# quant_file_table %>% head() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
+# sample_table_all %>% head() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 
-    ##                                                                                           files
-    ## 17 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_077_S33_quant/quant.sf
-    ## 18 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_078_S34_quant/quant.sf
-    ## 19 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_079_S35_quant/quant.sf
-    ## 20 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_080_S36_quant/quant.sf
-    ## 21 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_081_S37_quant/quant.sf
-    ## 22 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_082_S38_quant/quant.sf
-    ##      samplename order         filename sequencing lane
-    ## 17 RNA_P557_S33    17 RNA_P557_077_S33       P557 L001
-    ## 18 RNA_P557_S34    18 RNA_P557_078_S34       P557 L001
-    ## 19 RNA_P557_S35    19 RNA_P557_079_S35       P557 L001
-    ## 20 RNA_P557_S36    20 RNA_P557_080_S36       P557 L001
-    ## 21 RNA_P557_S37    21 RNA_P557_081_S37       P557 L001
-    ## 22 RNA_P557_S38    22 RNA_P557_082_S38       P557 L001
-
-``` r
-sample_table_all %>% head()
-```
-
-    ##        samplename
-    ## 1   RNA_P2041_S37
-    ## 5   RNA_P2041_S41
-    ## 10  RNA_P2041_S46
-    ## 173  RNA_P557_S33
-    ## 177  RNA_P557_S37
-    ## 181  RNA_P557_S41
-    ##                                                                                                files
-    ## 1   /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10619_S37_L003_quant/quant.sf
-    ## 5   /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10632_S41_L003_quant/quant.sf
-    ## 10  /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10640_S46_L003_quant/quant.sf
-    ## 173     /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_077_S33_quant/quant.sf
-    ## 177     /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_081_S37_quant/quant.sf
-    ## 181     /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/CH_HS_KK_085_S41_quant/quant.sf
-    ##     order                 filename sequencing lane rna_id      Datum
-    ## 1      33 RNA_P2041_10619_S37_L003      P2041 L003   6952 2017-05-04
-    ## 5      37 RNA_P2041_10632_S41_L003      P2041 L003  10268 2021-08-25
-    ## 10     42 RNA_P2041_10640_S46_L003      P2041 L003  10292 2021-08-27
-    ## 173    17         RNA_P557_077_S33       P557 L001   7693 2018-09-13
-    ## 177    21         RNA_P557_081_S37       P557 L001   7699 2018-09-13
-    ## 181    25         RNA_P557_085_S41       P557 L001   7705 2018-09-14
-    ##                               Probe rna_conc treatment genotype sequencing.y
-    ## 1   Kelly CRISPR Cas Hif LV1 Nx 24h       NA        Nx    Kelly        P2041
-    ## 5                     Kelly LV.1 Nx       NA        Nx    Kelly        P2041
-    ## 10                    Kelly LV.1 Nx       NA        Nx    Kelly        P2041
-    ## 173  Kelly CRISPR Hif LV1 P7 Nx 24h   830.48        Nx    Kelly         P557
-    ## 177  Kelly CRISPR Hif LV1 P7 Nx 24h   603.48        Nx    Kelly         P557
-    ## 181  Kelly CRISPR Hif LV1 P8 Nx 24h   807.66        Nx    Kelly         P557
-    ##     replicate clone cellline lane.y sample_id    run_id experiment
-    ## 1        <NA>  LV_1    Kelly   L003       S37 RNA_10619    Control
-    ## 5        <NA>  LV_1    Kelly   L003       S41 RNA_10754      Simon
-    ## 10       <NA>  LV_1    Kelly   L003       S46 RNA_10635      Simon
-    ## 173        P7   LV1    Kelly   L001       S33    RNA_77  Katharina
-    ## 177        P7   LV1    Kelly   L001       S37    RNA_81  Katharina
-    ## 181        P8   LV1    Kelly   L001       S41    RNA_85  Katharina
-    ##     experiment_date repetition     exp_rep CUGE-ID           Nx           HX
-    ## 1        2017-05-04          0   Control_0   10619           LV         <NA>
-    ## 5        2021-08-25          4     Simon_4   10754 del_Hif1a1.3 del_Hif1a1.3
-    ## 10       2021-08-27          5     Simon_5   10635  delHif1b6.1  delHif1b6.1
-    ## 173      2018-09-13          1 Katharina_1      NA         <NA>         <NA>
-    ## 177      2018-09-13          1 Katharina_1      NA         <NA>         <NA>
-    ## 181      2018-09-14          2 Katharina_2      NA         <NA>         <NA>
-    ##     sample order_number Konz.(µg/µl) cell_density condition mappingrates
-    ## 1   RNA_01           NA           NA         <NA>  Kelly_Nx        81.00
-    ## 5   RNA_11           NA           NA         <NA>  Kelly_Nx        77.42
-    ## 10  RNA_25           NA           NA         <NA>  Kelly_Nx        77.48
-    ## 173   <NA>           NA           NA         <NA>  Kelly_Nx        76.90
-    ## 177   <NA>           NA           NA         <NA>  Kelly_Nx        80.42
-    ## 181   <NA>           NA           NA         <NA>  Kelly_Nx        77.44
-
-``` r
 sample_table_all$names = paste(sample_table_all$sequencing,
                                sample_table_all$genotype,
                                sample_table_all$treatment,
@@ -1417,18 +21845,8 @@ coldata <- data.frame(files = sample_table_all$files,
 # load tximeta
 
 # make linked Transcriptome (local offline mode)
-indexdir
-```
-
-    ## [1] "/mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/index/human_ens110_index"
-
-``` r
-dirgenomic
-```
-
-    ## [1] "/mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/110"
-
-``` r
+# indexdir
+# dirgenomic
 list.files(dirgenomic)
 ```
 
@@ -1441,17 +21859,17 @@ list.files(dirgenomic)
 
 ``` r
 fastaPath <- file.path(dirgenomic, "Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz")
-fastaPath
-```
-
-    ## [1] "/mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/110/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
-
-``` r
+# fastaPath
 gtfPath <- file.path(dirgenomic,"Homo_sapiens.GRCh38.110.gff3.gz")
-gtfPath
+# gtfPath
+
+cat(indexdir,dirgenomic,fastaPath,gtfPath, sep="\n")
 ```
 
-    ## [1] "/mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/110/Homo_sapiens.GRCh38.110.gff3.gz"
+    ## /mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/index/human_ens110_index
+    ## /mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/110
+    ## /mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/110/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+    ## /mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/110/Homo_sapiens.GRCh38.110.gff3.gz
 
 ``` r
 file.exists(indexdir, fastaPath, gtfPath)
@@ -1490,127 +21908,622 @@ se
     ## colData names(33): names samplename ... mappingrates names.1
 
 ``` r
-colData(se)
+colData(se)[c(1,2,87,88),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-    ## DataFrame with 188 rows and 33 columns
-    ##                               names    samplename     order
-    ##                         <character>   <character> <integer>
-    ## P2041_Kelly_Nx_33 P2041_Kelly_Nx_33 RNA_P2041_S37        33
-    ## P2041_Kelly_Nx_37 P2041_Kelly_Nx_37 RNA_P2041_S41        37
-    ## P2041_Kelly_Nx_42 P2041_Kelly_Nx_42 RNA_P2041_S46        42
-    ## P557_Kelly_Nx_17   P557_Kelly_Nx_17  RNA_P557_S33        17
-    ## P557_Kelly_Nx_21   P557_Kelly_Nx_21  RNA_P557_S37        21
-    ## ...                             ...           ...       ...
-    ## P2041_HIF1B_Hx_41 P2041_HIF1B_Hx_41 RNA_P2041_S45        41
-    ## P2041_HIF1B_Hx_48 P2041_HIF1B_Hx_48 RNA_P2041_S52        48
-    ## P2041_HIF1B_Hx_50 P2041_HIF1B_Hx_50 RNA_P2041_S54        50
-    ## P2041_HIF1B_Hx_35 P2041_HIF1B_Hx_35 RNA_P2041_S39        35
-    ## P2041_HIF1B_Hx_52 P2041_HIF1B_Hx_52 RNA_P2041_S56        52
-    ##                                 filename  sequencing        lane    rna_id
-    ##                              <character> <character> <character> <numeric>
-    ## P2041_Kelly_Nx_33 RNA_P2041_10619_S37_..       P2041        L003      6952
-    ## P2041_Kelly_Nx_37 RNA_P2041_10632_S41_..       P2041        L003     10268
-    ## P2041_Kelly_Nx_42 RNA_P2041_10640_S46_..       P2041        L003     10292
-    ## P557_Kelly_Nx_17        RNA_P557_077_S33        P557        L001      7693
-    ## P557_Kelly_Nx_21        RNA_P557_081_S37        P557        L001      7699
-    ## ...                                  ...         ...         ...       ...
-    ## P2041_HIF1B_Hx_41 RNA_P2041_10638_S45_..       P2041        L003     10285
-    ## P2041_HIF1B_Hx_48 RNA_P2041_10749_S52_..       P2041        L003     10301
-    ## P2041_HIF1B_Hx_50 RNA_P2041_10751_S54_..       P2041        L003     10303
-    ## P2041_HIF1B_Hx_35 RNA_P2041_10625_S39_..       P2041        L003     10186
-    ## P2041_HIF1B_Hx_52 RNA_P2041_10753_S56_..       P2041        L003     10305
-    ##                        Datum                  Probe  rna_conc   treatment
-    ##                    <POSIXct>            <character> <numeric> <character>
-    ## P2041_Kelly_Nx_33 2017-05-04 Kelly CRISPR Cas Hif..        NA          Nx
-    ## P2041_Kelly_Nx_37 2021-08-25          Kelly LV.1 Nx        NA          Nx
-    ## P2041_Kelly_Nx_42 2021-08-27          Kelly LV.1 Nx        NA          Nx
-    ## P557_Kelly_Nx_17  2018-09-13 Kelly CRISPR Hif LV1..    830.48          Nx
-    ## P557_Kelly_Nx_21  2018-09-13 Kelly CRISPR Hif LV1..    603.48          Nx
-    ## ...                      ...                    ...       ...         ...
-    ## P2041_HIF1B_Hx_41 2021-08-25    Kelly Hif1b 15.1 Hx        NA          Hx
-    ## P2041_HIF1B_Hx_48 2021-08-27     Kelly Hif1b 4.1 Hx        NA          Hx
-    ## P2041_HIF1B_Hx_50 2021-08-27     Kelly Hif1b 6.1 Hx        NA          Hx
-    ## P2041_HIF1B_Hx_35 2021-06-16 Kelly Hif1b.sg1+2 Kl..        NA          Hx
-    ## P2041_HIF1B_Hx_52 2021-08-27     Kelly Hif1b 9.1 Hx        NA          Hx
-    ##                   genotype sequencing.y   replicate       clone    cellline
-    ##                   <factor>  <character> <character> <character> <character>
-    ## P2041_Kelly_Nx_33    Kelly        P2041          NA        LV_1       Kelly
-    ## P2041_Kelly_Nx_37    Kelly        P2041          NA        LV_1       Kelly
-    ## P2041_Kelly_Nx_42    Kelly        P2041          NA        LV_1       Kelly
-    ## P557_Kelly_Nx_17     Kelly         P557          P7         LV1       Kelly
-    ## P557_Kelly_Nx_21     Kelly         P557          P7         LV1       Kelly
-    ## ...                    ...          ...         ...         ...         ...
-    ## P2041_HIF1B_Hx_41    HIF1B        P2041          NA    Hif1b_15       Kelly
-    ## P2041_HIF1B_Hx_48    HIF1B        P2041          NA     Hif1b_4       Kelly
-    ## P2041_HIF1B_Hx_50    HIF1B        P2041          NA     Hif1b_6       Kelly
-    ## P2041_HIF1B_Hx_35    HIF1B        P2041          NA     Hif1b_9       Kelly
-    ## P2041_HIF1B_Hx_52    HIF1B        P2041          NA     Hif1b_9       Kelly
-    ##                        lane.y   sample_id      run_id  experiment
-    ##                   <character> <character> <character> <character>
-    ## P2041_Kelly_Nx_33        L003         S37   RNA_10619     Control
-    ## P2041_Kelly_Nx_37        L003         S41   RNA_10754       Simon
-    ## P2041_Kelly_Nx_42        L003         S46   RNA_10635       Simon
-    ## P557_Kelly_Nx_17         L001         S33      RNA_77   Katharina
-    ## P557_Kelly_Nx_21         L001         S37      RNA_81   Katharina
-    ## ...                       ...         ...         ...         ...
-    ## P2041_HIF1B_Hx_41        L003         S45   RNA_10632       Simon
-    ## P2041_HIF1B_Hx_48        L003         S52   RNA_10747       Simon
-    ## P2041_HIF1B_Hx_50        L003         S54   RNA_10749       Simon
-    ## P2041_HIF1B_Hx_35        L003         S39   RNA_10744       Simon
-    ## P2041_HIF1B_Hx_52        L003         S56   RNA_10751       Simon
-    ##                   experiment_date  repetition     exp_rep   CUGE.ID
-    ##                         <POSIXct> <character> <character> <numeric>
-    ## P2041_Kelly_Nx_33      2017-05-04           0   Control_0     10619
-    ## P2041_Kelly_Nx_37      2021-08-25           4     Simon_4     10754
-    ## P2041_Kelly_Nx_42      2021-08-27           5     Simon_5     10635
-    ## P557_Kelly_Nx_17       2018-09-13           1 Katharina_1        NA
-    ## P557_Kelly_Nx_21       2018-09-13           1 Katharina_1        NA
-    ## ...                           ...         ...         ...       ...
-    ## P2041_HIF1B_Hx_41      2021-08-25           4     Simon_4     10632
-    ## P2041_HIF1B_Hx_48      2021-08-27           5     Simon_5     10747
-    ## P2041_HIF1B_Hx_50      2021-08-27           5     Simon_5     10749
-    ## P2041_HIF1B_Hx_35      2021-06-16           1     Simon_1     10744
-    ## P2041_HIF1B_Hx_52      2021-08-27           5     Simon_5     10751
-    ##                             Nx           HX      sample order_number
-    ##                    <character>  <character> <character>    <numeric>
-    ## P2041_Kelly_Nx_33           LV           NA      RNA_01           NA
-    ## P2041_Kelly_Nx_37 del_Hif1a1.3 del_Hif1a1.3      RNA_11           NA
-    ## P2041_Kelly_Nx_42  delHif1b6.1  delHif1b6.1      RNA_25           NA
-    ## P557_Kelly_Nx_17            NA           NA          NA           NA
-    ## P557_Kelly_Nx_21            NA           NA          NA           NA
-    ## ...                        ...          ...         ...          ...
-    ## P2041_HIF1B_Hx_41  delHif1b4.1           NA      RNA_22           NA
-    ## P2041_HIF1B_Hx_48           NA           NA      RNA_34           NA
-    ## P2041_HIF1B_Hx_50           NA           NA      RNA_36           NA
-    ## P2041_HIF1B_Hx_35           LV           LV      RNA_04           NA
-    ## P2041_HIF1B_Hx_52           NA           NA      RNA_38           NA
-    ##                   Konz..µg.µl. cell_density condition mappingrates
-    ##                      <numeric>  <character>  <factor>    <numeric>
-    ## P2041_Kelly_Nx_33           NA           NA  Kelly_Nx        81.00
-    ## P2041_Kelly_Nx_37           NA           NA  Kelly_Nx        77.42
-    ## P2041_Kelly_Nx_42           NA           NA  Kelly_Nx        77.48
-    ## P557_Kelly_Nx_17            NA           NA  Kelly_Nx        76.90
-    ## P557_Kelly_Nx_21            NA           NA  Kelly_Nx        80.42
-    ## ...                        ...          ...       ...          ...
-    ## P2041_HIF1B_Hx_41           NA           NA  HIF1B_Hx        84.48
-    ## P2041_HIF1B_Hx_48           NA           NA  HIF1B_Hx        84.55
-    ## P2041_HIF1B_Hx_50           NA           NA  HIF1B_Hx        84.48
-    ## P2041_HIF1B_Hx_35           NA           NA  HIF1B_Hx        84.50
-    ## P2041_HIF1B_Hx_52           NA           NA  HIF1B_Hx        84.56
-    ##                             names.1
-    ##                         <character>
-    ## P2041_Kelly_Nx_33 P2041_Kelly_Nx_33
-    ## P2041_Kelly_Nx_37 P2041_Kelly_Nx_37
-    ## P2041_Kelly_Nx_42 P2041_Kelly_Nx_42
-    ## P557_Kelly_Nx_17   P557_Kelly_Nx_17
-    ## P557_Kelly_Nx_21   P557_Kelly_Nx_21
-    ## ...                             ...
-    ## P2041_HIF1B_Hx_41 P2041_HIF1B_Hx_41
-    ## P2041_HIF1B_Hx_48 P2041_HIF1B_Hx_48
-    ## P2041_HIF1B_Hx_50 P2041_HIF1B_Hx_50
-    ## P2041_HIF1B_Hx_35 P2041_HIF1B_Hx_35
-    ## P2041_HIF1B_Hx_52 P2041_HIF1B_Hx_52
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+names
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+order
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+filename
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sequencing
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+lane
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Datum
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Probe
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_conc
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+treatment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+genotype
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sequencing.y
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+replicate
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+clone
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cellline
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+lane.y
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+run_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment_date
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+repetition
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+exp_rep
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+CUGE.ID
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Nx
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+HX
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+order_number
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Konz..µg.µl.
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cell_density
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+condition
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+mappingrates
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+names.1
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+P2041_Kelly_Nx_33
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_33
+</td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:left;">
+RNA_P2041_10619_S37_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+6952
+</td>
+<td style="text-align:left;">
+2017-05-04
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Cas Hif LV1 Nx 24h
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV_1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S37
+</td>
+<td style="text-align:left;">
+RNA_10619
+</td>
+<td style="text-align:left;">
+Control
+</td>
+<td style="text-align:left;">
+2017-05-04
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+Control_0
+</td>
+<td style="text-align:right;">
+10619
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+<td style="text-align:right;">
+81.00
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_33
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+P2041_Kelly_Nx_37
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_37
+</td>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:left;">
+RNA_P2041_10632_S41_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10268
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+Kelly LV.1 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV_1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S41
+</td>
+<td style="text-align:left;">
+RNA_10754
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Simon_4
+</td>
+<td style="text-align:right;">
+10754
+</td>
+<td style="text-align:left;">
+del_Hif1a1.3
+</td>
+<td style="text-align:left;">
+del_Hif1a1.3
+</td>
+<td style="text-align:left;">
+RNA_11
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+<td style="text-align:right;">
+77.42
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_37
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+P3302_HIF1A_Nx_160
+</td>
+<td style="text-align:left;">
+P3302_HIF1A_Nx_160
+</td>
+<td style="text-align:left;">
+RNA_P3302_S176
+</td>
+<td style="text-align:right;">
+160
+</td>
+<td style="text-align:left;">
+RNA_P3302_36_S176_L006
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L006
+</td>
+<td style="text-align:right;">
+10990
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+57.14
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S176
+</td>
+<td style="text-align:left;">
+RNA_36_L006
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11726
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+88
+</td>
+<td style="text-align:right;">
+1.3212
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+<td style="text-align:right;">
+82.27
+</td>
+<td style="text-align:left;">
+P3302_HIF1A_Nx_160
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+P3302_HIF1A_Nx_161
+</td>
+<td style="text-align:left;">
+P3302_HIF1A_Nx_161
+</td>
+<td style="text-align:left;">
+RNA_P3302_S176
+</td>
+<td style="text-align:right;">
+161
+</td>
+<td style="text-align:left;">
+RNA_P3302_36_S176_L007
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+L007
+</td>
+<td style="text-align:right;">
+10990
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+Kelly Hif1.3 (600000) Nx 24 h
+</td>
+<td style="text-align:right;">
+57.14
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+P3302
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+S176
+</td>
+<td style="text-align:left;">
+RNA_36_L007
+</td>
+<td style="text-align:left;">
+Ulrike
+</td>
+<td style="text-align:left;">
+2023-06-28
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Ulrike_4
+</td>
+<td style="text-align:right;">
+11726
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+88
+</td>
+<td style="text-align:right;">
+1.3212
+</td>
+<td style="text-align:left;">
+600000
+</td>
+<td style="text-align:left;">
+HIF1A_Nx
+</td>
+<td style="text-align:right;">
+82.26
+</td>
+<td style="text-align:left;">
+P3302_HIF1A_Nx_161
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+
+``` r
+mcols(se)[c(1,2,87,88),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
+```
+
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+tx_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+gene_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+tx_name
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+ENST00000415118
+</td>
+<td style="text-align:right;">
+165589
+</td>
+<td style="text-align:left;">
+ENSG0000….
+</td>
+<td style="text-align:left;">
+ENST00000415118
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENST00000448914
+</td>
+<td style="text-align:right;">
+165591
+</td>
+<td style="text-align:left;">
+ENSG0000….
+</td>
+<td style="text-align:left;">
+ENST00000448914
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENST00000390348
+</td>
+<td style="text-align:right;">
+99057
+</td>
+<td style="text-align:left;">
+ENSG0000….
+</td>
+<td style="text-align:left;">
+ENST00000390348
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENST00000619103
+</td>
+<td style="text-align:right;">
+96921
+</td>
+<td style="text-align:left;">
+ENSG0000….
+</td>
+<td style="text-align:left;">
+ENST00000619103
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ``` r
 # meta infos sind da (genotype, treatment,...)
@@ -1618,59 +22531,177 @@ colData(se)
 # rename Samples
 # rownames(colData(se)) <- str_remove(rownames(colData(se)), pattern="_quant")
 
-rowRanges(se)
+rowRanges(se)[c(1,10,100,1000,10000),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-    ## GRanges object with 242932 ranges and 3 metadata columns:
-    ##                   seqnames              ranges strand |     tx_id
-    ##                      <Rle>           <IRanges>  <Rle> | <integer>
-    ##   ENST00000415118       14   22438547-22438554      + |    165589
-    ##   ENST00000448914       14   22449113-22449125      + |    165591
-    ##   ENST00000434970       14   22439007-22439015      + |    165590
-    ##   ENST00000605284       15   20011153-20011169      - |    179094
-    ##   ENST00000604642       15   20003840-20003862      - |    179090
-    ##               ...      ...                 ...    ... .       ...
-    ##   ENST00000461982        1 153704088-153704385      + |      7203
-    ##   ENST00000410579        1     8796571-8796673      - |     12455
-    ##   ENST00000583026        1     8979576-8979874      - |     12477
-    ##   ENST00000516935        1 148330271-148330394      + |      6664
-    ##   ENST00000580835        1 179900262-179900564      + |      8938
-    ##                           gene_id         tx_name
-    ##                   <CharacterList>     <character>
-    ##   ENST00000415118 ENSG00000223997 ENST00000415118
-    ##   ENST00000448914 ENSG00000228985 ENST00000448914
-    ##   ENST00000434970 ENSG00000237235 ENST00000434970
-    ##   ENST00000605284 ENSG00000271336 ENST00000605284
-    ##   ENST00000604642 ENSG00000270961 ENST00000604642
-    ##               ...             ...             ...
-    ##   ENST00000461982 ENSG00000242565 ENST00000461982
-    ##   ENST00000410579 ENSG00000222511 ENST00000410579
-    ##   ENST00000583026 ENSG00000265141 ENST00000583026
-    ##   ENST00000516935 ENSG00000252744 ENST00000516935
-    ##   ENST00000580835 ENSG00000264916 ENST00000580835
-    ##   -------
-    ##   seqinfo: 47 sequences (1 circular) from an unspecified genome; no seqlengths
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+seqnames
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+start
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+end
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+width
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+strand
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+tx_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+gene_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+tx_name
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+14
+</td>
+<td style="text-align:right;">
+22438547
+</td>
+<td style="text-align:right;">
+22438554
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:left;">
+
+- </td>
+  <td style="text-align:right;">
+  165589
+  </td>
+  <td style="text-align:left;">
+  ENSG0000….
+  </td>
+  <td style="text-align:left;">
+  ENST00000415118
+  </td>
+  </tr>
+  <tr>
+  <td style="text-align:left;">
+  14
+  </td>
+  <td style="text-align:right;">
+  22469041
+  </td>
+  <td style="text-align:right;">
+  22469698
+  </td>
+  <td style="text-align:right;">
+  658
+  </td>
+  <td style="text-align:left;">
+
+  - </td>
+    <td style="text-align:right;">
+    170742
+    </td>
+    <td style="text-align:left;">
+    ENSG0000….
+    </td>
+    <td style="text-align:left;">
+    ENST00000535880
+    </td>
+    </tr>
+    <tr>
+    <td style="text-align:left;">
+    22
+    </td>
+    <td style="text-align:right;">
+    22893692
+    </td>
+    <td style="text-align:right;">
+    22893818
+    </td>
+    <td style="text-align:right;">
+    127
+    </td>
+    <td style="text-align:left;">
+
+    - </td>
+      <td style="text-align:right;">
+      239054
+      </td>
+      <td style="text-align:left;">
+      ENSG0000….
+      </td>
+      <td style="text-align:left;">
+      ENST00000390320
+      </td>
+      </tr>
+      <tr>
+      <td style="text-align:left;">
+      22
+      </td>
+      <td style="text-align:right;">
+      30890949
+      </td>
+      <td style="text-align:right;">
+      30894261
+      </td>
+      <td style="text-align:right;">
+      3313
+      </td>
+      <td style="text-align:left;">
+
+      - </td>
+        <td style="text-align:right;">
+        239683
+        </td>
+        <td style="text-align:left;">
+        ENSG0000….
+        </td>
+        <td style="text-align:left;">
+        ENST00000496575
+        </td>
+        </tr>
+        <tr>
+        <td style="text-align:left;">
+        8
+        </td>
+        <td style="text-align:right;">
+        76982934
+        </td>
+        <td style="text-align:right;">
+        77000947
+        </td>
+        <td style="text-align:right;">
+        18014
+        </td>
+        <td style="text-align:left;">
+
+        - </td>
+          <td style="text-align:right;">
+          111318
+          </td>
+          <td style="text-align:left;">
+          ENSG0000….
+          </td>
+          <td style="text-align:left;">
+          ENST00000520103
+          </td>
+          </tr>
+          </tbody>
+          </table>
+          </div>
 
 ``` r
 # genome info
-seqinfo(se)
-```
-
-    ## Seqinfo object with 47 sequences (1 circular) from an unspecified genome; no seqlengths:
-    ##   seqnames   seqlengths isCircular genome
-    ##   1                <NA>       <NA>   <NA>
-    ##   2                <NA>       <NA>   <NA>
-    ##   3                <NA>       <NA>   <NA>
-    ##   4                <NA>       <NA>   <NA>
-    ##   5                <NA>       <NA>   <NA>
-    ##   ...               ...        ...    ...
-    ##   KI270731.1       <NA>       <NA>   <NA>
-    ##   KI270733.1       <NA>       <NA>   <NA>
-    ##   KI270734.1       <NA>       <NA>   <NA>
-    ##   KI270744.1       <NA>       <NA>   <NA>
-    ##   KI270750.1       <NA>       <NA>   <NA>
-
-``` r
+# seqinfo(se) %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 # ?
 assays(se)[["counts"]][1:5,1:5] %>% kable()
 ```
@@ -1689,75 +22720,985 @@ assays(se)[["counts"]][1:5,1:5] %>% kable()
 # Mapping infos:
 # names(metadata(se)[["quantInfo"]])
 # str(metadata(se)[["quantInfo"]]) # Infos from Salmon Mapping
-metadata(se)[["quantInfo"]]$percent_mapped %>% head() %>% kable()
+metadata(se)[["quantInfo"]][c("percent_mapped","num_processed")] %>% data.frame() %>% head() %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-|        x |
-|---------:|
-| 87.92344 |
-| 91.55031 |
-| 92.21336 |
-| 80.99582 |
-| 80.41615 |
-| 81.92242 |
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+percent_mapped
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+num_processed
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+87.92344
+</td>
+<td style="text-align:right;">
+71719907
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+91.55031
+</td>
+<td style="text-align:right;">
+74462734
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+92.21336
+</td>
+<td style="text-align:right;">
+66875819
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+80.99582
+</td>
+<td style="text-align:right;">
+26981591
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+80.41615
+</td>
+<td style="text-align:right;">
+32081935
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+81.92242
+</td>
+<td style="text-align:right;">
+23145792
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ``` r
-metadata(se)[["quantInfo"]]$num_processed %>% head() %>% kable()
-```
-
-|        x |
-|---------:|
-| 71719907 |
-| 74462734 |
-| 66875819 |
-| 26981591 |
-| 32081935 |
-| 23145792 |
-
-``` r
-par(mfrow=c(1,1))
-barplot(metadata(se)[["quantInfo"]]$percent_mapped, main="Mapping Rate")
+par(mfrow=c(1,2), mar=c(3,3,3,3))
+barplot(metadata(se)[["quantInfo"]]$percent_mapped, main="Mapping Rate", 
+        horiz=T,las=1)
+barplot(metadata(se)[["quantInfo"]]$num_processed/1000000, main="Mio. Reads", 
+        names.arg=colData(se)$exp_rep, horiz=T,las=1)
 ```
 
 ![](README_files/figure-gfm/tximeta-1.png)<!-- -->
 
 ``` r
-barplot(metadata(se)[["quantInfo"]]$num_processed/1000000, main="Mio. Reads")
+colData(se) %>% head() %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-![](README_files/figure-gfm/tximeta-2.png)<!-- -->
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+names
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+order
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+filename
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sequencing
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+lane
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Datum
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Probe
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_conc
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+treatment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+genotype
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sequencing.y
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+replicate
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+clone
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cellline
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+lane.y
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+run_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment_date
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+repetition
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+exp_rep
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+CUGE.ID
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Nx
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+HX
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+order_number
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Konz..µg.µl.
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cell_density
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+condition
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+mappingrates
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+names.1
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+P2041_Kelly_Nx_33
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_33
+</td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:left;">
+RNA_P2041_10619_S37_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+6952
+</td>
+<td style="text-align:left;">
+2017-05-04
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Cas Hif LV1 Nx 24h
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV_1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S37
+</td>
+<td style="text-align:left;">
+RNA_10619
+</td>
+<td style="text-align:left;">
+Control
+</td>
+<td style="text-align:left;">
+2017-05-04
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+Control_0
+</td>
+<td style="text-align:right;">
+10619
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+<td style="text-align:right;">
+81.00
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_33
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+P2041_Kelly_Nx_37
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_37
+</td>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:left;">
+RNA_P2041_10632_S41_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10268
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+Kelly LV.1 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV_1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S41
+</td>
+<td style="text-align:left;">
+RNA_10754
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Simon_4
+</td>
+<td style="text-align:right;">
+10754
+</td>
+<td style="text-align:left;">
+del_Hif1a1.3
+</td>
+<td style="text-align:left;">
+del_Hif1a1.3
+</td>
+<td style="text-align:left;">
+RNA_11
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+<td style="text-align:right;">
+77.42
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_37
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+P2041_Kelly_Nx_42
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_42
+</td>
+<td style="text-align:left;">
+RNA_P2041_S46
+</td>
+<td style="text-align:right;">
+42
+</td>
+<td style="text-align:left;">
+RNA_P2041_10640_S46_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10292
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Kelly LV.1 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV_1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S46
+</td>
+<td style="text-align:left;">
+RNA_10635
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:right;">
+10635
+</td>
+<td style="text-align:left;">
+delHif1b6.1
+</td>
+<td style="text-align:left;">
+delHif1b6.1
+</td>
+<td style="text-align:left;">
+RNA_25
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+<td style="text-align:right;">
+77.48
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_42
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+P557_Kelly_Nx_17
+</td>
+<td style="text-align:left;">
+P557_Kelly_Nx_17
+</td>
+<td style="text-align:left;">
+RNA_P557_S33
+</td>
+<td style="text-align:right;">
+17
+</td>
+<td style="text-align:left;">
+RNA_P557_077_S33
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7693
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif LV1 P7 Nx 24h
+</td>
+<td style="text-align:right;">
+830.48
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P7
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S33
+</td>
+<td style="text-align:left;">
+RNA_77
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+<td style="text-align:right;">
+76.90
+</td>
+<td style="text-align:left;">
+P557_Kelly_Nx_17
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+P557_Kelly_Nx_21
+</td>
+<td style="text-align:left;">
+P557_Kelly_Nx_21
+</td>
+<td style="text-align:left;">
+RNA_P557_S37
+</td>
+<td style="text-align:right;">
+21
+</td>
+<td style="text-align:left;">
+RNA_P557_081_S37
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7699
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif LV1 P7 Nx 24h
+</td>
+<td style="text-align:right;">
+603.48
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P7
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S37
+</td>
+<td style="text-align:left;">
+RNA_81
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-13
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Katharina_1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+<td style="text-align:right;">
+80.42
+</td>
+<td style="text-align:left;">
+P557_Kelly_Nx_21
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+P557_Kelly_Nx_25
+</td>
+<td style="text-align:left;">
+P557_Kelly_Nx_25
+</td>
+<td style="text-align:left;">
+RNA_P557_S41
+</td>
+<td style="text-align:right;">
+25
+</td>
+<td style="text-align:left;">
+RNA_P557_085_S41
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:right;">
+7705
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Hif LV1 P8 Nx 24h
+</td>
+<td style="text-align:right;">
+807.66
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P557
+</td>
+<td style="text-align:left;">
+P8
+</td>
+<td style="text-align:left;">
+LV1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L001
+</td>
+<td style="text-align:left;">
+S41
+</td>
+<td style="text-align:left;">
+RNA_85
+</td>
+<td style="text-align:left;">
+Katharina
+</td>
+<td style="text-align:left;">
+2018-09-14
+</td>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+Katharina_2
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+<td style="text-align:right;">
+77.44
+</td>
+<td style="text-align:left;">
+P557_Kelly_Nx_25
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ``` r
 edb <- retrieveDb(se)
-class(edb)
+# class(edb)
+genes(edb) %>% head() %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-    ## [1] "TxDb"
-    ## attr(,"package")
-    ## [1] "GenomicFeatures"
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+seqnames
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+start
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+end
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+width
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+strand
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+gene_id
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+X
+</td>
+<td style="text-align:right;">
+100627108
+</td>
+<td style="text-align:right;">
+100639991
+</td>
+<td style="text-align:right;">
+12884
+</td>
+<td style="text-align:left;">
+
+- </td>
+  <td style="text-align:left;">
+  ENSG00000000003
+  </td>
+  </tr>
+  <tr>
+  <td style="text-align:left;">
+  X
+  </td>
+  <td style="text-align:right;">
+  100584936
+  </td>
+  <td style="text-align:right;">
+  100599885
+  </td>
+  <td style="text-align:right;">
+  14950
+  </td>
+  <td style="text-align:left;">
+
+  - </td>
+    <td style="text-align:left;">
+    ENSG00000000005
+    </td>
+    </tr>
+    <tr>
+    <td style="text-align:left;">
+    20
+    </td>
+    <td style="text-align:right;">
+    50934867
+    </td>
+    <td style="text-align:right;">
+    50959140
+    </td>
+    <td style="text-align:right;">
+    24274
+    </td>
+    <td style="text-align:left;">
+
+    - </td>
+      <td style="text-align:left;">
+      ENSG00000000419
+      </td>
+      </tr>
+      <tr>
+      <td style="text-align:left;">
+      1
+      </td>
+      <td style="text-align:right;">
+      169849631
+      </td>
+      <td style="text-align:right;">
+      169894267
+      </td>
+      <td style="text-align:right;">
+      44637
+      </td>
+      <td style="text-align:left;">
+
+      - </td>
+        <td style="text-align:left;">
+        ENSG00000000457
+        </td>
+        </tr>
+        <tr>
+        <td style="text-align:left;">
+        1
+        </td>
+        <td style="text-align:right;">
+        169662007
+        </td>
+        <td style="text-align:right;">
+        169854080
+        </td>
+        <td style="text-align:right;">
+        192074
+        </td>
+        <td style="text-align:left;">
+
+        - </td>
+          <td style="text-align:left;">
+          ENSG00000000460
+          </td>
+          </tr>
+          <tr>
+          <td style="text-align:left;">
+          1
+          </td>
+          <td style="text-align:right;">
+          27612064
+          </td>
+          <td style="text-align:right;">
+          27635185
+          </td>
+          <td style="text-align:right;">
+          23122
+          </td>
+          <td style="text-align:left;">
+
+          - </td>
+            <td style="text-align:left;">
+            ENSG00000000938
+            </td>
+            </tr>
+            </tbody>
+            </table>
+            </div>
 
 ``` r
-genes(edb)
-```
-
-    ## GRanges object with 62754 ranges and 1 metadata column:
-    ##                   seqnames              ranges strand |         gene_id
-    ##                      <Rle>           <IRanges>  <Rle> |     <character>
-    ##   ENSG00000000003        X 100627108-100639991      - | ENSG00000000003
-    ##   ENSG00000000005        X 100584936-100599885      + | ENSG00000000005
-    ##   ENSG00000000419       20   50934867-50959140      - | ENSG00000000419
-    ##   ENSG00000000457        1 169849631-169894267      - | ENSG00000000457
-    ##   ENSG00000000460        1 169662007-169854080      + | ENSG00000000460
-    ##               ...      ...                 ...    ... .             ...
-    ##   ENSG00000292369        Y   57190738-57208756      + | ENSG00000292369
-    ##   ENSG00000292370        Y   57201143-57203357      - | ENSG00000292370
-    ##   ENSG00000292371        Y   57212184-57214397      - | ENSG00000292371
-    ##   ENSG00000292372        Y   57207346-57212230      + | ENSG00000292372
-    ##   ENSG00000292373        Y   57184216-57197337      + | ENSG00000292373
-    ##   -------
-    ##   seqinfo: 47 sequences (1 circular) from an unspecified genome; no seqlengths
-
-``` r
+# no symbols!
 columns(edb)
 ```
 
@@ -1769,133 +23710,677 @@ columns(edb)
 
 ``` r
 se.exons <- addExons(se)
-rowRanges(se.exons)[[1]]
-```
-
-    ## GRanges object with 1 range and 3 metadata columns:
-    ##       seqnames            ranges strand |   exon_id       exon_name exon_rank
-    ##          <Rle>         <IRanges>  <Rle> | <integer>     <character> <integer>
-    ##   [1]       14 22438547-22438554      + |    522848 ENSE00001661486         1
-    ##   -------
-    ##   seqinfo: 47 sequences (1 circular) from an unspecified genome; no seqlengths
-
-``` r
+# rowRanges(se.exons)[[1]]
 gse <- summarizeToGene(se)
-rowRanges(gse)
+rowRanges(gse)[1:10,] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-    ## GRanges object with 59472 ranges and 2 metadata columns:
-    ##                   seqnames              ranges strand |         gene_id
-    ##                      <Rle>           <IRanges>  <Rle> |     <character>
-    ##   ENSG00000000003        X 100627108-100639991      - | ENSG00000000003
-    ##   ENSG00000000005        X 100584936-100599885      + | ENSG00000000005
-    ##   ENSG00000000419       20   50934867-50959140      - | ENSG00000000419
-    ##   ENSG00000000457        1 169849631-169894267      - | ENSG00000000457
-    ##   ENSG00000000460        1 169662007-169854080      + | ENSG00000000460
-    ##               ...      ...                 ...    ... .             ...
-    ##   ENSG00000291299       22   23658094-23693185      - | ENSG00000291299
-    ##   ENSG00000291300       16     2839568-2842744      - | ENSG00000291300
-    ##   ENSG00000291301       15   96761545-96766917      - | ENSG00000291301
-    ##   ENSG00000291316        8 144449582-144465430      - | ENSG00000291316
-    ##   ENSG00000291317        8 144463817-144465667      - | ENSG00000291317
-    ##                                                                tx_ids
-    ##                                                       <CharacterList>
-    ##   ENSG00000000003 ENST00000373020,ENST00000612152,ENST00000496771,...
-    ##   ENSG00000000005                     ENST00000373031,ENST00000485971
-    ##   ENSG00000000419 ENST00000466152,ENST00000371582,ENST00000371588,...
-    ##   ENSG00000000457 ENST00000367771,ENST00000367770,ENST00000367772,...
-    ##   ENSG00000000460 ENST00000498289,ENST00000472795,ENST00000359326,...
-    ##               ...                                                 ...
-    ##   ENSG00000291299 ENST00000417194,ENST00000438858,ENST00000458554,...
-    ##   ENSG00000291300 ENST00000506153,ENST00000489864,ENST00000476276,...
-    ##   ENSG00000291301                                     ENST00000706486
-    ##   ENSG00000291316                     ENST00000438911,ENST00000526887
-    ##   ENSG00000291317 ENST00000403000,ENST00000424149,ENST00000306145,...
-    ##   -------
-    ##   seqinfo: 47 sequences (1 circular) from an unspecified genome; no seqlengths
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+seqnames
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+start
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+end
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+width
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+strand
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+gene_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+tx_ids
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+X
+</td>
+<td style="text-align:right;">
+100627108
+</td>
+<td style="text-align:right;">
+100639991
+</td>
+<td style="text-align:right;">
+12884
+</td>
+<td style="text-align:left;">
+
+- </td>
+  <td style="text-align:left;">
+  ENSG00000000003
+  </td>
+  <td style="text-align:left;">
+  ENST0000….
+  </td>
+  </tr>
+  <tr>
+  <td style="text-align:left;">
+  X
+  </td>
+  <td style="text-align:right;">
+  100584936
+  </td>
+  <td style="text-align:right;">
+  100599885
+  </td>
+  <td style="text-align:right;">
+  14950
+  </td>
+  <td style="text-align:left;">
+
+  - </td>
+    <td style="text-align:left;">
+    ENSG00000000005
+    </td>
+    <td style="text-align:left;">
+    ENST0000….
+    </td>
+    </tr>
+    <tr>
+    <td style="text-align:left;">
+    20
+    </td>
+    <td style="text-align:right;">
+    50934867
+    </td>
+    <td style="text-align:right;">
+    50959140
+    </td>
+    <td style="text-align:right;">
+    24274
+    </td>
+    <td style="text-align:left;">
+
+    - </td>
+      <td style="text-align:left;">
+      ENSG00000000419
+      </td>
+      <td style="text-align:left;">
+      ENST0000….
+      </td>
+      </tr>
+      <tr>
+      <td style="text-align:left;">
+      1
+      </td>
+      <td style="text-align:right;">
+      169849631
+      </td>
+      <td style="text-align:right;">
+      169894267
+      </td>
+      <td style="text-align:right;">
+      44637
+      </td>
+      <td style="text-align:left;">
+
+      - </td>
+        <td style="text-align:left;">
+        ENSG00000000457
+        </td>
+        <td style="text-align:left;">
+        ENST0000….
+        </td>
+        </tr>
+        <tr>
+        <td style="text-align:left;">
+        1
+        </td>
+        <td style="text-align:right;">
+        169662007
+        </td>
+        <td style="text-align:right;">
+        169854080
+        </td>
+        <td style="text-align:right;">
+        192074
+        </td>
+        <td style="text-align:left;">
+
+        - </td>
+          <td style="text-align:left;">
+          ENSG00000000460
+          </td>
+          <td style="text-align:left;">
+          ENST0000….
+          </td>
+          </tr>
+          <tr>
+          <td style="text-align:left;">
+          1
+          </td>
+          <td style="text-align:right;">
+          27612064
+          </td>
+          <td style="text-align:right;">
+          27635185
+          </td>
+          <td style="text-align:right;">
+          23122
+          </td>
+          <td style="text-align:left;">
+
+          - </td>
+            <td style="text-align:left;">
+            ENSG00000000938
+            </td>
+            <td style="text-align:left;">
+            ENST0000….
+            </td>
+            </tr>
+            <tr>
+            <td style="text-align:left;">
+            1
+            </td>
+            <td style="text-align:right;">
+            196651754
+            </td>
+            <td style="text-align:right;">
+            196752476
+            </td>
+            <td style="text-align:right;">
+            100723
+            </td>
+            <td style="text-align:left;">
+
+            - </td>
+              <td style="text-align:left;">
+              ENSG00000000971
+              </td>
+              <td style="text-align:left;">
+              ENST0000….
+              </td>
+              </tr>
+              <tr>
+              <td style="text-align:left;">
+              6
+              </td>
+              <td style="text-align:right;">
+              143494812
+              </td>
+              <td style="text-align:right;">
+              143511720
+              </td>
+              <td style="text-align:right;">
+              16909
+              </td>
+              <td style="text-align:left;">
+
+              - </td>
+                <td style="text-align:left;">
+                ENSG00000001036
+                </td>
+                <td style="text-align:left;">
+                ENST0000….
+                </td>
+                </tr>
+                <tr>
+                <td style="text-align:left;">
+                6
+                </td>
+                <td style="text-align:right;">
+                53497341
+                </td>
+                <td style="text-align:right;">
+                53616970
+                </td>
+                <td style="text-align:right;">
+                119630
+                </td>
+                <td style="text-align:left;">
+
+                - </td>
+                  <td style="text-align:left;">
+                  ENSG00000001084
+                  </td>
+                  <td style="text-align:left;">
+                  ENST0000….
+                  </td>
+                  </tr>
+                  <tr>
+                  <td style="text-align:left;">
+                  6
+                  </td>
+                  <td style="text-align:right;">
+                  41072974
+                  </td>
+                  <td style="text-align:right;">
+                  41102403
+                  </td>
+                  <td style="text-align:right;">
+                  29430
+                  </td>
+                  <td style="text-align:left;">
+
+                  - </td>
+                    <td style="text-align:left;">
+                    ENSG00000001167
+                    </td>
+                    <td style="text-align:left;">
+                    ENST0000….
+                    </td>
+                    </tr>
+                    </tbody>
+                    </table>
+                    </div>
 
 ``` r
-head(assays(gse)[["counts"]])[1:5,1:5]
+head(assays(gse)[["counts"]])[1:5,1:5] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-    ##                 P2041_Kelly_Nx_33 P2041_Kelly_Nx_37 P2041_Kelly_Nx_42
-    ## ENSG00000000003          1378.349          1039.053          1311.244
-    ## ENSG00000000005             0.000             0.000             0.000
-    ## ENSG00000000419          2102.114           854.001           369.999
-    ## ENSG00000000457           605.000           612.000           655.000
-    ## ENSG00000000460          1403.000           976.001           503.001
-    ##                 P557_Kelly_Nx_17 P557_Kelly_Nx_21
-    ## ENSG00000000003          656.540          842.549
-    ## ENSG00000000005            0.000            0.000
-    ## ENSG00000000419          755.000          868.000
-    ## ENSG00000000457          365.999          386.000
-    ## ENSG00000000460          648.000          834.999
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P2041_Kelly_Nx_33
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P2041_Kelly_Nx_37
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P2041_Kelly_Nx_42
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P557_Kelly_Nx_17
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P557_Kelly_Nx_21
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+ENSG00000000003
+</td>
+<td style="text-align:right;">
+1378.349
+</td>
+<td style="text-align:right;">
+1039.053
+</td>
+<td style="text-align:right;">
+1311.244
+</td>
+<td style="text-align:right;">
+656.540
+</td>
+<td style="text-align:right;">
+842.549
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000005
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000419
+</td>
+<td style="text-align:right;">
+2102.114
+</td>
+<td style="text-align:right;">
+854.001
+</td>
+<td style="text-align:right;">
+369.999
+</td>
+<td style="text-align:right;">
+755.000
+</td>
+<td style="text-align:right;">
+868.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000457
+</td>
+<td style="text-align:right;">
+605.000
+</td>
+<td style="text-align:right;">
+612.000
+</td>
+<td style="text-align:right;">
+655.000
+</td>
+<td style="text-align:right;">
+365.999
+</td>
+<td style="text-align:right;">
+386.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000460
+</td>
+<td style="text-align:right;">
+1403.000
+</td>
+<td style="text-align:right;">
+976.001
+</td>
+<td style="text-align:right;">
+503.001
+</td>
+<td style="text-align:right;">
+648.000
+</td>
+<td style="text-align:right;">
+834.999
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ``` r
-head(assays(gse)[["abundance"]])[1:5,1:5]
+head(assays(gse)[["abundance"]])[1:5,1:5] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-    ##                 P2041_Kelly_Nx_33 P2041_Kelly_Nx_37 P2041_Kelly_Nx_42
-    ## ENSG00000000003          9.711093          7.889026          9.494666
-    ## ENSG00000000005          0.000000          0.000000          0.000000
-    ## ENSG00000000419         50.529537         22.559695          9.177242
-    ## ENSG00000000457          3.043852          3.659331          3.564734
-    ## ENSG00000000460         13.979227          9.547022          5.254258
-    ##                 P557_Kelly_Nx_17 P557_Kelly_Nx_21
-    ## ENSG00000000003        14.451820        15.351933
-    ## ENSG00000000005         0.000000         0.000000
-    ## ENSG00000000419        59.105502        54.655441
-    ## ENSG00000000457         6.675638         5.378061
-    ## ENSG00000000460        19.083862        22.049446
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P2041_Kelly_Nx_33
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P2041_Kelly_Nx_37
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P2041_Kelly_Nx_42
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P557_Kelly_Nx_17
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P557_Kelly_Nx_21
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+ENSG00000000003
+</td>
+<td style="text-align:right;">
+9.711093
+</td>
+<td style="text-align:right;">
+7.889026
+</td>
+<td style="text-align:right;">
+9.494666
+</td>
+<td style="text-align:right;">
+14.451820
+</td>
+<td style="text-align:right;">
+15.351933
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000005
+</td>
+<td style="text-align:right;">
+0.000000
+</td>
+<td style="text-align:right;">
+0.000000
+</td>
+<td style="text-align:right;">
+0.000000
+</td>
+<td style="text-align:right;">
+0.000000
+</td>
+<td style="text-align:right;">
+0.000000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000419
+</td>
+<td style="text-align:right;">
+50.529537
+</td>
+<td style="text-align:right;">
+22.559695
+</td>
+<td style="text-align:right;">
+9.177242
+</td>
+<td style="text-align:right;">
+59.105502
+</td>
+<td style="text-align:right;">
+54.655441
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000457
+</td>
+<td style="text-align:right;">
+3.043852
+</td>
+<td style="text-align:right;">
+3.659331
+</td>
+<td style="text-align:right;">
+3.564734
+</td>
+<td style="text-align:right;">
+6.675638
+</td>
+<td style="text-align:right;">
+5.378061
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000460
+</td>
+<td style="text-align:right;">
+13.979227
+</td>
+<td style="text-align:right;">
+9.547022
+</td>
+<td style="text-align:right;">
+5.254258
+</td>
+<td style="text-align:right;">
+19.083862
+</td>
+<td style="text-align:right;">
+22.049446
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ``` r
-head(assays(gse)[["length"]])[1:5,1:5]
+head(assays(gse)[["length"]])[1:5,1:5] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-    ##                 P2041_Kelly_Nx_33 P2041_Kelly_Nx_37 P2041_Kelly_Nx_42
-    ## ENSG00000000003         2595.5910         2408.1134         2276.2989
-    ## ENSG00000000005          942.0689          942.0689          942.0689
-    ## ENSG00000000419          760.7744          692.1298          664.5306
-    ## ENSG00000000457         3634.7701         3057.8236         3028.5854
-    ## ENSG00000000460         1835.3531         1869.1518         1577.9096
-    ##                 P557_Kelly_Nx_17 P557_Kelly_Nx_21
-    ## ENSG00000000003        2707.5669        2617.2499
-    ## ENSG00000000005         942.0689         942.0689
-    ## ENSG00000000419         761.3070         757.3546
-    ## ENSG00000000457        3267.6006        3422.7450
-    ## ENSG00000000460        2023.7157        1805.9336
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P2041_Kelly_Nx_33
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P2041_Kelly_Nx_37
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P2041_Kelly_Nx_42
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P557_Kelly_Nx_17
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P557_Kelly_Nx_21
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+ENSG00000000003
+</td>
+<td style="text-align:right;">
+2595.5910
+</td>
+<td style="text-align:right;">
+2408.1134
+</td>
+<td style="text-align:right;">
+2276.2989
+</td>
+<td style="text-align:right;">
+2707.5669
+</td>
+<td style="text-align:right;">
+2617.2499
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000005
+</td>
+<td style="text-align:right;">
+942.0689
+</td>
+<td style="text-align:right;">
+942.0689
+</td>
+<td style="text-align:right;">
+942.0689
+</td>
+<td style="text-align:right;">
+942.0689
+</td>
+<td style="text-align:right;">
+942.0689
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000419
+</td>
+<td style="text-align:right;">
+760.7744
+</td>
+<td style="text-align:right;">
+692.1298
+</td>
+<td style="text-align:right;">
+664.5306
+</td>
+<td style="text-align:right;">
+761.3070
+</td>
+<td style="text-align:right;">
+757.3546
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000457
+</td>
+<td style="text-align:right;">
+3634.7701
+</td>
+<td style="text-align:right;">
+3057.8236
+</td>
+<td style="text-align:right;">
+3028.5854
+</td>
+<td style="text-align:right;">
+3267.6006
+</td>
+<td style="text-align:right;">
+3422.7450
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000460
+</td>
+<td style="text-align:right;">
+1835.3531
+</td>
+<td style="text-align:right;">
+1869.1518
+</td>
+<td style="text-align:right;">
+1577.9096
+</td>
+<td style="text-align:right;">
+2023.7157
+</td>
+<td style="text-align:right;">
+1805.9336
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ``` r
 #### add gene symbol
-columns(retrieveDb(se))
-```
-
-    ##  [1] "CDSCHROM"   "CDSEND"     "CDSID"      "CDSNAME"    "CDSPHASE"  
-    ##  [6] "CDSSTART"   "CDSSTRAND"  "EXONCHROM"  "EXONEND"    "EXONID"    
-    ## [11] "EXONNAME"   "EXONRANK"   "EXONSTART"  "EXONSTRAND" "GENEID"    
-    ## [16] "TXCHROM"    "TXEND"      "TXID"       "TXNAME"     "TXSTART"   
-    ## [21] "TXSTRAND"   "TXTYPE"
-
-``` r
-edb
-```
-
-    ## TxDb object:
-    ## # Db type: TxDb
-    ## # Supporting package: GenomicFeatures
-    ## # Data source: /mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/110/Homo_sapiens.GRCh38.110.gff3.gz
-    ## # Organism: NA
-    ## # Taxonomy ID: NA
-    ## # miRBase build ID: NA
-    ## # Genome: NA
-    ## # Nb of transcripts: 252894
-    ## # Db created by: GenomicFeatures package from Bioconductor
-    ## # Creation time: 2024-02-21 16:26:27 +0100 (Wed, 21 Feb 2024)
-    ## # GenomicFeatures version at creation time: 1.54.3
-    ## # RSQLite version at creation time: 2.3.5
-    ## # DBSCHEMAVERSION: 1.2
-
-``` r
 metadata(se)$txomeInfo$source
 ```
 
@@ -1905,33 +24390,11 @@ metadata(se)$txomeInfo$source
 TXNAME <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "TXNAME", keytype = "GENEID", multiVals="first"))
 # select()' returned 1:many mapping between keys and columns = 1 gene has many transcripts...
 TXNAME.list <- (mapIds(edb,keys = mcols(gse)$gene_id, column = "TXNAME", keytype = "GENEID", multiVals="list"))
-head(TXNAME.list)
+head(TXNAME.list)[1]
 ```
 
     ## $ENSG00000000003
     ## [1] "ENST00000373020" "ENST00000612152" "ENST00000496771" "ENST00000494424"
-    ## 
-    ## $ENSG00000000005
-    ## [1] "ENST00000373031" "ENST00000485971"
-    ## 
-    ## $ENSG00000000419
-    ##  [1] "ENST00000466152" "ENST00000371582" "ENST00000371588" "ENST00000683048"
-    ##  [5] "ENST00000494752" "ENST00000682366" "ENST00000371584" "ENST00000684193"
-    ##  [9] "ENST00000683466" "ENST00000682713" "ENST00000681979" "ENST00000684708"
-    ## [13] "ENST00000413082" "ENST00000682754" "ENST00000683010" "ENST00000684628"
-    ## 
-    ## $ENSG00000000457
-    ## [1] "ENST00000367771" "ENST00000367770" "ENST00000367772" "ENST00000423670"
-    ## [5] "ENST00000470238"
-    ## 
-    ## $ENSG00000000460
-    ## [1] "ENST00000498289" "ENST00000472795" "ENST00000359326" "ENST00000496973"
-    ## [5] "ENST00000481744" "ENST00000466580" "ENST00000459772" "ENST00000286031"
-    ## [9] "ENST00000413811"
-    ## 
-    ## $ENSG00000000938
-    ## [1] "ENST00000374005" "ENST00000399173" "ENST00000374004" "ENST00000374003"
-    ## [5] "ENST00000457296" "ENST00000475472" "ENST00000468038"
 
 ``` r
 # info is already there
@@ -2058,95 +24521,35 @@ mcols(gse)$GENEBIOTYPE <- mapIds(edb, keys = mcols(gse)$gene_id, column = "GENEB
 mcols(gse)$UNIPROTID <- mapIds(edb, keys = mcols(gse)$gene_id, column = "UNIPROTID", keytype = "GENEID")
 
 for (i in columns(edb)[c(-10)]){
-  print(i)
+  # print(i)
   mapIds(edb, keys = mcols(gse)$gene_id[1:10], column = i, keytype = "GENEID") # %>% print()
 }
-```
-
-    ## [1] "CANONICALTRANSCRIPT"
-    ## [1] "DESCRIPTION"
-    ## [1] "ENTREZID"
-    ## [1] "EXONID"
-    ## [1] "EXONIDX"
-    ## [1] "EXONSEQEND"
-    ## [1] "EXONSEQSTART"
-    ## [1] "GCCONTENT"
-    ## [1] "GENEBIOTYPE"
-    ## [1] "GENEIDVERSION"
-    ## [1] "GENENAME"
-    ## [1] "GENESEQEND"
-    ## [1] "GENESEQSTART"
-    ## [1] "INTERPROACCESSION"
-    ## [1] "ISCIRCULAR"
-    ## [1] "PROTDOMEND"
-    ## [1] "PROTDOMSTART"
-    ## [1] "PROTEINDOMAINID"
-    ## [1] "PROTEINDOMAINSOURCE"
-    ## [1] "PROTEINID"
-    ## [1] "PROTEINSEQUENCE"
-    ## [1] "SEQCOORDSYSTEM"
-    ## [1] "SEQLENGTH"
-    ## [1] "SEQNAME"
-    ## [1] "SEQSTRAND"
-    ## [1] "SYMBOL"
-    ## [1] "TXBIOTYPE"
-    ## [1] "TXCDSSEQEND"
-    ## [1] "TXCDSSEQSTART"
-    ## [1] "TXEXTERNALNAME"
-    ## [1] "TXID"
-    ## [1] "TXIDVERSION"
-    ## [1] "TXISCANONICAL"
-    ## [1] "TXNAME"
-    ## [1] "TXSEQEND"
-    ## [1] "TXSEQSTART"
-    ## [1] "TXSUPPORTLEVEL"
-    ## [1] "UNIPROTDB"
-    ## [1] "UNIPROTID"
-    ## [1] "UNIPROTMAPPINGTYPE"
-
-``` r
 # include tryCatch
 
 save(gse,file=paste(data,"tximeta.txm", sep="/"))
 ```
 
-## DESeq2
+## - DESeq2
 
 ``` r
 load(file=paste(data,"tximeta.txm", sep="/"))
-colData(gse)$genotype
+colData(gse)$genotype %>% levels()
 ```
 
-    ##   [1] Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly
-    ##  [13] Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly
-    ##  [25] Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly
-    ##  [37] Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly
-    ##  [49] Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly Kelly
-    ##  [61] Kelly Kelly Kelly Kelly Kelly Kelly Kelly HIF1A HIF1A HIF1A HIF1A HIF1A
-    ##  [73] HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A
-    ##  [85] HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A
-    ##  [97] HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A
-    ## [109] HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A HIF1A
-    ## [121] HIF1A HIF1A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A
-    ## [133] HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A
-    ## [145] HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A
-    ## [157] HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A
-    ## [169] HIF2A HIF2A HIF2A HIF2A HIF2A HIF2A HIF1B HIF1B HIF1B HIF1B HIF1B HIF1B
-    ## [181] HIF1B HIF1B HIF1B HIF1B HIF1B HIF1B HIF1B HIF1B
-    ## Levels: Kelly HIF1A HIF1B HIF2A
+    ## [1] "Kelly" "HIF1A" "HIF2A" "HIF1B"
 
 ``` r
 design = ~genotype+treatment+treatment:genotype
 dds <- DESeqDataSet(gse, design = design)
 dds <- collapseReplicates(dds, dds$samplename, dds$names)
 
-sample.number <- nrow(colData(dds))
+sample.number <- nrow(colData(dds)) / colData(gse)$genotype %>% levels() %>% length()
 keep.sn <- rowSums(counts(dds)) >= sample.number
 keep.sn %>% summary()
 ```
 
     ##    Mode   FALSE    TRUE 
-    ## logical   35551   23921
+    ## logical   30982   28490
 
 ``` r
 dds <- dds[keep.sn,]
@@ -2157,13 +24560,13 @@ summary(results(dds, alpha = 0.05))
 ```
 
     ## 
-    ## out of 23919 with nonzero total read count
+    ## out of 28485 with nonzero total read count
     ## adjusted p-value < 0.05
-    ## LFC > 0 (up)       : 1897, 7.9%
-    ## LFC < 0 (down)     : 2611, 11%
-    ## outliers [1]       : 7, 0.029%
-    ## low counts [2]     : 1854, 7.8%
-    ## (mean count < 2)
+    ## LFC > 0 (up)       : 615, 2.2%
+    ## LFC < 0 (down)     : 807, 2.8%
+    ## outliers [1]       : 8, 0.028%
+    ## low counts [2]     : 8835, 31%
+    ## (mean count < 4)
     ## [1] see 'cooksCutoff' argument of ?results
     ## [2] see 'independentFiltering' argument of ?results
 
@@ -2184,152 +24587,888 @@ resultsNames(dds)
 ```
 
     ## [1] "Intercept"                 "genotype_HIF1A_vs_Kelly"  
-    ## [3] "genotype_HIF1B_vs_Kelly"   "genotype_HIF2A_vs_Kelly"  
-    ## [5] "treatment_Nx_vs_Hx"        "genotypeHIF1A.treatmentNx"
-    ## [7] "genotypeHIF1B.treatmentNx" "genotypeHIF2A.treatmentNx"
+    ## [3] "genotype_HIF2A_vs_Kelly"   "genotype_HIF1B_vs_Kelly"  
+    ## [5] "treatment_Hx_vs_Nx"        "genotypeHIF1A.treatmentHx"
+    ## [7] "genotypeHIF2A.treatmentHx" "genotypeHIF1B.treatmentHx"
+
+``` r
+getwd()
+```
+
+    ## [1] "/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/git_RNAseq_Kelly_Hx/data_processing"
+
+``` r
+save(dds,file=paste(data,"deseq2.dds", sep="/"))
+dds <- 1
+load(file=paste(data,"deseq2.dds", sep="/"))
+dds
+```
+
+    ## class: DESeqDataSet 
+    ## dim: 28490 88 
+    ## metadata(8): tximetaInfo quantInfo ... assignRanges version
+    ## assays(6): counts mu ... replaceCounts replaceCooks
+    ## rownames(28490): ENSG00000000003 ENSG00000000419 ... ENSG00000291316
+    ##   ENSG00000291317
+    ## rowData names(56): gene_id tx_ids ... maxCooks replace
+    ## colnames(88): RNA_P2041_S37 RNA_P2041_S38 ... RNA_P557_S47 RNA_P557_S48
+    ## colData names(36): names samplename ... sizeFactor replaceable
 
 # 3. Pre-Analysis
 
-### 4. Data transformations
+### - Data transformations
 
 ``` r
+load(file=paste(data,"deseq2.dds", sep="/"))
+vsd <- vst(dds, blind=FALSE) #Variance stabilized transformation
+ntd <- normTransform(dds)
+```
+
+``` r
+rld <- rlog(dds, blind=FALSE) #regularized logarithm
+save(rld,file=paste(data,"rlog.rld", sep="/"))
+rld <- 1
+load(file=paste(data,"rlog.rld", sep="/"))
+rld
+```
+
+``` r
+load(file=paste(data,"rlog.rld", sep="/"))
 meanSdPlot(assay(ntd))
 meanSdPlot(assay(vsd))
 meanSdPlot(assay(rld))
 ```
 
-<img src="README_files/figure-gfm/figures-side-1.png" width="33%" /><img src="README_files/figure-gfm/figures-side-2.png" width="33%" /><img src="README_files/figure-gfm/figures-side-3.png" width="33%" />
+<img src="README_files/figure-gfm/pre_trans_fig, figures-side-1.png" width="33%" /><img src="README_files/figure-gfm/pre_trans_fig, figures-side-2.png" width="33%" /><img src="README_files/figure-gfm/pre_trans_fig, figures-side-3.png" width="33%" />
 
-### 5. Check sample distance
+### - Check sample distance
 
 ``` r
 sampleDists <- dist(t(assay(vsd)))
 
 sampleDistMatrix <- as.matrix(sampleDists)
-rownames(sampleDistMatrix) <- paste(vsd$morpho, vsd$organ, sep="-")
+rownames(sampleDistMatrix) <- vsd$names
 colnames(sampleDistMatrix) <- NULL
 colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
 pheatmap(sampleDistMatrix,
          clustering_distance_rows=sampleDists,
          clustering_distance_cols=sampleDists,
-         col=colors)
+         col=viridis(20),
+         cutree_rows = 8,
+         cutree_cols = 8)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](README_files/figure-gfm/pre_sample_dist-1.png)<!-- -->
 
-### 6. Perform principal component analysis
+### - Perform principal component analysis
 
 ``` r
 # transform data
+load(file=paste(data,"deseq2.dds", sep="/"))
 vst_dat <- assay(vst(dds))
-colData(dds)
+colData(dds) %>% head() %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
-    ## DataFrame with 88 rows and 36 columns
-    ##                           names    samplename     order               filename
-    ##                     <character>   <character> <integer>            <character>
-    ## RNA_P2041_S37 P2041_Kelly_Nx_33 RNA_P2041_S37        33 RNA_P2041_10619_S37_..
-    ## RNA_P2041_S38 P2041_HIF1B_Nx_34 RNA_P2041_S38        34 RNA_P2041_10621_S38_..
-    ## RNA_P2041_S39 P2041_HIF1B_Hx_35 RNA_P2041_S39        35 RNA_P2041_10625_S39_..
-    ## RNA_P2041_S40 P2041_HIF1B_Nx_36 RNA_P2041_S40        36 RNA_P2041_10631_S40_..
-    ## RNA_P2041_S41 P2041_Kelly_Nx_37 RNA_P2041_S41        37 RNA_P2041_10632_S41_..
-    ## ...                         ...           ...       ...                    ...
-    ## RNA_P557_S44   P557_HIF2A_Hx_28  RNA_P557_S44        28       RNA_P557_088_S44
-    ## RNA_P557_S45   P557_Kelly_Nx_29  RNA_P557_S45        29       RNA_P557_089_S45
-    ## RNA_P557_S46   P557_Kelly_Hx_30  RNA_P557_S46        30       RNA_P557_090_S46
-    ## RNA_P557_S47   P557_HIF1A_Hx_31  RNA_P557_S47        31       RNA_P557_091_S47
-    ## RNA_P557_S48   P557_HIF2A_Hx_32  RNA_P557_S48        32       RNA_P557_092_S48
-    ##                sequencing        lane    rna_id      Datum
-    ##               <character> <character> <numeric>  <POSIXct>
-    ## RNA_P2041_S37       P2041        L003      6952 2017-05-04
-    ## RNA_P2041_S38       P2041        L003     10185 2021-06-16
-    ## RNA_P2041_S39       P2041        L003     10186 2021-06-16
-    ## RNA_P2041_S40       P2041        L003     10189 2021-06-16
-    ## RNA_P2041_S41       P2041        L003     10268 2021-08-25
-    ## ...                   ...         ...       ...        ...
-    ## RNA_P557_S44         P557        L001      7710 2018-09-14
-    ## RNA_P557_S45         P557        L001      7711 2018-09-14
-    ## RNA_P557_S46         P557        L001      7714 2018-09-14
-    ## RNA_P557_S47         P557        L001      7715 2018-09-14
-    ## RNA_P557_S48         P557        L001      7716 2018-09-14
-    ##                                Probe  rna_conc treatment genotype sequencing.y
-    ##                          <character> <numeric>  <factor> <factor>  <character>
-    ## RNA_P2041_S37 Kelly CRISPR Cas Hif..        NA        Nx    Kelly        P2041
-    ## RNA_P2041_S38 Kelly Hif1b.sg1+2 Kl..        NA        Nx    HIF1B        P2041
-    ## RNA_P2041_S39 Kelly Hif1b.sg1+2 Kl..        NA        Hx    HIF1B        P2041
-    ## RNA_P2041_S40 Kelly Hif1b.sg1+2 Kl..        NA        Nx    HIF1B        P2041
-    ## RNA_P2041_S41          Kelly LV.1 Nx        NA        Nx    Kelly        P2041
-    ## ...                              ...       ...       ...      ...          ...
-    ## RNA_P557_S44  Kelly CRISPR HifL2.2..    885.16        Hx    HIF2A         P557
-    ## RNA_P557_S45  Kelly CRISPR Hif LV1..    694.64        Nx    Kelly         P557
-    ## RNA_P557_S46  Kelly CRISPR HifLV1 ..    349.06        Hx    Kelly         P557
-    ## RNA_P557_S47  Kelly CRISPR Hif1.3 ..    583.24        Hx    HIF1A         P557
-    ## RNA_P557_S48  Kelly CRISPR HifL2.2..    644.24        Hx    HIF2A         P557
-    ##                 replicate       clone    cellline      lane.y   sample_id
-    ##               <character> <character> <character> <character> <character>
-    ## RNA_P2041_S37          NA        LV_1       Kelly        L003         S37
-    ## RNA_P2041_S38          NA     Hif1b_9       Kelly        L003         S38
-    ## RNA_P2041_S39          NA     Hif1b_9       Kelly        L003         S39
-    ## RNA_P2041_S40          NA    Hif1b_15       Kelly        L003         S40
-    ## RNA_P2041_S41          NA        LV_1       Kelly        L003         S41
-    ## ...                   ...         ...         ...         ...         ...
-    ## RNA_P557_S44          P14   Hif2a_2.2       Kelly        L001         S44
-    ## RNA_P557_S45           P8         LV1       Kelly        L001         S45
-    ## RNA_P557_S46           P8         LV1       Kelly        L001         S46
-    ## RNA_P557_S47          P14   Hif1a_1.3       Kelly        L001         S47
-    ## RNA_P557_S48          P14   Hif2a_2.2       Kelly        L001         S48
-    ##                    run_id  experiment experiment_date  repetition     exp_rep
-    ##               <character> <character>       <POSIXct> <character> <character>
-    ## RNA_P2041_S37   RNA_10619     Control      2017-05-04           0   Control_0
-    ## RNA_P2041_S38   RNA_10621       Simon      2021-06-16           1     Simon_1
-    ## RNA_P2041_S39   RNA_10744       Simon      2021-06-16           1     Simon_1
-    ## RNA_P2041_S40   RNA_10745       Simon      2021-06-16           1     Simon_1
-    ## RNA_P2041_S41   RNA_10754       Simon      2021-08-25           4     Simon_4
-    ## ...                   ...         ...             ...         ...         ...
-    ## RNA_P557_S44       RNA_88   Katharina      2018-09-14           2 Katharina_2
-    ## RNA_P557_S45       RNA_89   Katharina      2018-09-14           2 Katharina_2
-    ## RNA_P557_S46       RNA_90   Katharina      2018-09-14           2 Katharina_2
-    ## RNA_P557_S47       RNA_91   Katharina      2018-09-14           2 Katharina_2
-    ## RNA_P557_S48       RNA_92   Katharina      2018-09-14           2 Katharina_2
-    ##                 CUGE.ID           Nx           HX      sample order_number
-    ##               <numeric>  <character>  <character> <character>    <numeric>
-    ## RNA_P2041_S37     10619           LV           NA      RNA_01           NA
-    ## RNA_P2041_S38     10621           LV           LV      RNA_03           NA
-    ## RNA_P2041_S39     10744           LV           LV      RNA_04           NA
-    ## RNA_P2041_S40     10745           NA           NA      RNA_05           NA
-    ## RNA_P2041_S41     10754 del_Hif1a1.3 del_Hif1a1.3      RNA_11           NA
-    ## ...                 ...          ...          ...         ...          ...
-    ## RNA_P557_S44         NA           NA           NA          NA           NA
-    ## RNA_P557_S45         NA           NA           NA          NA           NA
-    ## RNA_P557_S46         NA           NA           NA          NA           NA
-    ## RNA_P557_S47         NA           NA           NA          NA           NA
-    ## RNA_P557_S48         NA           NA           NA          NA           NA
-    ##               Konz..µg.µl. cell_density condition mappingrates
-    ##                  <numeric>  <character>  <factor>    <numeric>
-    ## RNA_P2041_S37           NA           NA  Kelly_Nx        81.00
-    ## RNA_P2041_S38           NA           NA  HIF1B_Nx        83.33
-    ## RNA_P2041_S39           NA           NA  HIF1B_Hx        84.50
-    ## RNA_P2041_S40           NA           NA  HIF1B_Nx        82.33
-    ## RNA_P2041_S41           NA           NA  Kelly_Nx        77.42
-    ## ...                    ...          ...       ...          ...
-    ## RNA_P557_S44            NA           NA  HIF2A_Hx        86.49
-    ## RNA_P557_S45            NA           NA  Kelly_Nx        77.32
-    ## RNA_P557_S46            NA           NA  Kelly_Hx        86.32
-    ## RNA_P557_S47            NA           NA  HIF1A_Hx        82.84
-    ## RNA_P557_S48            NA           NA  HIF2A_Hx        86.79
-    ##                         names.1     runsCollapsed sizeFactor replaceable
-    ##                     <character>       <character>  <numeric>   <logical>
-    ## RNA_P2041_S37 P2041_Kelly_Nx_33 P2041_Kelly_Nx_33    1.14743        TRUE
-    ## RNA_P2041_S38 P2041_HIF1B_Nx_34 P2041_HIF1B_Nx_34    1.47856        TRUE
-    ## RNA_P2041_S39 P2041_HIF1B_Hx_35 P2041_HIF1B_Hx_35    1.31700       FALSE
-    ## RNA_P2041_S40 P2041_HIF1B_Nx_36 P2041_HIF1B_Nx_36    1.39912        TRUE
-    ## RNA_P2041_S41 P2041_Kelly_Nx_37 P2041_Kelly_Nx_37    1.10019        TRUE
-    ## ...                         ...               ...        ...         ...
-    ## RNA_P557_S44   P557_HIF2A_Hx_28  P557_HIF2A_Hx_28   0.408427        TRUE
-    ## RNA_P557_S45   P557_Kelly_Nx_29  P557_Kelly_Nx_29   0.363647        TRUE
-    ## RNA_P557_S46   P557_Kelly_Hx_30  P557_Kelly_Hx_30   0.381354        TRUE
-    ## RNA_P557_S47   P557_HIF1A_Hx_31  P557_HIF1A_Hx_31   0.268650        TRUE
-    ## RNA_P557_S48   P557_HIF2A_Hx_32  P557_HIF2A_Hx_32   0.303047        TRUE
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+names
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+order
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+filename
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sequencing
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+lane
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Datum
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Probe
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+rna_conc
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+treatment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+genotype
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sequencing.y
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+replicate
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+clone
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cellline
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+lane.y
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+run_id
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+experiment_date
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+repetition
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+exp_rep
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+CUGE.ID
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Nx
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+HX
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+sample
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+order_number
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Konz..µg.µl.
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+cell_density
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+condition
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+mappingrates
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+names.1
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+runsCollapsed
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+sizeFactor
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+replaceable
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_33
+</td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:left;">
+RNA_P2041_10619_S37_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+6952
+</td>
+<td style="text-align:left;">
+2017-05-04
+</td>
+<td style="text-align:left;">
+Kelly CRISPR Cas Hif LV1 Nx 24h
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV_1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S37
+</td>
+<td style="text-align:left;">
+RNA_10619
+</td>
+<td style="text-align:left;">
+Control
+</td>
+<td style="text-align:left;">
+2017-05-04
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+Control_0
+</td>
+<td style="text-align:right;">
+10619
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+<td style="text-align:right;">
+81.00
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_33
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_33
+</td>
+<td style="text-align:right;">
+1.147433
+</td>
+<td style="text-align:left;">
+TRUE
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S38
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_34
+</td>
+<td style="text-align:left;">
+RNA_P2041_S38
+</td>
+<td style="text-align:right;">
+34
+</td>
+<td style="text-align:left;">
+RNA_P2041_10621_S38_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10185
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+Kelly Hif1b.sg1+2 Klon 9 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_9
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S38
+</td>
+<td style="text-align:left;">
+RNA_10621
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Simon_1
+</td>
+<td style="text-align:right;">
+10621
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+RNA_03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Nx
+</td>
+<td style="text-align:right;">
+83.33
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_34
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_34
+</td>
+<td style="text-align:right;">
+1.478555
+</td>
+<td style="text-align:left;">
+TRUE
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S39
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Hx_35
+</td>
+<td style="text-align:left;">
+RNA_P2041_S39
+</td>
+<td style="text-align:right;">
+35
+</td>
+<td style="text-align:left;">
+RNA_P2041_10625_S39_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10186
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+Kelly Hif1b.sg1+2 Klon 9 Hx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_9
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S39
+</td>
+<td style="text-align:left;">
+RNA_10744
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Simon_1
+</td>
+<td style="text-align:right;">
+10744
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+LV
+</td>
+<td style="text-align:left;">
+RNA_04
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Hx
+</td>
+<td style="text-align:right;">
+84.50
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Hx_35
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Hx_35
+</td>
+<td style="text-align:right;">
+1.316998
+</td>
+<td style="text-align:left;">
+FALSE
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S40
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_36
+</td>
+<td style="text-align:left;">
+RNA_P2041_S40
+</td>
+<td style="text-align:right;">
+36
+</td>
+<td style="text-align:left;">
+RNA_P2041_10631_S40_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10189
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+Kelly Hif1b.sg1+2 Klon 15 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_15
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S40
+</td>
+<td style="text-align:left;">
+RNA_10745
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Simon_1
+</td>
+<td style="text-align:right;">
+10745
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_05
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Nx
+</td>
+<td style="text-align:right;">
+82.33
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_36
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_36
+</td>
+<td style="text-align:right;">
+1.399124
+</td>
+<td style="text-align:left;">
+TRUE
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_37
+</td>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:left;">
+RNA_P2041_10632_S41_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10268
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+Kelly LV.1 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV_1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S41
+</td>
+<td style="text-align:left;">
+RNA_10754
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Simon_4
+</td>
+<td style="text-align:right;">
+10754
+</td>
+<td style="text-align:left;">
+del_Hif1a1.3
+</td>
+<td style="text-align:left;">
+del_Hif1a1.3
+</td>
+<td style="text-align:left;">
+RNA_11
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Nx
+</td>
+<td style="text-align:right;">
+77.42
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_37
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Nx_37
+</td>
+<td style="text-align:right;">
+1.100194
+</td>
+<td style="text-align:left;">
+TRUE
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S42
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Hx_38
+</td>
+<td style="text-align:left;">
+RNA_P2041_S42
+</td>
+<td style="text-align:right;">
+38
+</td>
+<td style="text-align:left;">
+RNA_P2041_10635_S42_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10269
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+Kelly LV.1 Hx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+LV_1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S42
+</td>
+<td style="text-align:left;">
+RNA_10755
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Simon_4
+</td>
+<td style="text-align:right;">
+10755
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+del_Hif1a1.6
+</td>
+<td style="text-align:left;">
+RNA_12
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Kelly_Hx
+</td>
+<td style="text-align:right;">
+92.75
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Hx_38
+</td>
+<td style="text-align:left;">
+P2041_Kelly_Hx_38
+</td>
+<td style="text-align:right;">
+1.227558
+</td>
+<td style="text-align:left;">
+TRUE
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ``` r
 ens <- rownames(dds)
@@ -2344,41 +25483,51 @@ ens <- rownames(dds)
   vst_dat <- vst_dat[keep2,]
 
 ### PCA with top 500 genes with highest row variance 
-pcaData <- plotPCA(vsd, intgroup=c("genotype", "treatment","exp_rep"), returnData=TRUE)
+pcaData <- plotPCA(vsd, intgroup=colnames(colData(vsd)), returnData=TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
-ggplot(pcaData, aes(PC1, PC2, color=genotype, shape=treatment)) +
-  geom_point(size=3) +
+g1 <- ggplot(pcaData, aes(PC1, PC2, color=treatment, shape=genotype)) +
+  geom_point(size=5, alpha=0.7) +
   labs(title = "top 500 variance") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  scale_color_manual(values = c("lightcoral","skyblue1")) +
   coord_fixed()
-```
 
-![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
-
-``` r
-ggplot(pcaData, aes(PC1, PC2, color=exp_rep, shape=treatment)) +
-  geom_point(size=3) +
+g2 <- ggplot(pcaData, aes(PC1, PC2, label=names,color=experiment, shape=genotype)) +
+  geom_text_repel(data         = subset(pcaData, experiment == "Simon"),
+                  segment.color = 'grey50',
+                  max.overlaps = 40,
+                  color="grey30",
+                  size          = 2.5) +
+  geom_point(size=3, alpha=0.7) +
   labs(title = "top 500 variance") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) +
   scale_color_viridis_d(option ="viridis") +
   coord_fixed()
+
+g1+g2
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-3-2.png)<!-- -->
+![](README_files/figure-gfm/pca-1.png)<!-- -->
 
 ``` r
 # calculate PCA (all data)
+## https://www.bioconductor.org/packages/devel/bioc/vignettes/PCAtools/inst/doc/PCAtools.html#modify-bi-plots
+
 p <- pca(vst_dat, metadata = colData(dds))
 
 biplot(p, showLoadings = TRUE,
     labSize = 3, pointSize = 5, sizeLoadingsNames = 2.5,
-    
+    colby ='experiment',
+    lab=p$metadata$names,
+    shape='genotype',
+    # encircle = TRUE,
+    legendPosition = 'right',
     title = "biplot containing all datapoints")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-3-3.png)<!-- -->
+![](README_files/figure-gfm/pca-2.png)<!-- -->
 
 ``` r
 # find explaining PCs
@@ -2397,4 +25546,212 @@ screeplot(p,
         label = 'Horn\'s', vjust = -1, size = 8))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-3-4.png)<!-- -->
+![](README_files/figure-gfm/pca-3.png)<!-- -->
+
+### - Plot example counts
+
+``` r
+# CA9 & EPO
+load(file=paste(data,"deseq2.dds", sep="/"))
+goi <- c("CA9","EPO")
+(mcols(dds)$SYMBOL == "CA9") %>% summary()
+```
+
+    ##    Mode   FALSE    TRUE    NA's 
+    ## logical   28480       1       9
+
+``` r
+mcols(dds)$gene_id %>% length()
+```
+
+    ## [1] 28490
+
+``` r
+mcols(dds)$SYMBOL %>% length()
+```
+
+    ## [1] 28490
+
+``` r
+SYMBOLs <- mcols(dds)$SYMBOL %>% unique() %>% na.omit()
+SYMBOLs %>% length()
+```
+
+    ## [1] 21750
+
+``` r
+SYMBOLs <- SYMBOLs[!(SYMBOLs == "")]
+SYMBOLs %>% length()
+```
+
+    ## [1] 21749
+
+``` r
+ENSEMBLS <- as.character(mapIds(edb,keys = SYMBOLs, column = "GENEID", keytype = "SYMBOL", multiVals="first"))
+ENTREZ <- as.character(mapIds(edb,keys = SYMBOLs, column = "ENTREZID", keytype = "SYMBOL", multiVals="first"))
+s2e <- data.frame(symbol=SYMBOLs,
+                  ensemble=ENSEMBLS,
+                  entrez=ENTREZ)
+rownames(s2e) <- s2e$symbol
+s2e %>% head() %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
+```
+
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+symbol
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+ensemble
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+entrez
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+TSPAN6
+</td>
+<td style="text-align:left;">
+TSPAN6
+</td>
+<td style="text-align:left;">
+ENSG00000000003
+</td>
+<td style="text-align:left;">
+7105
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DPM1
+</td>
+<td style="text-align:left;">
+DPM1
+</td>
+<td style="text-align:left;">
+ENSG00000000419
+</td>
+<td style="text-align:left;">
+8813
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SCYL3
+</td>
+<td style="text-align:left;">
+SCYL3
+</td>
+<td style="text-align:left;">
+ENSG00000000457
+</td>
+<td style="text-align:left;">
+57147
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FIRRM
+</td>
+<td style="text-align:left;">
+FIRRM
+</td>
+<td style="text-align:left;">
+ENSG00000000460
+</td>
+<td style="text-align:left;">
+55732
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CFH
+</td>
+<td style="text-align:left;">
+CFH
+</td>
+<td style="text-align:left;">
+ENSG00000000971
+</td>
+<td style="text-align:left;">
+3075
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FUCA2
+</td>
+<td style="text-align:left;">
+FUCA2
+</td>
+<td style="text-align:left;">
+ENSG00000001036
+</td>
+<td style="text-align:left;">
+2519
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+
+``` r
+s2e[goi[1],2]
+```
+
+    ## [1] "ENSG00000107159"
+
+``` r
+plotCounts(dds,gene=s2e[goi[1],2],intgroup="condition",main=goi[1],col=dds$experiment)
+```
+
+![](README_files/figure-gfm/example_counts-1.png)<!-- -->
+
+``` r
+plotCounts(dds,gene=s2e[goi[2],2],intgroup="condition",main=goi[2],col=dds$experiment)
+```
+
+![](README_files/figure-gfm/example_counts-2.png)<!-- -->
+
+``` r
+i <- 1
+l <- length(goi)
+all_counts <- {}
+for (i in 1:l){
+  d <-  plotCounts(dds, gene=s2e[goi[i],2], intgroup=c("condition","experiment","genotype","treatment"), main=goi[i],returnData=TRUE)
+  d$Gene <- rep(goi[i],length(rownames(d)))
+  d$sample <- rownames(d)
+  # rownames(d) <- {}
+  all_counts <- bind_rows(all_counts,d)
+  }
+
+cols = brewer.pal(n=8,name = 'Paired')
+
+gcounts <- ggplot(all_counts, aes(x = Gene, y = count, fill=condition)) +
+  geom_boxplot(fatten = 1) +
+  scale_fill_manual(values=cols) +
+  scale_y_continuous(trans = "log2")
+gcounts
+```
+
+![](README_files/figure-gfm/example_counts-3.png)<!-- -->
+
+``` r
+gcounts1 <- ggplot(d, aes(x = condition, y = count, color=experiment)) +
+  geom_point() +
+  geom_text(label = d$sample) +
+  scale_fill_manual(values=cols) +
+  scale_y_continuous(trans = "log2")
+gcounts1
+```
+
+![](README_files/figure-gfm/example_counts-4.png)<!-- -->
