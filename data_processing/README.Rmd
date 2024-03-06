@@ -330,7 +330,7 @@ sample_table_P3302[c(1,2,49,50),] %>% kable() %>% kable_styling("striped", full_
 ```
 
 
-### P2041
+### P2041*
 ```{r P2041}
 ## P2041
 list.files(fastqdir2, pattern=".xlsx")
@@ -366,9 +366,36 @@ sample_table$clone <- sample_table$clone%>% factor
 # Make table
 sample_table_P2041 <- as.data.frame(sample_table)
 
+# correct sample names I (shift -4)
+sample_table_P2041$orig.name <- sample_table_P2041$samplename
+sample_table_P2041$samplename2 <- sample_table_P2041$samplename
+sample_table_P2041$newsamplenumber <- str_extract(sample_table_P2041$samplename2,"S[0-9]+") %>% str_extract("[0-9]+") %>%
+  as.numeric()-4
+sample_table_P2041$newsamplenumber <- ifelse(sample_table_P2041$newsamplenumber<37,sample_table_P2041$newsamplenumber+22,sample_table_P2041$newsamplenumber)
+sample_table_P2041$samplename2 <- paste("RNA_P2041_S",sample_table_P2041$newsamplenumber,sep="")
+sample_table_P2041$samplename <- sample_table_P2041$samplename2
+
+# correct sample names II (exchange 3 samples)
+sample_table_P2041$samplename3 <- sample_table_P2041$samplename2
+
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_S38"] <- "RNA_P2041_new"
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_S58"] <- "RNA_P2041_S38"
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_new"] <- "RNA_P2041_S58"
+
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_S57"] <- "RNA_P2041_new2"
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_S56"] <- "RNA_P2041_S57"
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_new2"] <- "RNA_P2041_S56"
+
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_S48"] <- "RNA_P2041_new3"
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_S47"] <- "RNA_P2041_S48"
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_new3"] <- "RNA_P2041_S47"
+
+sample_table_P2041$samplename <- sample_table_P2041$samplename3
+
 sample_table_P2041$samplename %in% quant_file_table$samplename %>% summary()
 
-sample_table_P2041[c(1,2,21,22),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
+sample_table_P2041[sample_table_P2041$genotype=="HIF1A",] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
+
 ```
 
 ### P557
@@ -474,6 +501,9 @@ sample_table_all %>% kable() %>% kable_styling("striped", full_width = F) %>% sc
 levels(sample_table_all$genotype)
 levels(sample_table_all$clone %>% as.factor())
 
+sample_table_all$condition %>% levels()
+subset(sample_table_all,sequencing =="P2041")
+subset(sample_table_all, condition=="HIF1A_Hx" & sequencing =="P2041")
 
 ```
 
@@ -538,7 +568,7 @@ par(mar=c(4,4,4,4)+.1)
 ```
 
 ## - Tximeta
-```{r tximeta, eval=FALSE}
+```{r tximeta, eval=TRUE}
 # prepare coldata table
 # quant_file_table %>% head() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 # sample_table_all %>% head() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
@@ -548,12 +578,15 @@ sample_table_all$names = paste(sample_table_all$sequencing,
                                sample_table_all$treatment,
                                sample_table_all$order,
                                sep="_")
+
+subset(sample_table_all, condition=="HIF1A_Hx" & sequencing =="P2041")
+
 head(sample_table_all$names)
 
 coldata <- data.frame(files = sample_table_all$files,
                       names = sample_table_all$names, 
                       sample_table_all[,-c(2)])
-
+# coldata[c(1:3,35:40),c("filename","names","samplename","orig.name","samplename3","order","condition")]
 # load tximeta
 
 # make linked Transcriptome (local offline mode)
@@ -647,7 +680,6 @@ head(TXTYPE)
 # add CDSID
 mcols(gse)$CDSID <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "CDSID", keytype = "GENEID", multiVals="first"))
 
-
 colnames(mcols(gse))
 head(rownames(gse))
 
@@ -655,6 +687,10 @@ getwd()
 save(gse,file=paste(data,"tximeta.txm", sep="/"))
 gse <- 1
 load(file=paste(data,"tximeta.txm", sep="/"))
+
+subset(colData(gse), condition=="HIF1A_Hx" & sequencing =="P2041")
+subset(colData(gse), samplename=="RNA_P2041_S45")
+(colData(gse)$samplename==colData(gse)$samplename3) %>% summary()
 
 ```
 
@@ -684,7 +720,7 @@ save(gse,file=paste(data,"tximeta.txm", sep="/"))
 ```
 
 ## - DESeq2
-```{r deseq2, warning=FALSE, eval=FALSE}
+```{r deseq2, warning=FALSE, eval=TRUE}
 
 load(file=paste(data,"tximeta.txm", sep="/"))
 colData(gse)$genotype %>% levels()
@@ -711,6 +747,9 @@ save(dds,file=paste(data,"deseq2.dds", sep="/"))
 dds <- 1
 load(file=paste(data,"deseq2.dds", sep="/"))
 dds
+
+subset(colData(dds), condition=="HIF1A_Hx" & sequencing =="P2041")
+(colData(dds)$samplename==colData(dds)$samplename3) %>% summary()
 
 ```
 
@@ -784,7 +823,20 @@ g1 <- ggplot(pcaData, aes(PC1, PC2, color=treatment, shape=genotype)) +
   scale_color_manual(values = c("lightcoral","skyblue1")) +
   coord_fixed()
 
-g2 <- ggplot(pcaData, aes(PC1, PC2, label=names,color=experiment, shape=genotype)) +
+g2 <- ggplot(pcaData, aes(PC1, PC2, label=samplename3,color=experiment, shape=genotype)) +
+  geom_text_repel(data         = subset(pcaData, experiment == "Simon"),
+                  segment.color = 'grey50',
+                  max.overlaps = 40,
+                  color="grey30",
+                  size          = 2.5) +
+  geom_point(size=3, alpha=0.7) +
+  labs(title = "top 500 variance") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  scale_color_viridis_d(option ="viridis") +
+  coord_fixed()
+
+g3 <- ggplot(pcaData, aes(PC1, PC2, label=orig.name,color=condition, shape=genotype)) +
   geom_text_repel(data         = subset(pcaData, experiment == "Simon"),
                   segment.color = 'grey50',
                   max.overlaps = 40,
@@ -798,6 +850,8 @@ g2 <- ggplot(pcaData, aes(PC1, PC2, label=names,color=experiment, shape=genotype
   coord_fixed()
 
 g1+g2
+g2+g3
+
 
 # calculate PCA (all data)
 ## https://www.bioconductor.org/packages/devel/bioc/vignettes/PCAtools/inst/doc/PCAtools.html#modify-bi-plots
@@ -806,16 +860,18 @@ p <- pca(vst_dat, metadata = colData(dds))
 
 biplot(p, showLoadings = TRUE,
     labSize = 3, pointSize = 5, sizeLoadingsNames = 2.5,
-    colby ='experiment',
-    lab=p$metadata$names,
+    colby ='condition',
+    lab=p$metadata$samplename,
     shape='genotype',
     # encircle = TRUE,
     legendPosition = 'right',
     title = "biplot containing all datapoints")
 
 # find explaining PCs
-horn <- parallelPCA(vst_dat)
-horn$n
+horn <- list()
+horn$n <- 8
+# horn <- parallelPCA(vst_dat)
+
 
 # plot Scree 
 screeplot(p,

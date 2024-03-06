@@ -8,7 +8,7 @@
   - [- Sample names](#sample-names)
     - [Extract filenames from quants](#extract-filenames-from-quants)
     - [P3302](#p3302)
-    - [P2041](#p2041)
+    - [P2041\*](#p2041)
     - [P557](#p557)
     - [combine lists](#combine-lists)
 - [2. Process](#process)
@@ -957,7 +957,7 @@ Ulrike_4
 
 </div>
 
-### P2041
+### P2041\*
 
 ``` r
 ## P2041
@@ -1017,6 +1017,32 @@ sample_table$clone <- sample_table$clone%>% factor
 # Make table
 sample_table_P2041 <- as.data.frame(sample_table)
 
+# correct sample names I (shift -4)
+sample_table_P2041$orig.name <- sample_table_P2041$samplename
+sample_table_P2041$samplename2 <- sample_table_P2041$samplename
+sample_table_P2041$newsamplenumber <- str_extract(sample_table_P2041$samplename2,"S[0-9]+") %>% str_extract("[0-9]+") %>%
+  as.numeric()-4
+sample_table_P2041$newsamplenumber <- ifelse(sample_table_P2041$newsamplenumber<37,sample_table_P2041$newsamplenumber+22,sample_table_P2041$newsamplenumber)
+sample_table_P2041$samplename2 <- paste("RNA_P2041_S",sample_table_P2041$newsamplenumber,sep="")
+sample_table_P2041$samplename <- sample_table_P2041$samplename2
+
+# correct sample names II (exchange 3 samples)
+sample_table_P2041$samplename3 <- sample_table_P2041$samplename2
+
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_S38"] <- "RNA_P2041_new"
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_S58"] <- "RNA_P2041_S38"
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_new"] <- "RNA_P2041_S58"
+
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_S57"] <- "RNA_P2041_new2"
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_S56"] <- "RNA_P2041_S57"
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_new2"] <- "RNA_P2041_S56"
+
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_S48"] <- "RNA_P2041_new3"
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_S47"] <- "RNA_P2041_S48"
+sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_new3"] <- "RNA_P2041_S47"
+
+sample_table_P2041$samplename <- sample_table_P2041$samplename3
+
 sample_table_P2041$samplename %in% quant_file_table$samplename %>% summary()
 ```
 
@@ -1024,7 +1050,7 @@ sample_table_P2041$samplename %in% quant_file_table$samplename %>% summary()
     ## logical      22
 
 ``` r
-sample_table_P2041[c(1,2,21,22),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
+sample_table_P2041[sample_table_P2041$genotype=="HIF1A",] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
@@ -1094,125 +1120,72 @@ run_id
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 sample_id
 </th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+orig.name
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename2
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+newsamplenumber
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename3
+</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align:left;">
-1
+12
 </td>
 <td style="text-align:left;">
-RNA_P2041_S37
+RNA_P2041_S44
 </td>
 <td style="text-align:right;">
-10619
+10637
 </td>
 <td style="text-align:right;">
-6952
+10294
 </td>
 <td style="text-align:left;">
-2017-05-04
-</td>
-<td style="text-align:left;">
-Control
-</td>
-<td style="text-align:left;">
-2017-05-04
-</td>
-<td style="text-align:left;">
-0
-</td>
-<td style="text-align:left;">
-Control_0
-</td>
-<td style="text-align:left;">
-Kelly CRISPR Cas Hif LV1 Nx 24h
-</td>
-<td style="text-align:left;">
-Nx
-</td>
-<td style="text-align:left;">
-Kelly
-</td>
-<td style="text-align:left;">
-LV_1
-</td>
-<td style="text-align:left;">
-LV
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-Kelly
-</td>
-<td style="text-align:left;">
-RNA_01
-</td>
-<td style="text-align:left;">
-L003
-</td>
-<td style="text-align:left;">
-P2041
-</td>
-<td style="text-align:left;">
-RNA_10619
-</td>
-<td style="text-align:left;">
-S37
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-2
-</td>
-<td style="text-align:left;">
-RNA_P2041_S38
-</td>
-<td style="text-align:right;">
-10621
-</td>
-<td style="text-align:right;">
-10185
-</td>
-<td style="text-align:left;">
-2021-06-16
+2021-08-27
 </td>
 <td style="text-align:left;">
 Simon
 </td>
 <td style="text-align:left;">
-2021-06-16
+2021-08-27
 </td>
 <td style="text-align:left;">
-1
+5
 </td>
 <td style="text-align:left;">
-Simon_1
+Simon_5
+</td>
+<td style="text-align:left;">
+Kelly Hif1a 1.3 Nx
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+Hif1a_1.3
 </td>
 <td style="text-align:left;">
 Kelly Hif1b.sg1+2 Klon 9 Nx
 </td>
 <td style="text-align:left;">
-Nx
-</td>
-<td style="text-align:left;">
-HIF1B
-</td>
-<td style="text-align:left;">
-Hif1b_9
-</td>
-<td style="text-align:left;">
-LV
-</td>
-<td style="text-align:left;">
-LV
+Kelly Hif1b.sg1+2 Klon 9 Hx
 </td>
 <td style="text-align:left;">
 Kelly
 </td>
 <td style="text-align:left;">
-RNA_03
+RNA_27
 </td>
 <td style="text-align:left;">
 L003
@@ -1221,24 +1194,36 @@ L003
 P2041
 </td>
 <td style="text-align:left;">
-RNA_10621
+RNA_10637
 </td>
 <td style="text-align:left;">
-S38
+S48
+</td>
+<td style="text-align:left;">
+RNA_P2041_S48
+</td>
+<td style="text-align:left;">
+RNA_P2041_S44
+</td>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:left;">
+RNA_P2041_S44
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-21
+13
 </td>
 <td style="text-align:left;">
-RNA_P2041_S57
+RNA_P2041_S45
 </td>
 <td style="text-align:right;">
-10752
+10638
 </td>
 <td style="text-align:right;">
-10306
+10295
 </td>
 <td style="text-align:left;">
 2021-08-27
@@ -1256,93 +1241,28 @@ Simon
 Simon_5
 </td>
 <td style="text-align:left;">
-Kelly Hif1b 10.1 Nx
-</td>
-<td style="text-align:left;">
-Nx
-</td>
-<td style="text-align:left;">
-HIF1B
-</td>
-<td style="text-align:left;">
-Hif1b_10
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-Kelly
-</td>
-<td style="text-align:left;">
-RNA_39
-</td>
-<td style="text-align:left;">
-L003
-</td>
-<td style="text-align:left;">
-P2041
-</td>
-<td style="text-align:left;">
-RNA_10752
-</td>
-<td style="text-align:left;">
-S57
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-22
-</td>
-<td style="text-align:left;">
-RNA_P2041_S58
-</td>
-<td style="text-align:right;">
-10753
-</td>
-<td style="text-align:right;">
-10307
-</td>
-<td style="text-align:left;">
-2021-08-27
-</td>
-<td style="text-align:left;">
-Simon
-</td>
-<td style="text-align:left;">
-2021-08-27
-</td>
-<td style="text-align:left;">
-5
-</td>
-<td style="text-align:left;">
-Simon_5
-</td>
-<td style="text-align:left;">
-Kelly Hif1b 10.1 Hx
+Kelly Hif1a 1.3 Hx
 </td>
 <td style="text-align:left;">
 Hx
 </td>
 <td style="text-align:left;">
-HIF1B
+HIF1A
 </td>
 <td style="text-align:left;">
-Hif1b_10
+Hif1a_1.3
 </td>
 <td style="text-align:left;">
-NA
+delHif1b10.1
 </td>
 <td style="text-align:left;">
-NA
+delHif1b10.1
 </td>
 <td style="text-align:left;">
 Kelly
 </td>
 <td style="text-align:left;">
-RNA_40
+RNA_28
 </td>
 <td style="text-align:left;">
 L003
@@ -1351,10 +1271,99 @@ L003
 P2041
 </td>
 <td style="text-align:left;">
-RNA_10753
+RNA_10638
 </td>
 <td style="text-align:left;">
-S58
+S49
+</td>
+<td style="text-align:left;">
+RNA_P2041_S49
+</td>
+<td style="text-align:left;">
+RNA_P2041_S45
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:left;">
+RNA_P2041_S45
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+14
+</td>
+<td style="text-align:left;">
+RNA_P2041_S46
+</td>
+<td style="text-align:right;">
+10640
+</td>
+<td style="text-align:right;">
+10297
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-27
+</td>
+<td style="text-align:left;">
+5
+</td>
+<td style="text-align:left;">
+Simon_5
+</td>
+<td style="text-align:left;">
+Kelly Hif1a 1.6 Hx
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1A
+</td>
+<td style="text-align:left;">
+Hif1a_1.6
+</td>
+<td style="text-align:left;">
+delHif1b15.1
+</td>
+<td style="text-align:left;">
+delHif1b15.1
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+RNA_30
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+RNA_10640
+</td>
+<td style="text-align:left;">
+S50
+</td>
+<td style="text-align:left;">
+RNA_P2041_S50
+</td>
+<td style="text-align:left;">
+RNA_P2041_S46
+</td>
+<td style="text-align:right;">
+46
+</td>
+<td style="text-align:left;">
+RNA_P2041_S46
 </td>
 </tr>
 </tbody>
@@ -2083,6 +2092,18 @@ HX
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 sample
 </th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+orig.name
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename2
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+newsamplenumber
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename3
+</th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 order_number
 </th>
@@ -2157,6 +2178,18 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -2239,6 +2272,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -2311,6 +2356,18 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -2393,6 +2450,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -2470,6 +2539,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -2542,6 +2623,18 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -2654,7 +2747,7 @@ sample_table_all$experiment <- sample_table_all$experiment %>% as.factor()
 dim(sample_table_all)
 ```
 
-    ## [1] 188  31
+    ## [1] 188  35
 
 ``` r
 sample_table_all[c(1,2,187,188),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
@@ -2747,6 +2840,18 @@ HX
 </th>
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 sample
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+orig.name
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename2
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+newsamplenumber
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename3
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 order_number
@@ -2843,6 +2948,18 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -2946,6 +3063,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -3044,6 +3173,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 102
 </td>
@@ -3137,6 +3278,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -3257,6 +3410,18 @@ HX
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 sample
 </th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+orig.name
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename2
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+newsamplenumber
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename3
+</th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 order_number
 </th>
@@ -3274,19 +3439,19 @@ condition
 <tbody>
 <tr>
 <td style="text-align:left;">
-1
+19
 </td>
 <td style="text-align:left;">
-RNA_P2041_S37
+RNA_P2041_S55
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10619_S37_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10752_S55_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-33
+51
 </td>
 <td style="text-align:left;">
-RNA_P2041_10619_S37_L003
+RNA_P2041_10752_S55_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -3357,6 +3522,18 @@ NA
 <td style="text-align:left;">
 RNA_01
 </td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:left;">
+RNA_P2041_S55
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:left;">
+RNA_P2041_S55
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -3372,19 +3549,19 @@ Kelly_Nx
 </tr>
 <tr>
 <td style="text-align:left;">
-5
+1
 </td>
 <td style="text-align:left;">
-RNA_P2041_S41
+RNA_P2041_S37
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10632_S41_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10619_S37_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-37
+33
 </td>
 <td style="text-align:left;">
-RNA_P2041_10632_S41_L003
+RNA_P2041_10619_S37_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -3455,6 +3632,18 @@ del_Hif1a1.3
 <td style="text-align:left;">
 RNA_11
 </td>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -3470,19 +3659,19 @@ Kelly_Nx
 </tr>
 <tr>
 <td style="text-align:left;">
-10
+6
 </td>
 <td style="text-align:left;">
-RNA_P2041_S46
+RNA_P2041_S42
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10640_S46_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10635_S42_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-42
+38
 </td>
 <td style="text-align:left;">
-RNA_P2041_10640_S46_L003
+RNA_P2041_10635_S42_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -3552,6 +3741,18 @@ delHif1b6.1
 </td>
 <td style="text-align:left;">
 RNA_25
+</td>
+<td style="text-align:left;">
+RNA_P2041_S46
+</td>
+<td style="text-align:left;">
+RNA_P2041_S42
+</td>
+<td style="text-align:right;">
+42
+</td>
+<td style="text-align:left;">
+RNA_P2041_S42
 </td>
 <td style="text-align:right;">
 NA
@@ -3646,6 +3847,18 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -3749,6 +3962,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -3842,6 +4067,18 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -3945,6 +4182,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -4038,6 +4287,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -4141,6 +4402,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 53
 </td>
@@ -4234,6 +4507,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -4337,6 +4622,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 54
 </td>
@@ -4430,6 +4727,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -4533,6 +4842,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 54
 </td>
@@ -4626,6 +4947,18 @@ Ulrike_2
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -4729,6 +5062,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 65
 </td>
@@ -4822,6 +5167,18 @@ Ulrike_2
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -4925,6 +5282,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 66
 </td>
@@ -5018,6 +5387,18 @@ Ulrike_2
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -5121,6 +5502,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 66
 </td>
@@ -5214,6 +5607,18 @@ Ulrike_3
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -5317,6 +5722,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 73
 </td>
@@ -5410,6 +5827,18 @@ Ulrike_3
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -5513,6 +5942,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 74
 </td>
@@ -5606,6 +6047,18 @@ Ulrike_3
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -5709,6 +6162,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 74
 </td>
@@ -5802,6 +6267,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -5905,6 +6382,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 81
 </td>
@@ -5998,6 +6487,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -6101,6 +6602,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 82
 </td>
@@ -6194,6 +6707,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -6297,6 +6822,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 82
 </td>
@@ -6390,6 +6927,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -6493,6 +7042,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 87
 </td>
@@ -6591,6 +7152,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 87
 </td>
@@ -6606,19 +7179,19 @@ Kelly_Nx
 </tr>
 <tr>
 <td style="text-align:left;">
-6
+22
 </td>
 <td style="text-align:left;">
-RNA_P2041_S42
+RNA_P2041_S58
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10635_S42_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10755_S58_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-38
+54
 </td>
 <td style="text-align:left;">
-RNA_P2041_10635_S42_L003
+RNA_P2041_10755_S58_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -6689,6 +7262,18 @@ del_Hif1a1.6
 <td style="text-align:left;">
 RNA_12
 </td>
+<td style="text-align:left;">
+RNA_P2041_S42
+</td>
+<td style="text-align:left;">
+RNA_P2041_S38
+</td>
+<td style="text-align:right;">
+38
+</td>
+<td style="text-align:left;">
+RNA_P2041_S58
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -6704,19 +7289,19 @@ Kelly_Hx
 </tr>
 <tr>
 <td style="text-align:left;">
-11
+7
 </td>
 <td style="text-align:left;">
-RNA_P2041_S47
+RNA_P2041_S43
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10744_S47_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10636_S43_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-43
+39
 </td>
 <td style="text-align:left;">
-RNA_P2041_10744_S47_L003
+RNA_P2041_10636_S43_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -6786,6 +7371,18 @@ delHif1b9.1
 </td>
 <td style="text-align:left;">
 RNA_26
+</td>
+<td style="text-align:left;">
+RNA_P2041_S47
+</td>
+<td style="text-align:left;">
+RNA_P2041_S43
+</td>
+<td style="text-align:right;">
+43
+</td>
+<td style="text-align:left;">
+RNA_P2041_S43
 </td>
 <td style="text-align:right;">
 NA
@@ -6880,6 +7477,18 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -6983,6 +7592,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -7076,6 +7697,18 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -7179,6 +7812,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -7272,6 +7917,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -7375,6 +8032,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 59
 </td>
@@ -7468,6 +8137,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -7571,6 +8252,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 60
 </td>
@@ -7664,6 +8357,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -7767,6 +8472,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 60
 </td>
@@ -7860,6 +8577,18 @@ Ulrike_2
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -7963,6 +8692,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 69
 </td>
@@ -8056,6 +8797,18 @@ Ulrike_2
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -8159,6 +8912,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 70
 </td>
@@ -8252,6 +9017,18 @@ Ulrike_2
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -8355,6 +9132,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 70
 </td>
@@ -8448,6 +9237,18 @@ Ulrike_3
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -8551,6 +9352,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 77
 </td>
@@ -8644,6 +9457,18 @@ Ulrike_3
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -8747,6 +9572,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 78
 </td>
@@ -8840,6 +9677,18 @@ Ulrike_3
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -8943,6 +9792,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 78
 </td>
@@ -9036,6 +9897,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -9139,6 +10012,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 92
 </td>
@@ -9232,6 +10117,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -9335,6 +10232,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 93
 </td>
@@ -9428,6 +10337,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -9531,6 +10452,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 93
 </td>
@@ -9624,6 +10557,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -9727,6 +10672,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 98
 </td>
@@ -9825,6 +10782,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 98
 </td>
@@ -9840,19 +10809,19 @@ Kelly_Hx
 </tr>
 <tr>
 <td style="text-align:left;">
-12
+8
 </td>
 <td style="text-align:left;">
-RNA_P2041_S48
+RNA_P2041_S44
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10745_S48_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10637_S44_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-44
+40
 </td>
 <td style="text-align:left;">
-RNA_P2041_10745_S48_L003
+RNA_P2041_10637_S44_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -9922,6 +10891,18 @@ Kelly Hif1b.sg1+2 Klon 9 Hx
 </td>
 <td style="text-align:left;">
 RNA_27
+</td>
+<td style="text-align:left;">
+RNA_P2041_S48
+</td>
+<td style="text-align:left;">
+RNA_P2041_S44
+</td>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:left;">
+RNA_P2041_S44
 </td>
 <td style="text-align:right;">
 NA
@@ -10016,6 +10997,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -10119,6 +11112,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 55
 </td>
@@ -10212,6 +11217,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -10315,6 +11332,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 56
 </td>
@@ -10408,6 +11437,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -10511,6 +11552,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 56
 </td>
@@ -10604,6 +11657,18 @@ Ulrike_2
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -10707,6 +11772,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 67
 </td>
@@ -10800,6 +11877,18 @@ Ulrike_2
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -10903,6 +11992,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 75
 </td>
@@ -10996,6 +12097,18 @@ Ulrike_3
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -11099,6 +12212,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 75
 </td>
@@ -11192,6 +12317,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -11295,6 +12432,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 83
 </td>
@@ -11388,6 +12537,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -11491,6 +12652,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 84
 </td>
@@ -11584,6 +12757,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -11687,6 +12872,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 84
 </td>
@@ -11780,6 +12977,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -11883,6 +13092,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 88
 </td>
@@ -11976,6 +13197,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -12079,6 +13312,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 89
 </td>
@@ -12172,6 +13417,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -12275,6 +13532,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 89
 </td>
@@ -12368,6 +13637,18 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -12471,6 +13752,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -12564,6 +13857,18 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -12667,6 +13972,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -12682,19 +13999,19 @@ HIF1A_Hx
 </tr>
 <tr>
 <td style="text-align:left;">
-13
+9
 </td>
 <td style="text-align:left;">
-RNA_P2041_S49
+RNA_P2041_S45
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10746_S49_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10638_S45_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-45
+41
 </td>
 <td style="text-align:left;">
-RNA_P2041_10746_S49_L003
+RNA_P2041_10638_S45_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -12764,6 +14081,18 @@ delHif1b10.1
 </td>
 <td style="text-align:left;">
 RNA_28
+</td>
+<td style="text-align:left;">
+RNA_P2041_S49
+</td>
+<td style="text-align:left;">
+RNA_P2041_S45
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:left;">
+RNA_P2041_S45
 </td>
 <td style="text-align:right;">
 NA
@@ -12858,6 +14187,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -12961,6 +14302,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 61
 </td>
@@ -13054,6 +14407,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -13157,6 +14522,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 62
 </td>
@@ -13250,6 +14627,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -13353,6 +14742,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 62
 </td>
@@ -13446,6 +14847,18 @@ Ulrike_2
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -13549,6 +14962,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 71
 </td>
@@ -13642,6 +15067,18 @@ Ulrike_2
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -13745,6 +15182,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 79
 </td>
@@ -13838,6 +15287,18 @@ Ulrike_3
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -13941,6 +15402,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 79
 </td>
@@ -14034,6 +15507,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -14137,6 +15622,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 94
 </td>
@@ -14230,6 +15727,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -14333,6 +15842,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 95
 </td>
@@ -14426,6 +15947,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -14529,6 +16062,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 95
 </td>
@@ -14622,6 +16167,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -14725,6 +16282,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 99
 </td>
@@ -14818,6 +16387,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -14921,6 +16502,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 100
 </td>
@@ -15014,6 +16607,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -15117,6 +16722,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 100
 </td>
@@ -15132,19 +16749,19 @@ HIF1A_Hx
 </tr>
 <tr>
 <td style="text-align:left;">
-14
+10
 </td>
 <td style="text-align:left;">
-RNA_P2041_S50
+RNA_P2041_S46
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10747_S50_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10640_S46_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-46
+42
 </td>
 <td style="text-align:left;">
-RNA_P2041_10747_S50_L003
+RNA_P2041_10640_S46_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -15214,6 +16831,18 @@ delHif1b15.1
 </td>
 <td style="text-align:left;">
 RNA_30
+</td>
+<td style="text-align:left;">
+RNA_P2041_S50
+</td>
+<td style="text-align:left;">
+RNA_P2041_S46
+</td>
+<td style="text-align:right;">
+46
+</td>
+<td style="text-align:left;">
+RNA_P2041_S46
 </td>
 <td style="text-align:right;">
 NA
@@ -15308,6 +16937,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -15411,6 +17052,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 57
 </td>
@@ -15504,6 +17157,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -15607,6 +17272,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 58
 </td>
@@ -15700,6 +17377,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -15803,6 +17492,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 58
 </td>
@@ -15896,6 +17597,18 @@ Ulrike_2
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -15999,6 +17712,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 68
 </td>
@@ -16092,6 +17817,18 @@ Ulrike_2
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -16195,6 +17932,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 76
 </td>
@@ -16288,6 +18037,18 @@ Ulrike_3
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -16391,6 +18152,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 76
 </td>
@@ -16484,6 +18257,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -16587,6 +18372,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 85
 </td>
@@ -16680,6 +18477,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -16783,6 +18592,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 86
 </td>
@@ -16876,6 +18697,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -16979,6 +18812,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 86
 </td>
@@ -17072,6 +18917,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -17175,6 +19032,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 90
 </td>
@@ -17268,6 +19137,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -17371,6 +19252,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 91
 </td>
@@ -17464,6 +19357,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -17567,6 +19472,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 91
 </td>
@@ -17660,6 +19577,18 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -17763,6 +19692,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -17856,6 +19797,18 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -17959,6 +19912,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -18052,6 +20017,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -18155,6 +20132,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 63
 </td>
@@ -18248,6 +20237,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -18351,6 +20352,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 64
 </td>
@@ -18444,6 +20457,18 @@ Ulrike_1
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -18547,6 +20572,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 64
 </td>
@@ -18640,6 +20677,18 @@ Ulrike_2
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -18743,6 +20792,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 72
 </td>
@@ -18836,6 +20897,18 @@ Ulrike_2
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -18939,6 +21012,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 80
 </td>
@@ -19032,6 +21117,18 @@ Ulrike_3
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -19135,6 +21232,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 80
 </td>
@@ -19228,6 +21337,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -19331,6 +21452,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 96
 </td>
@@ -19424,6 +21557,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -19527,6 +21672,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 97
 </td>
@@ -19620,6 +21777,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -19723,6 +21892,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 97
 </td>
@@ -19816,6 +21997,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -19919,6 +22112,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 101
 </td>
@@ -20012,6 +22217,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -20115,6 +22332,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 102
 </td>
@@ -20208,6 +22437,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -20311,6 +22552,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 102
 </td>
@@ -20326,19 +22579,19 @@ HIF2A_Hx
 </tr>
 <tr>
 <td style="text-align:left;">
-21
+17
 </td>
 <td style="text-align:left;">
-RNA_P2041_S57
+RNA_P2041_S53
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10754_S57_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10750_S53_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-53
+49
 </td>
 <td style="text-align:left;">
-RNA_P2041_10754_S57_L003
+RNA_P2041_10750_S53_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -20409,6 +22662,18 @@ NA
 <td style="text-align:left;">
 RNA_39
 </td>
+<td style="text-align:left;">
+RNA_P2041_S57
+</td>
+<td style="text-align:left;">
+RNA_P2041_S53
+</td>
+<td style="text-align:right;">
+53
+</td>
+<td style="text-align:left;">
+RNA_P2041_S53
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -20424,19 +22689,19 @@ HIF1B_Nx
 </tr>
 <tr>
 <td style="text-align:left;">
-4
+2
 </td>
 <td style="text-align:left;">
-RNA_P2041_S40
+RNA_P2041_S38
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10631_S40_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10621_S38_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-36
+34
 </td>
 <td style="text-align:left;">
-RNA_P2041_10631_S40_L003
+RNA_P2041_10621_S38_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -20507,6 +22772,18 @@ NA
 <td style="text-align:left;">
 RNA_05
 </td>
+<td style="text-align:left;">
+RNA_P2041_S40
+</td>
+<td style="text-align:left;">
+RNA_P2041_S58
+</td>
+<td style="text-align:right;">
+58
+</td>
+<td style="text-align:left;">
+RNA_P2041_S38
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -20522,19 +22799,19 @@ HIF1B_Nx
 </tr>
 <tr>
 <td style="text-align:left;">
-8
+4
 </td>
 <td style="text-align:left;">
-RNA_P2041_S44
+RNA_P2041_S40
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10637_S44_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10631_S40_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-40
+36
 </td>
 <td style="text-align:left;">
-RNA_P2041_10637_S44_L003
+RNA_P2041_10631_S40_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -20605,6 +22882,18 @@ delHif1b4.1
 <td style="text-align:left;">
 RNA_21
 </td>
+<td style="text-align:left;">
+RNA_P2041_S44
+</td>
+<td style="text-align:left;">
+RNA_P2041_S40
+</td>
+<td style="text-align:right;">
+40
+</td>
+<td style="text-align:left;">
+RNA_P2041_S40
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -20620,19 +22909,19 @@ HIF1B_Nx
 </tr>
 <tr>
 <td style="text-align:left;">
-7
+3
 </td>
 <td style="text-align:left;">
-RNA_P2041_S43
+RNA_P2041_S39
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10636_S43_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10625_S39_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-39
+35
 </td>
 <td style="text-align:left;">
-RNA_P2041_10636_S43_L003
+RNA_P2041_10625_S39_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -20703,6 +22992,18 @@ NA
 <td style="text-align:left;">
 RNA_15
 </td>
+<td style="text-align:left;">
+RNA_P2041_S43
+</td>
+<td style="text-align:left;">
+RNA_P2041_S39
+</td>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:left;">
+RNA_P2041_S39
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -20718,19 +23019,19 @@ HIF1B_Nx
 </tr>
 <tr>
 <td style="text-align:left;">
-15
+12
 </td>
 <td style="text-align:left;">
-RNA_P2041_S51
+RNA_P2041_S48
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10748_S51_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10745_S48_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-47
+44
 </td>
 <td style="text-align:left;">
-RNA_P2041_10748_S51_L003
+RNA_P2041_10745_S48_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -20801,6 +23102,18 @@ NA
 <td style="text-align:left;">
 RNA_33
 </td>
+<td style="text-align:left;">
+RNA_P2041_S51
+</td>
+<td style="text-align:left;">
+RNA_P2041_S47
+</td>
+<td style="text-align:right;">
+47
+</td>
+<td style="text-align:left;">
+RNA_P2041_S48
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -20816,19 +23129,19 @@ HIF1B_Nx
 </tr>
 <tr>
 <td style="text-align:left;">
-17
+13
 </td>
 <td style="text-align:left;">
-RNA_P2041_S53
+RNA_P2041_S49
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10750_S53_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10746_S49_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-49
+45
 </td>
 <td style="text-align:left;">
-RNA_P2041_10750_S53_L003
+RNA_P2041_10746_S49_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -20899,6 +23212,18 @@ NA
 <td style="text-align:left;">
 RNA_35
 </td>
+<td style="text-align:left;">
+RNA_P2041_S53
+</td>
+<td style="text-align:left;">
+RNA_P2041_S49
+</td>
+<td style="text-align:right;">
+49
+</td>
+<td style="text-align:left;">
+RNA_P2041_S49
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -20914,19 +23239,19 @@ HIF1B_Nx
 </tr>
 <tr>
 <td style="text-align:left;">
-2
+21
 </td>
 <td style="text-align:left;">
-RNA_P2041_S38
+RNA_P2041_S57
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10621_S38_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10754_S57_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-34
+53
 </td>
 <td style="text-align:left;">
-RNA_P2041_10621_S38_L003
+RNA_P2041_10754_S57_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -20997,6 +23322,18 @@ LV
 <td style="text-align:left;">
 RNA_03
 </td>
+<td style="text-align:left;">
+RNA_P2041_S38
+</td>
+<td style="text-align:left;">
+RNA_P2041_S56
+</td>
+<td style="text-align:right;">
+56
+</td>
+<td style="text-align:left;">
+RNA_P2041_S57
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -21012,19 +23349,19 @@ HIF1B_Nx
 </tr>
 <tr>
 <td style="text-align:left;">
-19
+15
 </td>
 <td style="text-align:left;">
-RNA_P2041_S55
+RNA_P2041_S51
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10752_S55_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10748_S51_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-51
+47
 </td>
 <td style="text-align:left;">
-RNA_P2041_10752_S55_L003
+RNA_P2041_10748_S51_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -21095,6 +23432,18 @@ NA
 <td style="text-align:left;">
 RNA_37
 </td>
+<td style="text-align:left;">
+RNA_P2041_S55
+</td>
+<td style="text-align:left;">
+RNA_P2041_S51
+</td>
+<td style="text-align:right;">
+51
+</td>
+<td style="text-align:left;">
+RNA_P2041_S51
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -21110,19 +23459,19 @@ HIF1B_Nx
 </tr>
 <tr>
 <td style="text-align:left;">
-22
+18
 </td>
 <td style="text-align:left;">
-RNA_P2041_S58
+RNA_P2041_S54
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10755_S58_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10751_S54_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-54
+50
 </td>
 <td style="text-align:left;">
-RNA_P2041_10755_S58_L003
+RNA_P2041_10751_S54_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -21193,6 +23542,18 @@ NA
 <td style="text-align:left;">
 RNA_40
 </td>
+<td style="text-align:left;">
+RNA_P2041_S58
+</td>
+<td style="text-align:left;">
+RNA_P2041_S54
+</td>
+<td style="text-align:right;">
+54
+</td>
+<td style="text-align:left;">
+RNA_P2041_S54
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -21208,19 +23569,19 @@ HIF1B_Hx
 </tr>
 <tr>
 <td style="text-align:left;">
-9
+5
 </td>
 <td style="text-align:left;">
-RNA_P2041_S45
+RNA_P2041_S41
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10638_S45_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10632_S41_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-41
+37
 </td>
 <td style="text-align:left;">
-RNA_P2041_10638_S45_L003
+RNA_P2041_10632_S41_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -21291,6 +23652,18 @@ NA
 <td style="text-align:left;">
 RNA_22
 </td>
+<td style="text-align:left;">
+RNA_P2041_S45
+</td>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:right;">
+41
+</td>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -21306,19 +23679,19 @@ HIF1B_Hx
 </tr>
 <tr>
 <td style="text-align:left;">
-16
+11
 </td>
 <td style="text-align:left;">
-RNA_P2041_S52
+RNA_P2041_S47
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10749_S52_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10744_S47_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-48
+43
 </td>
 <td style="text-align:left;">
-RNA_P2041_10749_S52_L003
+RNA_P2041_10744_S47_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -21389,6 +23762,18 @@ NA
 <td style="text-align:left;">
 RNA_34
 </td>
+<td style="text-align:left;">
+RNA_P2041_S52
+</td>
+<td style="text-align:left;">
+RNA_P2041_S48
+</td>
+<td style="text-align:right;">
+48
+</td>
+<td style="text-align:left;">
+RNA_P2041_S47
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -21404,19 +23789,19 @@ HIF1B_Hx
 </tr>
 <tr>
 <td style="text-align:left;">
-18
+14
 </td>
 <td style="text-align:left;">
-RNA_P2041_S54
+RNA_P2041_S50
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10751_S54_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10747_S50_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-50
+46
 </td>
 <td style="text-align:left;">
-RNA_P2041_10751_S54_L003
+RNA_P2041_10747_S50_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -21487,6 +23872,18 @@ NA
 <td style="text-align:left;">
 RNA_36
 </td>
+<td style="text-align:left;">
+RNA_P2041_S54
+</td>
+<td style="text-align:left;">
+RNA_P2041_S50
+</td>
+<td style="text-align:right;">
+50
+</td>
+<td style="text-align:left;">
+RNA_P2041_S50
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -21502,19 +23899,19 @@ HIF1B_Hx
 </tr>
 <tr>
 <td style="text-align:left;">
-3
+20
 </td>
 <td style="text-align:left;">
-RNA_P2041_S39
+RNA_P2041_S56
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10625_S39_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10753_S56_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-35
+52
 </td>
 <td style="text-align:left;">
-RNA_P2041_10625_S39_L003
+RNA_P2041_10753_S56_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -21585,6 +23982,18 @@ LV
 <td style="text-align:left;">
 RNA_04
 </td>
+<td style="text-align:left;">
+RNA_P2041_S39
+</td>
+<td style="text-align:left;">
+RNA_P2041_S57
+</td>
+<td style="text-align:right;">
+57
+</td>
+<td style="text-align:left;">
+RNA_P2041_S56
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -21600,19 +24009,19 @@ HIF1B_Hx
 </tr>
 <tr>
 <td style="text-align:left;">
-20
+16
 </td>
 <td style="text-align:left;">
-RNA_P2041_S56
+RNA_P2041_S52
 </td>
 <td style="text-align:left;">
-/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10753_S56_L003_quant/quant.sf
+/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10749_S52_L003_quant/quant.sf
 </td>
 <td style="text-align:right;">
-52
+48
 </td>
 <td style="text-align:left;">
-RNA_P2041_10753_S56_L003
+RNA_P2041_10749_S52_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -21683,6 +24092,18 @@ NA
 <td style="text-align:left;">
 RNA_38
 </td>
+<td style="text-align:left;">
+RNA_P2041_S56
+</td>
+<td style="text-align:left;">
+RNA_P2041_S52
+</td>
+<td style="text-align:right;">
+52
+</td>
+<td style="text-align:left;">
+RNA_P2041_S52
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -21713,6 +24134,254 @@ levels(sample_table_all$clone %>% as.factor())
 
     ##  [1] "Hif1a_1.3" "Hif1a_1.6" "Hif1b_10"  "Hif1b_15"  "Hif1b_4"   "Hif1b_6"  
     ##  [7] "Hif1b_9"   "Hif2a_2.2" "LV_1"      "LV1"
+
+``` r
+sample_table_all$condition %>% levels()
+```
+
+    ## [1] "Kelly_Nx" "Kelly_Hx" "HIF1A_Nx" "HIF1A_Hx" "HIF2A_Nx" "HIF2A_Hx" "HIF1B_Nx"
+    ## [8] "HIF1B_Hx"
+
+``` r
+subset(sample_table_all,sequencing =="P2041")
+```
+
+    ##       samplename
+    ## 19 RNA_P2041_S55
+    ## 1  RNA_P2041_S37
+    ## 6  RNA_P2041_S42
+    ## 22 RNA_P2041_S58
+    ## 7  RNA_P2041_S43
+    ## 8  RNA_P2041_S44
+    ## 9  RNA_P2041_S45
+    ## 10 RNA_P2041_S46
+    ## 17 RNA_P2041_S53
+    ## 2  RNA_P2041_S38
+    ## 4  RNA_P2041_S40
+    ## 3  RNA_P2041_S39
+    ## 12 RNA_P2041_S48
+    ## 13 RNA_P2041_S49
+    ## 21 RNA_P2041_S57
+    ## 15 RNA_P2041_S51
+    ## 18 RNA_P2041_S54
+    ## 5  RNA_P2041_S41
+    ## 11 RNA_P2041_S47
+    ## 14 RNA_P2041_S50
+    ## 20 RNA_P2041_S56
+    ## 16 RNA_P2041_S52
+    ##                                                                                               files
+    ## 19 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10752_S55_L003_quant/quant.sf
+    ## 1  /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10619_S37_L003_quant/quant.sf
+    ## 6  /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10635_S42_L003_quant/quant.sf
+    ## 22 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10755_S58_L003_quant/quant.sf
+    ## 7  /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10636_S43_L003_quant/quant.sf
+    ## 8  /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10637_S44_L003_quant/quant.sf
+    ## 9  /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10638_S45_L003_quant/quant.sf
+    ## 10 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10640_S46_L003_quant/quant.sf
+    ## 17 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10750_S53_L003_quant/quant.sf
+    ## 2  /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10621_S38_L003_quant/quant.sf
+    ## 4  /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10631_S40_L003_quant/quant.sf
+    ## 3  /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10625_S39_L003_quant/quant.sf
+    ## 12 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10745_S48_L003_quant/quant.sf
+    ## 13 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10746_S49_L003_quant/quant.sf
+    ## 21 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10754_S57_L003_quant/quant.sf
+    ## 15 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10748_S51_L003_quant/quant.sf
+    ## 18 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10751_S54_L003_quant/quant.sf
+    ## 5  /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10632_S41_L003_quant/quant.sf
+    ## 11 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10744_S47_L003_quant/quant.sf
+    ## 14 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10747_S50_L003_quant/quant.sf
+    ## 20 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10753_S56_L003_quant/quant.sf
+    ## 16 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10749_S52_L003_quant/quant.sf
+    ##    order                 filename sequencing lane rna_id      Datum
+    ## 19    51 RNA_P2041_10752_S55_L003      P2041 L003   6952 2017-05-04
+    ## 1     33 RNA_P2041_10619_S37_L003      P2041 L003  10268 2021-08-25
+    ## 6     38 RNA_P2041_10635_S42_L003      P2041 L003  10292 2021-08-27
+    ## 22    54 RNA_P2041_10755_S58_L003      P2041 L003  10269 2021-08-25
+    ## 7     39 RNA_P2041_10636_S43_L003      P2041 L003  10293 2021-08-27
+    ## 8     40 RNA_P2041_10637_S44_L003      P2041 L003  10294 2021-08-27
+    ## 9     41 RNA_P2041_10638_S45_L003      P2041 L003  10295 2021-08-27
+    ## 10    42 RNA_P2041_10640_S46_L003      P2041 L003  10297 2021-08-27
+    ## 17    49 RNA_P2041_10750_S53_L003      P2041 L003  10306 2021-08-27
+    ## 2     34 RNA_P2041_10621_S38_L003      P2041 L003  10189 2021-06-16
+    ## 4     36 RNA_P2041_10631_S40_L003      P2041 L003  10284 2021-08-25
+    ## 3     35 RNA_P2041_10625_S39_L003      P2041 L003  10276 2021-08-25
+    ## 12    44 RNA_P2041_10745_S48_L003      P2041 L003  10300 2021-08-27
+    ## 13    45 RNA_P2041_10746_S49_L003      P2041 L003  10302 2021-08-27
+    ## 21    53 RNA_P2041_10754_S57_L003      P2041 L003  10185 2021-06-16
+    ## 15    47 RNA_P2041_10748_S51_L003      P2041 L003  10304 2021-08-27
+    ## 18    50 RNA_P2041_10751_S54_L003      P2041 L003  10307 2021-08-27
+    ## 5     37 RNA_P2041_10632_S41_L003      P2041 L003  10285 2021-08-25
+    ## 11    43 RNA_P2041_10744_S47_L003      P2041 L003  10301 2021-08-27
+    ## 14    46 RNA_P2041_10747_S50_L003      P2041 L003  10303 2021-08-27
+    ## 20    52 RNA_P2041_10753_S56_L003      P2041 L003  10186 2021-06-16
+    ## 16    48 RNA_P2041_10749_S52_L003      P2041 L003  10305 2021-08-27
+    ##                              Probe rna_conc treatment genotype sequencing.y
+    ## 19 Kelly CRISPR Cas Hif LV1 Nx 24h       NA        Nx    Kelly        P2041
+    ## 1                    Kelly LV.1 Nx       NA        Nx    Kelly        P2041
+    ## 6                    Kelly LV.1 Nx       NA        Nx    Kelly        P2041
+    ## 22                   Kelly LV.1 Hx       NA        Hx    Kelly        P2041
+    ## 7                    Kelly LV.1 Hx       NA        Hx    Kelly        P2041
+    ## 8               Kelly Hif1a 1.3 Nx       NA        Nx    HIF1A        P2041
+    ## 9               Kelly Hif1a 1.3 Hx       NA        Hx    HIF1A        P2041
+    ## 10              Kelly Hif1a 1.6 Hx       NA        Hx    HIF1A        P2041
+    ## 17             Kelly Hif1b 10.1 Nx       NA        Nx    HIF1B        P2041
+    ## 2     Kelly Hif1b.sg1+2 Klon 15 Nx       NA        Nx    HIF1B        P2041
+    ## 4              Kelly Hif1b 15.1 Nx       NA        Nx    HIF1B        P2041
+    ## 3               Kelly Hif1b 4.1 Nx       NA        Nx    HIF1B        P2041
+    ## 12              Kelly Hif1b 4.1 Nx       NA        Nx    HIF1B        P2041
+    ## 13              Kelly Hif1b 6.1 Nx       NA        Nx    HIF1B        P2041
+    ## 21     Kelly Hif1b.sg1+2 Klon 9 Nx       NA        Nx    HIF1B        P2041
+    ## 15              Kelly Hif1b 9.1 Nx       NA        Nx    HIF1B        P2041
+    ## 18             Kelly Hif1b 10.1 Hx       NA        Hx    HIF1B        P2041
+    ## 5              Kelly Hif1b 15.1 Hx       NA        Hx    HIF1B        P2041
+    ## 11              Kelly Hif1b 4.1 Hx       NA        Hx    HIF1B        P2041
+    ## 14              Kelly Hif1b 6.1 Hx       NA        Hx    HIF1B        P2041
+    ## 20     Kelly Hif1b.sg1+2 Klon 9 Hx       NA        Hx    HIF1B        P2041
+    ## 16              Kelly Hif1b 9.1 Hx       NA        Hx    HIF1B        P2041
+    ##    replicate     clone cellline lane.y sample_id    run_id experiment
+    ## 19      <NA>      LV_1    Kelly   L003       S37 RNA_10619    Control
+    ## 1       <NA>      LV_1    Kelly   L003       S41 RNA_10754      Simon
+    ## 6       <NA>      LV_1    Kelly   L003       S46 RNA_10635      Simon
+    ## 22      <NA>      LV_1    Kelly   L003       S42 RNA_10755      Simon
+    ## 7       <NA>      LV_1    Kelly   L003       S47 RNA_10636      Simon
+    ## 8       <NA> Hif1a_1.3    Kelly   L003       S48 RNA_10637      Simon
+    ## 9       <NA> Hif1a_1.3    Kelly   L003       S49 RNA_10638      Simon
+    ## 10      <NA> Hif1a_1.6    Kelly   L003       S50 RNA_10640      Simon
+    ## 17      <NA>  Hif1b_10    Kelly   L003       S57 RNA_10752      Simon
+    ## 2       <NA>  Hif1b_15    Kelly   L003       S40 RNA_10745      Simon
+    ## 4       <NA>  Hif1b_15    Kelly   L003       S44 RNA_10631      Simon
+    ## 3       <NA>   Hif1b_4    Kelly   L003       S43 RNA_10625      Simon
+    ## 12      <NA>   Hif1b_4    Kelly   L003       S51 RNA_10746      Simon
+    ## 13      <NA>   Hif1b_6    Kelly   L003       S53 RNA_10748      Simon
+    ## 21      <NA>   Hif1b_9    Kelly   L003       S38 RNA_10621      Simon
+    ## 15      <NA>   Hif1b_9    Kelly   L003       S55 RNA_10750      Simon
+    ## 18      <NA>  Hif1b_10    Kelly   L003       S58 RNA_10753      Simon
+    ## 5       <NA>  Hif1b_15    Kelly   L003       S45 RNA_10632      Simon
+    ## 11      <NA>   Hif1b_4    Kelly   L003       S52 RNA_10747      Simon
+    ## 14      <NA>   Hif1b_6    Kelly   L003       S54 RNA_10749      Simon
+    ## 20      <NA>   Hif1b_9    Kelly   L003       S39 RNA_10744      Simon
+    ## 16      <NA>   Hif1b_9    Kelly   L003       S56 RNA_10751      Simon
+    ##    experiment_date repetition   exp_rep CUGE-ID                           Nx
+    ## 19      2017-05-04          0 Control_0   10619                           LV
+    ## 1       2021-08-25          4   Simon_4   10754                 del_Hif1a1.3
+    ## 6       2021-08-27          5   Simon_5   10635                  delHif1b6.1
+    ## 22      2021-08-25          4   Simon_4   10755                         <NA>
+    ## 7       2021-08-27          5   Simon_5   10636                  delHif1b9.1
+    ## 8       2021-08-27          5   Simon_5   10637  Kelly Hif1b.sg1+2 Klon 9 Nx
+    ## 9       2021-08-27          5   Simon_5   10638                 delHif1b10.1
+    ## 10      2021-08-27          5   Simon_5   10640                 delHif1b15.1
+    ## 17      2021-08-27          5   Simon_5   10752                         <NA>
+    ## 2       2021-06-16          1   Simon_1   10745                         <NA>
+    ## 4       2021-08-25          4   Simon_4   10631                  delHif1b4.1
+    ## 3       2021-08-25          4   Simon_4   10625                         <NA>
+    ## 12      2021-08-27          5   Simon_5   10746 Kelly Hif1b.sg1+2 Klon 15 Nx
+    ## 13      2021-08-27          5   Simon_5   10748                         <NA>
+    ## 21      2021-06-16          1   Simon_1   10621                           LV
+    ## 15      2021-08-27          5   Simon_5   10750                         <NA>
+    ## 18      2021-08-27          5   Simon_5   10753                         <NA>
+    ## 5       2021-08-25          4   Simon_4   10632                  delHif1b4.1
+    ## 11      2021-08-27          5   Simon_5   10747                         <NA>
+    ## 14      2021-08-27          5   Simon_5   10749                         <NA>
+    ## 20      2021-06-16          1   Simon_1   10744                           LV
+    ## 16      2021-08-27          5   Simon_5   10751                         <NA>
+    ##                             HX sample     orig.name   samplename2
+    ## 19                        <NA> RNA_01 RNA_P2041_S37 RNA_P2041_S55
+    ## 1                 del_Hif1a1.3 RNA_11 RNA_P2041_S41 RNA_P2041_S37
+    ## 6                  delHif1b6.1 RNA_25 RNA_P2041_S46 RNA_P2041_S42
+    ## 22                del_Hif1a1.6 RNA_12 RNA_P2041_S42 RNA_P2041_S38
+    ## 7                  delHif1b9.1 RNA_26 RNA_P2041_S47 RNA_P2041_S43
+    ## 8  Kelly Hif1b.sg1+2 Klon 9 Hx RNA_27 RNA_P2041_S48 RNA_P2041_S44
+    ## 9                 delHif1b10.1 RNA_28 RNA_P2041_S49 RNA_P2041_S45
+    ## 10                delHif1b15.1 RNA_30 RNA_P2041_S50 RNA_P2041_S46
+    ## 17                        <NA> RNA_39 RNA_P2041_S57 RNA_P2041_S53
+    ## 2                         <NA> RNA_05 RNA_P2041_S40 RNA_P2041_S58
+    ## 4                  delHif1b4.1 RNA_21 RNA_P2041_S44 RNA_P2041_S40
+    ## 3                         <NA> RNA_15 RNA_P2041_S43 RNA_P2041_S39
+    ## 12                        <NA> RNA_33 RNA_P2041_S51 RNA_P2041_S47
+    ## 13                        <NA> RNA_35 RNA_P2041_S53 RNA_P2041_S49
+    ## 21                          LV RNA_03 RNA_P2041_S38 RNA_P2041_S56
+    ## 15                        <NA> RNA_37 RNA_P2041_S55 RNA_P2041_S51
+    ## 18                        <NA> RNA_40 RNA_P2041_S58 RNA_P2041_S54
+    ## 5                         <NA> RNA_22 RNA_P2041_S45 RNA_P2041_S41
+    ## 11                        <NA> RNA_34 RNA_P2041_S52 RNA_P2041_S48
+    ## 14                        <NA> RNA_36 RNA_P2041_S54 RNA_P2041_S50
+    ## 20                          LV RNA_04 RNA_P2041_S39 RNA_P2041_S57
+    ## 16                        <NA> RNA_38 RNA_P2041_S56 RNA_P2041_S52
+    ##    newsamplenumber   samplename3 order_number Konz.(µg/µl) cell_density
+    ## 19              55 RNA_P2041_S55           NA           NA         <NA>
+    ## 1               37 RNA_P2041_S37           NA           NA         <NA>
+    ## 6               42 RNA_P2041_S42           NA           NA         <NA>
+    ## 22              38 RNA_P2041_S58           NA           NA         <NA>
+    ## 7               43 RNA_P2041_S43           NA           NA         <NA>
+    ## 8               44 RNA_P2041_S44           NA           NA         <NA>
+    ## 9               45 RNA_P2041_S45           NA           NA         <NA>
+    ## 10              46 RNA_P2041_S46           NA           NA         <NA>
+    ## 17              53 RNA_P2041_S53           NA           NA         <NA>
+    ## 2               58 RNA_P2041_S38           NA           NA         <NA>
+    ## 4               40 RNA_P2041_S40           NA           NA         <NA>
+    ## 3               39 RNA_P2041_S39           NA           NA         <NA>
+    ## 12              47 RNA_P2041_S48           NA           NA         <NA>
+    ## 13              49 RNA_P2041_S49           NA           NA         <NA>
+    ## 21              56 RNA_P2041_S57           NA           NA         <NA>
+    ## 15              51 RNA_P2041_S51           NA           NA         <NA>
+    ## 18              54 RNA_P2041_S54           NA           NA         <NA>
+    ## 5               41 RNA_P2041_S41           NA           NA         <NA>
+    ## 11              48 RNA_P2041_S47           NA           NA         <NA>
+    ## 14              50 RNA_P2041_S50           NA           NA         <NA>
+    ## 20              57 RNA_P2041_S56           NA           NA         <NA>
+    ## 16              52 RNA_P2041_S52           NA           NA         <NA>
+    ##    condition
+    ## 19  Kelly_Nx
+    ## 1   Kelly_Nx
+    ## 6   Kelly_Nx
+    ## 22  Kelly_Hx
+    ## 7   Kelly_Hx
+    ## 8   HIF1A_Nx
+    ## 9   HIF1A_Hx
+    ## 10  HIF1A_Hx
+    ## 17  HIF1B_Nx
+    ## 2   HIF1B_Nx
+    ## 4   HIF1B_Nx
+    ## 3   HIF1B_Nx
+    ## 12  HIF1B_Nx
+    ## 13  HIF1B_Nx
+    ## 21  HIF1B_Nx
+    ## 15  HIF1B_Nx
+    ## 18  HIF1B_Hx
+    ## 5   HIF1B_Hx
+    ## 11  HIF1B_Hx
+    ## 14  HIF1B_Hx
+    ## 20  HIF1B_Hx
+    ## 16  HIF1B_Hx
+
+``` r
+subset(sample_table_all, condition=="HIF1A_Hx" & sequencing =="P2041")
+```
+
+    ##       samplename
+    ## 9  RNA_P2041_S45
+    ## 10 RNA_P2041_S46
+    ##                                                                                               files
+    ## 9  /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10638_S45_L003_quant/quant.sf
+    ## 10 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10640_S46_L003_quant/quant.sf
+    ##    order                 filename sequencing lane rna_id      Datum
+    ## 9     41 RNA_P2041_10638_S45_L003      P2041 L003  10295 2021-08-27
+    ## 10    42 RNA_P2041_10640_S46_L003      P2041 L003  10297 2021-08-27
+    ##                 Probe rna_conc treatment genotype sequencing.y replicate
+    ## 9  Kelly Hif1a 1.3 Hx       NA        Hx    HIF1A        P2041      <NA>
+    ## 10 Kelly Hif1a 1.6 Hx       NA        Hx    HIF1A        P2041      <NA>
+    ##        clone cellline lane.y sample_id    run_id experiment experiment_date
+    ## 9  Hif1a_1.3    Kelly   L003       S49 RNA_10638      Simon      2021-08-27
+    ## 10 Hif1a_1.6    Kelly   L003       S50 RNA_10640      Simon      2021-08-27
+    ##    repetition exp_rep CUGE-ID           Nx           HX sample     orig.name
+    ## 9           5 Simon_5   10638 delHif1b10.1 delHif1b10.1 RNA_28 RNA_P2041_S49
+    ## 10          5 Simon_5   10640 delHif1b15.1 delHif1b15.1 RNA_30 RNA_P2041_S50
+    ##      samplename2 newsamplenumber   samplename3 order_number Konz.(µg/µl)
+    ## 9  RNA_P2041_S45              45 RNA_P2041_S45           NA           NA
+    ## 10 RNA_P2041_S46              46 RNA_P2041_S46           NA           NA
+    ##    cell_density condition
+    ## 9          <NA>  HIF1A_Hx
+    ## 10         <NA>  HIF1A_Hx
 
 # 2. Process
 
@@ -21784,9 +24453,9 @@ head(m.table)
 ```
 
     ##   sample_table_all.samplename samplelist.17.204. mappingrates.17.204.
-    ## 1               RNA_P2041_S37   CH_HS_KK_077_S33                81.00
-    ## 2               RNA_P2041_S41   CH_HS_KK_078_S34                77.42
-    ## 3               RNA_P2041_S46   CH_HS_KK_079_S35                77.48
+    ## 1               RNA_P2041_S55   CH_HS_KK_077_S33                81.00
+    ## 2               RNA_P2041_S37   CH_HS_KK_078_S34                77.42
+    ## 3               RNA_P2041_S42   CH_HS_KK_079_S35                77.48
     ## 4                RNA_P557_S33   CH_HS_KK_080_S36                76.90
     ## 5                RNA_P557_S37   CH_HS_KK_081_S37                80.42
     ## 6                RNA_P557_S41   CH_HS_KK_082_S38                77.44
@@ -21831,17 +24500,47 @@ sample_table_all$names = paste(sample_table_all$sequencing,
                                sample_table_all$treatment,
                                sample_table_all$order,
                                sep="_")
+
+subset(sample_table_all, condition=="HIF1A_Hx" & sequencing =="P2041")
+```
+
+    ##       samplename
+    ## 9  RNA_P2041_S45
+    ## 10 RNA_P2041_S46
+    ##                                                                                               files
+    ## 9  /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10638_S45_L003_quant/quant.sf
+    ## 10 /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/quants/P2041_10640_S46_L003_quant/quant.sf
+    ##    order                 filename sequencing lane rna_id      Datum
+    ## 9     41 RNA_P2041_10638_S45_L003      P2041 L003  10295 2021-08-27
+    ## 10    42 RNA_P2041_10640_S46_L003      P2041 L003  10297 2021-08-27
+    ##                 Probe rna_conc treatment genotype sequencing.y replicate
+    ## 9  Kelly Hif1a 1.3 Hx       NA        Hx    HIF1A        P2041      <NA>
+    ## 10 Kelly Hif1a 1.6 Hx       NA        Hx    HIF1A        P2041      <NA>
+    ##        clone cellline lane.y sample_id    run_id experiment experiment_date
+    ## 9  Hif1a_1.3    Kelly   L003       S49 RNA_10638      Simon      2021-08-27
+    ## 10 Hif1a_1.6    Kelly   L003       S50 RNA_10640      Simon      2021-08-27
+    ##    repetition exp_rep CUGE-ID           Nx           HX sample     orig.name
+    ## 9           5 Simon_5   10638 delHif1b10.1 delHif1b10.1 RNA_28 RNA_P2041_S49
+    ## 10          5 Simon_5   10640 delHif1b15.1 delHif1b15.1 RNA_30 RNA_P2041_S50
+    ##      samplename2 newsamplenumber   samplename3 order_number Konz.(µg/µl)
+    ## 9  RNA_P2041_S45              45 RNA_P2041_S45           NA           NA
+    ## 10 RNA_P2041_S46              46 RNA_P2041_S46           NA           NA
+    ##    cell_density condition mappingrates             names
+    ## 9          <NA>  HIF1A_Hx        82.84 P2041_HIF1A_Hx_41
+    ## 10         <NA>  HIF1A_Hx        85.75 P2041_HIF1A_Hx_42
+
+``` r
 head(sample_table_all$names)
 ```
 
-    ## [1] "P2041_Kelly_Nx_33" "P2041_Kelly_Nx_37" "P2041_Kelly_Nx_42"
+    ## [1] "P2041_Kelly_Nx_51" "P2041_Kelly_Nx_33" "P2041_Kelly_Nx_38"
     ## [4] "P557_Kelly_Nx_17"  "P557_Kelly_Nx_21"  "P557_Kelly_Nx_25"
 
 ``` r
 coldata <- data.frame(files = sample_table_all$files,
                       names = sample_table_all$names, 
                       sample_table_all[,-c(2)])
-
+# coldata[c(1:3,35:40),c("filename","names","samplename","orig.name","samplename3","order","condition")]
 # load tximeta
 
 # make linked Transcriptome (local offline mode)
@@ -21903,9 +24602,9 @@ se
     ## rownames(242932): ENST00000415118 ENST00000448914 ... ENST00000516935
     ##   ENST00000580835
     ## rowData names(3): tx_id gene_id tx_name
-    ## colnames(188): P2041_Kelly_Nx_33 P2041_Kelly_Nx_37 ...
-    ##   P2041_HIF1B_Hx_35 P2041_HIF1B_Hx_52
-    ## colData names(33): names samplename ... mappingrates names.1
+    ## colnames(188): P2041_Kelly_Nx_51 P2041_Kelly_Nx_33 ...
+    ##   P2041_HIF1B_Hx_52 P2041_HIF1B_Hx_48
+    ## colData names(37): names samplename ... mappingrates names.1
 
 ``` r
 colData(se)[c(1,2,87,88),] %>% kable() %>% kable_styling("striped", full_width = F) %>% scroll_box(height = "400px")
@@ -21999,6 +24698,18 @@ HX
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 sample
 </th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+orig.name
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename2
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+newsamplenumber
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename3
+</th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 order_number
 </th>
@@ -22022,19 +24733,19 @@ names.1
 <tbody>
 <tr>
 <td style="text-align:left;">
-P2041_Kelly_Nx_33
+P2041_Kelly_Nx_51
 </td>
 <td style="text-align:left;">
-P2041_Kelly_Nx_33
+P2041_Kelly_Nx_51
 </td>
 <td style="text-align:left;">
-RNA_P2041_S37
+RNA_P2041_S55
 </td>
 <td style="text-align:right;">
-33
+51
 </td>
 <td style="text-align:left;">
-RNA_P2041_10619_S37_L003
+RNA_P2041_10752_S55_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -22105,6 +24816,18 @@ NA
 <td style="text-align:left;">
 RNA_01
 </td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:left;">
+RNA_P2041_S55
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:left;">
+RNA_P2041_S55
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -22121,24 +24844,24 @@ Kelly_Nx
 81.00
 </td>
 <td style="text-align:left;">
-P2041_Kelly_Nx_33
+P2041_Kelly_Nx_51
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-P2041_Kelly_Nx_37
+P2041_Kelly_Nx_33
 </td>
 <td style="text-align:left;">
-P2041_Kelly_Nx_37
+P2041_Kelly_Nx_33
 </td>
 <td style="text-align:left;">
-RNA_P2041_S41
+RNA_P2041_S37
 </td>
 <td style="text-align:right;">
-37
+33
 </td>
 <td style="text-align:left;">
-RNA_P2041_10632_S41_L003
+RNA_P2041_10619_S37_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -22209,6 +24932,18 @@ del_Hif1a1.3
 <td style="text-align:left;">
 RNA_11
 </td>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -22225,7 +24960,7 @@ Kelly_Nx
 77.42
 </td>
 <td style="text-align:left;">
-P2041_Kelly_Nx_37
+P2041_Kelly_Nx_33
 </td>
 </tr>
 <tr>
@@ -22308,6 +25043,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -22412,6 +25159,18 @@ Ulrike_4
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -22706,7 +25465,7 @@ tx_name
 assays(se)[["counts"]][1:5,1:5] %>% kable()
 ```
 
-|                 | P2041_Kelly_Nx_33 | P2041_Kelly_Nx_37 | P2041_Kelly_Nx_42 | P557_Kelly_Nx_17 | P557_Kelly_Nx_21 |
+|                 | P2041_Kelly_Nx_51 | P2041_Kelly_Nx_33 | P2041_Kelly_Nx_38 | P557_Kelly_Nx_17 | P557_Kelly_Nx_21 |
 |:----------------|------------------:|------------------:|------------------:|-----------------:|-----------------:|
 | ENST00000415118 |                 0 |                 0 |                 0 |                0 |                0 |
 | ENST00000448914 |                 0 |                 0 |                 0 |                0 |                0 |
@@ -22739,6 +25498,14 @@ num_processed
 <tbody>
 <tr>
 <td style="text-align:right;">
+92.74597
+</td>
+<td style="text-align:right;">
+72981097
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
 87.92344
 </td>
 <td style="text-align:right;">
@@ -22747,18 +25514,10 @@ num_processed
 </tr>
 <tr>
 <td style="text-align:right;">
-91.55031
+87.98293
 </td>
 <td style="text-align:right;">
-74462734
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-92.21336
-</td>
-<td style="text-align:right;">
-66875819
+70022147
 </td>
 </tr>
 <tr>
@@ -22892,6 +25651,18 @@ HX
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 sample
 </th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+orig.name
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename2
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+newsamplenumber
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename3
+</th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 order_number
 </th>
@@ -22915,19 +25686,19 @@ names.1
 <tbody>
 <tr>
 <td style="text-align:left;">
-P2041_Kelly_Nx_33
+P2041_Kelly_Nx_51
 </td>
 <td style="text-align:left;">
-P2041_Kelly_Nx_33
+P2041_Kelly_Nx_51
 </td>
 <td style="text-align:left;">
-RNA_P2041_S37
+RNA_P2041_S55
 </td>
 <td style="text-align:right;">
-33
+51
 </td>
 <td style="text-align:left;">
-RNA_P2041_10619_S37_L003
+RNA_P2041_10752_S55_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -22998,6 +25769,18 @@ NA
 <td style="text-align:left;">
 RNA_01
 </td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:left;">
+RNA_P2041_S55
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:left;">
+RNA_P2041_S55
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -23014,24 +25797,24 @@ Kelly_Nx
 81.00
 </td>
 <td style="text-align:left;">
-P2041_Kelly_Nx_33
+P2041_Kelly_Nx_51
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-P2041_Kelly_Nx_37
+P2041_Kelly_Nx_33
 </td>
 <td style="text-align:left;">
-P2041_Kelly_Nx_37
+P2041_Kelly_Nx_33
 </td>
 <td style="text-align:left;">
-RNA_P2041_S41
+RNA_P2041_S37
 </td>
 <td style="text-align:right;">
-37
+33
 </td>
 <td style="text-align:left;">
-RNA_P2041_10632_S41_L003
+RNA_P2041_10619_S37_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -23102,6 +25885,18 @@ del_Hif1a1.3
 <td style="text-align:left;">
 RNA_11
 </td>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -23118,24 +25913,24 @@ Kelly_Nx
 77.42
 </td>
 <td style="text-align:left;">
-P2041_Kelly_Nx_37
+P2041_Kelly_Nx_33
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-P2041_Kelly_Nx_42
+P2041_Kelly_Nx_38
 </td>
 <td style="text-align:left;">
-P2041_Kelly_Nx_42
+P2041_Kelly_Nx_38
 </td>
 <td style="text-align:left;">
-RNA_P2041_S46
+RNA_P2041_S42
 </td>
 <td style="text-align:right;">
-42
+38
 </td>
 <td style="text-align:left;">
-RNA_P2041_10640_S46_L003
+RNA_P2041_10635_S42_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -23206,6 +26001,18 @@ delHif1b6.1
 <td style="text-align:left;">
 RNA_25
 </td>
+<td style="text-align:left;">
+RNA_P2041_S46
+</td>
+<td style="text-align:left;">
+RNA_P2041_S42
+</td>
+<td style="text-align:right;">
+42
+</td>
+<td style="text-align:left;">
+RNA_P2041_S42
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -23222,7 +26029,7 @@ Kelly_Nx
 77.48
 </td>
 <td style="text-align:left;">
-P2041_Kelly_Nx_42
+P2041_Kelly_Nx_38
 </td>
 </tr>
 <tr>
@@ -23305,6 +26112,18 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -23414,6 +26233,18 @@ NA
 <td style="text-align:left;">
 NA
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -23513,6 +26344,18 @@ NA
 NA
 </td>
 <td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -23989,13 +26832,13 @@ head(assays(gse)[["counts"]])[1:5,1:5] %>% kable() %>% kable_styling("striped", 
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P2041_Kelly_Nx_51
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 P2041_Kelly_Nx_33
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-P2041_Kelly_Nx_37
-</th>
-<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-P2041_Kelly_Nx_42
+P2041_Kelly_Nx_38
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 P557_Kelly_Nx_17
@@ -24011,13 +26854,13 @@ P557_Kelly_Nx_21
 ENSG00000000003
 </td>
 <td style="text-align:right;">
+1712.709
+</td>
+<td style="text-align:right;">
 1378.349
 </td>
 <td style="text-align:right;">
-1039.053
-</td>
-<td style="text-align:right;">
-1311.244
+1418.113
 </td>
 <td style="text-align:right;">
 656.540
@@ -24051,13 +26894,13 @@ ENSG00000000005
 ENSG00000000419
 </td>
 <td style="text-align:right;">
+1086.001
+</td>
+<td style="text-align:right;">
 2102.114
 </td>
 <td style="text-align:right;">
-854.001
-</td>
-<td style="text-align:right;">
-369.999
+1958.810
 </td>
 <td style="text-align:right;">
 755.000
@@ -24071,13 +26914,13 @@ ENSG00000000419
 ENSG00000000457
 </td>
 <td style="text-align:right;">
+759.000
+</td>
+<td style="text-align:right;">
 605.000
 </td>
 <td style="text-align:right;">
-612.000
-</td>
-<td style="text-align:right;">
-655.000
+762.000
 </td>
 <td style="text-align:right;">
 365.999
@@ -24091,13 +26934,13 @@ ENSG00000000457
 ENSG00000000460
 </td>
 <td style="text-align:right;">
+1913.001
+</td>
+<td style="text-align:right;">
 1403.000
 </td>
 <td style="text-align:right;">
-976.001
-</td>
-<td style="text-align:right;">
-503.001
+1871.001
 </td>
 <td style="text-align:right;">
 648.000
@@ -24123,13 +26966,13 @@ head(assays(gse)[["abundance"]])[1:5,1:5] %>% kable() %>% kable_styling("striped
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P2041_Kelly_Nx_51
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 P2041_Kelly_Nx_33
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-P2041_Kelly_Nx_37
-</th>
-<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-P2041_Kelly_Nx_42
+P2041_Kelly_Nx_38
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 P557_Kelly_Nx_17
@@ -24145,13 +26988,13 @@ P557_Kelly_Nx_21
 ENSG00000000003
 </td>
 <td style="text-align:right;">
+12.140724
+</td>
+<td style="text-align:right;">
 9.711093
 </td>
 <td style="text-align:right;">
-7.889026
-</td>
-<td style="text-align:right;">
-9.494666
+12.06532
 </td>
 <td style="text-align:right;">
 14.451820
@@ -24171,7 +27014,7 @@ ENSG00000000005
 0.000000
 </td>
 <td style="text-align:right;">
-0.000000
+0.00000
 </td>
 <td style="text-align:right;">
 0.000000
@@ -24185,13 +27028,13 @@ ENSG00000000005
 ENSG00000000419
 </td>
 <td style="text-align:right;">
+28.370280
+</td>
+<td style="text-align:right;">
 50.529537
 </td>
 <td style="text-align:right;">
-22.559695
-</td>
-<td style="text-align:right;">
-9.177242
+59.41466
 </td>
 <td style="text-align:right;">
 59.105502
@@ -24205,13 +27048,13 @@ ENSG00000000419
 ENSG00000000457
 </td>
 <td style="text-align:right;">
+4.330254
+</td>
+<td style="text-align:right;">
 3.043852
 </td>
 <td style="text-align:right;">
-3.659331
-</td>
-<td style="text-align:right;">
-3.564734
+4.84314
 </td>
 <td style="text-align:right;">
 6.675638
@@ -24225,13 +27068,13 @@ ENSG00000000457
 ENSG00000000460
 </td>
 <td style="text-align:right;">
+21.274642
+</td>
+<td style="text-align:right;">
 13.979227
 </td>
 <td style="text-align:right;">
-9.547022
-</td>
-<td style="text-align:right;">
-5.254258
+23.20183
 </td>
 <td style="text-align:right;">
 19.083862
@@ -24257,13 +27100,13 @@ head(assays(gse)[["length"]])[1:5,1:5] %>% kable() %>% kable_styling("striped", 
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+P2041_Kelly_Nx_51
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 P2041_Kelly_Nx_33
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-P2041_Kelly_Nx_37
-</th>
-<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-P2041_Kelly_Nx_42
+P2041_Kelly_Nx_38
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 P557_Kelly_Nx_17
@@ -24279,13 +27122,13 @@ P557_Kelly_Nx_21
 ENSG00000000003
 </td>
 <td style="text-align:right;">
+2517.4908
+</td>
+<td style="text-align:right;">
 2595.5910
 </td>
 <td style="text-align:right;">
-2408.1134
-</td>
-<td style="text-align:right;">
-2276.2989
+2588.2307
 </td>
 <td style="text-align:right;">
 2707.5669
@@ -24319,13 +27162,13 @@ ENSG00000000005
 ENSG00000000419
 </td>
 <td style="text-align:right;">
+683.1169
+</td>
+<td style="text-align:right;">
 760.7744
 </td>
 <td style="text-align:right;">
-692.1298
-</td>
-<td style="text-align:right;">
-664.5306
+725.9882
 </td>
 <td style="text-align:right;">
 761.3070
@@ -24339,13 +27182,13 @@ ENSG00000000419
 ENSG00000000457
 </td>
 <td style="text-align:right;">
+3127.9326
+</td>
+<td style="text-align:right;">
 3634.7701
 </td>
 <td style="text-align:right;">
-3057.8236
-</td>
-<td style="text-align:right;">
-3028.5854
+3464.6495
 </td>
 <td style="text-align:right;">
 3267.6006
@@ -24359,13 +27202,13 @@ ENSG00000000457
 ENSG00000000460
 </td>
 <td style="text-align:right;">
+1604.6548
+</td>
+<td style="text-align:right;">
 1835.3531
 </td>
 <td style="text-align:right;">
-1869.1518
-</td>
-<td style="text-align:right;">
-1577.9096
+1775.7547
 </td>
 <td style="text-align:right;">
 2023.7157
@@ -24436,7 +27279,6 @@ head(TXTYPE)
 # add CDSID
 mcols(gse)$CDSID <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "CDSID", keytype = "GENEID", multiVals="first"))
 
-
 colnames(mcols(gse))
 ```
 
@@ -24459,7 +27301,87 @@ getwd()
 save(gse,file=paste(data,"tximeta.txm", sep="/"))
 gse <- 1
 load(file=paste(data,"tximeta.txm", sep="/"))
+
+subset(colData(gse), condition=="HIF1A_Hx" & sequencing =="P2041")
 ```
+
+    ## DataFrame with 2 rows and 37 columns
+    ##                               names    samplename     order
+    ##                         <character>   <character> <integer>
+    ## P2041_HIF1A_Hx_41 P2041_HIF1A_Hx_41 RNA_P2041_S45        41
+    ## P2041_HIF1A_Hx_42 P2041_HIF1A_Hx_42 RNA_P2041_S46        42
+    ##                                 filename  sequencing        lane    rna_id
+    ##                              <character> <character> <character> <numeric>
+    ## P2041_HIF1A_Hx_41 RNA_P2041_10638_S45_..       P2041        L003     10295
+    ## P2041_HIF1A_Hx_42 RNA_P2041_10640_S46_..       P2041        L003     10297
+    ##                        Datum              Probe  rna_conc treatment genotype
+    ##                    <POSIXct>        <character> <numeric>  <factor> <factor>
+    ## P2041_HIF1A_Hx_41 2021-08-27 Kelly Hif1a 1.3 Hx        NA        Hx    HIF1A
+    ## P2041_HIF1A_Hx_42 2021-08-27 Kelly Hif1a 1.6 Hx        NA        Hx    HIF1A
+    ##                   sequencing.y   replicate       clone    cellline      lane.y
+    ##                    <character> <character> <character> <character> <character>
+    ## P2041_HIF1A_Hx_41        P2041          NA   Hif1a_1.3       Kelly        L003
+    ## P2041_HIF1A_Hx_42        P2041          NA   Hif1a_1.6       Kelly        L003
+    ##                     sample_id      run_id experiment experiment_date
+    ##                   <character> <character>   <factor>       <POSIXct>
+    ## P2041_HIF1A_Hx_41         S49   RNA_10638      Simon      2021-08-27
+    ## P2041_HIF1A_Hx_42         S50   RNA_10640      Simon      2021-08-27
+    ##                    repetition     exp_rep   CUGE.ID           Nx           HX
+    ##                   <character> <character> <numeric>  <character>  <character>
+    ## P2041_HIF1A_Hx_41           5     Simon_5     10638 delHif1b10.1 delHif1b10.1
+    ## P2041_HIF1A_Hx_42           5     Simon_5     10640 delHif1b15.1 delHif1b15.1
+    ##                        sample     orig.name   samplename2 newsamplenumber
+    ##                   <character>   <character>   <character>       <numeric>
+    ## P2041_HIF1A_Hx_41      RNA_28 RNA_P2041_S49 RNA_P2041_S45              45
+    ## P2041_HIF1A_Hx_42      RNA_30 RNA_P2041_S50 RNA_P2041_S46              46
+    ##                     samplename3 order_number Konz..µg.µl. cell_density
+    ##                     <character>    <numeric>    <numeric>  <character>
+    ## P2041_HIF1A_Hx_41 RNA_P2041_S45           NA           NA           NA
+    ## P2041_HIF1A_Hx_42 RNA_P2041_S46           NA           NA           NA
+    ##                   condition mappingrates           names.1
+    ##                    <factor>    <numeric>       <character>
+    ## P2041_HIF1A_Hx_41  HIF1A_Hx        82.84 P2041_HIF1A_Hx_41
+    ## P2041_HIF1A_Hx_42  HIF1A_Hx        85.75 P2041_HIF1A_Hx_42
+
+``` r
+subset(colData(gse), samplename=="RNA_P2041_S45")
+```
+
+    ## DataFrame with 1 row and 37 columns
+    ##                               names    samplename     order
+    ##                         <character>   <character> <integer>
+    ## P2041_HIF1A_Hx_41 P2041_HIF1A_Hx_41 RNA_P2041_S45        41
+    ##                                 filename  sequencing        lane    rna_id
+    ##                              <character> <character> <character> <numeric>
+    ## P2041_HIF1A_Hx_41 RNA_P2041_10638_S45_..       P2041        L003     10295
+    ##                        Datum              Probe  rna_conc treatment genotype
+    ##                    <POSIXct>        <character> <numeric>  <factor> <factor>
+    ## P2041_HIF1A_Hx_41 2021-08-27 Kelly Hif1a 1.3 Hx        NA        Hx    HIF1A
+    ##                   sequencing.y   replicate       clone    cellline      lane.y
+    ##                    <character> <character> <character> <character> <character>
+    ## P2041_HIF1A_Hx_41        P2041          NA   Hif1a_1.3       Kelly        L003
+    ##                     sample_id      run_id experiment experiment_date
+    ##                   <character> <character>   <factor>       <POSIXct>
+    ## P2041_HIF1A_Hx_41         S49   RNA_10638      Simon      2021-08-27
+    ##                    repetition     exp_rep   CUGE.ID           Nx           HX
+    ##                   <character> <character> <numeric>  <character>  <character>
+    ## P2041_HIF1A_Hx_41           5     Simon_5     10638 delHif1b10.1 delHif1b10.1
+    ##                        sample     orig.name   samplename2 newsamplenumber
+    ##                   <character>   <character>   <character>       <numeric>
+    ## P2041_HIF1A_Hx_41      RNA_28 RNA_P2041_S49 RNA_P2041_S45              45
+    ##                     samplename3 order_number Konz..µg.µl. cell_density
+    ##                     <character>    <numeric>    <numeric>  <character>
+    ## P2041_HIF1A_Hx_41 RNA_P2041_S45           NA           NA           NA
+    ##                   condition mappingrates           names.1
+    ##                    <factor>    <numeric>       <character>
+    ## P2041_HIF1A_Hx_41  HIF1A_Hx        82.84 P2041_HIF1A_Hx_41
+
+``` r
+(colData(gse)$samplename==colData(gse)$samplename3) %>% summary()
+```
+
+    ##    Mode    TRUE    NA's 
+    ## logical      22     166
 
 ### add gene symbols
 
@@ -24560,13 +27482,13 @@ summary(results(dds, alpha = 0.05))
 ```
 
     ## 
-    ## out of 28485 with nonzero total read count
+    ## out of 28484 with nonzero total read count
     ## adjusted p-value < 0.05
-    ## LFC > 0 (up)       : 615, 2.2%
-    ## LFC < 0 (down)     : 807, 2.8%
-    ## outliers [1]       : 8, 0.028%
-    ## low counts [2]     : 8835, 31%
-    ## (mean count < 4)
+    ## LFC > 0 (up)       : 4545, 16%
+    ## LFC < 0 (down)     : 5444, 19%
+    ## outliers [1]       : 7, 0.025%
+    ## low counts [2]     : 3872, 14%
+    ## (mean count < 1)
     ## [1] see 'cooksCutoff' argument of ?results
     ## [2] see 'independentFiltering' argument of ?results
 
@@ -24612,7 +27534,56 @@ dds
     ##   ENSG00000291317
     ## rowData names(56): gene_id tx_ids ... maxCooks replace
     ## colnames(88): RNA_P2041_S37 RNA_P2041_S38 ... RNA_P557_S47 RNA_P557_S48
-    ## colData names(36): names samplename ... sizeFactor replaceable
+    ## colData names(40): names samplename ... sizeFactor replaceable
+
+``` r
+subset(colData(dds), condition=="HIF1A_Hx" & sequencing =="P2041")
+```
+
+    ## DataFrame with 2 rows and 40 columns
+    ##                           names    samplename     order               filename
+    ##                     <character>   <character> <integer>            <character>
+    ## RNA_P2041_S45 P2041_HIF1A_Hx_41 RNA_P2041_S45        41 RNA_P2041_10638_S45_..
+    ## RNA_P2041_S46 P2041_HIF1A_Hx_42 RNA_P2041_S46        42 RNA_P2041_10640_S46_..
+    ##                sequencing        lane    rna_id      Datum              Probe
+    ##               <character> <character> <numeric>  <POSIXct>        <character>
+    ## RNA_P2041_S45       P2041        L003     10295 2021-08-27 Kelly Hif1a 1.3 Hx
+    ## RNA_P2041_S46       P2041        L003     10297 2021-08-27 Kelly Hif1a 1.6 Hx
+    ##                rna_conc treatment genotype sequencing.y   replicate       clone
+    ##               <numeric>  <factor> <factor>  <character> <character> <character>
+    ## RNA_P2041_S45        NA        Hx    HIF1A        P2041          NA   Hif1a_1.3
+    ## RNA_P2041_S46        NA        Hx    HIF1A        P2041          NA   Hif1a_1.6
+    ##                  cellline      lane.y   sample_id      run_id experiment
+    ##               <character> <character> <character> <character>   <factor>
+    ## RNA_P2041_S45       Kelly        L003         S49   RNA_10638      Simon
+    ## RNA_P2041_S46       Kelly        L003         S50   RNA_10640      Simon
+    ##               experiment_date  repetition     exp_rep   CUGE.ID           Nx
+    ##                     <POSIXct> <character> <character> <numeric>  <character>
+    ## RNA_P2041_S45      2021-08-27           5     Simon_5     10638 delHif1b10.1
+    ## RNA_P2041_S46      2021-08-27           5     Simon_5     10640 delHif1b15.1
+    ##                         HX      sample     orig.name   samplename2
+    ##                <character> <character>   <character>   <character>
+    ## RNA_P2041_S45 delHif1b10.1      RNA_28 RNA_P2041_S49 RNA_P2041_S45
+    ## RNA_P2041_S46 delHif1b15.1      RNA_30 RNA_P2041_S50 RNA_P2041_S46
+    ##               newsamplenumber   samplename3 order_number Konz..µg.µl.
+    ##                     <numeric>   <character>    <numeric>    <numeric>
+    ## RNA_P2041_S45              45 RNA_P2041_S45           NA           NA
+    ## RNA_P2041_S46              46 RNA_P2041_S46           NA           NA
+    ##               cell_density condition mappingrates           names.1
+    ##                <character>  <factor>    <numeric>       <character>
+    ## RNA_P2041_S45           NA  HIF1A_Hx        82.84 P2041_HIF1A_Hx_41
+    ## RNA_P2041_S46           NA  HIF1A_Hx        85.75 P2041_HIF1A_Hx_42
+    ##                   runsCollapsed sizeFactor replaceable
+    ##                     <character>  <numeric>   <logical>
+    ## RNA_P2041_S45 P2041_HIF1A_Hx_41   0.889304        TRUE
+    ## RNA_P2041_S46 P2041_HIF1A_Hx_42   0.719237        TRUE
+
+``` r
+(colData(dds)$samplename==colData(dds)$samplename3) %>% summary()
+```
+
+    ##    Mode    TRUE    NA's 
+    ## logical      22      66
 
 # 3. Pre-Analysis
 
@@ -24757,6 +27728,18 @@ HX
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 sample
 </th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+orig.name
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename2
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+newsamplenumber
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+samplename3
+</th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 order_number
 </th>
@@ -24802,458 +27785,6 @@ RNA_P2041_S37
 </td>
 <td style="text-align:left;">
 RNA_P2041_10619_S37_L003
-</td>
-<td style="text-align:left;">
-P2041
-</td>
-<td style="text-align:left;">
-L003
-</td>
-<td style="text-align:right;">
-6952
-</td>
-<td style="text-align:left;">
-2017-05-04
-</td>
-<td style="text-align:left;">
-Kelly CRISPR Cas Hif LV1 Nx 24h
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:left;">
-Nx
-</td>
-<td style="text-align:left;">
-Kelly
-</td>
-<td style="text-align:left;">
-P2041
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-LV_1
-</td>
-<td style="text-align:left;">
-Kelly
-</td>
-<td style="text-align:left;">
-L003
-</td>
-<td style="text-align:left;">
-S37
-</td>
-<td style="text-align:left;">
-RNA_10619
-</td>
-<td style="text-align:left;">
-Control
-</td>
-<td style="text-align:left;">
-2017-05-04
-</td>
-<td style="text-align:left;">
-0
-</td>
-<td style="text-align:left;">
-Control_0
-</td>
-<td style="text-align:right;">
-10619
-</td>
-<td style="text-align:left;">
-LV
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-RNA_01
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-Kelly_Nx
-</td>
-<td style="text-align:right;">
-81.00
-</td>
-<td style="text-align:left;">
-P2041_Kelly_Nx_33
-</td>
-<td style="text-align:left;">
-P2041_Kelly_Nx_33
-</td>
-<td style="text-align:right;">
-1.147433
-</td>
-<td style="text-align:left;">
-TRUE
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-RNA_P2041_S38
-</td>
-<td style="text-align:left;">
-P2041_HIF1B_Nx_34
-</td>
-<td style="text-align:left;">
-RNA_P2041_S38
-</td>
-<td style="text-align:right;">
-34
-</td>
-<td style="text-align:left;">
-RNA_P2041_10621_S38_L003
-</td>
-<td style="text-align:left;">
-P2041
-</td>
-<td style="text-align:left;">
-L003
-</td>
-<td style="text-align:right;">
-10185
-</td>
-<td style="text-align:left;">
-2021-06-16
-</td>
-<td style="text-align:left;">
-Kelly Hif1b.sg1+2 Klon 9 Nx
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:left;">
-Nx
-</td>
-<td style="text-align:left;">
-HIF1B
-</td>
-<td style="text-align:left;">
-P2041
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-Hif1b_9
-</td>
-<td style="text-align:left;">
-Kelly
-</td>
-<td style="text-align:left;">
-L003
-</td>
-<td style="text-align:left;">
-S38
-</td>
-<td style="text-align:left;">
-RNA_10621
-</td>
-<td style="text-align:left;">
-Simon
-</td>
-<td style="text-align:left;">
-2021-06-16
-</td>
-<td style="text-align:left;">
-1
-</td>
-<td style="text-align:left;">
-Simon_1
-</td>
-<td style="text-align:right;">
-10621
-</td>
-<td style="text-align:left;">
-LV
-</td>
-<td style="text-align:left;">
-LV
-</td>
-<td style="text-align:left;">
-RNA_03
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-HIF1B_Nx
-</td>
-<td style="text-align:right;">
-83.33
-</td>
-<td style="text-align:left;">
-P2041_HIF1B_Nx_34
-</td>
-<td style="text-align:left;">
-P2041_HIF1B_Nx_34
-</td>
-<td style="text-align:right;">
-1.478555
-</td>
-<td style="text-align:left;">
-TRUE
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-RNA_P2041_S39
-</td>
-<td style="text-align:left;">
-P2041_HIF1B_Hx_35
-</td>
-<td style="text-align:left;">
-RNA_P2041_S39
-</td>
-<td style="text-align:right;">
-35
-</td>
-<td style="text-align:left;">
-RNA_P2041_10625_S39_L003
-</td>
-<td style="text-align:left;">
-P2041
-</td>
-<td style="text-align:left;">
-L003
-</td>
-<td style="text-align:right;">
-10186
-</td>
-<td style="text-align:left;">
-2021-06-16
-</td>
-<td style="text-align:left;">
-Kelly Hif1b.sg1+2 Klon 9 Hx
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:left;">
-Hx
-</td>
-<td style="text-align:left;">
-HIF1B
-</td>
-<td style="text-align:left;">
-P2041
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-Hif1b_9
-</td>
-<td style="text-align:left;">
-Kelly
-</td>
-<td style="text-align:left;">
-L003
-</td>
-<td style="text-align:left;">
-S39
-</td>
-<td style="text-align:left;">
-RNA_10744
-</td>
-<td style="text-align:left;">
-Simon
-</td>
-<td style="text-align:left;">
-2021-06-16
-</td>
-<td style="text-align:left;">
-1
-</td>
-<td style="text-align:left;">
-Simon_1
-</td>
-<td style="text-align:right;">
-10744
-</td>
-<td style="text-align:left;">
-LV
-</td>
-<td style="text-align:left;">
-LV
-</td>
-<td style="text-align:left;">
-RNA_04
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-HIF1B_Hx
-</td>
-<td style="text-align:right;">
-84.50
-</td>
-<td style="text-align:left;">
-P2041_HIF1B_Hx_35
-</td>
-<td style="text-align:left;">
-P2041_HIF1B_Hx_35
-</td>
-<td style="text-align:right;">
-1.316998
-</td>
-<td style="text-align:left;">
-FALSE
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-RNA_P2041_S40
-</td>
-<td style="text-align:left;">
-P2041_HIF1B_Nx_36
-</td>
-<td style="text-align:left;">
-RNA_P2041_S40
-</td>
-<td style="text-align:right;">
-36
-</td>
-<td style="text-align:left;">
-RNA_P2041_10631_S40_L003
-</td>
-<td style="text-align:left;">
-P2041
-</td>
-<td style="text-align:left;">
-L003
-</td>
-<td style="text-align:right;">
-10189
-</td>
-<td style="text-align:left;">
-2021-06-16
-</td>
-<td style="text-align:left;">
-Kelly Hif1b.sg1+2 Klon 15 Nx
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:left;">
-Nx
-</td>
-<td style="text-align:left;">
-HIF1B
-</td>
-<td style="text-align:left;">
-P2041
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-Hif1b_15
-</td>
-<td style="text-align:left;">
-Kelly
-</td>
-<td style="text-align:left;">
-L003
-</td>
-<td style="text-align:left;">
-S40
-</td>
-<td style="text-align:left;">
-RNA_10745
-</td>
-<td style="text-align:left;">
-Simon
-</td>
-<td style="text-align:left;">
-2021-06-16
-</td>
-<td style="text-align:left;">
-1
-</td>
-<td style="text-align:left;">
-Simon_1
-</td>
-<td style="text-align:right;">
-10745
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-RNA_05
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-HIF1B_Nx
-</td>
-<td style="text-align:right;">
-82.33
-</td>
-<td style="text-align:left;">
-P2041_HIF1B_Nx_36
-</td>
-<td style="text-align:left;">
-P2041_HIF1B_Nx_36
-</td>
-<td style="text-align:right;">
-1.399124
-</td>
-<td style="text-align:left;">
-TRUE
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-RNA_P2041_S41
-</td>
-<td style="text-align:left;">
-P2041_Kelly_Nx_37
-</td>
-<td style="text-align:left;">
-RNA_P2041_S41
-</td>
-<td style="text-align:right;">
-37
-</td>
-<td style="text-align:left;">
-RNA_P2041_10632_S41_L003
 </td>
 <td style="text-align:left;">
 P2041
@@ -25324,6 +27855,18 @@ del_Hif1a1.3
 <td style="text-align:left;">
 RNA_11
 </td>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
 <td style="text-align:right;">
 NA
 </td>
@@ -25340,13 +27883,13 @@ Kelly_Nx
 77.42
 </td>
 <td style="text-align:left;">
-P2041_Kelly_Nx_37
+P2041_Kelly_Nx_33
 </td>
 <td style="text-align:left;">
-P2041_Kelly_Nx_37
+P2041_Kelly_Nx_33
 </td>
 <td style="text-align:right;">
-1.100194
+1.147433
 </td>
 <td style="text-align:left;">
 TRUE
@@ -25354,10 +27897,510 @@ TRUE
 </tr>
 <tr>
 <td style="text-align:left;">
+RNA_P2041_S38
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_34
+</td>
+<td style="text-align:left;">
+RNA_P2041_S38
+</td>
+<td style="text-align:right;">
+34
+</td>
+<td style="text-align:left;">
+RNA_P2041_10621_S38_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10189
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+Kelly Hif1b.sg1+2 Klon 15 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_15
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S40
+</td>
+<td style="text-align:left;">
+RNA_10745
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-06-16
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+Simon_1
+</td>
+<td style="text-align:right;">
+10745
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_05
+</td>
+<td style="text-align:left;">
+RNA_P2041_S40
+</td>
+<td style="text-align:left;">
+RNA_P2041_S58
+</td>
+<td style="text-align:right;">
+58
+</td>
+<td style="text-align:left;">
+RNA_P2041_S38
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Nx
+</td>
+<td style="text-align:right;">
+82.33
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_34
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_34
+</td>
+<td style="text-align:right;">
+1.478555
+</td>
+<td style="text-align:left;">
+TRUE
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S39
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_35
+</td>
+<td style="text-align:left;">
+RNA_P2041_S39
+</td>
+<td style="text-align:right;">
+35
+</td>
+<td style="text-align:left;">
+RNA_P2041_10625_S39_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10276
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 4.1 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_4
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S43
+</td>
+<td style="text-align:left;">
+RNA_10625
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Simon_4
+</td>
+<td style="text-align:right;">
+10625
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_15
+</td>
+<td style="text-align:left;">
+RNA_P2041_S43
+</td>
+<td style="text-align:left;">
+RNA_P2041_S39
+</td>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:left;">
+RNA_P2041_S39
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Nx
+</td>
+<td style="text-align:right;">
+81.51
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_35
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_35
+</td>
+<td style="text-align:right;">
+1.316998
+</td>
+<td style="text-align:left;">
+TRUE
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S40
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_36
+</td>
+<td style="text-align:left;">
+RNA_P2041_S40
+</td>
+<td style="text-align:right;">
+36
+</td>
+<td style="text-align:left;">
+RNA_P2041_10631_S40_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10284
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 15.1 Nx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Nx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_15
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S44
+</td>
+<td style="text-align:left;">
+RNA_10631
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Simon_4
+</td>
+<td style="text-align:right;">
+10631
+</td>
+<td style="text-align:left;">
+delHif1b4.1
+</td>
+<td style="text-align:left;">
+delHif1b4.1
+</td>
+<td style="text-align:left;">
+RNA_21
+</td>
+<td style="text-align:left;">
+RNA_P2041_S44
+</td>
+<td style="text-align:left;">
+RNA_P2041_S40
+</td>
+<td style="text-align:right;">
+40
+</td>
+<td style="text-align:left;">
+RNA_P2041_S40
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Nx
+</td>
+<td style="text-align:right;">
+81.47
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_36
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Nx_36
+</td>
+<td style="text-align:right;">
+1.399124
+</td>
+<td style="text-align:left;">
+TRUE
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Hx_37
+</td>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:left;">
+RNA_P2041_10632_S41_L003
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:right;">
+10285
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+Kelly Hif1b 15.1 Hx
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+Hx
+</td>
+<td style="text-align:left;">
+HIF1B
+</td>
+<td style="text-align:left;">
+P2041
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Hif1b_15
+</td>
+<td style="text-align:left;">
+Kelly
+</td>
+<td style="text-align:left;">
+L003
+</td>
+<td style="text-align:left;">
+S45
+</td>
+<td style="text-align:left;">
+RNA_10632
+</td>
+<td style="text-align:left;">
+Simon
+</td>
+<td style="text-align:left;">
+2021-08-25
+</td>
+<td style="text-align:left;">
+4
+</td>
+<td style="text-align:left;">
+Simon_4
+</td>
+<td style="text-align:right;">
+10632
+</td>
+<td style="text-align:left;">
+delHif1b4.1
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+RNA_22
+</td>
+<td style="text-align:left;">
+RNA_P2041_S45
+</td>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:right;">
+41
+</td>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+HIF1B_Hx
+</td>
+<td style="text-align:right;">
+84.48
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Hx_37
+</td>
+<td style="text-align:left;">
+P2041_HIF1B_Hx_37
+</td>
+<td style="text-align:right;">
+1.100194
+</td>
+<td style="text-align:left;">
+FALSE
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
 RNA_P2041_S42
 </td>
 <td style="text-align:left;">
-P2041_Kelly_Hx_38
+P2041_Kelly_Nx_38
 </td>
 <td style="text-align:left;">
 RNA_P2041_S42
@@ -25375,19 +28418,19 @@ P2041
 L003
 </td>
 <td style="text-align:right;">
-10269
+10292
 </td>
 <td style="text-align:left;">
-2021-08-25
+2021-08-27
 </td>
 <td style="text-align:left;">
-Kelly LV.1 Hx
+Kelly LV.1 Nx
 </td>
 <td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
-Hx
+Nx
 </td>
 <td style="text-align:left;">
 Kelly
@@ -25408,55 +28451,67 @@ Kelly
 L003
 </td>
 <td style="text-align:left;">
-S42
+S46
 </td>
 <td style="text-align:left;">
-RNA_10755
+RNA_10635
 </td>
 <td style="text-align:left;">
 Simon
 </td>
 <td style="text-align:left;">
-2021-08-25
+2021-08-27
 </td>
 <td style="text-align:left;">
-4
+5
 </td>
 <td style="text-align:left;">
-Simon_4
+Simon_5
 </td>
 <td style="text-align:right;">
-10755
+10635
+</td>
+<td style="text-align:left;">
+delHif1b6.1
+</td>
+<td style="text-align:left;">
+delHif1b6.1
+</td>
+<td style="text-align:left;">
+RNA_25
+</td>
+<td style="text-align:left;">
+RNA_P2041_S46
+</td>
+<td style="text-align:left;">
+RNA_P2041_S42
+</td>
+<td style="text-align:right;">
+42
+</td>
+<td style="text-align:left;">
+RNA_P2041_S42
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 NA
 </td>
 <td style="text-align:left;">
-del_Hif1a1.6
-</td>
-<td style="text-align:left;">
-RNA_12
+Kelly_Nx
 </td>
 <td style="text-align:right;">
-NA
-</td>
-<td style="text-align:right;">
-NA
+77.48
 </td>
 <td style="text-align:left;">
-NA
+P2041_Kelly_Nx_38
 </td>
 <td style="text-align:left;">
-Kelly_Hx
-</td>
-<td style="text-align:right;">
-92.75
-</td>
-<td style="text-align:left;">
-P2041_Kelly_Hx_38
-</td>
-<td style="text-align:left;">
-P2041_Kelly_Hx_38
+P2041_Kelly_Nx_38
 </td>
 <td style="text-align:right;">
 1.227558
@@ -25493,7 +28548,20 @@ g1 <- ggplot(pcaData, aes(PC1, PC2, color=treatment, shape=genotype)) +
   scale_color_manual(values = c("lightcoral","skyblue1")) +
   coord_fixed()
 
-g2 <- ggplot(pcaData, aes(PC1, PC2, label=names,color=experiment, shape=genotype)) +
+g2 <- ggplot(pcaData, aes(PC1, PC2, label=samplename3,color=experiment, shape=genotype)) +
+  geom_text_repel(data         = subset(pcaData, experiment == "Simon"),
+                  segment.color = 'grey50',
+                  max.overlaps = 40,
+                  color="grey30",
+                  size          = 2.5) +
+  geom_point(size=3, alpha=0.7) +
+  labs(title = "top 500 variance") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  scale_color_viridis_d(option ="viridis") +
+  coord_fixed()
+
+g3 <- ggplot(pcaData, aes(PC1, PC2, label=orig.name,color=condition, shape=genotype)) +
   geom_text_repel(data         = subset(pcaData, experiment == "Simon"),
                   segment.color = 'grey50',
                   max.overlaps = 40,
@@ -25512,6 +28580,12 @@ g1+g2
 ![](README_files/figure-gfm/pca-1.png)<!-- -->
 
 ``` r
+g2+g3
+```
+
+![](README_files/figure-gfm/pca-2.png)<!-- -->
+
+``` r
 # calculate PCA (all data)
 ## https://www.bioconductor.org/packages/devel/bioc/vignettes/PCAtools/inst/doc/PCAtools.html#modify-bi-plots
 
@@ -25519,25 +28593,23 @@ p <- pca(vst_dat, metadata = colData(dds))
 
 biplot(p, showLoadings = TRUE,
     labSize = 3, pointSize = 5, sizeLoadingsNames = 2.5,
-    colby ='experiment',
-    lab=p$metadata$names,
+    colby ='condition',
+    lab=p$metadata$samplename,
     shape='genotype',
     # encircle = TRUE,
     legendPosition = 'right',
     title = "biplot containing all datapoints")
 ```
 
-![](README_files/figure-gfm/pca-2.png)<!-- -->
+![](README_files/figure-gfm/pca-3.png)<!-- -->
 
 ``` r
 # find explaining PCs
-horn <- parallelPCA(vst_dat)
-horn$n
-```
+horn <- list()
+horn$n <- 8
+# horn <- parallelPCA(vst_dat)
 
-    ## [1] 7
 
-``` r
 # plot Scree 
 screeplot(p,
         components = getComponents(p),
@@ -25546,7 +28618,7 @@ screeplot(p,
         label = 'Horn\'s', vjust = -1, size = 8))
 ```
 
-![](README_files/figure-gfm/pca-3.png)<!-- -->
+![](README_files/figure-gfm/pca-4.png)<!-- -->
 
 ### - Plot example counts
 
