@@ -52,6 +52,7 @@ library(PCAtools)
 library(cowplot)
 library(EnhancedVolcano)
 library(gridExtra)
+library(patchwork)
 library(grid)
 library(readxl)
 library(VennDiagram)
@@ -813,11 +814,10 @@ pcaData <- plotPCA(vsd, intgroup=colnames(colData(vsd)), returnData=TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
 g1 <- ggplot(pcaData, aes(PC1, PC2, color=treatment, shape=genotype)) +
   geom_point(size=5, alpha=0.7) +
-  labs(title = "top 500 variance") +
+  labs(title = "treatment") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
-  scale_color_manual(values = c("lightcoral","skyblue1")) +
-  coord_fixed()
+  scale_color_manual(values = c("lightcoral","skyblue1"))
 
 g2 <- ggplot(pcaData, aes(PC1, PC2, label=samplename3,color=experiment, shape=genotype)) +
   geom_text_repel(data         = subset(pcaData, experiment == "Simon"),
@@ -829,8 +829,8 @@ g2 <- ggplot(pcaData, aes(PC1, PC2, label=samplename3,color=experiment, shape=ge
   labs(title = "top 500 variance") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-  scale_color_viridis_d(option ="viridis") +
-  coord_fixed()
+  # coord_fixed()
+  scale_color_viridis_d(option ="viridis") 
 
 g3 <- ggplot(pcaData, aes(PC1, PC2, label=orig.name,color=condition, shape=genotype)) +
   geom_text_repel(data         = subset(pcaData, experiment == "Simon"),
@@ -842,12 +842,17 @@ g3 <- ggplot(pcaData, aes(PC1, PC2, label=orig.name,color=condition, shape=genot
   labs(title = "top 500 variance") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-  scale_color_viridis_d(option ="viridis") +
-  coord_fixed()
+  # coord_fixed()
+  scale_color_viridis_d(option ="viridis") 
 
-(g1+g2) / (g2+g3)
+((g1+g2) / (g2+g3)) + plot_layout(guides = "collect", axis_titles="collect")
 
 
+```
+
+
+```{r pca_advanced, warning = FALSE, fig.show="hold", out.width="100%"}
+# transform data
 # calculate PCA (all data)
 ## https://www.bioconductor.org/packages/devel/bioc/vignettes/PCAtools/inst/doc/PCAtools.html#modify-bi-plots
 
@@ -875,7 +880,9 @@ screeplot(p,
         vline = c(horn$n))+
         geom_label(aes(x = horn$n, y = 50,
         label = 'Horn\'s', vjust = -1, size = 8))
+
 ```
+
 
 ### - Plot example counts
 ```{r example_counts, eval=TRUE, fig.show="hold", out.width="50%"}
