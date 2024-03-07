@@ -30,7 +30,7 @@
 
 BiocManager::install()
 
-BiocManager::install(“GOSemSim”)
+BiocManager::install(“animation”)
 
 ## - Linux
 
@@ -5909,6 +5909,12 @@ ens <- rownames(dds)
 
 ### PCA with top 500 genes with highest row variance 
 pcaData <- plotPCA(vsd, intgroup=colnames(colData(vsd)), returnData=TRUE)
+levels(pcaData$genotype)
+```
+
+    ## [1] "Kelly" "HIF1A" "HIF2A" "HIF1B"
+
+``` r
 percentVar <- round(100 * attr(pcaData, "percentVar"))
 g1 <- ggplot(pcaData, aes(PC1, PC2, color=treatment, shape=genotype)) +
   geom_point(size=5, alpha=0.7) +
@@ -5917,69 +5923,125 @@ g1 <- ggplot(pcaData, aes(PC1, PC2, color=treatment, shape=genotype)) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
   scale_color_manual(values = c("lightcoral","skyblue1"))
 
-g2 <- ggplot(pcaData, aes(PC1, PC2, label=samplename3,color=experiment, shape=genotype)) +
+g2 <- ggplot(pcaData, aes(PC1, PC2, color=experiment, shape=genotype)) +
+  geom_point(size=5, alpha=0.7) +
+  labs(title = "experiment") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  scale_color_viridis_d(option ="viridis")
+
+g3 <- ggplot(pcaData, aes(PC1, PC2, color=condition, shape=genotype)) +
+  geom_point(size=5, alpha=0.7) +
+  labs(title = "condition") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  # coord_fixed()
+  scale_color_viridis_d(option ="viridis") 
+
+g4 <- ggplot(pcaData, aes(PC1, PC2, label=orig.name,color=condition, shape=genotype)) +
   geom_text_repel(data         = subset(pcaData, experiment == "Simon"),
                   segment.color = 'grey50',
                   max.overlaps = 40,
                   color="grey30",
                   size          = 2.5) +
-  geom_point(size=3, alpha=0.7) +
+  geom_point(size=5, alpha=0.7) +
   labs(title = "top 500 variance") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) +
   # coord_fixed()
   scale_color_viridis_d(option ="viridis") 
 
-g3 <- ggplot(pcaData, aes(PC1, PC2, label=orig.name,color=condition, shape=genotype)) +
-  geom_text_repel(data         = subset(pcaData, experiment == "Simon"),
-                  segment.color = 'grey50',
-                  max.overlaps = 40,
-                  color="grey30",
-                  size          = 2.5) +
-  geom_point(size=3, alpha=0.7) +
-  labs(title = "top 500 variance") +
-  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-  # coord_fixed()
-  scale_color_viridis_d(option ="viridis") 
-
-((g1+g2) / (g2+g3)) + plot_layout(guides = "collect", axis_titles="collect")
+((g1+g2) / (g3)) + plot_layout(guides = "collect", axis_titles="collect")
 ```
 
 <img src="README_files/figure-gfm/pca-1.png" width="100%" />
+
+###### – Advanced PCA
 
 ``` r
 # transform data
 # calculate PCA (all data)
 ## https://www.bioconductor.org/packages/devel/bioc/vignettes/PCAtools/inst/doc/PCAtools.html#modify-bi-plots
 
-p <- pca(vst_dat, metadata = colData(dds))
+# p <- pca(vst_dat, metadata = colData(dds))
+# vst <- assay(vst(dds))
+p <- pca(vst_dat, metadata = colData(dds), removeVar = 0.1)
 
-biplot(p, showLoadings = TRUE,
-    labSize = 3, pointSize = 5, sizeLoadingsNames = 2.5,
-    colby ='condition',
-    lab=p$metadata$samplename,
-    shape='genotype',
-    # encircle = TRUE,
-    legendPosition = 'right',
-    title = "biplot containing all datapoints")
+# check different PCAs
+p1 <- pairsplot(p,colby = 'treatment', colkey = viridis(2),title = 'treatment',
+                hline = 0, vline = 0,gridlines.major = FALSE, gridlines.minor = FALSE,
+                plotaxes = FALSE,margingaps = unit(c(-0.01, -0.01, -0.01, -0.01), 'cm')) # -> PC1 = treatment
+p2 <- pairsplot(p,colby = 'genotype', colkey = viridis(4),title = 'genotype',
+                hline = 0, vline = 0,gridlines.major = FALSE, gridlines.minor = FALSE,
+                plotaxes = FALSE,margingaps = unit(c(-0.01, -0.01, -0.01, -0.01), 'cm')) # -> PC1&3 = genotype
+p3 <- pairsplot(p,colby = 'experiment', colkey = viridis(4),title = 'experiment',
+                hline = 0, vline = 0,gridlines.major = FALSE, gridlines.minor = FALSE,
+                plotaxes = FALSE,margingaps = unit(c(-0.01, -0.01, -0.01, -0.01), 'cm')) # -> PC4 = experiment
+p4 <- pairsplot(p,colby = 'condition', colkey = viridis(8),title = 'condition',
+                hline = 0, vline = 0,gridlines.major = FALSE, gridlines.minor = FALSE,
+                plotaxes = FALSE,margingaps = unit(c(-0.01, -0.01, -0.01, -0.01), 'cm')) # PC1 & PC3 = condition
 
+(p1+p2) / (p3+p4)
+
+# Determine optimum number of PCs to retain
+elbow <- findElbowPoint(p$variance)
+elbow
+```
+
+    ## PC6 
+    ##   6
+
+``` r
+# plot Scree
 # find explaining PCs
 # horn <- parallelPCA(vst_dat)
 # warnings()
 
 horn <- list()
 horn$n <- 7
-
-# plot Scree 
 screeplot(p,
         components = getComponents(p),
         vline = c(horn$n))+
         geom_label(aes(x = horn$n, y = 50,
-        label = 'Horn\'s', vjust = -1, size = 8))
+        label = 'Horn\'s=7', vjust = -1, size = 8))
+
+bi <- biplot(p,x="PC3",y="PC1",
+    lab = p$metadata$experiment,
+    colby = 'condition',colkey = viridis(8),
+    hline = 0, vline = 0,
+    encircle = TRUE, encircleFill = TRUE,
+    legendLabSize = 10, legendIconSize = 4.0,
+    legendPosition = 'bottom')
+bi <- bi +theme(panel.background = element_rect(fill='transparent'))
+
+pairs <- pairsplot(p,
+    components = getComponents(p, c(1:7)),
+    triangle = TRUE, trianglelabSize = 12,
+    hline = 0, vline = 0,
+    pointSize = 2,
+    gridlines.major = FALSE, gridlines.minor = FALSE,
+    colby = 'condition', colkey = viridis(8),
+    title = 'Pairs plot', plotaxes = FALSE,
+    margingaps = unit(c(-0.01, -0.01, -0.01, -0.01), 'cm'))
+
+layout <- c(
+  area(t = 1, l = 1, b = 6, r = 6),
+  area(t = 5, l = 1, b = 7, r = 3)
+)
+pairs + bi + 
+  plot_layout(design = layout)
+
+# pairs + inset_element(bi, left = 0, bottom = 0, right = 0.5, top = 0.5)
+
+plotloadings(p,
+             components = getComponents(p)[1:7],
+             col = viridis(3),
+             
+             labSize = 3
+             )
 ```
 
-<img src="README_files/figure-gfm/pca_advanced-1.png" width="100%" /><img src="README_files/figure-gfm/pca_advanced-2.png" width="100%" />
+<img src="README_files/figure-gfm/pca_advanced-1.png" width="100%" /><img src="README_files/figure-gfm/pca_advanced-2.png" width="100%" /><img src="README_files/figure-gfm/pca_advanced-3.png" width="100%" /><img src="README_files/figure-gfm/pca_advanced-4.png" width="100%" />
 
 ### - Plot example counts
 
