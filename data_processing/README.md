@@ -5968,16 +5968,16 @@ g4 <- ggplot(pcaData, aes(PC1, PC2, label=orig.name,color=condition, shape=genot
 p <- pca(vst_dat, metadata = colData(dds), removeVar = 0.1)
 
 # check different PCAs
-p1 <- pairsplot(p,colby = 'treatment', colkey = viridis(2),title = 'treatment',
+p1 <- pairsplot(p,colby = 'treatment', colkey = viridis(2),title = 'treatment',titleLabSize = 15,trianglelabSize = 12,
                 hline = 0, vline = 0,gridlines.major = FALSE, gridlines.minor = FALSE,
                 plotaxes = FALSE,margingaps = unit(c(-0.01, -0.01, -0.01, -0.01), 'cm')) # -> PC1 = treatment
-p2 <- pairsplot(p,colby = 'genotype', colkey = viridis(4),title = 'genotype',
+p2 <- pairsplot(p,colby = 'genotype', colkey = viridis(4),title = 'genotype',titleLabSize = 15,trianglelabSize = 12,
                 hline = 0, vline = 0,gridlines.major = FALSE, gridlines.minor = FALSE,
                 plotaxes = FALSE,margingaps = unit(c(-0.01, -0.01, -0.01, -0.01), 'cm')) # -> PC1&3 = genotype
-p3 <- pairsplot(p,colby = 'experiment', colkey = viridis(4),title = 'experiment',
+p3 <- pairsplot(p,colby = 'experiment', colkey = viridis(4),title = 'experiment',titleLabSize = 15,trianglelabSize = 12,
                 hline = 0, vline = 0,gridlines.major = FALSE, gridlines.minor = FALSE,
                 plotaxes = FALSE,margingaps = unit(c(-0.01, -0.01, -0.01, -0.01), 'cm')) # -> PC4 = experiment
-p4 <- pairsplot(p,colby = 'condition', colkey = viridis(8),title = 'condition',
+p4 <- pairsplot(p,colby = 'condition', colkey = viridis(8),title = 'condition',titleLabSize = 15,trianglelabSize = 12,
                 hline = 0, vline = 0,gridlines.major = FALSE, gridlines.minor = FALSE,
                 plotaxes = FALSE,margingaps = unit(c(-0.01, -0.01, -0.01, -0.01), 'cm')) # PC1 & PC3 = condition
 
@@ -5999,11 +5999,14 @@ elbow
 
 horn <- list()
 horn$n <- 7
+
 screeplot(p,
-        components = getComponents(p),
-        vline = c(horn$n))+
-        geom_label(aes(x = horn$n, y = 50,
-        label = 'Horn\'s=7', vjust = -1, size = 8))
+    components = getComponents(p, 1:20),
+    vline = c(horn$n, elbow)) +
+    geom_label(aes(x = horn$n + 1, y = 30,
+      label = 'Horn\'s=7', vjust = -1, size = 8)) +
+    geom_label(aes(x = elbow + 1, y = 50,
+      label = 'Elbow=6', vjust = -1, size = 8))
 
 bi <- biplot(p,x="PC3",y="PC1",
     lab = p$metadata$experiment,
@@ -6042,6 +6045,59 @@ plotloadings(p,
 ```
 
 <img src="README_files/figure-gfm/pca_advanced-1.png" width="100%" /><img src="README_files/figure-gfm/pca_advanced-2.png" width="100%" /><img src="README_files/figure-gfm/pca_advanced-3.png" width="100%" /><img src="README_files/figure-gfm/pca_advanced-4.png" width="100%" />
+
+###### – PCA gif
+
+``` r
+saveGIF({
+  ani.options(nmax = 100)
+for (i in 1:100){
+  n <- i*250
+pcaData <- plotPCA(vsd, intgroup=colnames(colData(vsd)), returnData=TRUE,ntop=n)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+g1 <- ggplot(pcaData, aes(PC1, PC2, color=treatment, shape=genotype)) +
+  geom_point(size=5, alpha=0.7) +
+  labs(title = "treatment") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  coord_cartesian(xlim = c(-100, 100),ylim = c(-100,100)) +
+  scale_color_manual(values = c("lightcoral","skyblue1"))
+
+g2 <- ggplot(pcaData, aes(PC1, PC2, color=experiment, shape=genotype)) +
+  geom_point(size=5, alpha=0.7) +
+  labs(title = "experiment") +
+  coord_cartesian(xlim = c(-100, 100),ylim = c(-100,100)) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  scale_color_viridis_d(option ="viridis")
+
+g3 <- ggplot(pcaData, aes(PC1, PC2, color=condition, shape=genotype)) +
+  geom_point(size=5, alpha=0.7) +
+  labs(title = "condition") +
+  coord_cartesian(xlim = c(-100, 100),ylim = c(-100,100)) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  # coord_fixed()
+  scale_color_viridis_d(option ="viridis")
+plot((g1+g2)/g3 +
+       plot_annotation(title = paste("number of variable genes: ",n)) +
+       plot_layout(guides = 'collect')
+     )
+ani.pause()
+}
+}, interval = 0.5, movie.name = 'pca.gif', ani.width = 600, ani.height = 600)
+
+
+#
+```
+
+<a href="pca.gif" height="100%," width="100%">PCA Gif</a>
+
+``` r
+knitr::include_graphics("pca.gif")
+```
+
+<img src="pca.gif" width="100%" />
 
 ### - Plot example counts
 

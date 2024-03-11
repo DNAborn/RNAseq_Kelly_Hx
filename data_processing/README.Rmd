@@ -866,16 +866,16 @@ g4 <- ggplot(pcaData, aes(PC1, PC2, label=orig.name,color=condition, shape=genot
 p <- pca(vst_dat, metadata = colData(dds), removeVar = 0.1)
 
 # check different PCAs
-p1 <- pairsplot(p,colby = 'treatment', colkey = viridis(2),title = 'treatment',
+p1 <- pairsplot(p,colby = 'treatment', colkey = viridis(2),title = 'treatment',titleLabSize = 15,trianglelabSize = 12,
                 hline = 0, vline = 0,gridlines.major = FALSE, gridlines.minor = FALSE,
                 plotaxes = FALSE,margingaps = unit(c(-0.01, -0.01, -0.01, -0.01), 'cm')) # -> PC1 = treatment
-p2 <- pairsplot(p,colby = 'genotype', colkey = viridis(4),title = 'genotype',
+p2 <- pairsplot(p,colby = 'genotype', colkey = viridis(4),title = 'genotype',titleLabSize = 15,trianglelabSize = 12,
                 hline = 0, vline = 0,gridlines.major = FALSE, gridlines.minor = FALSE,
                 plotaxes = FALSE,margingaps = unit(c(-0.01, -0.01, -0.01, -0.01), 'cm')) # -> PC1&3 = genotype
-p3 <- pairsplot(p,colby = 'experiment', colkey = viridis(4),title = 'experiment',
+p3 <- pairsplot(p,colby = 'experiment', colkey = viridis(4),title = 'experiment',titleLabSize = 15,trianglelabSize = 12,
                 hline = 0, vline = 0,gridlines.major = FALSE, gridlines.minor = FALSE,
                 plotaxes = FALSE,margingaps = unit(c(-0.01, -0.01, -0.01, -0.01), 'cm')) # -> PC4 = experiment
-p4 <- pairsplot(p,colby = 'condition', colkey = viridis(8),title = 'condition',
+p4 <- pairsplot(p,colby = 'condition', colkey = viridis(8),title = 'condition',titleLabSize = 15,trianglelabSize = 12,
                 hline = 0, vline = 0,gridlines.major = FALSE, gridlines.minor = FALSE,
                 plotaxes = FALSE,margingaps = unit(c(-0.01, -0.01, -0.01, -0.01), 'cm')) # PC1 & PC3 = condition
 
@@ -939,7 +939,7 @@ plotloadings(p,
 ```
 
 ###### -- PCA gif
-```{r pca_gif, warning = FALSE, fig.show="hold", out.width="100%", fig.height=8}
+```{r pca_gif, eval=FALSE, warning = FALSE, fig.show="hold", out.width="100%", fig.height=8}
 
 saveGIF({
   ani.options(nmax = 100)
@@ -983,7 +983,9 @@ ani.pause()
 #
 ```
 
-```{r pca_gif_include}
+[PCA Gif](pca.gif){height=100%, width=100%}
+
+```{r pca_gif_include, out.width="100%", fig.height=8}
 knitr::include_graphics("pca.gif")
 
 ```
