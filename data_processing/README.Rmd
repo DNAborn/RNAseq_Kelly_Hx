@@ -363,7 +363,8 @@ sample_table$repetition <- as.character(sample_table$repetition)
 sample_table$sample_id %in% sample %>% summary()
 sample_table$exp_rep <- paste(sample_table$experiment,sample_table$repetition, sep="_")
 
-sample_table$clone <- sample_table$clone%>% factor
+sample_table$clone <- str_replace(sample_table$clone, pattern = "LV_1", replacement = "LV1")
+sample_table$clone <- sample_table$clone %>% as.factor() %>% relevel(ref="LV1")
 
 # Make table
 sample_table_P2041 <- as.data.frame(sample_table)
@@ -393,6 +394,8 @@ sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_S47"
 sample_table_P2041$samplename3[sample_table_P2041$samplename3 == "RNA_P2041_new3"] <- "RNA_P2041_S47"
 
 sample_table_P2041$samplename <- sample_table_P2041$samplename3
+
+sample_table_P2041[,c("orig.name","samplename2","samplename3","treatment","genotype")] %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 sample_table_P2041$samplename %in% quant_file_table$samplename %>% summary()
 
@@ -473,12 +476,9 @@ head(sample_table_all) %>% kable() %>% kable_styling("striped", full_width = T) 
 length(rownames(sample_table_all))
 length(rownames(quant_file_table))
 
-(quant_file_table$samplename == quant_file_table$samplename.1) %>% summary()
-(quant_file_table$files == quant_file_table$file) %>% summary()
 sample_table_all <- merge(quant_file_table,sample_table_all, by = "samplename")
-class(sample_table)
+# class(sample_table)
 sample_table_all <- sample_table_all[order(sample_table_all$order),]
-(sample_table_all$sequencing == sample_table_all$sequencing.y) %>% summary()
 colnames(sample_table_all)[which(names(sample_table_all) == "sequencing.x")] <- "sequencing"
 colnames(sample_table_all)[which(names(sample_table_all) == "lane.x")] <- "lane"
 el <- sample_table_all$sequencing=="P3302"
@@ -723,6 +723,7 @@ save(gse,file=paste(data,"tximeta.txm", sep="/"))
 load(file=paste(data,"tximeta.txm", sep="/"))
 colData(gse)$genotype %>% levels()
 design = ~genotype+treatment+treatment:genotype
+
 dds <- DESeqDataSet(gse, design = design)
 dds <- collapseReplicates(dds, dds$samplename, dds$names)
 
@@ -777,23 +778,37 @@ meanSdPlot(assay(rld))
 ```
 
 ### - Check sample distance
-```{r pre_sample_dist, fig.height=12}
+```{r pre_sample_dist, fig.height=12, out.width="100%"}
 sampleDists <- dist(t(assay(vsd)))
 
 sampleDistMatrix <- as.matrix(sampleDists)
 rownames(sampleDistMatrix) <- vsd$names
-colnames(sampleDistMatrix) <- NULL
+# colnames(sampleDistMatrix) <- NULL
 colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+anno_col <- as.data.frame(colData(vsd)[,c("experiment","treatment","genotype")])
+anno_colors <- list(treatment = c("lightcoral","skyblue1"),
+                    genotype = c("grey","seagreen3","turquoise3","tan2"),
+                    experiment = viridis(4, option="plasma"))
+
+names(anno_colors$treatment) <- levels(anno_col$treatment)
+names(anno_colors$genotype) <- levels(anno_col$genotype)
+names(anno_colors$experiment) <- levels(anno_col$experiment)
+
 pheatmap(sampleDistMatrix,
          clustering_distance_rows=sampleDists,
          clustering_distance_cols=sampleDists,
+         annotation_col=anno_col,
+         annotation_colors = anno_colors,
+         show_colnames     = FALSE,
          col=viridis(20),
          cutree_rows = 8,
          cutree_cols = 8)
+
+
 ```
 
 ### - Perform principal component analysis
-```{r pca, warning = FALSE, fig.show="hold", out.width="100%", fig.height=8}
+```{r pca, warning = FALSE, fig.show="hold", out.width="80%", fig.height=6}
 # transform data
 load(file=paste(data,"deseq2.dds", sep="/"))
 vst_dat <- assay(vst(dds))
@@ -856,7 +871,7 @@ g4 <- ggplot(pcaData, aes(PC1, PC2, label=orig.name,color=condition, shape=genot
 
 
 ###### -- Advanced PCA
-```{r pca_advanced, warning = FALSE, fig.show="hold", out.width="100%", fig.height=8}
+```{r pca_advanced, warning = FALSE, fig.show="hold", out.width="80%", fig.height=6}
 # transform data
 # calculate PCA (all data)
 ## https://www.bioconductor.org/packages/devel/bioc/vignettes/PCAtools/inst/doc/PCAtools.html#modify-bi-plots
