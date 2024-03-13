@@ -11,8 +11,9 @@ library(gridExtra)
 allowWGCNAThreads(nThreads = 40)          # allow multi-threading (optional)
 
 # 1. Fetch Data ------------------------------------------------
-
+setwd("/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/git_RNAseq_Kelly_Hx/WGCNA")
 data <- read.delim('data/GSE152418_p20047_Study1_RawCounts.txt', header = T)
+
 
 # get metadata
 geo_id <- "GSE152418"
@@ -123,9 +124,9 @@ norm.counts[1:10,1:10]
 nrow(norm.counts)
 dim(norm.counts)
 
-load(file="norm.counts.RDS")
-norm.counts[1:10,1:10]
-dim(norm.counts)
+# load(file="norm.counts.RDS")
+# norm.counts[1:10,1:10]
+# dim(norm.counts)
 
 # Call the network topology analysis function
 sft <- pickSoftThreshold(norm.counts,
@@ -151,7 +152,8 @@ a2 <- ggplot(sft.data, aes(Power, mean.k., label = Power)) +
   labs(x = 'Power', y = 'Mean Connectivity') +
   theme_classic()
   
-grid.arrange(a1, a2, nrow = 2)
+a12 <- grid.arrange(a1, a2, nrow = 2)
+ggsave(a12,file="Power_pick_Hx.pdf", width = 8, height = 8)
 
 
 # convert matrix to numeric

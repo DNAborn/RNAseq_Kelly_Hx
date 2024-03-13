@@ -23,8 +23,6 @@ BiocManager::install()
 BiocManager::install("CorLevelPlot") 
 ```{r librarys, include=FALSE}
 
-library(BiocManager)
-library(devtools)
 library(WGCNA)
 library(DESeq2)
 library(GEOquery)
@@ -38,9 +36,11 @@ ifelse(Sys.info()["sysname"]== "Linux",
 dir <- paste(s,"AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all",sep="/")
 gitdir <- paste(dir,"git_RNAseq_Kelly_Hx",sep="/")
 data <- paste(dir,"data",sep="/")
+wdir <- paste(gitdir,"2A_WGCNA",sep="/")
 
 options(stringsAsFactors = FALSE)
-enableWGCNAThreads(nThreads = 15)
+enableWGCNAThreads(nThreads = 40)
+allowWGCNAThreads(nThreads = 40)
 
 ```
 
@@ -90,37 +90,26 @@ ggplot(pca.dat, aes(PC1, PC2)) +
 
 ```
 
+## (-pickSoftThreshold)
+```{r}
+power <- c(c(1:10), seq(from = 12, to = 50, by = 2))
+# Run in R Script
+cat('sft <- pickSoftThreshold(norm.counts,powerVector = power,verbose = 5,networkType = "signed")' ,file = paste(wdir,"pickSoftThreshold.R", sep="/"))
+source(file=paste(wdir,"pickSoftThreshold.R",sep="/"), local = knitr::knit_global())
+
+```
+
 ## -network construction
 ```{r}
+
 # Choose a set of soft-thresholding powers
-power <- c(c(1:10), seq(from = 12, to = 20, by = 2))
 
-# # Call the network topology analysis function
-# n.cores <- 20
-# my.cluster <- parallel::makeCluster(n.cores,type = "FORK")
-# doParallel::registerDoParallel(cl = my.cluster)
-# foreach::getDoParRegistered()
-# foreach::getDoParWorkers()
-
-sft <- pickSoftThreshold(norm.counts[1:10,1:1000],
-                         powerVector = power,
-                         verbose = 3,
-                         networkType = "signed")
-
-counts <- counts(dds75, normalized =TRUE) %>% t()
-dim(counts)
-sft <- pickSoftThreshold(counts,
-                         powerVector = power,
-                         verbose = 3,
-                         networkType = "signed")
-
-parallel::stopCluster(my.cluster)
-
+power <- c(c(1:10), seq(from = 12, to = 50, by = 2))
 
 sft <- pickSoftThreshold(norm.counts,
-                  powerVector = power,
-                  networkType = "signed",
-                  verbose = 5)
+                         powerVector = power,
+                         verbose = 5,
+                         networkType = "signed")
 
 sft.data <- sft$fitIndices
 
@@ -140,7 +129,7 @@ a2 <- ggplot(sft.data, aes(Power, mean.k., label = Power)) +
   theme_classic()
 
 grid.arrange(a1, a2, nrow = 2)
-# power 10 or 26
+# power 26
 
 # convert matrix to numeric
 norm.counts[] <- sapply(norm.counts, as.numeric)
@@ -151,7 +140,7 @@ cor <- WGCNA::cor
 
 # memory estimate w.r.t blocksize
 bwnet <- blockwiseModules(norm.counts,
-                 maxBlockSize = 30000,
+                 maxBlockSize = 15000,
                  TOMType = "signed",
                  power = soft_power,
                  mergeCutHeight = 0.25,
@@ -161,13 +150,43 @@ bwnet <- blockwiseModules(norm.counts,
 
 cor <- temp_cor
 
-save(bwnet,file="data_analysis/bwnet.wgcna")
+save(bwnet,file="2A_WGCNA/bwnet.RDS")
+
+# TS
+bwnet <- blockwiseModules(norm.counts,               
+
+                          # == Adjacency Function ==
+                          power = soft_power,                
+                          networkType = "signed",
+
+                          # == Tree and Block Options ==
+                          deepSplit = 2,
+                          pamRespectsDendro = F,
+                          # detectCutHeight = 0.75,
+                          minModuleSize = 30,
+                          maxBlockSize = 40000,
+
+                          # == Module Adjustments ==
+                          reassignThreshold = 0,
+                          mergeCutHeight = 0.25,
+
+                          # == TOM == Archive the run results in TOM file (saves time)
+                          saveTOMs = T,
+                          saveTOMFileBase = "ER",
+
+                          # == Output Options
+                          numericLabels = T,
+                          verbose = 3)
+
+save(bwnet,file="2A_WGCNA/bwnet_TS.RDS")
+
+
 
 ```
 
 ## -Module Eigengenes 
 ```{r}
-load(file="data_analysis/bwnet.wgcna")
+load(file="2A_WGCNA/bwnet.RDS")
 
 module_eigengenes <- bwnet$MEs
 
@@ -199,9 +218,7 @@ traits <- colData %>%
   mutate(disease_state_bin = ifelse(grepl('COVID', disease_state), 1, 0)) %>% 
   select(8)
 
-traits <- colData %>% 
-  mutate(treatment_bin = ifelse(grepl('Hx', treatment), 1, 0)) %>% 
-  select("treatment_bin")
+traits <- colData$treatment_bin <- ifelse(grepl('Hx', colData$treatment), 1, 0)
 
 # binarize categorical variables
 
@@ -210,15 +227,22 @@ colData$genotype %>% levels()
 genotype_bin <- binarizeCategoricalColumns(colData$genotype,
                            includePairwise = FALSE,
                            includeLevelVsAll = TRUE,
+                           dropFirstLevelVsAll = FALSE,
                            minCount = 1)
+colnames(genotype_bin) <- levels(colData$genotype)
 
 condition_bin <- binarizeCategoricalColumns(colData$condition,
                            includePairwise = FALSE,
                            includeLevelVsAll = TRUE,
+                           dropFirstLevelVsAll = FALSE,
                            minCount = 1)
+colnames(condition_bin) <- levels(colData$condition)
 
 traits <- cbind(traits, genotype_bin,condition_bin)
-
+rownames(traits) <- rownames(colData)
+dim(traits)
+orig.colnames <- colnames(traits)
+colnames(traits)[1] <- c("Hypoxia")
 
 # Define numbers of genes and samples
 nSamples <- nrow(norm.counts)
@@ -237,12 +261,37 @@ heatmap.data <- heatmap.data %>%
   column_to_rownames(var = 'Row.names')
 
 CorLevelPlot(heatmap.data,
-             x = names(heatmap.data)[18:22],
-             y = names(heatmap.data)[1:17],
+             x = names(heatmap.data)[14:26],
+             y = names(heatmap.data)[1:13],
              col = c("blue1", "skyblue", "white", "pink", "red"))
+
+module.gene.mapping <- as.data.frame(bwnet$colors)
+module.gene.mapping %>% 
+  filter(`bwnet$colors` == 'turquoise') %>% 
+  rownames()
 
 ```
 
+## Intramodular analysis: Identifying driver genes
+```{r}
+
+module.membership.measure <- cor(module_eigengenes, norm.counts, use = 'p')
+module.membership.measure.pvals <- corPvalueStudent(module.membership.measure, nSamples)
+
+
+module.membership.measure.pvals[1:10,1:10]
+
+gene.signf.corr <- cor(norm.counts, traits$data.Severe.vs.all, use = 'p')
+gene.signf.corr.pvals <- corPvalueStudent(gene.signf.corr, nSamples)
+
+
+gene.signf.corr.pvals %>% 
+  as.data.frame() %>% 
+  arrange(V1) %>% 
+  head(25)
+
+
+```
 
 
 

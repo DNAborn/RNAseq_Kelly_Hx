@@ -7,7 +7,7 @@ output:
   variant: gfm
 toc: true
 always_allow_html: true
-editor_options: 
+# editor_options: 
   chunk_output_type: console
 ---
   

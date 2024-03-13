@@ -1,0 +1,1 @@
+sft <- pickSoftThreshold(norm.counts,powerVector = power,verbose = 5,networkType = "signed")
