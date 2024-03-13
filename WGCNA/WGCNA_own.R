@@ -23,8 +23,6 @@ BiocManager::install()
 BiocManager::install("CorLevelPlot") 
 ```{r librarys, include=FALSE}
 
-library(BiocManager)
-library(devtools)
 library(WGCNA)
 library(DESeq2)
 library(GEOquery)

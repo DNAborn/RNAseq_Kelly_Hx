@@ -11,7 +11,8 @@ library(gridExtra)
 allowWGCNAThreads(nThreads = 40)          # allow multi-threading (optional)
 
 # 1. Fetch Data ------------------------------------------------
-data <- read.delim('WGCNA/data/GSE152418_p20047_Study1_RawCounts.txt', header = T)
+
+data <- read.delim('data/GSE152418_p20047_Study1_RawCounts.txt', header = T)
 
 # get metadata
 geo_id <- "GSE152418"
@@ -118,6 +119,13 @@ norm.counts <- assay(dds_norm) %>%
 # 4. Network Construction  ---------------------------------------------------
 # Choose a set of soft-thresholding powers
 power <- c(c(1:10), seq(from = 12, to = 50, by = 2))
+norm.counts[1:10,1:10]
+nrow(norm.counts)
+dim(norm.counts)
+
+load(file="norm.counts.RDS")
+norm.counts[1:10,1:10]
+dim(norm.counts)
 
 # Call the network topology analysis function
 sft <- pickSoftThreshold(norm.counts,
@@ -165,7 +173,7 @@ bwnet <- blockwiseModules(norm.counts,
 
 cor <- temp_cor
 
-save(bwnet,file="WGCNA/data/bwnet.wgcna")
+save(bwnet,file="data/bwnet.wgcna")
 
 
 # 5. Module Eigengenes ---------------------------------------------------------
