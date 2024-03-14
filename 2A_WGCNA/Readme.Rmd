@@ -13,7 +13,10 @@ editor_options:
   
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T,
-                      error=FALSE, warning=FALSE, message=FALSE)
+                      error=FALSE,
+                      warning=FALSE,
+                      message=FALSE,
+                      dpi=300)
 ```
 
 # 0. Load
@@ -81,7 +84,7 @@ allowWGCNAThreads(nThreads = 40)
 
 # 1. WGCNA
 ## -load dds
-```{r load_dds, }
+```{r load_dds, out.width="100%",fig.width=12}
 load(file=paste(data,"deseq2.dds", sep="/"))
 s75 <- (nrow(colData(dds))*0.75) %>% round()
 dds75 <- dds[rowSums(counts(dds) >= 15) >= 66,]
@@ -225,7 +228,7 @@ save(bwnet,file=paste(data,"bwnet_TS.RDS", sep="/"))
 ```
 
 ## -Module Eigengenes 
-```{r eigengenes, fig.height=6, fig.width=12, out.width="100%"}
+```{r eigengenes, fig.width=20, out.width="100%"}
 load(file=paste(data,"bwnet_TS.RDS", sep="/"))
 
 module_eigengenes <- bwnet$MEs
@@ -329,8 +332,7 @@ gene.hypoxia.corr %>% head() %>% kable() %>% kable_styling("striped", full_width
 gene.hypoxia.corr.pvals %>% 
   as.data.frame() %>% 
   arrange(V1) %>% 
-  head(25) %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
-
+  head(25) %>% log(base = 10) %>% abs() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 ```
 
@@ -386,7 +388,7 @@ mME %>% ggplot(., aes(x=treatment, y=name, fill=value)) +
 ```
 
 ## -GO terms enrichment
-```{r goa, fig.height=6, fig.width=12,out.width="100%"}
+```{r goa, fig.width=20, out.width="100%"}
 
 # Get GO terms of top colors
 turquoise_mod <- module_df[module_df$colors == "turquoise",] # Hypoxia
