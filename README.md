@@ -1,67 +1,7 @@
-# 0. Load
+# RNAseq_Kelly_Hx
+RNA-Seq Analysis of HIF-1A, HIF-2A, HIF-1B in Kelly cells under Hypoxia
 
-## - R
-
-``` r
-#BiocManager::install("GOSemSim")
-
-library(devtools)
-library(BiocManager)
-
-library(tximeta)
-library(tximport)
-library(RColorBrewer)
-library(tidyverse)
-library(stringr)
-library(stringi)
-library(BiocFileCache)
-library(SummarizedExperiment)
-library(org.Mm.eg.db)
-library(AnnotationHub)
-library(DESeq2)
-library(vsn)
-library(ggplot2)
-library(pheatmap)
-library(PCAtools)
-library(cowplot)
-library(EnhancedVolcano)
-library(gridExtra)
-library(grid)
-library(readxl)
-library(VennDiagram)
-library(clusterProfiler)
-library(biomaRt)
-library(GOSemSim)
-library(sessioninfo)
-library(data.table)
-library(plyr)
-library(tximeta)
-library(tximport)
-library(curl)
-library(R.utils)
-library(kableExtra)
-library(knitr)
-library(writexl)
-
-
-ifelse(Sys.info()["sysname"]== "Linux",
-  s <- "/mnt/s",
-  s <- "S:")
-dir <- paste(s,"AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all",sep="/")
-list.files(dir) %>% head()
-gitdir <- paste(dir,"git_RNAseq_Kelly_Hx",sep="/")
-list.files(gitdir) %>% head()
-
-fastqdir <- paste(s,"AG/AG-Scholz-NGS/Daten/RNASeq_Kelly2_P3302",sep="/")
-list.files(fastqdir) %>% head()
-fastqdir2 <- paste(s,"AG/AG-Scholz-NGS/Daten/RNASeq_Kelly",sep="/")
-list.files(fastqdir2) %>% head()
-fastqdir3 <- paste(s,"AG/AG-Scholz-NGS/Daten/Sequencing-2/Sequencing-2_A/FASTQ",sep="/")
-list.files(fastqdir3) %>% head()
-
-indexdir <- paste(s,"AG/AG-Scholz-NGS/Daten/Salmon/index/human_ens110_index",sep="/")
-
-dirgenomic <- paste(s,"AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/110",sep="/")
-list.files(dirgenomic) %>% head()
-setwd(gitdir)
-```
+# 1. data_processing -> [here](1_data_processing)
+# 2A. WGCNA -> [here](2A_WGCNA)
+# 2B. DGE -> [here](2B_DEG)
+# ...
