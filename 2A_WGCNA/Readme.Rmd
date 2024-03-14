@@ -1,5 +1,5 @@
 ---
-title: "RNA-Seq Kelly analysis"
+title: "WGCNA"
 author: "Kelterborn"
 date: "2024-03-07"
 output:
@@ -57,7 +57,13 @@ library(flashClust)
 library(gridExtra)
 library(patchwork)
 library(grid)
+library(reshape2)
 
+library(pheatmap)
+library(plyr)
+
+library(kableExtra)
+library(knitr)
 
 ifelse(Sys.info()["sysname"]== "Linux",
        s <- "/mnt/s",
@@ -75,11 +81,11 @@ allowWGCNAThreads(nThreads = 40)
 
 # 1. WGCNA
 ## -load dds
-```{r load_dds}
+```{r load_dds, }
 load(file=paste(data,"deseq2.dds", sep="/"))
 s75 <- (nrow(colData(dds))*0.75) %>% round()
 dds75 <- dds[rowSums(counts(dds) >= 15) >= 66,]
-nrow(dds75) # 13284 genes
+nrow(dds75) # 14889 genes left
 
 vsd <- vst(dds75, blind = FALSE) #transform while accounting for design 
 # counts <- counts(dds, normalized=TRUE)
@@ -129,7 +135,7 @@ source(file=paste(wdir,"pickSoftThreshold.R",sep="/"), local = knitr::knit_globa
 ```
 
 ## -pickSoftThreshold
-```{r pickSoftThreshold}
+```{r pickSoftThreshold, echo=FALSE, eval=FALSE, include=TRUE}
 
 # Choose a set of soft-thresholding powers
 
@@ -163,7 +169,7 @@ grid.arrange(a1, a2, nrow = 2)
 ```
 
 ## -network construction
-```{r network2}
+```{r network2, eval=FALSE}
 
 # convert matrix to numeric
 norm.counts[] <- sapply(norm.counts, as.numeric)
@@ -219,13 +225,13 @@ save(bwnet,file=paste(data,"bwnet_TS.RDS", sep="/"))
 ```
 
 ## -Module Eigengenes 
-```{r eigengenes}
+```{r eigengenes, fig.height=6, fig.width=8}
 load(file=paste(data,"bwnet_TS.RDS", sep="/"))
 
 module_eigengenes <- bwnet$MEs
 
 # Print out a preview
-head(module_eigengenes)
+head(module_eigengenes) %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 # get number of genes for each module
 table(bwnet$colors)
@@ -285,7 +291,7 @@ module.trait.corr.pvals <- corPvalueStudent(module.trait.corr, nSamples)
 
 heatmap.data <- merge(module_eigengenes, traits, by = 'row.names')
 
-head(heatmap.data)
+head(heatmap.data) %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 heatmap.data <- heatmap.data %>% 
   column_to_rownames(var = 'Row.names')
@@ -299,9 +305,11 @@ CorLevelPlot(heatmap.data,
              # col = c("blue1", "skyblue", "white", "pink", "red"))
 
 module.gene.mapping <- as.data.frame(bwnet$colors)
+
+# Genes related to Hypoxia
 module.gene.mapping %>% 
   filter(`bwnet$colors` == 'turquoise') %>% 
-  rownames() %>% head()
+  rownames() %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 ```
 
@@ -311,17 +319,17 @@ module.gene.mapping %>%
 module.membership.measure <- cor(module_eigengenes, norm.counts, use = 'p')
 module.membership.measure.pvals <- corPvalueStudent(module.membership.measure, nSamples)
 
-module.membership.measure[1:10,1:10]
-module.membership.measure.pvals[1:10,1:10]
+module.membership.measure[1:10,1:10] %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
+module.membership.measure.pvals[1:10,1:10] %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 gene.hypoxia.corr <- cor(norm.counts, traits$Hypoxia, use = 'p')
 gene.hypoxia.corr.pvals <- corPvalueStudent(gene.hypoxia.corr, nSamples)
-gene.hypoxia.corr %>% head()
+gene.hypoxia.corr %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 gene.hypoxia.corr.pvals %>% 
   as.data.frame() %>% 
   arrange(V1) %>% 
-  head(25)
+  head(25) %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 
 ```
@@ -375,6 +383,12 @@ mME %>% ggplot(., aes(x=treatment, y=name, fill=value)) +
   theme(axis.text.x = element_text(angle=90)) +
   labs(title = "Module-trait Relationships", y = "Modules", fill="corr")
 
+```
+
+## -GO terms enrichment
+```{r goa, fig.height=6, fig.width=8}
+
+# Get GO terms of top colors
 turquoise_mod <- module_df[module_df$colors == "turquoise",] # Hypoxia
 turquoise_ens <- turquoise_mod$gene_id
 
@@ -443,11 +457,26 @@ go4 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = "red: HIF
 ```{r module_sample}
 # module Sample correlation
 
-M0s
+MEs0 %>%
+  pivot_longer(-treatment) %>%
+  mutate(
+    name = gsub("ME", "", name),
+    name = factor(name, levels = module_order)
+  )
 
-bwnet$MEs
+mydata <- mtcars[, c(1,3,4,5,6,7)]
+head(mydata)
+cormat <- round(cor(mydata),2)
+head(cormat)
+class(cormat)
+melted_cormat <- melt(cormat)
+head(melted_cormat)
 
-bwnet$MEs %>% ggplot(., aes(x=treatment, y=name, fill=value)) +
+bwnet$MEs %>% class()
+bwnet$MEs %>% data.matrix() %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
+ME.heatmap <- bwnet$MEs %>% data.matrix() %>% melt()
+
+ME.heatmap %>% ggplot(., aes(x=Var2, y=Var1, fill=value)) +
   geom_tile() +
   theme_bw() +
   scale_fill_gradient2(
@@ -459,26 +488,46 @@ bwnet$MEs %>% ggplot(., aes(x=treatment, y=name, fill=value)) +
   theme(axis.text.x = element_text(angle=90)) +
   labs(title = "Module-trait Relationships", y = "Modules", fill="corr")
 
+pheatmap(bwnet$MEs)
 
 ```
 
 
 
-
 # Export into dds
-```{r eval=FALSE, include=FALSE}
+```{r export_in_dds, eval=FALSE, include=TRUE, echo=FALSE}
 
 load(file=paste(data,"deseq2.dds", sep="/"))
+load(file=paste(data,"bwnet_TS.RDS", sep="/"))
 
-module.gene.mapping
+# color per gene
+mcols(dds)$colors <- bwnet$colors[match(mcols(dds)$gene_id, names(bwnet$colors))] %>% 
+  factor() %>%
+  relevel(ref="grey")
 
-# add WGCNA data to dds
-mcols(dds)
+head(mtcars)
+# color per sample
+module.cols <- bind_cols(as.data.frame(colData(dds)),
+                     as.data.frame(bwnet$MEs))
+module.cols <- module.cols[,str_detect(colnames(module.cols),pattern="ME")]
+colnames(module.cols) <- module.cols %>% colnames() %>% str_remove(pattern="ME")
 
-colData(dds)
+colData(dds)$blue <- module.cols[,1]
+colData(dds)$greenyellow <- module.cols[,2]
+colData(dds)$turquoise <- module.cols[,3]
+colData(dds)$red <- module.cols[,4]
+colData(dds)$purple <- module.cols[,5]
+colData(dds)$yellow <- module.cols[,6]
+colData(dds)$tan <- module.cols[,7]
+colData(dds)$black <- module.cols[,8]
+colData(dds)$magenta <- module.cols[,9]
+colData(dds)$salmon <- module.cols[,10]
+colData(dds)$green <- module.cols[,11]
+colData(dds)$brown <- module.cols[,12]
+colData(dds)$pink <- module.cols[,13]
+colData(dds)$grey <- module.cols[,14]
 
-
-
+save(dds, file=paste(data,"deseq2.dds", sep="/"))
 
 ```
 
