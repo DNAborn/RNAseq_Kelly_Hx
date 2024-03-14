@@ -225,7 +225,7 @@ save(bwnet,file=paste(data,"bwnet_TS.RDS", sep="/"))
 ```
 
 ## -Module Eigengenes 
-```{r eigengenes, fig.height=6, fig.width=8}
+```{r eigengenes, fig.height=6, fig.width=12, out.width="100%"}
 load(file=paste(data,"bwnet_TS.RDS", sep="/"))
 
 module_eigengenes <- bwnet$MEs
@@ -386,7 +386,7 @@ mME %>% ggplot(., aes(x=treatment, y=name, fill=value)) +
 ```
 
 ## -GO terms enrichment
-```{r goa, fig.height=6, fig.width=8}
+```{r goa, fig.height=6, fig.width=12,out.width="100%"}
 
 # Get GO terms of top colors
 turquoise_mod <- module_df[module_df$colors == "turquoise",] # Hypoxia
@@ -495,7 +495,7 @@ pheatmap(bwnet$MEs)
 
 
 # Export into dds
-```{r export_in_dds, eval=FALSE, include=TRUE, echo=FALSE}
+```{r export_in_dds, eval=FALSE, include=TRUE, echo=TRUE}
 
 load(file=paste(data,"deseq2.dds", sep="/"))
 load(file=paste(data,"bwnet_TS.RDS", sep="/"))

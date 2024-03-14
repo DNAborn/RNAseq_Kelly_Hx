@@ -533,7 +533,7 @@ plotDendroAndColors(bwnet$dendrograms[[1]], cbind(bwnet$unmergedColors, bwnet$co
                     guideHang = 0.05)
 ```
 
-![](Readme_files/figure-gfm/eigengenes-1.png)<!-- -->
+<img src="Readme_files/figure-gfm/eigengenes-1.png" width="100%" />
 
 ``` r
 # grey module = all genes that doesn't fall into other modules were assigned to the grey module
@@ -1225,7 +1225,7 @@ CorLevelPlot(heatmap.data,
              col = viridis(100, option='plasma'))
 ```
 
-![](Readme_files/figure-gfm/eigengenes-2.png)<!-- -->
+<img src="Readme_files/figure-gfm/eigengenes-2.png" width="100%" />
 
 ``` r
              # col = c("blue1", "skyblue", "white", "pink", "red"))
