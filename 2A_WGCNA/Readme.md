@@ -1,28 +1,29 @@
--   [0. Load](#load)
-    -   [- R](#r)
--   [1. WGCNA](#wgcna)
-    -   [-load dds](#load-dds)
-    -   [(-pickSoftThreshold extern)](#picksoftthreshold-extern)
-    -   [-pickSoftThreshold](#picksoftthreshold)
-    -   [-network construction](#network-construction)
-    -   [-Module Eigengenes](#module-eigengenes)
-    -   [-Intramodular analysis: Identifying driver genes](#intramodular-analysis-identifying-driver-genes)
-    -   [-TS Analysis](#ts-analysis)
-    -   [-GO terms enrichment](#go-terms-enrichment)
-    -   [-module to sample](#module-to-sample)
--   [Export into dds](#export-into-dds)
+- [0. Load](#load)
+  - [- R](#r)
+- [1. WGCNA](#wgcna)
+  - [-load dds](#load-dds)
+  - [(-pickSoftThreshold extern)](#picksoftthreshold-extern)
+  - [-pickSoftThreshold](#picksoftthreshold)
+  - [-network construction](#network-construction)
+  - [-Module Eigengenes](#module-eigengenes)
+  - [-Intramodular analysis: Identifying driver
+    genes](#intramodular-analysis-identifying-driver-genes)
+  - [-TS Analysis](#ts-analysis)
+  - [-GO terms enrichment](#go-terms-enrichment)
+  - [-module to sample](#module-to-sample)
+- [Export into dds](#export-into-dds)
 
-# 0. Load {#load}
+# 0. Load
 
-## - R {#r}
+## - R
 
 BiocManager::install()
 
 BiocManager::install(“CorLevelPlot”)
 
-# 1. WGCNA {#wgcna}
+# 1. WGCNA
 
-## -load dds {#load-dds}
+## -load dds
 
 ``` r
 load(file=paste(data,"deseq2.dds", sep="/"))
@@ -31,9 +32,7 @@ dds75 <- dds[rowSums(counts(dds) >= 15) >= 66,]
 nrow(dds75) # 14889 genes left
 ```
 
-```         
-## [1] 14889
-```
+    ## [1] 14889
 
 ``` r
 vsd <- vst(dds75, blind = FALSE) #transform while accounting for design 
@@ -50,38 +49,30 @@ norm.counts <- assay(vsd) %>%
 gsg <- goodSamplesGenes(norm.counts)
 ```
 
-```         
-##  Flagging genes and samples with too many missing values...
-##   ..step 1
-```
+    ##  Flagging genes and samples with too many missing values...
+    ##   ..step 1
 
 ``` r
 summary(gsg)
 ```
 
-```         
-##             Length Class  Mode   
-## goodGenes   14889  -none- logical
-## goodSamples    88  -none- logical
-## allOK           1  -none- logical
-```
+    ##             Length Class  Mode   
+    ## goodGenes   14889  -none- logical
+    ## goodSamples    88  -none- logical
+    ## allOK           1  -none- logical
 
 ``` r
 summary(gsg$goodGenes)
 ```
 
-```         
-##    Mode    TRUE 
-## logical   14889
-```
+    ##    Mode    TRUE 
+    ## logical   14889
 
 ``` r
 gsg$allOK
 ```
 
-```         
-## [1] TRUE
-```
+    ## [1] TRUE
 
 ``` r
 # detect outlier samples - hierarchical clustering - method 1
@@ -89,7 +80,7 @@ htree <- hclust(dist(norm.counts), method = "average")
 plot(htree) # S46, S50, S58?
 ```
 
-<img src="Readme_files/figure-gfm/load_dds-1.png" width="100%"/>
+<img src="Readme_files/figure-gfm/load_dds-1.png" width="100%" />
 
 ``` r
 # PCA 
@@ -108,13 +99,13 @@ ggplot(pca.dat, aes(PC1, PC2)) +
        y = paste0('PC2: ', pca.var.percent[2], ' %'))
 ```
 
-<img src="Readme_files/figure-gfm/load_dds-2.png" width="100%"/>
+<img src="Readme_files/figure-gfm/load_dds-2.png" width="100%" />
 
-## (-pickSoftThreshold extern) {#picksoftthreshold-extern}
+## (-pickSoftThreshold extern)
 
-## -pickSoftThreshold {#picksoftthreshold}
+## -pickSoftThreshold
 
-## -network construction {#network-construction}
+## -network construction
 
 ``` r
 # convert matrix to numeric
@@ -169,7 +160,7 @@ cor <- temp_cor
 save(bwnet,file=paste(data,"bwnet_TS.RDS", sep="/"))
 ```
 
-## -Module Eigengenes {#module-eigengenes}
+## -Module Eigengenes
 
 ``` r
 load(file=paste(data,"bwnet_TS.RDS", sep="/"))
@@ -180,148 +171,357 @@ module_eigengenes <- bwnet$MEs
 head(module_eigengenes) %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 ```
 
-::: {style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; "}
-<table>
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
 <thead>
-<tr class="header">
-<th style="text-align: left;"><p></p></th>
-<th style="text-align: right;"><p>MEblue</p></th>
-<th style="text-align: right;"><p>MEgreenyellow</p></th>
-<th style="text-align: right;"><p>MEturquoise</p></th>
-<th style="text-align: right;"><p>MEred</p></th>
-<th style="text-align: right;"><p>MEpurple</p></th>
-<th style="text-align: right;"><p>MEyellow</p></th>
-<th style="text-align: right;"><p>MEtan</p></th>
-<th style="text-align: right;"><p>MEblack</p></th>
-<th style="text-align: right;"><p>MEmagenta</p></th>
-<th style="text-align: right;"><p>MEsalmon</p></th>
-<th style="text-align: right;"><p>MEgreen</p></th>
-<th style="text-align: right;"><p>MEbrown</p></th>
-<th style="text-align: right;"><p>MEpink</p></th>
-<th style="text-align: right;"><p>MEgrey</p></th>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEblue
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEgreenyellow
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEturquoise
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEred
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEpurple
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEyellow
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEtan
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEblack
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEmagenta
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEsalmon
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEgreen
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEbrown
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEpink
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEgrey
+</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
-<td style="text-align: left;"><p>RNA_P2041_S37</p></td>
-<td style="text-align: right;"><p>0.1281120</p></td>
-<td style="text-align: right;"><p>0.0314268</p></td>
-<td style="text-align: right;"><p>0.0759919</p></td>
-<td style="text-align: right;"><p>-0.0581103</p></td>
-<td style="text-align: right;"><p>-0.1300627</p></td>
-<td style="text-align: right;"><p>-0.1325789</p></td>
-<td style="text-align: right;"><p>-0.0642281</p></td>
-<td style="text-align: right;"><p>-0.0021847</p></td>
-<td style="text-align: right;"><p>-0.1017963</p></td>
-<td style="text-align: right;"><p>-0.0486040</p></td>
-<td style="text-align: right;"><p>0.0165934</p></td>
-<td style="text-align: right;"><p>-0.0924871</p></td>
-<td style="text-align: right;"><p>-0.0568860</p></td>
-<td style="text-align: right;"><p>-0.0075408</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:right;">
+0.1281120
+</td>
+<td style="text-align:right;">
+0.0314268
+</td>
+<td style="text-align:right;">
+0.0759919
+</td>
+<td style="text-align:right;">
+-0.0581103
+</td>
+<td style="text-align:right;">
+-0.1300627
+</td>
+<td style="text-align:right;">
+-0.1325789
+</td>
+<td style="text-align:right;">
+-0.0642281
+</td>
+<td style="text-align:right;">
+-0.0021847
+</td>
+<td style="text-align:right;">
+-0.1017963
+</td>
+<td style="text-align:right;">
+-0.0486040
+</td>
+<td style="text-align:right;">
+0.0165934
+</td>
+<td style="text-align:right;">
+-0.0924871
+</td>
+<td style="text-align:right;">
+-0.0568860
+</td>
+<td style="text-align:right;">
+-0.0075408
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>RNA_P2041_S38</p></td>
-<td style="text-align: right;"><p>0.0062446</p></td>
-<td style="text-align: right;"><p>0.0273521</p></td>
-<td style="text-align: right;"><p>0.0906208</p></td>
-<td style="text-align: right;"><p>0.0552750</p></td>
-<td style="text-align: right;"><p>0.0117340</p></td>
-<td style="text-align: right;"><p>-0.0202258</p></td>
-<td style="text-align: right;"><p>0.0165917</p></td>
-<td style="text-align: right;"><p>-0.0620210</p></td>
-<td style="text-align: right;"><p>-0.0509336</p></td>
-<td style="text-align: right;"><p>-0.0856672</p></td>
-<td style="text-align: right;"><p>-0.0837301</p></td>
-<td style="text-align: right;"><p>-0.0868097</p></td>
-<td style="text-align: right;"><p>-0.0456848</p></td>
-<td style="text-align: right;"><p>0.2027819</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S38
+</td>
+<td style="text-align:right;">
+0.0062446
+</td>
+<td style="text-align:right;">
+0.0273521
+</td>
+<td style="text-align:right;">
+0.0906208
+</td>
+<td style="text-align:right;">
+0.0552750
+</td>
+<td style="text-align:right;">
+0.0117340
+</td>
+<td style="text-align:right;">
+-0.0202258
+</td>
+<td style="text-align:right;">
+0.0165917
+</td>
+<td style="text-align:right;">
+-0.0620210
+</td>
+<td style="text-align:right;">
+-0.0509336
+</td>
+<td style="text-align:right;">
+-0.0856672
+</td>
+<td style="text-align:right;">
+-0.0837301
+</td>
+<td style="text-align:right;">
+-0.0868097
+</td>
+<td style="text-align:right;">
+-0.0456848
+</td>
+<td style="text-align:right;">
+0.2027819
+</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;"><p>RNA_P2041_S39</p></td>
-<td style="text-align: right;"><p>0.1645680</p></td>
-<td style="text-align: right;"><p>0.0416806</p></td>
-<td style="text-align: right;"><p>0.1108524</p></td>
-<td style="text-align: right;"><p>-0.0603458</p></td>
-<td style="text-align: right;"><p>-0.1201275</p></td>
-<td style="text-align: right;"><p>-0.1574578</p></td>
-<td style="text-align: right;"><p>0.0200316</p></td>
-<td style="text-align: right;"><p>-0.0068658</p></td>
-<td style="text-align: right;"><p>-0.1129571</p></td>
-<td style="text-align: right;"><p>-0.0293112</p></td>
-<td style="text-align: right;"><p>0.0071073</p></td>
-<td style="text-align: right;"><p>-0.1145541</p></td>
-<td style="text-align: right;"><p>-0.0581314</p></td>
-<td style="text-align: right;"><p>0.0223168</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S39
+</td>
+<td style="text-align:right;">
+0.1645680
+</td>
+<td style="text-align:right;">
+0.0416806
+</td>
+<td style="text-align:right;">
+0.1108524
+</td>
+<td style="text-align:right;">
+-0.0603458
+</td>
+<td style="text-align:right;">
+-0.1201275
+</td>
+<td style="text-align:right;">
+-0.1574578
+</td>
+<td style="text-align:right;">
+0.0200316
+</td>
+<td style="text-align:right;">
+-0.0068658
+</td>
+<td style="text-align:right;">
+-0.1129571
+</td>
+<td style="text-align:right;">
+-0.0293112
+</td>
+<td style="text-align:right;">
+0.0071073
+</td>
+<td style="text-align:right;">
+-0.1145541
+</td>
+<td style="text-align:right;">
+-0.0581314
+</td>
+<td style="text-align:right;">
+0.0223168
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>RNA_P2041_S40</p></td>
-<td style="text-align: right;"><p>0.0997921</p></td>
-<td style="text-align: right;"><p>0.0580851</p></td>
-<td style="text-align: right;"><p>0.0970832</p></td>
-<td style="text-align: right;"><p>-0.0216944</p></td>
-<td style="text-align: right;"><p>-0.0788621</p></td>
-<td style="text-align: right;"><p>-0.1063083</p></td>
-<td style="text-align: right;"><p>0.0042522</p></td>
-<td style="text-align: right;"><p>-0.0238073</p></td>
-<td style="text-align: right;"><p>-0.0951074</p></td>
-<td style="text-align: right;"><p>-0.0378056</p></td>
-<td style="text-align: right;"><p>-0.0181197</p></td>
-<td style="text-align: right;"><p>-0.1008806</p></td>
-<td style="text-align: right;"><p>-0.0645278</p></td>
-<td style="text-align: right;"><p>0.0428643</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S40
+</td>
+<td style="text-align:right;">
+0.0997921
+</td>
+<td style="text-align:right;">
+0.0580851
+</td>
+<td style="text-align:right;">
+0.0970832
+</td>
+<td style="text-align:right;">
+-0.0216944
+</td>
+<td style="text-align:right;">
+-0.0788621
+</td>
+<td style="text-align:right;">
+-0.1063083
+</td>
+<td style="text-align:right;">
+0.0042522
+</td>
+<td style="text-align:right;">
+-0.0238073
+</td>
+<td style="text-align:right;">
+-0.0951074
+</td>
+<td style="text-align:right;">
+-0.0378056
+</td>
+<td style="text-align:right;">
+-0.0181197
+</td>
+<td style="text-align:right;">
+-0.1008806
+</td>
+<td style="text-align:right;">
+-0.0645278
+</td>
+<td style="text-align:right;">
+0.0428643
+</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;"><p>RNA_P2041_S41</p></td>
-<td style="text-align: right;"><p>0.1591024</p></td>
-<td style="text-align: right;"><p>0.1234278</p></td>
-<td style="text-align: right;"><p>-0.0003433</p></td>
-<td style="text-align: right;"><p>-0.2994517</p></td>
-<td style="text-align: right;"><p>-0.0409261</p></td>
-<td style="text-align: right;"><p>-0.2204171</p></td>
-<td style="text-align: right;"><p>0.1268816</p></td>
-<td style="text-align: right;"><p>0.1551481</p></td>
-<td style="text-align: right;"><p>-0.0299868</p></td>
-<td style="text-align: right;"><p>-0.0415677</p></td>
-<td style="text-align: right;"><p>0.0998807</p></td>
-<td style="text-align: right;"><p>-0.0257840</p></td>
-<td style="text-align: right;"><p>-0.1187182</p></td>
-<td style="text-align: right;"><p>0.0239185</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:right;">
+0.1591024
+</td>
+<td style="text-align:right;">
+0.1234278
+</td>
+<td style="text-align:right;">
+-0.0003433
+</td>
+<td style="text-align:right;">
+-0.2994517
+</td>
+<td style="text-align:right;">
+-0.0409261
+</td>
+<td style="text-align:right;">
+-0.2204171
+</td>
+<td style="text-align:right;">
+0.1268816
+</td>
+<td style="text-align:right;">
+0.1551481
+</td>
+<td style="text-align:right;">
+-0.0299868
+</td>
+<td style="text-align:right;">
+-0.0415677
+</td>
+<td style="text-align:right;">
+0.0998807
+</td>
+<td style="text-align:right;">
+-0.0257840
+</td>
+<td style="text-align:right;">
+-0.1187182
+</td>
+<td style="text-align:right;">
+0.0239185
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>RNA_P2041_S42</p></td>
-<td style="text-align: right;"><p>0.0626866</p></td>
-<td style="text-align: right;"><p>0.0063552</p></td>
-<td style="text-align: right;"><p>0.1106346</p></td>
-<td style="text-align: right;"><p>0.0519351</p></td>
-<td style="text-align: right;"><p>-0.0387361</p></td>
-<td style="text-align: right;"><p>-0.0604608</p></td>
-<td style="text-align: right;"><p>-0.0066684</p></td>
-<td style="text-align: right;"><p>-0.0690776</p></td>
-<td style="text-align: right;"><p>-0.0975534</p></td>
-<td style="text-align: right;"><p>-0.0670320</p></td>
-<td style="text-align: right;"><p>-0.0681120</p></td>
-<td style="text-align: right;"><p>-0.1082488</p></td>
-<td style="text-align: right;"><p>-0.0394585</p></td>
-<td style="text-align: right;"><p>-0.0136884</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S42
+</td>
+<td style="text-align:right;">
+0.0626866
+</td>
+<td style="text-align:right;">
+0.0063552
+</td>
+<td style="text-align:right;">
+0.1106346
+</td>
+<td style="text-align:right;">
+0.0519351
+</td>
+<td style="text-align:right;">
+-0.0387361
+</td>
+<td style="text-align:right;">
+-0.0604608
+</td>
+<td style="text-align:right;">
+-0.0066684
+</td>
+<td style="text-align:right;">
+-0.0690776
+</td>
+<td style="text-align:right;">
+-0.0975534
+</td>
+<td style="text-align:right;">
+-0.0670320
+</td>
+<td style="text-align:right;">
+-0.0681120
+</td>
+<td style="text-align:right;">
+-0.1082488
+</td>
+<td style="text-align:right;">
+-0.0394585
+</td>
+<td style="text-align:right;">
+-0.0136884
+</td>
 </tr>
 </tbody>
 </table>
-:::
+
+</div>
 
 ``` r
 # get number of genes for each module
 table(bwnet$colors)
 ```
 
-```         
-## 
-##       black        blue       brown       green greenyellow        grey 
-##         555        2371        2108        1099         127         361 
-##     magenta        pink      purple         red      salmon         tan 
-##         349         462         280         844         113         123 
-##   turquoise      yellow 
-##        4100        1997
-```
+    ## 
+    ##       black        blue       brown       green greenyellow        grey 
+    ##         555        2371        2108        1099         127         361 
+    ##     magenta        pink      purple         red      salmon         tan 
+    ##         349         462         280         844         113         123 
+    ##   turquoise      yellow 
+    ##        4100        1997
 
 ``` r
 # Plot the dendrogram and the module colors before and after merging underneath
@@ -333,7 +533,7 @@ plotDendroAndColors(bwnet$dendrograms[[1]], cbind(bwnet$unmergedColors, bwnet$co
                     guideHang = 0.05)
 ```
 
-<img src="Readme_files/figure-gfm/eigengenes-1.png" width="100%"/>
+<img src="Readme_files/figure-gfm/eigengenes-1.png" width="100%" />
 
 ``` r
 # grey module = all genes that doesn't fall into other modules were assigned to the grey module
@@ -353,9 +553,7 @@ traits <- colData$treatment_bin <- ifelse(grepl('Hx', colData$treatment), 1, 0)
 colData$genotype %>% levels()
 ```
 
-```         
-## [1] "Kelly" "HIF1A" "HIF2A" "HIF1B"
-```
+    ## [1] "Kelly" "HIF1A" "HIF2A" "HIF1B"
 
 ``` r
 genotype_bin <- binarizeCategoricalColumns(colData$genotype,
@@ -377,9 +575,7 @@ rownames(traits) <- rownames(colData)
 dim(traits)
 ```
 
-```         
-## [1] 88 13
-```
+    ## [1] 88 13
 
 ``` r
 orig.colnames <- colnames(traits)
@@ -399,224 +595,618 @@ heatmap.data <- merge(module_eigengenes, traits, by = 'row.names')
 head(heatmap.data) %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 ```
 
-::: {style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; "}
-<table>
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
 <thead>
-<tr class="header">
-<th style="text-align: left;"><p>Row.names</p></th>
-<th style="text-align: right;"><p>MEblue</p></th>
-<th style="text-align: right;"><p>MEgreenyellow</p></th>
-<th style="text-align: right;"><p>MEturquoise</p></th>
-<th style="text-align: right;"><p>MEred</p></th>
-<th style="text-align: right;"><p>MEpurple</p></th>
-<th style="text-align: right;"><p>MEyellow</p></th>
-<th style="text-align: right;"><p>MEtan</p></th>
-<th style="text-align: right;"><p>MEblack</p></th>
-<th style="text-align: right;"><p>MEmagenta</p></th>
-<th style="text-align: right;"><p>MEsalmon</p></th>
-<th style="text-align: right;"><p>MEgreen</p></th>
-<th style="text-align: right;"><p>MEbrown</p></th>
-<th style="text-align: right;"><p>MEpink</p></th>
-<th style="text-align: right;"><p>MEgrey</p></th>
-<th style="text-align: right;"><p>Hypoxia</p></th>
-<th style="text-align: right;"><p>Kelly</p></th>
-<th style="text-align: right;"><p>HIF1A</p></th>
-<th style="text-align: right;"><p>HIF2A</p></th>
-<th style="text-align: right;"><p>HIF1B</p></th>
-<th style="text-align: right;"><p>Kelly_Nx</p></th>
-<th style="text-align: right;"><p>Kelly_Hx</p></th>
-<th style="text-align: right;"><p>HIF1A_Nx</p></th>
-<th style="text-align: right;"><p>HIF1A_Hx</p></th>
-<th style="text-align: right;"><p>HIF2A_Nx</p></th>
-<th style="text-align: right;"><p>HIF2A_Hx</p></th>
-<th style="text-align: right;"><p>HIF1B_Nx</p></th>
-<th style="text-align: right;"><p>HIF1B_Hx</p></th>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Row.names
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEblue
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEgreenyellow
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEturquoise
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEred
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEpurple
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEyellow
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEtan
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEblack
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEmagenta
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEsalmon
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEgreen
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEbrown
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEpink
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEgrey
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Hypoxia
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Kelly
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+HIF1A
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+HIF2A
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+HIF1B
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Kelly_Nx
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Kelly_Hx
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+HIF1A_Nx
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+HIF1A_Hx
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+HIF2A_Nx
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+HIF2A_Hx
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+HIF1B_Nx
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+HIF1B_Hx
+</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
-<td style="text-align: left;"><p>RNA_P2041_S37</p></td>
-<td style="text-align: right;"><p>0.1281120</p></td>
-<td style="text-align: right;"><p>0.0314268</p></td>
-<td style="text-align: right;"><p>0.0759919</p></td>
-<td style="text-align: right;"><p>-0.0581103</p></td>
-<td style="text-align: right;"><p>-0.1300627</p></td>
-<td style="text-align: right;"><p>-0.1325789</p></td>
-<td style="text-align: right;"><p>-0.0642281</p></td>
-<td style="text-align: right;"><p>-0.0021847</p></td>
-<td style="text-align: right;"><p>-0.1017963</p></td>
-<td style="text-align: right;"><p>-0.0486040</p></td>
-<td style="text-align: right;"><p>0.0165934</p></td>
-<td style="text-align: right;"><p>-0.0924871</p></td>
-<td style="text-align: right;"><p>-0.0568860</p></td>
-<td style="text-align: right;"><p>-0.0075408</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>1</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>1</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:right;">
+0.1281120
+</td>
+<td style="text-align:right;">
+0.0314268
+</td>
+<td style="text-align:right;">
+0.0759919
+</td>
+<td style="text-align:right;">
+-0.0581103
+</td>
+<td style="text-align:right;">
+-0.1300627
+</td>
+<td style="text-align:right;">
+-0.1325789
+</td>
+<td style="text-align:right;">
+-0.0642281
+</td>
+<td style="text-align:right;">
+-0.0021847
+</td>
+<td style="text-align:right;">
+-0.1017963
+</td>
+<td style="text-align:right;">
+-0.0486040
+</td>
+<td style="text-align:right;">
+0.0165934
+</td>
+<td style="text-align:right;">
+-0.0924871
+</td>
+<td style="text-align:right;">
+-0.0568860
+</td>
+<td style="text-align:right;">
+-0.0075408
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>RNA_P2041_S38</p></td>
-<td style="text-align: right;"><p>0.0062446</p></td>
-<td style="text-align: right;"><p>0.0273521</p></td>
-<td style="text-align: right;"><p>0.0906208</p></td>
-<td style="text-align: right;"><p>0.0552750</p></td>
-<td style="text-align: right;"><p>0.0117340</p></td>
-<td style="text-align: right;"><p>-0.0202258</p></td>
-<td style="text-align: right;"><p>0.0165917</p></td>
-<td style="text-align: right;"><p>-0.0620210</p></td>
-<td style="text-align: right;"><p>-0.0509336</p></td>
-<td style="text-align: right;"><p>-0.0856672</p></td>
-<td style="text-align: right;"><p>-0.0837301</p></td>
-<td style="text-align: right;"><p>-0.0868097</p></td>
-<td style="text-align: right;"><p>-0.0456848</p></td>
-<td style="text-align: right;"><p>0.2027819</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>1</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>1</p></td>
-<td style="text-align: right;"><p>0</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S38
+</td>
+<td style="text-align:right;">
+0.0062446
+</td>
+<td style="text-align:right;">
+0.0273521
+</td>
+<td style="text-align:right;">
+0.0906208
+</td>
+<td style="text-align:right;">
+0.0552750
+</td>
+<td style="text-align:right;">
+0.0117340
+</td>
+<td style="text-align:right;">
+-0.0202258
+</td>
+<td style="text-align:right;">
+0.0165917
+</td>
+<td style="text-align:right;">
+-0.0620210
+</td>
+<td style="text-align:right;">
+-0.0509336
+</td>
+<td style="text-align:right;">
+-0.0856672
+</td>
+<td style="text-align:right;">
+-0.0837301
+</td>
+<td style="text-align:right;">
+-0.0868097
+</td>
+<td style="text-align:right;">
+-0.0456848
+</td>
+<td style="text-align:right;">
+0.2027819
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;"><p>RNA_P2041_S39</p></td>
-<td style="text-align: right;"><p>0.1645680</p></td>
-<td style="text-align: right;"><p>0.0416806</p></td>
-<td style="text-align: right;"><p>0.1108524</p></td>
-<td style="text-align: right;"><p>-0.0603458</p></td>
-<td style="text-align: right;"><p>-0.1201275</p></td>
-<td style="text-align: right;"><p>-0.1574578</p></td>
-<td style="text-align: right;"><p>0.0200316</p></td>
-<td style="text-align: right;"><p>-0.0068658</p></td>
-<td style="text-align: right;"><p>-0.1129571</p></td>
-<td style="text-align: right;"><p>-0.0293112</p></td>
-<td style="text-align: right;"><p>0.0071073</p></td>
-<td style="text-align: right;"><p>-0.1145541</p></td>
-<td style="text-align: right;"><p>-0.0581314</p></td>
-<td style="text-align: right;"><p>0.0223168</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>1</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>1</p></td>
-<td style="text-align: right;"><p>0</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S39
+</td>
+<td style="text-align:right;">
+0.1645680
+</td>
+<td style="text-align:right;">
+0.0416806
+</td>
+<td style="text-align:right;">
+0.1108524
+</td>
+<td style="text-align:right;">
+-0.0603458
+</td>
+<td style="text-align:right;">
+-0.1201275
+</td>
+<td style="text-align:right;">
+-0.1574578
+</td>
+<td style="text-align:right;">
+0.0200316
+</td>
+<td style="text-align:right;">
+-0.0068658
+</td>
+<td style="text-align:right;">
+-0.1129571
+</td>
+<td style="text-align:right;">
+-0.0293112
+</td>
+<td style="text-align:right;">
+0.0071073
+</td>
+<td style="text-align:right;">
+-0.1145541
+</td>
+<td style="text-align:right;">
+-0.0581314
+</td>
+<td style="text-align:right;">
+0.0223168
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>RNA_P2041_S40</p></td>
-<td style="text-align: right;"><p>0.0997921</p></td>
-<td style="text-align: right;"><p>0.0580851</p></td>
-<td style="text-align: right;"><p>0.0970832</p></td>
-<td style="text-align: right;"><p>-0.0216944</p></td>
-<td style="text-align: right;"><p>-0.0788621</p></td>
-<td style="text-align: right;"><p>-0.1063083</p></td>
-<td style="text-align: right;"><p>0.0042522</p></td>
-<td style="text-align: right;"><p>-0.0238073</p></td>
-<td style="text-align: right;"><p>-0.0951074</p></td>
-<td style="text-align: right;"><p>-0.0378056</p></td>
-<td style="text-align: right;"><p>-0.0181197</p></td>
-<td style="text-align: right;"><p>-0.1008806</p></td>
-<td style="text-align: right;"><p>-0.0645278</p></td>
-<td style="text-align: right;"><p>0.0428643</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>1</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>1</p></td>
-<td style="text-align: right;"><p>0</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S40
+</td>
+<td style="text-align:right;">
+0.0997921
+</td>
+<td style="text-align:right;">
+0.0580851
+</td>
+<td style="text-align:right;">
+0.0970832
+</td>
+<td style="text-align:right;">
+-0.0216944
+</td>
+<td style="text-align:right;">
+-0.0788621
+</td>
+<td style="text-align:right;">
+-0.1063083
+</td>
+<td style="text-align:right;">
+0.0042522
+</td>
+<td style="text-align:right;">
+-0.0238073
+</td>
+<td style="text-align:right;">
+-0.0951074
+</td>
+<td style="text-align:right;">
+-0.0378056
+</td>
+<td style="text-align:right;">
+-0.0181197
+</td>
+<td style="text-align:right;">
+-0.1008806
+</td>
+<td style="text-align:right;">
+-0.0645278
+</td>
+<td style="text-align:right;">
+0.0428643
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;"><p>RNA_P2041_S41</p></td>
-<td style="text-align: right;"><p>0.1591024</p></td>
-<td style="text-align: right;"><p>0.1234278</p></td>
-<td style="text-align: right;"><p>-0.0003433</p></td>
-<td style="text-align: right;"><p>-0.2994517</p></td>
-<td style="text-align: right;"><p>-0.0409261</p></td>
-<td style="text-align: right;"><p>-0.2204171</p></td>
-<td style="text-align: right;"><p>0.1268816</p></td>
-<td style="text-align: right;"><p>0.1551481</p></td>
-<td style="text-align: right;"><p>-0.0299868</p></td>
-<td style="text-align: right;"><p>-0.0415677</p></td>
-<td style="text-align: right;"><p>0.0998807</p></td>
-<td style="text-align: right;"><p>-0.0257840</p></td>
-<td style="text-align: right;"><p>-0.1187182</p></td>
-<td style="text-align: right;"><p>0.0239185</p></td>
-<td style="text-align: right;"><p>1</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>1</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>1</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:right;">
+0.1591024
+</td>
+<td style="text-align:right;">
+0.1234278
+</td>
+<td style="text-align:right;">
+-0.0003433
+</td>
+<td style="text-align:right;">
+-0.2994517
+</td>
+<td style="text-align:right;">
+-0.0409261
+</td>
+<td style="text-align:right;">
+-0.2204171
+</td>
+<td style="text-align:right;">
+0.1268816
+</td>
+<td style="text-align:right;">
+0.1551481
+</td>
+<td style="text-align:right;">
+-0.0299868
+</td>
+<td style="text-align:right;">
+-0.0415677
+</td>
+<td style="text-align:right;">
+0.0998807
+</td>
+<td style="text-align:right;">
+-0.0257840
+</td>
+<td style="text-align:right;">
+-0.1187182
+</td>
+<td style="text-align:right;">
+0.0239185
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>RNA_P2041_S42</p></td>
-<td style="text-align: right;"><p>0.0626866</p></td>
-<td style="text-align: right;"><p>0.0063552</p></td>
-<td style="text-align: right;"><p>0.1106346</p></td>
-<td style="text-align: right;"><p>0.0519351</p></td>
-<td style="text-align: right;"><p>-0.0387361</p></td>
-<td style="text-align: right;"><p>-0.0604608</p></td>
-<td style="text-align: right;"><p>-0.0066684</p></td>
-<td style="text-align: right;"><p>-0.0690776</p></td>
-<td style="text-align: right;"><p>-0.0975534</p></td>
-<td style="text-align: right;"><p>-0.0670320</p></td>
-<td style="text-align: right;"><p>-0.0681120</p></td>
-<td style="text-align: right;"><p>-0.1082488</p></td>
-<td style="text-align: right;"><p>-0.0394585</p></td>
-<td style="text-align: right;"><p>-0.0136884</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>1</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>1</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
-<td style="text-align: right;"><p>0</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S42
+</td>
+<td style="text-align:right;">
+0.0626866
+</td>
+<td style="text-align:right;">
+0.0063552
+</td>
+<td style="text-align:right;">
+0.1106346
+</td>
+<td style="text-align:right;">
+0.0519351
+</td>
+<td style="text-align:right;">
+-0.0387361
+</td>
+<td style="text-align:right;">
+-0.0604608
+</td>
+<td style="text-align:right;">
+-0.0066684
+</td>
+<td style="text-align:right;">
+-0.0690776
+</td>
+<td style="text-align:right;">
+-0.0975534
+</td>
+<td style="text-align:right;">
+-0.0670320
+</td>
+<td style="text-align:right;">
+-0.0681120
+</td>
+<td style="text-align:right;">
+-0.1082488
+</td>
+<td style="text-align:right;">
+-0.0394585
+</td>
+<td style="text-align:right;">
+-0.0136884
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
 </tr>
 </tbody>
 </table>
-:::
+
+</div>
 
 ``` r
 heatmap.data <- heatmap.data %>% 
@@ -624,9 +1214,7 @@ heatmap.data <- heatmap.data %>%
 dim(heatmap.data)
 ```
 
-```         
-## [1] 88 27
-```
+    ## [1] 88 27
 
 ``` r
 MEs <- heatmap.data %>% colnames() %>% str_detect(pattern="ME") %>% sum()
@@ -637,7 +1225,7 @@ CorLevelPlot(heatmap.data,
              col = viridis(100, option='plasma'))
 ```
 
-<img src="Readme_files/figure-gfm/eigengenes-2.png" width="100%"/>
+<img src="Readme_files/figure-gfm/eigengenes-2.png" width="100%" />
 
 ``` r
              # col = c("blue1", "skyblue", "white", "pink", "red"))
@@ -650,25 +1238,53 @@ module.gene.mapping %>%
   rownames() %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 ```
 
-::: {style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; "}
-+-----------------+
-| x               |
-+:================+
-| ENSG00000000460 |
-+-----------------+
-| ENSG00000001084 |
-+-----------------+
-| ENSG00000001167 |
-+-----------------+
-| ENSG00000001497 |
-+-----------------+
-| ENSG00000002549 |
-+-----------------+
-| ENSG00000003096 |
-+-----------------+
-:::
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
 
-## -Intramodular analysis: Identifying driver genes {#intramodular-analysis-identifying-driver-genes}
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+x
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+ENSG00000000460
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000001084
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000001167
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000001497
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000002549
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000003096
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+
+## -Intramodular analysis: Identifying driver genes
 
 ``` r
 module.membership.measure <- cor(module_eigengenes, norm.counts, use = 'p')
@@ -677,313 +1293,799 @@ module.membership.measure.pvals <- corPvalueStudent(module.membership.measure, n
 module.membership.measure[1:10,1:10] %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 ```
 
-::: {style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; "}
-<table>
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
 <thead>
-<tr class="header">
-<th style="text-align: left;"><p></p></th>
-<th style="text-align: right;"><p>ENSG00000000003</p></th>
-<th style="text-align: right;"><p>ENSG00000000419</p></th>
-<th style="text-align: right;"><p>ENSG00000000457</p></th>
-<th style="text-align: right;"><p>ENSG00000000460</p></th>
-<th style="text-align: right;"><p>ENSG00000001084</p></th>
-<th style="text-align: right;"><p>ENSG00000001167</p></th>
-<th style="text-align: right;"><p>ENSG00000001460</p></th>
-<th style="text-align: right;"><p>ENSG00000001461</p></th>
-<th style="text-align: right;"><p>ENSG00000001497</p></th>
-<th style="text-align: right;"><p>ENSG00000001617</p></th>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000000003
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000000419
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000000457
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000000460
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000001084
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000001167
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000001460
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000001461
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000001497
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000001617
+</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
-<td style="text-align: left;"><p>MEblue</p></td>
-<td style="text-align: right;"><p>0.4339447</p></td>
-<td style="text-align: right;"><p>-0.5050024</p></td>
-<td style="text-align: right;"><p>-0.3361417</p></td>
-<td style="text-align: right;"><p>0.4771875</p></td>
-<td style="text-align: right;"><p>-0.2442692</p></td>
-<td style="text-align: right;"><p>-0.2465824</p></td>
-<td style="text-align: right;"><p>0.3051790</p></td>
-<td style="text-align: right;"><p>-0.1776334</p></td>
-<td style="text-align: right;"><p>0.5691091</p></td>
-<td style="text-align: right;"><p>0.2416673</p></td>
+<tr>
+<td style="text-align:left;">
+MEblue
+</td>
+<td style="text-align:right;">
+0.4339447
+</td>
+<td style="text-align:right;">
+-0.5050024
+</td>
+<td style="text-align:right;">
+-0.3361417
+</td>
+<td style="text-align:right;">
+0.4771875
+</td>
+<td style="text-align:right;">
+-0.2442692
+</td>
+<td style="text-align:right;">
+-0.2465824
+</td>
+<td style="text-align:right;">
+0.3051790
+</td>
+<td style="text-align:right;">
+-0.1776334
+</td>
+<td style="text-align:right;">
+0.5691091
+</td>
+<td style="text-align:right;">
+0.2416673
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>MEgreenyellow</p></td>
-<td style="text-align: right;"><p>-0.1715155</p></td>
-<td style="text-align: right;"><p>0.0338527</p></td>
-<td style="text-align: right;"><p>-0.6976040</p></td>
-<td style="text-align: right;"><p>0.4939732</p></td>
-<td style="text-align: right;"><p>0.6452494</p></td>
-<td style="text-align: right;"><p>0.1669761</p></td>
-<td style="text-align: right;"><p>-0.5321144</p></td>
-<td style="text-align: right;"><p>-0.0897044</p></td>
-<td style="text-align: right;"><p>0.5719642</p></td>
-<td style="text-align: right;"><p>0.6918788</p></td>
+<tr>
+<td style="text-align:left;">
+MEgreenyellow
+</td>
+<td style="text-align:right;">
+-0.1715155
+</td>
+<td style="text-align:right;">
+0.0338527
+</td>
+<td style="text-align:right;">
+-0.6976040
+</td>
+<td style="text-align:right;">
+0.4939732
+</td>
+<td style="text-align:right;">
+0.6452494
+</td>
+<td style="text-align:right;">
+0.1669761
+</td>
+<td style="text-align:right;">
+-0.5321144
+</td>
+<td style="text-align:right;">
+-0.0897044
+</td>
+<td style="text-align:right;">
+0.5719642
+</td>
+<td style="text-align:right;">
+0.6918788
+</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;"><p>MEturquoise</p></td>
-<td style="text-align: right;"><p>-0.2458168</p></td>
-<td style="text-align: right;"><p>0.4088773</p></td>
-<td style="text-align: right;"><p>-0.7771590</p></td>
-<td style="text-align: right;"><p>0.9355040</p></td>
-<td style="text-align: right;"><p>0.4987265</p></td>
-<td style="text-align: right;"><p>0.6509596</p></td>
-<td style="text-align: right;"><p>-0.2692951</p></td>
-<td style="text-align: right;"><p>-0.8942265</p></td>
-<td style="text-align: right;"><p>0.8782823</p></td>
-<td style="text-align: right;"><p>-0.1938121</p></td>
+<tr>
+<td style="text-align:left;">
+MEturquoise
+</td>
+<td style="text-align:right;">
+-0.2458168
+</td>
+<td style="text-align:right;">
+0.4088773
+</td>
+<td style="text-align:right;">
+-0.7771590
+</td>
+<td style="text-align:right;">
+0.9355040
+</td>
+<td style="text-align:right;">
+0.4987265
+</td>
+<td style="text-align:right;">
+0.6509596
+</td>
+<td style="text-align:right;">
+-0.2692951
+</td>
+<td style="text-align:right;">
+-0.8942265
+</td>
+<td style="text-align:right;">
+0.8782823
+</td>
+<td style="text-align:right;">
+-0.1938121
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>MEred</p></td>
-<td style="text-align: right;"><p>-0.4177097</p></td>
-<td style="text-align: right;"><p>0.8627403</p></td>
-<td style="text-align: right;"><p>-0.0528473</p></td>
-<td style="text-align: right;"><p>0.1580826</p></td>
-<td style="text-align: right;"><p>0.4905091</p></td>
-<td style="text-align: right;"><p>0.5925330</p></td>
-<td style="text-align: right;"><p>-0.4449685</p></td>
-<td style="text-align: right;"><p>-0.4950865</p></td>
-<td style="text-align: right;"><p>-0.0620913</p></td>
-<td style="text-align: right;"><p>-0.5582321</p></td>
+<tr>
+<td style="text-align:left;">
+MEred
+</td>
+<td style="text-align:right;">
+-0.4177097
+</td>
+<td style="text-align:right;">
+0.8627403
+</td>
+<td style="text-align:right;">
+-0.0528473
+</td>
+<td style="text-align:right;">
+0.1580826
+</td>
+<td style="text-align:right;">
+0.4905091
+</td>
+<td style="text-align:right;">
+0.5925330
+</td>
+<td style="text-align:right;">
+-0.4449685
+</td>
+<td style="text-align:right;">
+-0.4950865
+</td>
+<td style="text-align:right;">
+-0.0620913
+</td>
+<td style="text-align:right;">
+-0.5582321
+</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;"><p>MEpurple</p></td>
-<td style="text-align: right;"><p>-0.6500057</p></td>
-<td style="text-align: right;"><p>0.3778904</p></td>
-<td style="text-align: right;"><p>-0.1112036</p></td>
-<td style="text-align: right;"><p>-0.1527466</p></td>
-<td style="text-align: right;"><p>0.4149976</p></td>
-<td style="text-align: right;"><p>0.5571761</p></td>
-<td style="text-align: right;"><p>-0.3996946</p></td>
-<td style="text-align: right;"><p>0.0184501</p></td>
-<td style="text-align: right;"><p>-0.0805389</p></td>
-<td style="text-align: right;"><p>-0.0027197</p></td>
+<tr>
+<td style="text-align:left;">
+MEpurple
+</td>
+<td style="text-align:right;">
+-0.6500057
+</td>
+<td style="text-align:right;">
+0.3778904
+</td>
+<td style="text-align:right;">
+-0.1112036
+</td>
+<td style="text-align:right;">
+-0.1527466
+</td>
+<td style="text-align:right;">
+0.4149976
+</td>
+<td style="text-align:right;">
+0.5571761
+</td>
+<td style="text-align:right;">
+-0.3996946
+</td>
+<td style="text-align:right;">
+0.0184501
+</td>
+<td style="text-align:right;">
+-0.0805389
+</td>
+<td style="text-align:right;">
+-0.0027197
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>MEyellow</p></td>
-<td style="text-align: right;"><p>-0.3315024</p></td>
-<td style="text-align: right;"><p>0.4226490</p></td>
-<td style="text-align: right;"><p>0.4423548</p></td>
-<td style="text-align: right;"><p>-0.5692261</p></td>
-<td style="text-align: right;"><p>0.1464383</p></td>
-<td style="text-align: right;"><p>0.1226267</p></td>
-<td style="text-align: right;"><p>-0.2664490</p></td>
-<td style="text-align: right;"><p>0.2938221</p></td>
-<td style="text-align: right;"><p>-0.6590922</p></td>
-<td style="text-align: right;"><p>-0.2025632</p></td>
+<tr>
+<td style="text-align:left;">
+MEyellow
+</td>
+<td style="text-align:right;">
+-0.3315024
+</td>
+<td style="text-align:right;">
+0.4226490
+</td>
+<td style="text-align:right;">
+0.4423548
+</td>
+<td style="text-align:right;">
+-0.5692261
+</td>
+<td style="text-align:right;">
+0.1464383
+</td>
+<td style="text-align:right;">
+0.1226267
+</td>
+<td style="text-align:right;">
+-0.2664490
+</td>
+<td style="text-align:right;">
+0.2938221
+</td>
+<td style="text-align:right;">
+-0.6590922
+</td>
+<td style="text-align:right;">
+-0.2025632
+</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;"><p>MEtan</p></td>
-<td style="text-align: right;"><p>-0.1845471</p></td>
-<td style="text-align: right;"><p>-0.4908305</p></td>
-<td style="text-align: right;"><p>-0.0008218</p></td>
-<td style="text-align: right;"><p>-0.2521394</p></td>
-<td style="text-align: right;"><p>-0.2030251</p></td>
-<td style="text-align: right;"><p>-0.0008586</p></td>
-<td style="text-align: right;"><p>0.2147341</p></td>
-<td style="text-align: right;"><p>0.3713840</p></td>
-<td style="text-align: right;"><p>0.0960995</p></td>
-<td style="text-align: right;"><p>0.3463287</p></td>
+<tr>
+<td style="text-align:left;">
+MEtan
+</td>
+<td style="text-align:right;">
+-0.1845471
+</td>
+<td style="text-align:right;">
+-0.4908305
+</td>
+<td style="text-align:right;">
+-0.0008218
+</td>
+<td style="text-align:right;">
+-0.2521394
+</td>
+<td style="text-align:right;">
+-0.2030251
+</td>
+<td style="text-align:right;">
+-0.0008586
+</td>
+<td style="text-align:right;">
+0.2147341
+</td>
+<td style="text-align:right;">
+0.3713840
+</td>
+<td style="text-align:right;">
+0.0960995
+</td>
+<td style="text-align:right;">
+0.3463287
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>MEblack</p></td>
-<td style="text-align: right;"><p>0.2916974</p></td>
-<td style="text-align: right;"><p>-0.5758474</p></td>
-<td style="text-align: right;"><p>0.0663694</p></td>
-<td style="text-align: right;"><p>-0.3242677</p></td>
-<td style="text-align: right;"><p>-0.0302205</p></td>
-<td style="text-align: right;"><p>-0.5987009</p></td>
-<td style="text-align: right;"><p>-0.0832604</p></td>
-<td style="text-align: right;"><p>0.7426329</p></td>
-<td style="text-align: right;"><p>-0.1723922</p></td>
-<td style="text-align: right;"><p>0.8698807</p></td>
+<tr>
+<td style="text-align:left;">
+MEblack
+</td>
+<td style="text-align:right;">
+0.2916974
+</td>
+<td style="text-align:right;">
+-0.5758474
+</td>
+<td style="text-align:right;">
+0.0663694
+</td>
+<td style="text-align:right;">
+-0.3242677
+</td>
+<td style="text-align:right;">
+-0.0302205
+</td>
+<td style="text-align:right;">
+-0.5987009
+</td>
+<td style="text-align:right;">
+-0.0832604
+</td>
+<td style="text-align:right;">
+0.7426329
+</td>
+<td style="text-align:right;">
+-0.1723922
+</td>
+<td style="text-align:right;">
+0.8698807
+</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;"><p>MEmagenta</p></td>
-<td style="text-align: right;"><p>-0.1726557</p></td>
-<td style="text-align: right;"><p>0.0173259</p></td>
-<td style="text-align: right;"><p>0.1605297</p></td>
-<td style="text-align: right;"><p>-0.4963159</p></td>
-<td style="text-align: right;"><p>0.3600614</p></td>
-<td style="text-align: right;"><p>-0.1813246</p></td>
-<td style="text-align: right;"><p>-0.4697569</p></td>
-<td style="text-align: right;"><p>0.6545480</p></td>
-<td style="text-align: right;"><p>-0.4484685</p></td>
-<td style="text-align: right;"><p>0.6079051</p></td>
+<tr>
+<td style="text-align:left;">
+MEmagenta
+</td>
+<td style="text-align:right;">
+-0.1726557
+</td>
+<td style="text-align:right;">
+0.0173259
+</td>
+<td style="text-align:right;">
+0.1605297
+</td>
+<td style="text-align:right;">
+-0.4963159
+</td>
+<td style="text-align:right;">
+0.3600614
+</td>
+<td style="text-align:right;">
+-0.1813246
+</td>
+<td style="text-align:right;">
+-0.4697569
+</td>
+<td style="text-align:right;">
+0.6545480
+</td>
+<td style="text-align:right;">
+-0.4484685
+</td>
+<td style="text-align:right;">
+0.6079051
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>MEsalmon</p></td>
-<td style="text-align: right;"><p>0.6713523</p></td>
-<td style="text-align: right;"><p>-0.1705023</p></td>
-<td style="text-align: right;"><p>0.3825966</p></td>
-<td style="text-align: right;"><p>-0.1236211</p></td>
-<td style="text-align: right;"><p>-0.2205614</p></td>
-<td style="text-align: right;"><p>-0.5488556</p></td>
-<td style="text-align: right;"><p>0.0396369</p></td>
-<td style="text-align: right;"><p>0.2570537</p></td>
-<td style="text-align: right;"><p>-0.3830369</p></td>
-<td style="text-align: right;"><p>0.0809468</p></td>
+<tr>
+<td style="text-align:left;">
+MEsalmon
+</td>
+<td style="text-align:right;">
+0.6713523
+</td>
+<td style="text-align:right;">
+-0.1705023
+</td>
+<td style="text-align:right;">
+0.3825966
+</td>
+<td style="text-align:right;">
+-0.1236211
+</td>
+<td style="text-align:right;">
+-0.2205614
+</td>
+<td style="text-align:right;">
+-0.5488556
+</td>
+<td style="text-align:right;">
+0.0396369
+</td>
+<td style="text-align:right;">
+0.2570537
+</td>
+<td style="text-align:right;">
+-0.3830369
+</td>
+<td style="text-align:right;">
+0.0809468
+</td>
 </tr>
 </tbody>
 </table>
-:::
+
+</div>
 
 ``` r
 module.membership.measure.pvals[1:10,1:10] %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 ```
 
-::: {style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; "}
-<table>
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
 <thead>
-<tr class="header">
-<th style="text-align: left;"><p></p></th>
-<th style="text-align: right;"><p>ENSG00000000003</p></th>
-<th style="text-align: right;"><p>ENSG00000000419</p></th>
-<th style="text-align: right;"><p>ENSG00000000457</p></th>
-<th style="text-align: right;"><p>ENSG00000000460</p></th>
-<th style="text-align: right;"><p>ENSG00000001084</p></th>
-<th style="text-align: right;"><p>ENSG00000001167</p></th>
-<th style="text-align: right;"><p>ENSG00000001460</p></th>
-<th style="text-align: right;"><p>ENSG00000001461</p></th>
-<th style="text-align: right;"><p>ENSG00000001497</p></th>
-<th style="text-align: right;"><p>ENSG00000001617</p></th>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000000003
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000000419
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000000457
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000000460
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000001084
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000001167
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000001460
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000001461
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000001497
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+ENSG00000001617
+</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
-<td style="text-align: left;"><p>MEblue</p></td>
-<td style="text-align: right;"><p>0.0000240</p></td>
-<td style="text-align: right;"><p>0.0000005</p></td>
-<td style="text-align: right;"><p>0.0013652</p></td>
-<td style="text-align: right;"><p>0.0000026</p></td>
-<td style="text-align: right;"><p>0.0218166</p></td>
-<td style="text-align: right;"><p>0.0205605</p></td>
-<td style="text-align: right;"><p>0.0038376</p></td>
-<td style="text-align: right;"><p>0.0977788</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.0233072</p></td>
+<tr>
+<td style="text-align:left;">
+MEblue
+</td>
+<td style="text-align:right;">
+0.0000240
+</td>
+<td style="text-align:right;">
+0.0000005
+</td>
+<td style="text-align:right;">
+0.0013652
+</td>
+<td style="text-align:right;">
+0.0000026
+</td>
+<td style="text-align:right;">
+0.0218166
+</td>
+<td style="text-align:right;">
+0.0205605
+</td>
+<td style="text-align:right;">
+0.0038376
+</td>
+<td style="text-align:right;">
+0.0977788
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0233072
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>MEgreenyellow</p></td>
-<td style="text-align: right;"><p>0.1100837</p></td>
-<td style="text-align: right;"><p>0.7541931</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.0000010</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.1199661</p></td>
-<td style="text-align: right;"><p>0.0000001</p></td>
-<td style="text-align: right;"><p>0.4058905</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
+<tr>
+<td style="text-align:left;">
+MEgreenyellow
+</td>
+<td style="text-align:right;">
+0.1100837
+</td>
+<td style="text-align:right;">
+0.7541931
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0000010
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.1199661
+</td>
+<td style="text-align:right;">
+0.0000001
+</td>
+<td style="text-align:right;">
+0.4058905
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;"><p>MEturquoise</p></td>
-<td style="text-align: right;"><p>0.0209692</p></td>
-<td style="text-align: right;"><p>0.0000765</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.0000008</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.0111760</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.0704013</p></td>
+<tr>
+<td style="text-align:left;">
+MEturquoise
+</td>
+<td style="text-align:right;">
+0.0209692
+</td>
+<td style="text-align:right;">
+0.0000765
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0000008
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0111760
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0704013
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>MEred</p></td>
-<td style="text-align: right;"><p>0.0000514</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.6248379</p></td>
-<td style="text-align: right;"><p>0.1412885</p></td>
-<td style="text-align: right;"><p>0.0000012</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.0000140</p></td>
-<td style="text-align: right;"><p>0.0000009</p></td>
-<td style="text-align: right;"><p>0.5654979</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
+<tr>
+<td style="text-align:left;">
+MEred
+</td>
+<td style="text-align:right;">
+0.0000514
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.6248379
+</td>
+<td style="text-align:right;">
+0.1412885
+</td>
+<td style="text-align:right;">
+0.0000012
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0000140
+</td>
+<td style="text-align:right;">
+0.0000009
+</td>
+<td style="text-align:right;">
+0.5654979
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;"><p>MEpurple</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.0002836</p></td>
-<td style="text-align: right;"><p>0.3023205</p></td>
-<td style="text-align: right;"><p>0.1553881</p></td>
-<td style="text-align: right;"><p>0.0000581</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.0001143</p></td>
-<td style="text-align: right;"><p>0.8645252</p></td>
-<td style="text-align: right;"><p>0.4557087</p></td>
-<td style="text-align: right;"><p>0.9799369</p></td>
+<tr>
+<td style="text-align:left;">
+MEpurple
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0002836
+</td>
+<td style="text-align:right;">
+0.3023205
+</td>
+<td style="text-align:right;">
+0.1553881
+</td>
+<td style="text-align:right;">
+0.0000581
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0001143
+</td>
+<td style="text-align:right;">
+0.8645252
+</td>
+<td style="text-align:right;">
+0.4557087
+</td>
+<td style="text-align:right;">
+0.9799369
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>MEyellow</p></td>
-<td style="text-align: right;"><p>0.0016048</p></td>
-<td style="text-align: right;"><p>0.0000409</p></td>
-<td style="text-align: right;"><p>0.0000160</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.1733800</p></td>
-<td style="text-align: right;"><p>0.2550392</p></td>
-<td style="text-align: right;"><p>0.0120966</p></td>
-<td style="text-align: right;"><p>0.0054611</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.0583960</p></td>
+<tr>
+<td style="text-align:left;">
+MEyellow
+</td>
+<td style="text-align:right;">
+0.0016048
+</td>
+<td style="text-align:right;">
+0.0000409
+</td>
+<td style="text-align:right;">
+0.0000160
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.1733800
+</td>
+<td style="text-align:right;">
+0.2550392
+</td>
+<td style="text-align:right;">
+0.0120966
+</td>
+<td style="text-align:right;">
+0.0054611
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0583960
+</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;"><p>MEtan</p></td>
-<td style="text-align: right;"><p>0.0852018</p></td>
-<td style="text-align: right;"><p>0.0000012</p></td>
-<td style="text-align: right;"><p>0.9939369</p></td>
-<td style="text-align: right;"><p>0.0177937</p></td>
-<td style="text-align: right;"><p>0.0578119</p></td>
-<td style="text-align: right;"><p>0.9936652</p></td>
-<td style="text-align: right;"><p>0.0445282</p></td>
-<td style="text-align: right;"><p>0.0003675</p></td>
-<td style="text-align: right;"><p>0.3731078</p></td>
-<td style="text-align: right;"><p>0.0009487</p></td>
+<tr>
+<td style="text-align:left;">
+MEtan
+</td>
+<td style="text-align:right;">
+0.0852018
+</td>
+<td style="text-align:right;">
+0.0000012
+</td>
+<td style="text-align:right;">
+0.9939369
+</td>
+<td style="text-align:right;">
+0.0177937
+</td>
+<td style="text-align:right;">
+0.0578119
+</td>
+<td style="text-align:right;">
+0.9936652
+</td>
+<td style="text-align:right;">
+0.0445282
+</td>
+<td style="text-align:right;">
+0.0003675
+</td>
+<td style="text-align:right;">
+0.3731078
+</td>
+<td style="text-align:right;">
+0.0009487
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>MEblack</p></td>
-<td style="text-align: right;"><p>0.0058249</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.5389672</p></td>
-<td style="text-align: right;"><p>0.0020552</p></td>
-<td style="text-align: right;"><p>0.7798579</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.4405738</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.1082500</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
+<tr>
+<td style="text-align:left;">
+MEblack
+</td>
+<td style="text-align:right;">
+0.0058249
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.5389672
+</td>
+<td style="text-align:right;">
+0.0020552
+</td>
+<td style="text-align:right;">
+0.7798579
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.4405738
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.1082500
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;"><p>MEmagenta</p></td>
-<td style="text-align: right;"><p>0.1077035</p></td>
-<td style="text-align: right;"><p>0.8727079</p></td>
-<td style="text-align: right;"><p>0.1351551</p></td>
-<td style="text-align: right;"><p>0.0000009</p></td>
-<td style="text-align: right;"><p>0.0005696</p></td>
-<td style="text-align: right;"><p>0.0908940</p></td>
-<td style="text-align: right;"><p>0.0000039</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.0000118</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
+<tr>
+<td style="text-align:left;">
+MEmagenta
+</td>
+<td style="text-align:right;">
+0.1077035
+</td>
+<td style="text-align:right;">
+0.8727079
+</td>
+<td style="text-align:right;">
+0.1351551
+</td>
+<td style="text-align:right;">
+0.0000009
+</td>
+<td style="text-align:right;">
+0.0005696
+</td>
+<td style="text-align:right;">
+0.0908940
+</td>
+<td style="text-align:right;">
+0.0000039
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0000118
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>MEsalmon</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.1122328</p></td>
-<td style="text-align: right;"><p>0.0002344</p></td>
-<td style="text-align: right;"><p>0.2511771</p></td>
-<td style="text-align: right;"><p>0.0389259</p></td>
-<td style="text-align: right;"><p>0.0000000</p></td>
-<td style="text-align: right;"><p>0.7138765</p></td>
-<td style="text-align: right;"><p>0.0156201</p></td>
-<td style="text-align: right;"><p>0.0002302</p></td>
-<td style="text-align: right;"><p>0.4534218</p></td>
+<tr>
+<td style="text-align:left;">
+MEsalmon
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.1122328
+</td>
+<td style="text-align:right;">
+0.0002344
+</td>
+<td style="text-align:right;">
+0.2511771
+</td>
+<td style="text-align:right;">
+0.0389259
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.7138765
+</td>
+<td style="text-align:right;">
+0.0156201
+</td>
+<td style="text-align:right;">
+0.0002302
+</td>
+<td style="text-align:right;">
+0.4534218
+</td>
 </tr>
 </tbody>
 </table>
-:::
+
+</div>
 
 ``` r
 gene.hypoxia.corr <- cor(norm.counts, traits$Hypoxia, use = 'p')
@@ -991,23 +2093,70 @@ gene.hypoxia.corr.pvals <- corPvalueStudent(gene.hypoxia.corr, nSamples)
 gene.hypoxia.corr %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 ```
 
-::: {style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; "}
-+-----------------+------------+
-|                 |            |
-+:================+===========:+
-| ENSG00000000003 | 0.1960105  |
-+-----------------+------------+
-| ENSG00000000419 | -0.3774390 |
-+-----------------+------------+
-| ENSG00000000457 | 0.5661531  |
-+-----------------+------------+
-| ENSG00000000460 | -0.7719286 |
-+-----------------+------------+
-| ENSG00000001084 | -0.3071976 |
-+-----------------+------------+
-| ENSG00000001167 | -0.5915887 |
-+-----------------+------------+
-:::
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+ENSG00000000003
+</td>
+<td style="text-align:right;">
+0.1960105
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000419
+</td>
+<td style="text-align:right;">
+-0.3774390
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000457
+</td>
+<td style="text-align:right;">
+0.5661531
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000000460
+</td>
+<td style="text-align:right;">
+-0.7719286
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000001084
+</td>
+<td style="text-align:right;">
+-0.3071976
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000001167
+</td>
+<td style="text-align:right;">
+-0.5915887
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 
 ``` r
 gene.hypoxia.corr.pvals %>% 
@@ -1016,63 +2165,148 @@ gene.hypoxia.corr.pvals %>%
   head(25) %>% log(base = 10) %>% abs() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 ```
 
-::: {style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; "}
-+----------+
-| V1       |
-+=========:+
-| 63.53687 |
-+----------+
-| 63.02413 |
-+----------+
-| 58.83494 |
-+----------+
-| 57.07775 |
-+----------+
-| 54.90220 |
-+----------+
-| 53.58299 |
-+----------+
-| 53.30477 |
-+----------+
-| 52.91199 |
-+----------+
-| 51.87249 |
-+----------+
-| 51.34846 |
-+----------+
-| 50.82014 |
-+----------+
-| 50.70417 |
-+----------+
-| 50.22887 |
-+----------+
-| 49.02622 |
-+----------+
-| 48.35648 |
-+----------+
-| 48.09111 |
-+----------+
-| 47.76749 |
-+----------+
-| 47.76559 |
-+----------+
-| 47.75480 |
-+----------+
-| 47.16036 |
-+----------+
-| 47.06072 |
-+----------+
-| 46.80941 |
-+----------+
-| 46.45087 |
-+----------+
-| 46.04357 |
-+----------+
-| 45.96559 |
-+----------+
-:::
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
 
-## -TS Analysis {#ts-analysis}
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+V1
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+63.53687
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+63.02413
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+58.83494
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+57.07775
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+54.90220
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+53.58299
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+53.30477
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+52.91199
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+51.87249
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+51.34846
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+50.82014
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+50.70417
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+50.22887
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+49.02622
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+48.35648
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+48.09111
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+47.76749
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+47.76559
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+47.75480
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+47.16036
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+47.06072
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+46.80941
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+46.45087
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+46.04357
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+45.96559
+</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+
+## -TS Analysis
 
 ``` r
 moduleLabelsAutomatic20 <- bwnet$colors   
@@ -1132,7 +2366,7 @@ mME %>% ggplot(., aes(x=treatment, y=name, fill=value)) +
 
 ![](Readme_files/figure-gfm/TS_analysis-3.png)<!-- -->
 
-## -GO terms enrichment {#go-terms-enrichment}
+## -GO terms enrichment
 
 ``` r
 # Get GO terms of top colors
@@ -1194,9 +2428,9 @@ go4 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = "red: HIF
 (go1 + go2) / (go3 + go4) +plot_layout(guides = "collect", axis_titles="collect")
 ```
 
-<img src="Readme_files/figure-gfm/goa-1.png" width="100%"/>
+<img src="Readme_files/figure-gfm/goa-1.png" width="100%" />
 
-## -module to sample {#module-to-sample}
+## -module to sample
 
 ``` r
 # module Sample correlation
@@ -1209,215 +2443,414 @@ MEs0 %>%
   )
 ```
 
-```         
-## # A tibble: 1,232 × 3
-##    treatment name           value
-##    <fct>     <chr>          <dbl>
-##  1 Kelly_Nx  blue         0.128  
-##  2 Kelly_Nx  greenyellow  0.0314 
-##  3 Kelly_Nx  turquoise    0.0760 
-##  4 Kelly_Nx  red         -0.0581 
-##  5 Kelly_Nx  purple      -0.130  
-##  6 Kelly_Nx  yellow      -0.133  
-##  7 Kelly_Nx  tan         -0.0642 
-##  8 Kelly_Nx  black       -0.00218
-##  9 Kelly_Nx  magenta     -0.102  
-## 10 Kelly_Nx  salmon      -0.0486 
-## # ℹ 1,222 more rows
-```
+    ## # A tibble: 1,232 × 3
+    ##    treatment name           value
+    ##    <fct>     <chr>          <dbl>
+    ##  1 Kelly_Nx  blue         0.128  
+    ##  2 Kelly_Nx  greenyellow  0.0314 
+    ##  3 Kelly_Nx  turquoise    0.0760 
+    ##  4 Kelly_Nx  red         -0.0581 
+    ##  5 Kelly_Nx  purple      -0.130  
+    ##  6 Kelly_Nx  yellow      -0.133  
+    ##  7 Kelly_Nx  tan         -0.0642 
+    ##  8 Kelly_Nx  black       -0.00218
+    ##  9 Kelly_Nx  magenta     -0.102  
+    ## 10 Kelly_Nx  salmon      -0.0486 
+    ## # ℹ 1,222 more rows
 
 ``` r
 mydata <- mtcars[, c(1,3,4,5,6,7)]
 head(mydata)
 ```
 
-```         
-##                    mpg disp  hp drat    wt  qsec
-## Mazda RX4         21.0  160 110 3.90 2.620 16.46
-## Mazda RX4 Wag     21.0  160 110 3.90 2.875 17.02
-## Datsun 710        22.8  108  93 3.85 2.320 18.61
-## Hornet 4 Drive    21.4  258 110 3.08 3.215 19.44
-## Hornet Sportabout 18.7  360 175 3.15 3.440 17.02
-## Valiant           18.1  225 105 2.76 3.460 20.22
-```
+    ##                    mpg disp  hp drat    wt  qsec
+    ## Mazda RX4         21.0  160 110 3.90 2.620 16.46
+    ## Mazda RX4 Wag     21.0  160 110 3.90 2.875 17.02
+    ## Datsun 710        22.8  108  93 3.85 2.320 18.61
+    ## Hornet 4 Drive    21.4  258 110 3.08 3.215 19.44
+    ## Hornet Sportabout 18.7  360 175 3.15 3.440 17.02
+    ## Valiant           18.1  225 105 2.76 3.460 20.22
 
 ``` r
 cormat <- round(cor(mydata),2)
 head(cormat)
 ```
 
-```         
-##        mpg  disp    hp  drat    wt  qsec
-## mpg   1.00 -0.85 -0.78  0.68 -0.87  0.42
-## disp -0.85  1.00  0.79 -0.71  0.89 -0.43
-## hp   -0.78  0.79  1.00 -0.45  0.66 -0.71
-## drat  0.68 -0.71 -0.45  1.00 -0.71  0.09
-## wt   -0.87  0.89  0.66 -0.71  1.00 -0.17
-## qsec  0.42 -0.43 -0.71  0.09 -0.17  1.00
-```
+    ##        mpg  disp    hp  drat    wt  qsec
+    ## mpg   1.00 -0.85 -0.78  0.68 -0.87  0.42
+    ## disp -0.85  1.00  0.79 -0.71  0.89 -0.43
+    ## hp   -0.78  0.79  1.00 -0.45  0.66 -0.71
+    ## drat  0.68 -0.71 -0.45  1.00 -0.71  0.09
+    ## wt   -0.87  0.89  0.66 -0.71  1.00 -0.17
+    ## qsec  0.42 -0.43 -0.71  0.09 -0.17  1.00
 
 ``` r
 class(cormat)
 ```
 
-```         
-## [1] "matrix" "array"
-```
+    ## [1] "matrix" "array"
 
 ``` r
 melted_cormat <- melt(cormat)
 head(melted_cormat)
 ```
 
-```         
-##   Var1 Var2 value
-## 1  mpg  mpg  1.00
-## 2 disp  mpg -0.85
-## 3   hp  mpg -0.78
-## 4 drat  mpg  0.68
-## 5   wt  mpg -0.87
-## 6 qsec  mpg  0.42
-```
+    ##   Var1 Var2 value
+    ## 1  mpg  mpg  1.00
+    ## 2 disp  mpg -0.85
+    ## 3   hp  mpg -0.78
+    ## 4 drat  mpg  0.68
+    ## 5   wt  mpg -0.87
+    ## 6 qsec  mpg  0.42
 
 ``` r
 bwnet$MEs %>% class()
 ```
 
-```         
-## [1] "data.frame"
-```
+    ## [1] "data.frame"
 
 ``` r
 bwnet$MEs %>% data.matrix() %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 ```
 
-::: {style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; "}
-<table>
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
+
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
 <thead>
-<tr class="header">
-<th style="text-align: left;"><p></p></th>
-<th style="text-align: right;"><p>MEblue</p></th>
-<th style="text-align: right;"><p>MEgreenyellow</p></th>
-<th style="text-align: right;"><p>MEturquoise</p></th>
-<th style="text-align: right;"><p>MEred</p></th>
-<th style="text-align: right;"><p>MEpurple</p></th>
-<th style="text-align: right;"><p>MEyellow</p></th>
-<th style="text-align: right;"><p>MEtan</p></th>
-<th style="text-align: right;"><p>MEblack</p></th>
-<th style="text-align: right;"><p>MEmagenta</p></th>
-<th style="text-align: right;"><p>MEsalmon</p></th>
-<th style="text-align: right;"><p>MEgreen</p></th>
-<th style="text-align: right;"><p>MEbrown</p></th>
-<th style="text-align: right;"><p>MEpink</p></th>
-<th style="text-align: right;"><p>MEgrey</p></th>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEblue
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEgreenyellow
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEturquoise
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEred
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEpurple
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEyellow
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEtan
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEblack
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEmagenta
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEsalmon
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEgreen
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEbrown
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEpink
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEgrey
+</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
-<td style="text-align: left;"><p>RNA_P2041_S37</p></td>
-<td style="text-align: right;"><p>0.1281120</p></td>
-<td style="text-align: right;"><p>0.0314268</p></td>
-<td style="text-align: right;"><p>0.0759919</p></td>
-<td style="text-align: right;"><p>-0.0581103</p></td>
-<td style="text-align: right;"><p>-0.1300627</p></td>
-<td style="text-align: right;"><p>-0.1325789</p></td>
-<td style="text-align: right;"><p>-0.0642281</p></td>
-<td style="text-align: right;"><p>-0.0021847</p></td>
-<td style="text-align: right;"><p>-0.1017963</p></td>
-<td style="text-align: right;"><p>-0.0486040</p></td>
-<td style="text-align: right;"><p>0.0165934</p></td>
-<td style="text-align: right;"><p>-0.0924871</p></td>
-<td style="text-align: right;"><p>-0.0568860</p></td>
-<td style="text-align: right;"><p>-0.0075408</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S37
+</td>
+<td style="text-align:right;">
+0.1281120
+</td>
+<td style="text-align:right;">
+0.0314268
+</td>
+<td style="text-align:right;">
+0.0759919
+</td>
+<td style="text-align:right;">
+-0.0581103
+</td>
+<td style="text-align:right;">
+-0.1300627
+</td>
+<td style="text-align:right;">
+-0.1325789
+</td>
+<td style="text-align:right;">
+-0.0642281
+</td>
+<td style="text-align:right;">
+-0.0021847
+</td>
+<td style="text-align:right;">
+-0.1017963
+</td>
+<td style="text-align:right;">
+-0.0486040
+</td>
+<td style="text-align:right;">
+0.0165934
+</td>
+<td style="text-align:right;">
+-0.0924871
+</td>
+<td style="text-align:right;">
+-0.0568860
+</td>
+<td style="text-align:right;">
+-0.0075408
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>RNA_P2041_S38</p></td>
-<td style="text-align: right;"><p>0.0062446</p></td>
-<td style="text-align: right;"><p>0.0273521</p></td>
-<td style="text-align: right;"><p>0.0906208</p></td>
-<td style="text-align: right;"><p>0.0552750</p></td>
-<td style="text-align: right;"><p>0.0117340</p></td>
-<td style="text-align: right;"><p>-0.0202258</p></td>
-<td style="text-align: right;"><p>0.0165917</p></td>
-<td style="text-align: right;"><p>-0.0620210</p></td>
-<td style="text-align: right;"><p>-0.0509336</p></td>
-<td style="text-align: right;"><p>-0.0856672</p></td>
-<td style="text-align: right;"><p>-0.0837301</p></td>
-<td style="text-align: right;"><p>-0.0868097</p></td>
-<td style="text-align: right;"><p>-0.0456848</p></td>
-<td style="text-align: right;"><p>0.2027819</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S38
+</td>
+<td style="text-align:right;">
+0.0062446
+</td>
+<td style="text-align:right;">
+0.0273521
+</td>
+<td style="text-align:right;">
+0.0906208
+</td>
+<td style="text-align:right;">
+0.0552750
+</td>
+<td style="text-align:right;">
+0.0117340
+</td>
+<td style="text-align:right;">
+-0.0202258
+</td>
+<td style="text-align:right;">
+0.0165917
+</td>
+<td style="text-align:right;">
+-0.0620210
+</td>
+<td style="text-align:right;">
+-0.0509336
+</td>
+<td style="text-align:right;">
+-0.0856672
+</td>
+<td style="text-align:right;">
+-0.0837301
+</td>
+<td style="text-align:right;">
+-0.0868097
+</td>
+<td style="text-align:right;">
+-0.0456848
+</td>
+<td style="text-align:right;">
+0.2027819
+</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;"><p>RNA_P2041_S39</p></td>
-<td style="text-align: right;"><p>0.1645680</p></td>
-<td style="text-align: right;"><p>0.0416806</p></td>
-<td style="text-align: right;"><p>0.1108524</p></td>
-<td style="text-align: right;"><p>-0.0603458</p></td>
-<td style="text-align: right;"><p>-0.1201275</p></td>
-<td style="text-align: right;"><p>-0.1574578</p></td>
-<td style="text-align: right;"><p>0.0200316</p></td>
-<td style="text-align: right;"><p>-0.0068658</p></td>
-<td style="text-align: right;"><p>-0.1129571</p></td>
-<td style="text-align: right;"><p>-0.0293112</p></td>
-<td style="text-align: right;"><p>0.0071073</p></td>
-<td style="text-align: right;"><p>-0.1145541</p></td>
-<td style="text-align: right;"><p>-0.0581314</p></td>
-<td style="text-align: right;"><p>0.0223168</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S39
+</td>
+<td style="text-align:right;">
+0.1645680
+</td>
+<td style="text-align:right;">
+0.0416806
+</td>
+<td style="text-align:right;">
+0.1108524
+</td>
+<td style="text-align:right;">
+-0.0603458
+</td>
+<td style="text-align:right;">
+-0.1201275
+</td>
+<td style="text-align:right;">
+-0.1574578
+</td>
+<td style="text-align:right;">
+0.0200316
+</td>
+<td style="text-align:right;">
+-0.0068658
+</td>
+<td style="text-align:right;">
+-0.1129571
+</td>
+<td style="text-align:right;">
+-0.0293112
+</td>
+<td style="text-align:right;">
+0.0071073
+</td>
+<td style="text-align:right;">
+-0.1145541
+</td>
+<td style="text-align:right;">
+-0.0581314
+</td>
+<td style="text-align:right;">
+0.0223168
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>RNA_P2041_S40</p></td>
-<td style="text-align: right;"><p>0.0997921</p></td>
-<td style="text-align: right;"><p>0.0580851</p></td>
-<td style="text-align: right;"><p>0.0970832</p></td>
-<td style="text-align: right;"><p>-0.0216944</p></td>
-<td style="text-align: right;"><p>-0.0788621</p></td>
-<td style="text-align: right;"><p>-0.1063083</p></td>
-<td style="text-align: right;"><p>0.0042522</p></td>
-<td style="text-align: right;"><p>-0.0238073</p></td>
-<td style="text-align: right;"><p>-0.0951074</p></td>
-<td style="text-align: right;"><p>-0.0378056</p></td>
-<td style="text-align: right;"><p>-0.0181197</p></td>
-<td style="text-align: right;"><p>-0.1008806</p></td>
-<td style="text-align: right;"><p>-0.0645278</p></td>
-<td style="text-align: right;"><p>0.0428643</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S40
+</td>
+<td style="text-align:right;">
+0.0997921
+</td>
+<td style="text-align:right;">
+0.0580851
+</td>
+<td style="text-align:right;">
+0.0970832
+</td>
+<td style="text-align:right;">
+-0.0216944
+</td>
+<td style="text-align:right;">
+-0.0788621
+</td>
+<td style="text-align:right;">
+-0.1063083
+</td>
+<td style="text-align:right;">
+0.0042522
+</td>
+<td style="text-align:right;">
+-0.0238073
+</td>
+<td style="text-align:right;">
+-0.0951074
+</td>
+<td style="text-align:right;">
+-0.0378056
+</td>
+<td style="text-align:right;">
+-0.0181197
+</td>
+<td style="text-align:right;">
+-0.1008806
+</td>
+<td style="text-align:right;">
+-0.0645278
+</td>
+<td style="text-align:right;">
+0.0428643
+</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;"><p>RNA_P2041_S41</p></td>
-<td style="text-align: right;"><p>0.1591024</p></td>
-<td style="text-align: right;"><p>0.1234278</p></td>
-<td style="text-align: right;"><p>-0.0003433</p></td>
-<td style="text-align: right;"><p>-0.2994517</p></td>
-<td style="text-align: right;"><p>-0.0409261</p></td>
-<td style="text-align: right;"><p>-0.2204171</p></td>
-<td style="text-align: right;"><p>0.1268816</p></td>
-<td style="text-align: right;"><p>0.1551481</p></td>
-<td style="text-align: right;"><p>-0.0299868</p></td>
-<td style="text-align: right;"><p>-0.0415677</p></td>
-<td style="text-align: right;"><p>0.0998807</p></td>
-<td style="text-align: right;"><p>-0.0257840</p></td>
-<td style="text-align: right;"><p>-0.1187182</p></td>
-<td style="text-align: right;"><p>0.0239185</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S41
+</td>
+<td style="text-align:right;">
+0.1591024
+</td>
+<td style="text-align:right;">
+0.1234278
+</td>
+<td style="text-align:right;">
+-0.0003433
+</td>
+<td style="text-align:right;">
+-0.2994517
+</td>
+<td style="text-align:right;">
+-0.0409261
+</td>
+<td style="text-align:right;">
+-0.2204171
+</td>
+<td style="text-align:right;">
+0.1268816
+</td>
+<td style="text-align:right;">
+0.1551481
+</td>
+<td style="text-align:right;">
+-0.0299868
+</td>
+<td style="text-align:right;">
+-0.0415677
+</td>
+<td style="text-align:right;">
+0.0998807
+</td>
+<td style="text-align:right;">
+-0.0257840
+</td>
+<td style="text-align:right;">
+-0.1187182
+</td>
+<td style="text-align:right;">
+0.0239185
+</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;"><p>RNA_P2041_S42</p></td>
-<td style="text-align: right;"><p>0.0626866</p></td>
-<td style="text-align: right;"><p>0.0063552</p></td>
-<td style="text-align: right;"><p>0.1106346</p></td>
-<td style="text-align: right;"><p>0.0519351</p></td>
-<td style="text-align: right;"><p>-0.0387361</p></td>
-<td style="text-align: right;"><p>-0.0604608</p></td>
-<td style="text-align: right;"><p>-0.0066684</p></td>
-<td style="text-align: right;"><p>-0.0690776</p></td>
-<td style="text-align: right;"><p>-0.0975534</p></td>
-<td style="text-align: right;"><p>-0.0670320</p></td>
-<td style="text-align: right;"><p>-0.0681120</p></td>
-<td style="text-align: right;"><p>-0.1082488</p></td>
-<td style="text-align: right;"><p>-0.0394585</p></td>
-<td style="text-align: right;"><p>-0.0136884</p></td>
+<tr>
+<td style="text-align:left;">
+RNA_P2041_S42
+</td>
+<td style="text-align:right;">
+0.0626866
+</td>
+<td style="text-align:right;">
+0.0063552
+</td>
+<td style="text-align:right;">
+0.1106346
+</td>
+<td style="text-align:right;">
+0.0519351
+</td>
+<td style="text-align:right;">
+-0.0387361
+</td>
+<td style="text-align:right;">
+-0.0604608
+</td>
+<td style="text-align:right;">
+-0.0066684
+</td>
+<td style="text-align:right;">
+-0.0690776
+</td>
+<td style="text-align:right;">
+-0.0975534
+</td>
+<td style="text-align:right;">
+-0.0670320
+</td>
+<td style="text-align:right;">
+-0.0681120
+</td>
+<td style="text-align:right;">
+-0.1082488
+</td>
+<td style="text-align:right;">
+-0.0394585
+</td>
+<td style="text-align:right;">
+-0.0136884
+</td>
 </tr>
 </tbody>
 </table>
-:::
+
+</div>
 
 ``` r
 ME.heatmap <- bwnet$MEs %>% data.matrix() %>% melt()
@@ -1443,7 +2876,7 @@ pheatmap(bwnet$MEs)
 
 ![](Readme_files/figure-gfm/module_sample-2.png)<!-- -->
 
-# Export into dds {#export-into-dds}
+# Export into dds
 
 ``` r
 load(file=paste(data,"deseq2.dds", sep="/"))
