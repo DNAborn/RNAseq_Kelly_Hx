@@ -2088,6 +2088,7 @@ MEsalmon
 </div>
 
 ``` r
+# Genes correlating with Hypoxia
 gene.hypoxia.corr <- cor(norm.counts, traits$Hypoxia, use = 'p')
 gene.hypoxia.corr.pvals <- corPvalueStudent(gene.hypoxia.corr, nSamples)
 gene.hypoxia.corr %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
@@ -2159,10 +2160,13 @@ ENSG00000001167
 </div>
 
 ``` r
-gene.hypoxia.corr.pvals %>% 
-  as.data.frame() %>% 
-  arrange(V1) %>% 
-  head(25) %>% log(base = 10) %>% abs() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
+# TOP 10 (pval) genes correlating with Hypoxia
+gene.hypoxia.corr.pvals %>%
+  log(base = 10) %>% abs() %>%
+  as.data.frame() %>%
+  rownames_to_column("gene_id") %>%
+  arrange(desc(V1)) %>%
+  head(10) %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; ">
@@ -2170,6 +2174,9 @@ gene.hypoxia.corr.pvals %>%
 <table class="table table-striped" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+gene_id
+</th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 V1
 </th>
@@ -2177,128 +2184,83 @@ V1
 </thead>
 <tbody>
 <tr>
+<td style="text-align:left;">
+ENSG00000185633
+</td>
 <td style="text-align:right;">
 63.53687
 </td>
 </tr>
 <tr>
+<td style="text-align:left;">
+ENSG00000114268
+</td>
 <td style="text-align:right;">
 63.02413
 </td>
 </tr>
 <tr>
+<td style="text-align:left;">
+ENSG00000186918
+</td>
 <td style="text-align:right;">
 58.83494
 </td>
 </tr>
 <tr>
+<td style="text-align:left;">
+ENSG00000148926
+</td>
 <td style="text-align:right;">
 57.07775
 </td>
 </tr>
 <tr>
+<td style="text-align:left;">
+ENSG00000134107
+</td>
 <td style="text-align:right;">
 54.90220
 </td>
 </tr>
 <tr>
+<td style="text-align:left;">
+ENSG00000196968
+</td>
 <td style="text-align:right;">
 53.58299
 </td>
 </tr>
 <tr>
+<td style="text-align:left;">
+ENSG00000182379
+</td>
 <td style="text-align:right;">
 53.30477
 </td>
 </tr>
 <tr>
+<td style="text-align:left;">
+ENSG00000122884
+</td>
 <td style="text-align:right;">
 52.91199
 </td>
 </tr>
 <tr>
+<td style="text-align:left;">
+ENSG00000107819
+</td>
 <td style="text-align:right;">
 51.87249
 </td>
 </tr>
 <tr>
+<td style="text-align:left;">
+ENSG00000112715
+</td>
 <td style="text-align:right;">
 51.34846
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-50.82014
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-50.70417
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-50.22887
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-49.02622
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-48.35648
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-48.09111
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-47.76749
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-47.76559
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-47.75480
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-47.16036
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-47.06072
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-46.80941
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-46.45087
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-46.04357
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-45.96559
 </td>
 </tr>
 </tbody>
@@ -2318,11 +2280,7 @@ plotDendroAndColors(bwnet$dendrograms[[1]], moduleColorsAutomatic20,
 dendroLabels = FALSE, hang = 0.03,
 addGuide = TRUE, guideHang = 0.05,
 main = "Cluster Dendrogram")
-```
 
-![](Readme_files/figure-gfm/TS_analysis-1.png)<!-- -->
-
-``` r
 module_df <- data.frame(
   gene_id = names(bwnet$colors),
   colors = labels2colors(bwnet$colors)
@@ -2336,11 +2294,7 @@ module_order = names(MEs0) %>% gsub("ME","", .)
 
 plotEigengeneNetworks(MEs0, "", marDendro = c(0, 4, 1, 2), marHeatmap = c(3, 
     4, 1, 2), cex.lab = 0.8, xLabelsAngle = 90)
-```
 
-![](Readme_files/figure-gfm/TS_analysis-2.png)<!-- -->
-
-``` r
 # Add treatment names
 MEs0$treatment <- colData$condition
 # tidy & plot data
@@ -2364,7 +2318,7 @@ mME %>% ggplot(., aes(x=treatment, y=name, fill=value)) +
   labs(title = "Module-trait Relationships", y = "Modules", fill="corr")
 ```
 
-![](Readme_files/figure-gfm/TS_analysis-3.png)<!-- -->
+![](Readme_files/figure-gfm/TS_analysis-1.png)![](Readme_files/figure-gfm/TS_analysis-2.png)![](Readme_files/figure-gfm/TS_analysis-3.png)
 
 ## -GO terms enrichment
 
