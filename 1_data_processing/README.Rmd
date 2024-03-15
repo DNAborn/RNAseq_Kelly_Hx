@@ -13,7 +13,10 @@ editor_options:
   
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T,
-                      error=FALSE, warning=FALSE, message=FALSE)
+                      error=FALSE,
+                      warning=FALSE,
+                      message=FALSE,
+                      dpi=300)
 ```
 
 # 0. Load
@@ -91,6 +94,12 @@ list.files(dirgenomic) %>% head()
 data <- paste(dir,"data",sep="/")
 dir.create(data)
 
+## ENSEMBL 111
+dirsalmon <- "/mnt/s/AG/AG-Scholz-NGS/Daten/Tobias/Salmon_TS/human"
+indexDir <- "/mnt/s/AG/AG-Scholz-NGS/Daten/Tobias/Salmon_TS/human/index"
+fastaPath <- file.path(dirsalmon, "Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz")
+gtfPath <- file.path(dirsalmon,"Homo_sapiens.GRCh38.111.gff3.gz")
+
 ```
 
 
@@ -103,9 +112,13 @@ fastqdir3="/mnt/s/AG/AG-Scholz-NGS/Daten/Sequencing-2/Sequencing-2_A/FASTQ";
 # /mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq Kelly all
 dir="/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all"
 
-quantdir="$dir/quants"
+quantdir="$dir/quants2"
 indexdir="/mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/index/human_ens110_index"
+
+indexdir="/mnt/s/AG/AG-Scholz-NGS/Daten/Tobias/Salmon_TS/human/index/human_ensh38_index"
+
 ```
+
 
 ## - Download Data
 ```{bash download_data, eval=FALSE}
@@ -196,7 +209,7 @@ salmon index -t gentrome_human_ensh38.fa.gz -d decoys_human_ensh38.txt -p 20 -i 
 
 ## - Mapping (Salmon)
 ```{bash salmon, eval=FALSE}
-conda activate salmon
+mamba activate salmon
 
 fastqfiles=$(ls $fastqdir/*R1*.fastq.gz)
 fastqfiles2=$(ls $fastqdir2/*R1*.fastq.gz)
@@ -218,14 +231,14 @@ R2=$(echo "$R1" | sed 's/R1/R2/');
 echo "Processing Sample: $samp";
 test -f $R1 && echo "--> File: $R1 exists"
 test -f $R2 && echo "--> File: $R2 exists"
-outquant=${dir}/quants/${samp}_quant
+outquant=${dir}/quants2/${samp}_quant
 echo $outquant
 echo $indexdir
 
 salmon quant -i $indexdir -l A \
--1 $R1 \
--2 $R2 \
--p 20 --validateMappings --gcBias -o $outquant
+ -1 $R1 \
+ -2 $R2 \
+ -p 20 --validateMappings --gcBias -o $outquant
 
 done
 
@@ -599,14 +612,14 @@ gtfPath <- file.path(dirgenomic,"Homo_sapiens.GRCh38.110.gff3.gz")
 cat(indexdir,dirgenomic,fastaPath,gtfPath, sep="\n")
 file.exists(indexdir, fastaPath, gtfPath)
 
-# makeLinkedTxome(indexDir=indexdir,
-#                 source="LocalEnsembl",
-#                 organism="Homo sapiens",
-#                 release="110",
-#                 genome="GRCh38",
-#                 fasta=fastaPath,
-#                 gtf=gtfPath,
-#                 write=FALSE)
+makeLinkedTxome(indexDir=indexdir,
+                source="LocalEnsembl",
+                organism="Homo sapiens",
+                release="110",
+                genome="GRCh38",
+                fasta=fastaPath,
+                gtf=gtfPath,
+                write=FALSE)
 
 # gtfdata <- readLines(gtfPath)
 # head(gtfdata, n=20)
@@ -806,6 +819,8 @@ pheatmap(sampleDistMatrix,
 
 
 ```
+
+
 
 ### - Perform principal component analysis
 ```{r pca, warning = FALSE, fig.show="hold", out.width="80%", fig.height=6}
@@ -1070,4 +1085,7 @@ gcounts2
 
 ```
 
+```{r}
+sessionInfo()
+```
 
