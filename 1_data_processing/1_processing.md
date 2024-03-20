@@ -5234,7 +5234,7 @@ xx <- barplot(height=mappingrates, cex.names=0.5, names=samplename, horiz=T, las
 text(x = mappingrates, y = xx, label = mappingrates, pos = 4, cex = 0.5, col = "red")
 ```
 
-![](README_files/figure-gfm/plot_mappingr-1.png)<!-- -->
+![](1_processing_files/figure-gfm/plot_mappingr-1.png)<!-- -->
 
 ``` r
 par(mar=c(4,4,4,4)+.1)
@@ -5518,7 +5518,7 @@ meanSdPlot(assay(vsd))
 meanSdPlot(assay(rld))
 ```
 
-<img src="README_files/figure-gfm/pre_trans_fig, figures-side-1.png" width="33%" /><img src="README_files/figure-gfm/pre_trans_fig, figures-side-2.png" width="33%" /><img src="README_files/figure-gfm/pre_trans_fig, figures-side-3.png" width="33%" />
+<img src="1_processing_files/figure-gfm/pre_trans_fig, figures-side-1.png" width="33%" /><img src="1_processing_files/figure-gfm/pre_trans_fig, figures-side-2.png" width="33%" /><img src="1_processing_files/figure-gfm/pre_trans_fig, figures-side-3.png" width="33%" />
 
 ### - Check sample distance
 
@@ -5549,7 +5549,7 @@ pheatmap(sampleDistMatrix,
          cutree_cols = 8)
 ```
 
-<img src="README_files/figure-gfm/pre_sample_dist-1.png" width="100%" />
+<img src="1_processing_files/figure-gfm/pre_sample_dist-1.png" width="100%" />
 
 ### - Perform principal component analysis
 
@@ -6483,7 +6483,7 @@ g4 <- ggplot(pcaData, aes(PC1, PC2, label=orig.name,color=condition, shape=genot
 ((g1+g2) / (g3)) + plot_layout(guides = "collect", axis_titles="collect")
 ```
 
-<img src="README_files/figure-gfm/pca-1.png" width="80%" />
+<img src="1_processing_files/figure-gfm/pca-1.png" width="80%" />
 
 ###### – Advanced PCA
 
@@ -6574,7 +6574,7 @@ plotloadings(p,
              )
 ```
 
-<img src="README_files/figure-gfm/pca_advanced-1.png" width="80%" /><img src="README_files/figure-gfm/pca_advanced-2.png" width="80%" /><img src="README_files/figure-gfm/pca_advanced-3.png" width="80%" /><img src="README_files/figure-gfm/pca_advanced-4.png" width="80%" />
+<img src="1_processing_files/figure-gfm/pca_advanced-1.png" width="80%" /><img src="1_processing_files/figure-gfm/pca_advanced-2.png" width="80%" /><img src="1_processing_files/figure-gfm/pca_advanced-3.png" width="80%" /><img src="1_processing_files/figure-gfm/pca_advanced-4.png" width="80%" />
 
 ###### – \#PCA gif
 
@@ -6827,7 +6827,7 @@ gcounts2 <- ggplot(all_counts, aes(x = condition, y = count, fill=Gene)) +
 gcounts2
 ```
 
-<img src="README_files/figure-gfm/example_counts-1.png" width="50%" /><img src="README_files/figure-gfm/example_counts-2.png" width="50%" /><img src="README_files/figure-gfm/example_counts-3.png" width="50%" /><img src="README_files/figure-gfm/example_counts-4.png" width="50%" />
+<img src="1_processing_files/figure-gfm/example_counts-1.png" width="50%" /><img src="1_processing_files/figure-gfm/example_counts-2.png" width="50%" /><img src="1_processing_files/figure-gfm/example_counts-3.png" width="50%" /><img src="1_processing_files/figure-gfm/example_counts-4.png" width="50%" />
 
 ``` r
 sessionInfo()

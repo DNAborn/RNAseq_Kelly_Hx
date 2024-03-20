@@ -1,0 +1,92 @@
+---
+title: "DGE"
+author: "Kelterborn"
+date: "2024-03-20"
+output:
+  md_document:
+    variant: gfm
+    toc: true
+always_allow_html: true
+editor_options: 
+  chunk_output_type: console
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, 
+      encoding = encoding, 
+      output_file = paste0(dirname(inputFile),'/README.md')) })
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T,
+                      error=FALSE,
+                      warning=FALSE,
+                      message=FALSE,
+                      dpi=300)
+
+```
+
+# 0. Load
+##  - R_libraries 
+BiocManager::install()
+
+```{r librarys, include=FALSE}
+
+library(DESeq2)
+library(GEOquery)
+library(tidyverse)
+library(CorLevelPlot)
+library(gridExtra)
+library(viridis)
+
+library(clusterProfiler)
+library(ggupset)
+library(enrichplot)
+library(stats)
+library(cowplot)
+library(VennDiagram)
+library(ggplot2)
+library(stringr)
+library(rlang)
+library(reshape2)
+library(readxl)
+library(SummarizedExperiment)
+library(biomaRt)
+library(org.Hs.eg.db)
+library(Rfast)
+library(xlsx)
+library(EnhancedVolcano)
+library(PCAtools)
+library(rgl)
+library(impute)
+library(magrittr)     
+library(flashClust)
+
+library(gridExtra)
+library(patchwork)
+library(grid)
+library(reshape2)
+
+library(pheatmap)
+library(plyr)
+
+library(kableExtra)
+library(knitr)
+
+ifelse(Sys.info()["sysname"]== "Linux",
+       s <- "/mnt/s",
+       s <- "S:")
+dir <- paste(s,"AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all",sep="/")
+gitdir <- paste(dir,"git_RNAseq_Kelly_Hx",sep="/")
+data <- paste(dir,"data",sep="/")
+dgedir <- paste(gitdir,"2B_DGE",sep="/")
+
+
+```
+
+
+## - dds
+```{r dds}
+load(file=paste(data,"deseq2.dds", sep="/"))
+
+
+```
+
