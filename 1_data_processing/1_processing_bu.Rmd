@@ -73,7 +73,6 @@ library(knitr)
 library(writexl)
 library(viridis)
 library(animation)
-library(ensembldb)
 
 ifelse(Sys.info()["sysname"]== "Linux",
        s <- "/mnt/s",
@@ -106,6 +105,7 @@ fastaPath <- file.path(dirsalmon, "Homo_sapiens.GRCh38.dna.primary_assembly.fa.g
 gtfPath <- file.path(dirsalmon,"Homo_sapiens.GRCh38.111.gff3.gz")
 
 ```
+
 
 ##  - #Linux
 ```{bash linux_folders, eval=FALSE}
@@ -581,19 +581,6 @@ par(mar=c(4,4,4,4)+.1)
 
 ```
 
-
-```{r clear_bfc, eval=FALSE}
-# clear the entire linkedTxome table 
-bfcloc <- getTximetaBFC()
-bfc <- BiocFileCache(bfcloc)
-show(bfc)
-bfcinfo()
-bfcquery(bfc, "Homo")
-bfcremove(bfc, bfcquery(bfc, "linkedTxomeTbl")$rid)
-bfcremove(bfc, bfcquery(bfc, "Homo")$rid)
-```
-
-
 ## - #Tximeta
 ```{r tximeta, fig.height=12, eval=TRUE}
 # prepare coldata table
@@ -625,7 +612,7 @@ fastaPath <- file.path(dirgenomic, "Homo_sapiens.GRCh38.dna.primary_assembly.fa.
 gtfPath <- file.path(dirgenomic,"Homo_sapiens.GRCh38.110.gff3.gz")
 # gtfPath
 
-cat("ENSEMBL 110",indexdir,dirgenomic,fastaPath,gtfPath, sep="\n")
+cat(indexdir,dirgenomic,fastaPath,gtfPath, sep="\n")
 
 # ENSEMBL 111 (TS)
 dirsalmon <- "/mnt/s/AG/AG-Scholz-NGS/Daten/Tobias/Salmon_TS/human"
@@ -638,7 +625,15 @@ fastaPath <- file.path(dirsalmon, "Homo_sapiens.GRCh38.dna.primary_assembly.fa.g
 gtfPath <- file.path(dirsalmon,"Homo_sapiens.GRCh38.111.chr_patch_hapl_scaff.gtf.gz")
 
 file.exists(indexdir, fastaPath, gtfPath)
-cat("TS: ENSEMBL 111",indexdir,dirgenomic,fastaPath,gtfPath, sep="\n")
+
+# clear the entire linkedTxome table 
+# bfcloc <- getTximetaBFC()
+# bfc <- BiocFileCache(bfcloc)
+# show(bfc)
+# bfcinfo()
+# bfcquery(bfc, "Homo")
+# bfcremove(bfc, bfcquery(bfc, "linkedTxomeTbl")$rid)
+# bfcremove(bfc, bfcquery(bfc, "Homo")$rid)
 
 # makeLinkedTxome(indexDir=indexdir,
 #                 source="LocalEnsembl",
@@ -649,10 +644,12 @@ cat("TS: ENSEMBL 111",indexdir,dirgenomic,fastaPath,gtfPath, sep="\n")
 #                 gtf=gtfPath,
 #                 write=FALSE)
 
-# dirtest <- "/mnt/s/AG/AG-Scholz-NGS/Daten/Tobias/Simon_test/"
-# save(coldata,file=paste(dirtest,"sample_table_Kelly.RDS", sep="/"))
-# coldata <- {}
-# load(file=paste(dirtest,"sample_table_Kelly.RDS", sep="/"))
+# gene_name info sind in gff3 abder nicht in se?
+
+dirtest <- "/mnt/s/AG/AG-Scholz-NGS/Daten/Tobias/Simon_test/"
+save(coldata,file=paste(dirtest,"sample_table_Kelly.RDS", sep="/"))
+coldata <- {}
+load(file=paste(dirtest,"sample_table_Kelly.RDS", sep="/"))
 
 se <- tximeta(coldata, useHub=T)
 se
@@ -683,11 +680,10 @@ barplot(metadata(se)[["quantInfo"]]$num_processed/1000000, main="Mio. Reads",
         names.arg=colData(se)$exp_rep, horiz=T,las=1)
 colData(se) %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 edb <- retrieveDb(se)
-ensembldb::listTables(edb)
-# seqnmae "LRG_432" has no length?!
-
 # class(edb)
 genes(edb) %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
+# no symbols!
+columns(edb)
 
 se.exons <- addExons(se)
 # rowRanges(se.exons)[[1]]
@@ -705,22 +701,21 @@ TXNAME <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "TXNAME", 
 # select()' returned 1:many mapping between keys and columns = 1 gene has many transcripts...
 TXNAME.list <- (mapIds(edb,keys = mcols(gse)$gene_id, column = "TXNAME", keytype = "GENEID", multiVals="list"))
 head(TXNAME.list)[1]
-
-# # info is already there
-# CDSID <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "CDSID", keytype = "GENEID", multiVals="first"))
-# head(CDSID)
-# # ?
-# CDSNAME <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "CDSNAME", keytype = "GENEID", multiVals="first"))
-# head(CDSNAME)
+# info is already there
+CDSID <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "CDSID", keytype = "GENEID", multiVals="first"))
+head(CDSID)
+# ?
+CDSNAME <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "CDSNAME", keytype = "GENEID", multiVals="first"))
+head(CDSNAME)
 # same as gene_id
-# EXONNAME <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "EXONNAME", keytype = "GENEID", multiVals="first"))
-# head(EXONNAME)
-# TXTYPE <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "TXTYPE", keytype = "GENEID", multiVals="first"))
-# head(TXTYPE)
+EXONNAME <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "EXONNAME", keytype = "GENEID", multiVals="first"))
+head(EXONNAME)
+TXTYPE <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "TXTYPE", keytype = "GENEID", multiVals="first"))
+head(TXTYPE)
 # no useful info... no gene Symbol!!
 
 # add CDSID
-# mcols(gse)$CDSID <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "CDSID", keytype = "GENEID", multiVals="first"))
+mcols(gse)$CDSID <- as.character(mapIds(edb,keys = mcols(gse)$gene_id, column = "CDSID", keytype = "GENEID", multiVals="first"))
 
 colnames(mcols(gse))
 head(rownames(gse))
@@ -742,7 +737,7 @@ ah = AnnotationHub()
 query(ah, c("EnsDb", "homo"))
 edb <- ah[["AH116291"]]
 load(file=paste(data,"tximeta.txm", sep="/"))
-listColumns(edb)
+columns(edb)
 
 mcols(gse)$SYMBOL <- mapIds(edb, keys = mcols(gse)$gene_id, column = "SYMBOL", keytype = "GENEID")
 mcols(gse)$ENTREZID <- mapIds(edb, keys = mcols(gse)$gene_id, column = "ENTREZID", keytype = "GENEID")
@@ -751,12 +746,10 @@ mcols(gse)$DESCRIPTION <- mapIds(edb, keys = mcols(gse)$gene_id, column = "DESCR
 mcols(gse)$GENEBIOTYPE <- mapIds(edb, keys = mcols(gse)$gene_id, column = "GENEBIOTYPE", keytype = "GENEID")
 mcols(gse)$UNIPROTID <- mapIds(edb, keys = mcols(gse)$gene_id, column = "UNIPROTID", keytype = "GENEID")
 
-# columns <- listColumns(edb) %>% toupper() 
-# for (i in columns[c(-1,-2,-3,-4,-6,-7,-8,-9,-10,-11,-12,-13,-14,-16)]){
-#   # print(i)
-#   print(i)
-#   mapIds(edb, keys = mcols(gse)$gene_id[1:10], column = i, keytype = "GENEID") %>% print()
-# }
+for (i in columns(edb)[c(-10)]){
+  # print(i)
+  mapIds(edb, keys = mcols(gse)$gene_id[1:10], column = i, keytype = "GENEID") # %>% print()
+}
 # include tryCatch
 
 save(gse,file=paste(data,"tximeta.txm", sep="/"))
@@ -768,7 +761,7 @@ save(gse,file=paste(data,"tximeta.txm", sep="/"))
 
 load(file=paste(data,"tximeta.txm", sep="/"))
 colData(gse)$genotype %>% levels()
-design = ~genotype+treatment+genotype:treatment
+design = ~genotype+treatment+treatment:genotype
 
 dds <- DESeqDataSet(gse, design = design)
 dds <- collapseReplicates(dds, dds$samplename, dds$names)
@@ -806,7 +799,7 @@ ntd <- normTransform(dds)
 ```
 
 #### -#rlog
-```{r pre_trans_rlog, eval=FALSE}
+```{r pre_trans_rlog, eval=TRUE}
 rld <- rlog(dds, blind=FALSE) #regularized logarithm
 save(rld,file=paste(data,"rlog.rld", sep="/"))
 rld <- 1
@@ -978,7 +971,7 @@ bi <- biplot(p,x="PC3",y="PC1",
     captionLabSize = 1)
 
 bi <- bi +theme(panel.background = element_rect(fill='transparent'))
-
+bi
 pairs <- pairsplot(p,
     components = getComponents(p, c(1:7)),
     triangle = TRUE, trianglelabSize = 6,
@@ -1001,18 +994,19 @@ pairs + bi +
 plotloadings(p,
              components = getComponents(p)[1:7],
              col = viridis(3),
-             labSize = 3)
-
+             
+             labSize = 3
+             )
 
 ```
 
 ###### -- #PCA gif
-```{r pca_gif, eval=FALSE, warning = FALSE, fig.show="hold", out.width="100%", fig.height=8}
+```{r pca_gif, eval=TRUE, warning = FALSE, fig.show="hold", out.width="100%", fig.height=8}
 
 saveGIF({
   ani.options(nmax = 100)
 for (i in 1:100){
-  n <- i*310
+  n <- i*250
 pcaData <- plotPCA(vsd, intgroup=colnames(colData(vsd)), returnData=TRUE,ntop=n)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
 g1 <- ggplot(pcaData, aes(PC1, PC2, color=treatment, shape=genotype)) +
@@ -1045,13 +1039,14 @@ plot((g1+g2)/g3 +
      )
 ani.pause()
 }
-}, interval = 0.3, movie.name = file.path(gitdir,"1_data_processing/pca.gif"), ani.width = 600, ani.height = 600)
+}, interval = 0.5, movie.name = '1_data_processing/pca.gif', ani.width = 600, ani.height = 600)
 
+#
 ```
 
 [PCA Gif](1_data_processing/pca.gif){height=100%, width=100%}
 
-```{r pca_gif_include, eval=FALSE, out.width="100%", fig.height=8}
+```{r pca_gif_include, out.width="100%", fig.height=8}
 knitr::include_graphics("1_data_processing/pca.gif")
 
 ```

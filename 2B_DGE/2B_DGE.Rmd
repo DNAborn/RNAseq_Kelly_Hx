@@ -87,6 +87,61 @@ dgedir <- paste(gitdir,"2B_DGE",sep="/")
 ```{r dds}
 load(file=paste(data,"deseq2.dds", sep="/"))
 
+```
+
+# 1. Make results
+```{r results}
+design(dds)
+# ~genotype + treatment + genotype:treatment
+resultsNames(dds)
+# [1] "Intercept"                 "genotype_HIF1A_vs_Kelly"   "genotype_HIF2A_vs_Kelly"   "genotype_HIF1B_vs_Kelly"   "treatment_Hx_vs_Nx"        "genotypeHIF1A.treatmentHx"
+# [7] "genotypeHIF2A.treatmentHx" "genotypeHIF1B.treatmentHx"
+l <- length(resultsNames(dds))
+cbind(resultsNames(dds),c(rep(0,l)))
+#      [,1]                        [,2]
+# [1,] "Intercept"                 "0" 
+# [2,] "genotype_HIF1A_vs_Kelly"   "0" 
+# [3,] "genotype_HIF2A_vs_Kelly"   "0" 
+# [4,] "genotype_HIF1B_vs_Kelly"   "0" 
+# [5,] "treatment_Hx_vs_Nx"        "0" 
+# [6,] "genotypeHIF1A.treatmentHx" "0" 
+# [7,] "genotypeHIF2A.treatmentHx" "0" 
+# [8,] "genotypeHIF1B.treatmentHx" "0" 
+
+condition <- colData(dds)$condition
+
+res.Kelly.Hx.vs.Nx <- results(dds, contrast = c("condition",condition[c(2,1)])) %>% cbind(.,mcols(dds)$symbol)
+
+res.Hif1a.Hx.vs.Nx <- results(dds, contrast = c("condition",condition[c(3,3)])) %>% cbind(.,mcols(dds)$symbol)
+res.Hif2a.Hx.vs.Nx <- results(dds, contrast = c("condition",condition[c(6,5)])) %>% cbind(.,mcols(dds)$symbol)
+res.Hif1b.Hx.vs.Nx <- results(dds, contrast = c("condition",condition[c(8,7)])) %>% cbind(.,mcols(dds)$symbol)
+
+res.Hx.Hif1a.vs.Kelly <- results(dds, contrast = c("condition",condition[c(4,2)])) %>% cbind(.,mcols(dds)$symbol)
+res.Hx.Hif2a.vs.Kelly <- results(dds, contrast = c("condition",condition[c(6,2)])) %>% cbind(.,mcols(dds)$symbol)
+res.Hx.Hif1b.vs.Kelly <- results(dds, contrast = c("condition",condition[c(8,2)])) %>% cbind(.,mcols(dds)$symbol)
+
+res.Nx.Hif1a.vs.Kelly <- results(dds, contrast = c("condition",condition[c(3,1)])) %>% cbind(.,mcols(dds)$symbol)
+res.Nx.Hif2a.vs.Kelly <- results(dds, contrast = c("condition",condition[c(5,2)])) %>% cbind(.,mcols(dds)$symbol)
+res.Nx.Hif1b.vs.Kelly <- results(dds, contrast = c("condition",condition[c(7,2)])) %>% cbind(.,mcols(dds)$symbol)
+
+res.Hx.vs.Nx  <- results(dds, name="treatment_Hx_vs_Nx")
+
+res.Hif1a.vs.Kelly <- results(dds, name="genotype_HIF1A_vs_Kelly")
+res.Hif2a.vs.Kelly <- results(dds, name="genotype_HIF2A_vs_Kelly")
+res.Hif1b.vs.Kelly <- results(dds, name="genotype_HIF1B_vs_Kelly")
+
+
+
+
+
+
+
+```
+
+# Vulcanos
+```{r}
+
+
 
 ```
 

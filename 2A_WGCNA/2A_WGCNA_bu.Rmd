@@ -511,16 +511,27 @@ mcols(dds)$colors <- bwnet$colors[match(mcols(dds)$gene_id, names(bwnet$colors))
   factor() %>%
   relevel(ref="grey")
 
+head(mtcars)
 # color per sample
 module.cols <- bind_cols(as.data.frame(colData(dds)),
                      as.data.frame(bwnet$MEs))
 module.cols <- module.cols[,str_detect(colnames(module.cols),pattern="ME")]
 colnames(module.cols) <- module.cols %>% colnames() %>% str_remove(pattern="ME")
-i <- "greenyellow"
-for (i in colnames(module.cols)){
-colData(dds)$tmp <- module.cols[,i]
-names(colData(dds))[names(colData(dds)) == 'tmp'] <- i
-}
+
+colData(dds)$blue <- module.cols[,1]
+colData(dds)$greenyellow <- module.cols[,2]
+colData(dds)$turquoise <- module.cols[,3]
+colData(dds)$red <- module.cols[,4]
+colData(dds)$purple <- module.cols[,5]
+colData(dds)$yellow <- module.cols[,6]
+colData(dds)$tan <- module.cols[,7]
+colData(dds)$black <- module.cols[,8]
+colData(dds)$magenta <- module.cols[,9]
+colData(dds)$salmon <- module.cols[,10]
+colData(dds)$green <- module.cols[,11]
+colData(dds)$brown <- module.cols[,12]
+colData(dds)$pink <- module.cols[,13]
+colData(dds)$grey <- module.cols[,14]
 
 save(dds, file=paste(data,"deseq2.dds", sep="/"))
 
