@@ -3,16 +3,15 @@ title: "DGE"
 author: "Kelterborn"
 date: "2024-03-20"
 output:
-  md_document:
-    variant: gfm
+  github_document:
+    html_preview: false
     toc: true
 always_allow_html: true
 editor_options: 
   chunk_output_type: console
-knit: (function(inputFile, encoding) {
-    rmarkdown::render(inputFile, 
-      encoding = encoding, 
-      output_file = paste0(dirname(inputFile),'/README.md')) })
+knit: (function(input_file, encoding) {
+    rmarkdown::render(input_file,output_file= 'README.md')
+    })
 ---
   
 ```{r setup, include=FALSE}

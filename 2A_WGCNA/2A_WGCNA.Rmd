@@ -93,8 +93,8 @@ allowWGCNAThreads(nThreads = 40)
 load(file=paste(data,"deseq2.dds", sep="/"))
 s75 <- (nrow(colData(dds))*0.75) %>% round()
 gc <- nrow(colData(dds))/ (levels(colData(dds)$condition) %>% length())
-dds75 <- dds[rowSums(counts(dds) >= gc) >= 66,]
-# nrow(dds75) # 15687 genes left
+dds75 <- dds[rowSums(counts(dds) >= gc) >= s75,]
+# nrow(dds75) # 16268 genes left
 
 vsd <- vst(dds75, blind = FALSE) #transform while accounting for design 
 # counts <- counts(dds, normalized=TRUE)
@@ -126,13 +126,24 @@ pca.var.percent <- round(pca.var/sum(pca.var)*100, digits = 2)
 
 pca.dat <- as.data.frame(pca.dat)
 
-ggplot(pca.dat, aes(PC1, PC2)) +
+g <- ggplot(pca.dat, aes(PC1, PC2)) +
   geom_point() +
   geom_text(label = rownames(pca.dat)) +
   labs(x = paste0('PC1: ', pca.var.percent[1], ' %'),
        y = paste0('PC2: ', pca.var.percent[2], ' %'))
 
 ```
+
+### -plot sample dist.
+```{r, fig.show="hold", echo =FALSE}
+summary(gsg)
+gsg$allOK
+
+plot(htree)
+g
+
+```
+
 
 ## (-pickSoftThreshold extern)
 ```{r pickSoftThreshold_ext, eval=FALSE, include=FALSE}
@@ -144,7 +155,7 @@ source(file=paste(wdir,"pickSoftThreshold.R",sep="/"), local = knitr::knit_globa
 ```
 
 ## -pickSoftThreshold
-```{r pickSoftThreshold, echo=FALSE, eval=TRUE, include=TRUE}
+```{r pickSoftThreshold, eval=TRUE, include=TRUE, echo=FALSE}
 
 # Choose a set of soft-thresholding powers
 
@@ -241,7 +252,7 @@ load(file=paste(data,"bwnet_TS.RDS", sep="/"))
 module_eigengenes <- bwnet$MEs
 
 # Print out a preview
-head(module_eigengenes) %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
+# head(module_eigengenes) %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 # get number of genes for each module
 table(bwnet$colors)
@@ -268,7 +279,7 @@ traits <- colData$treatment_bin <- ifelse(grepl('Hx', colData$treatment), 1, 0)
 
 # binarize categorical variables
 
-colData$genotype %>% levels()
+# colData$genotype %>% levels()
 
 genotype_bin <- binarizeCategoricalColumns(colData$genotype,
                            includePairwise = FALSE,
@@ -286,7 +297,7 @@ colnames(condition_bin) <- levels(colData$condition)
 
 traits <- cbind(traits, genotype_bin,condition_bin)
 rownames(traits) <- rownames(colData)
-dim(traits)
+# dim(traits)
 orig.colnames <- colnames(traits)
 colnames(traits)[1] <- c("Hypoxia")
 
@@ -301,11 +312,11 @@ module.trait.corr.pvals <- corPvalueStudent(module.trait.corr, nSamples)
 
 heatmap.data <- merge(module_eigengenes, traits, by = 'row.names')
 
-head(heatmap.data) %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
+# head(heatmap.data) %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 heatmap.data <- heatmap.data %>% 
   column_to_rownames(var = 'Row.names')
-dim(heatmap.data)
+# dim(heatmap.data)
 MEs <- heatmap.data %>% colnames() %>% str_detect(pattern="ME") %>% sum()
 max <- heatmap.data %>% ncol()
 CorLevelPlot(heatmap.data,
@@ -317,9 +328,9 @@ CorLevelPlot(heatmap.data,
 module.gene.mapping <- as.data.frame(bwnet$colors)
 
 # Genes related to Hypoxia
-module.gene.mapping %>% 
-  dplyr::filter(`bwnet$colors` == 'turquoise') %>% 
-  rownames() %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
+# module.gene.mapping %>% 
+#  dplyr::filter(`bwnet$colors` == 'turquoise') %>% 
+#  rownames() %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 ```
 

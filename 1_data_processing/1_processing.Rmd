@@ -107,7 +107,7 @@ gtfPath <- file.path(dirsalmon,"Homo_sapiens.GRCh38.111.gff3.gz")
 ```
 
 ##  - #Linux
-```{bash linux_folders, eval=FALSE}
+```{bash linux_folders, eval=FALSE, include=FALSE, echo=FALSE}
 fastqdir="/mnt/s/AG/AG-Scholz-NGS/Daten/RNASeq_Kelly2_P3302";
 fastqdir2="/mnt/s/AG/AG-Scholz-NGS/Daten/RNASeq_Kelly";
 fastqdir3="/mnt/s/AG/AG-Scholz-NGS/Daten/Sequencing-2/Sequencing-2_A/FASTQ";
@@ -124,7 +124,7 @@ indexdir="/mnt/s/AG/AG-Scholz-NGS/Daten/Tobias/Salmon_TS/human/index/human_ensh3
 
 
 ## - #Download Data
-```{bash download_data, eval=FALSE}
+```{bash download_data, eval=FALSE, include=FALSE, echo=FALSE}
 ## Download data
 
 cd $fastqdir;
@@ -160,7 +160,7 @@ wc -l $log
 
 # 1. Prepare Data
 ## - #Make Index
-```{bash index, eval=FALSE}
+```{bash index, eval=FALSE, include=FALSE, echo=FALSE}
 
 # check newest release http://ftp.ensembl.org/pub/
 release=110
@@ -211,7 +211,7 @@ salmon index -t gentrome_human_ensh38.fa.gz -d decoys_human_ensh38.txt -p 20 -i 
 ```
 
 ## - #Mapping (Salmon)
-```{bash salmon, eval=FALSE}
+```{bash salmon, eval=FALSE, include=FALSE, echo=FALSE}
 mamba activate salmon
 
 fastqfiles=$(ls $fastqdir/*R1*.fastq.gz)
@@ -586,7 +586,7 @@ sample_table_all$mappingrates <- mappingrates[17:204]
 
 
 ### Plot mapping rates
-```{r plot_mappingr, fig.height=15}
+```{r plot_mappingr, fig.height=15, include=TRUE, echo=FALSE}
 
 # Colours
 
@@ -818,7 +818,7 @@ subset(colData(dds), condition=="HIF1A_Hx" & sequencing =="P2041") %>% kable() %
 
 ```{r dds_design}
 design(dds)
-summary(results(dds, alpha = 0.05))
+summary(results(dds))
 plotMA(dds)
 plotDispEsts(dds)
 resultsNames(dds)
@@ -889,7 +889,7 @@ pheatmap(sampleDistMatrix,
 # transform data
 load(file=paste(data,"deseq2.dds", sep="/"))
 vst_dat <- assay(vst(dds))
-colData(dds) %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
+# colData(dds) %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 ens <- rownames(dds)
   symbols <- mcols(dds)$SYMBOL
@@ -904,7 +904,7 @@ ens <- rownames(dds)
 
 ### PCA with top 500 genes with highest row variance 
 pcaData <- plotPCA(vsd, intgroup=colnames(colData(vsd)), returnData=TRUE)
-levels(pcaData$genotype)
+# levels(pcaData$genotype)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
 g1 <- ggplot(pcaData, aes(PC1, PC2, color=treatment, shape=genotype)) +
   geom_point(size=5, alpha=0.7) +
@@ -948,7 +948,7 @@ g4 <- ggplot(pcaData, aes(PC1, PC2, label=orig.name,color=condition, shape=genot
 
 
 ###### -- Advanced PCA
-```{r pca_advanced, warning = FALSE, fig.show="hold", out.width="80%", fig.height=6,, eval=TRUE, include=TRUE, echo=FALSE}
+```{r pca_advanced, warning = FALSE, fig.show="hold", out.width="80%", fig.height=6, eval=TRUE, include=TRUE, echo=FALSE}
 # transform data
 # calculate PCA (all data)
 ## https://www.bioconductor.org/packages/devel/bioc/vignettes/PCAtools/inst/doc/PCAtools.html#modify-bi-plots
@@ -1077,10 +1077,10 @@ ani.pause()
 
 ```
 
-[PCA Gif](1_data_processing/pca.gif){height=100%, width=100%}
+[PCA Gif](pca.gif){height=100%, width=100%}
 
-```{r pca_gif_include, eval=FALSE, out.width="100%", fig.height=8}
-knitr::include_graphics("1_data_processing/pca.gif")
+```{r pca_gif_include, eval=TRUE, echo=FALSE, out.width="100%", fig.height=8}
+knitr::include_graphics("pca.gif")
 
 ```
 
@@ -1090,7 +1090,7 @@ knitr::include_graphics("1_data_processing/pca.gif")
 # CA9 & EPO
 load(file=paste(data,"deseq2.dds", sep="/"))
 goi <- c("CA9","EPO")
-(mcols(dds)$SYMBOL == "CA9") %>% summary()
+# (mcols(dds)$SYMBOL == "CA9") %>% summary()
 
 mcols(dds)$gene_id %>% length()
 mcols(dds)$SYMBOL %>% length()
@@ -1104,10 +1104,10 @@ s2e <- data.frame(symbol=SYMBOLs,
                   ensemble=ENSEMBLS,
                   entrez=ENTREZ)
 rownames(s2e) <- s2e$symbol
-s2e %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
+# s2e %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 
-s2e[goi[1],2]
+# s2e[goi[1],2]
 par(mar=c(2,2,2,2)+.1)
 # plotCounts(dds,gene=s2e[goi[1],2],intgroup="condition",main=goi[1],col=dds$experiment)
 # plotCounts(dds,gene=s2e[goi[2],2],intgroup="condition",main=goi[2],col=dds$experiment)
