@@ -24,8 +24,10 @@ knitr::opts_chunk$set(echo = T,
 ```
 
 # 0. Load
-##  - R_libraries 
+##  - Load R librarys
+```{r R_update, eval=FALSE, include=FALSE, echo=FALSE}
 BiocManager::install()
+```
 
 ```{r librarys, include=FALSE}
 
@@ -78,13 +80,15 @@ gitdir <- paste(dir,"git_RNAseq_Kelly_Hx",sep="/")
 data <- paste(dir,"data",sep="/")
 dgedir <- paste(gitdir,"2B_DGE",sep="/")
 
+par(mfrow = c(1,1))
 
 ```
 
 
 ## - dds
 ```{r dds}
-load(file=paste(data,"deseq2.dds", sep="/"))
+# load(file=paste(data,"deseq2.dds", sep="/"))
+load(file=paste(data,"deseq2_wgcna.dds", sep="/"))
 
 ```
 
@@ -92,9 +96,7 @@ load(file=paste(data,"deseq2.dds", sep="/"))
 ```{r results}
 design(dds)
 # ~genotype + treatment + genotype:treatment
-resultsNames(dds)
-# [1] "Intercept"                 "genotype_HIF1A_vs_Kelly"   "genotype_HIF2A_vs_Kelly"   "genotype_HIF1B_vs_Kelly"   "treatment_Hx_vs_Nx"        "genotypeHIF1A.treatmentHx"
-# [7] "genotypeHIF2A.treatmentHx" "genotypeHIF1B.treatmentHx"
+# resultsNames(dds)
 l <- length(resultsNames(dds))
 cbind(resultsNames(dds),c(rep(0,l)))
 #      [,1]                        [,2]
@@ -109,10 +111,106 @@ cbind(resultsNames(dds),c(rep(0,l)))
 
 condition <- colData(dds)$condition
 
-res.Kelly.Hx.vs.Nx <- results(dds, contrast = c(0,0,0,0,5,0,0,0)) %>% cbind(.,mcols(dds)$symbol)
+## Hx vs. Nx (fixed genotype)
+r1 <- results(dds, contrast = c(0,0,0,0,1,1,0,0))
+r1$symbol <- mcols(dds)$symbol
+res.Hif1a.Hx.vs.Nx <- r1 #ok
+# ok
+# same as res.Hif1a.Hx.vs.Nx_test <- r2 <- results(dds, contrast = list( c("treatment_Hx_vs_Nx","genotypeHIF1A.treatmentHx")))
+
+r1 <- results(dds, contrast = c(0,0,0,0,1,0,1,0))
+r1$symbol <- mcols(dds)$symbol
+res.Hif2a.Hx.vs.Nx <- r1 #ok
+
+r1 <- results(dds, contrast = c(0,0,0,0,1,0,0,1))
+r1$symbol <- mcols(dds)$symbol
+res.Hif1b.Hx.vs.Nx <- r1 #ok
+
+## KO vs. Kelly (Hx)
+r1 <- results(dds, contrast = c(0,1,0,0,0,1,0,0))
+r1$symbol <- mcols(dds)$symbol
+res.Hx.Hif1a.vs.Kelly <- r1
+
+r1 <- results(dds, contrast = c(0,0,1,0,0,0,1,0))
+r1$symbol <- mcols(dds)$symbol
+res.Hx.Hif2a.vs.Kelly <- r1
+
+r1 <- results(dds, contrast = c(0,0,0,1,0,0,0,1))
+r1$symbol <- mcols(dds)$symbol
+res.Hx.Hif1b.vs.Kelly <- r1
+
+## KO vs. Kelly (Nx)
+r1 <- results(dds, contrast = c(0,1,0,0,0,0,0,0))
+r1$symbol <- mcols(dds)$symbol
+res.Nx.Hif1a.vs.Kelly <- r1
+
+r1 <- results(dds, contrast = c(0,0,1,0,0,0,0,0))
+r1$symbol <- mcols(dds)$symbol
+res.Nx.Hif2a.vs.Kelly <- r1
+
+r1 <- results(dds, contrast = c(0,0,0,1,0,0,0,0))
+r1$symbol <- mcols(dds)$symbol
+res.Nx.Hif1b.vs.Kelly <- r1
+
+## Hx vs. Nx (all)
+
+# (Kelly_Hx - Kelly_Nx) + (Hif1a_Hx - Hif1a_Nx) + (Hif2a_Hx - Hif2a_Nx) + (Hif1b_Hx - Hif1b_Nx)
+#           5           +         5+6                      5+7                     5+8           /4
+# c(0,0,0,0,4*5/4,1/4)
+
+r1 <- results(dds, contrast = c(0,0,0,0,1,0.25,0.25,0.25))
+r1$symbol <- mcols(dds)$symbol
+res.Hx.vs.Nx <- r1
+
+
+
+
+r2 <- results(dds, contrast = c("genotype","HIF1B","Kelly"))
+# r2 <- results(dds, contrast = list( c("genotype_HIF1B_vs_Kelly","genotypeHIF1B.treatmentHx")))
+
+r1 %>% summary()
+r2 %>% summary()
+
+fm <- lm(r1$log2FoldChange ~ r2$log2FoldChange)
+plot(r1$log2FoldChange,r2$log2FoldChange, xlim = c(-5, 5), ylim = c(-5, 5))
+abline(fm, col = "red")
+
+
+res.Hx.vs.Nx  <- results(dds, name="treatment_Hx_vs_Nx")
+
+res.Hif1a.vs.Kelly <- results(dds, name="genotype_HIF1A_vs_Kelly")
+res.Hif2a.vs.Kelly <- results(dds, name="genotype_HIF2A_vs_Kelly")
+res.Hif1b.vs.Kelly <- results(dds, name="genotype_HIF1B_vs_Kelly")
+
+
+
+# Hx vs. Nx (in Kelly)
+res.Kelly.Hx.vs.Nx <- r1 <- results(dds, contrast = c(0,0,0,0,1,0,0,0))
+res.Kelly.Hx.vs.Nx %>% summary() #ok
+
+
+res.Kelly.Hx.vs.Nx_test <- r2 <- results(dds, contrast = c("treatment","Hx","Nx"))
+res.Kelly.Hx.vs.Nx_test %>% summary()
+
+
+
+
+
+
+# Hif1a vs. Kelly in Nx
+res.Kelly.Nx.vs.Hif1a.Nx <- results(dds, contrast = c(0,1,0,0,0,0,0,0))
+res.Kelly.Nx.vs.Hif1a.Nx %>% summary() # checked ok
+
+# Hif1a vs. Kelly in Hx
+res.Kelly.Nx.vs.Hif1a.Hx <- results(dds, contrast = c(0,1,0,0,0,1,0,0))
+res.Kelly.Nx.vs.Hif1a.Hx %>% summary() #?
+
+
+
+
+
+res.Kelly.Hx.vs.Nx <- results(dds, contrast = c(0,0,0,0,1,0,0,0)) %>% cbind(.,mcols(dds)$symbol)
 res.Kelly.Hx.vs.Nx %>% summary()
-
-
 
 res.Kelly.Hx.vs.Nx_test <- results(dds)
 res.Kelly.Hx.vs.Nx_test %>% summary()
@@ -122,23 +220,7 @@ fm
 plot(m.res_WT_D_vs.WT_BL$log2FoldChange,res_WT_D_vs.WT_BL$log2FoldChange, xlim = c(-5, 5), ylim = c(-5, 5))
 abline(fm, col = "red")
 
-res.Hif1a.Hx.vs.Nx <- results(dds, contrast = c("condition",condition[c(3,3)])) %>% cbind(.,mcols(dds)$symbol)
-res.Hif2a.Hx.vs.Nx <- results(dds, contrast = c("condition",condition[c(6,5)])) %>% cbind(.,mcols(dds)$symbol)
-res.Hif1b.Hx.vs.Nx <- results(dds, contrast = c("condition",condition[c(8,7)])) %>% cbind(.,mcols(dds)$symbol)
 
-res.Hx.Hif1a.vs.Kelly <- results(dds, contrast = c("condition",condition[c(4,2)])) %>% cbind(.,mcols(dds)$symbol)
-res.Hx.Hif2a.vs.Kelly <- results(dds, contrast = c("condition",condition[c(6,2)])) %>% cbind(.,mcols(dds)$symbol)
-res.Hx.Hif1b.vs.Kelly <- results(dds, contrast = c("condition",condition[c(8,2)])) %>% cbind(.,mcols(dds)$symbol)
-
-res.Nx.Hif1a.vs.Kelly <- results(dds, contrast = c("condition",condition[c(3,1)])) %>% cbind(.,mcols(dds)$symbol)
-res.Nx.Hif2a.vs.Kelly <- results(dds, contrast = c("condition",condition[c(5,2)])) %>% cbind(.,mcols(dds)$symbol)
-res.Nx.Hif1b.vs.Kelly <- results(dds, contrast = c("condition",condition[c(7,2)])) %>% cbind(.,mcols(dds)$symbol)
-
-res.Hx.vs.Nx  <- results(dds, name="treatment_Hx_vs_Nx")
-
-res.Hif1a.vs.Kelly <- results(dds, name="genotype_HIF1A_vs_Kelly")
-res.Hif2a.vs.Kelly <- results(dds, name="genotype_HIF2A_vs_Kelly")
-res.Hif1b.vs.Kelly <- results(dds, name="genotype_HIF1B_vs_Kelly")
 
 
 
