@@ -3,16 +3,15 @@ title: "WGCNA"
 author: "Kelterborn"
 date: "2024-03-07"
 output:
-  md_document:
-    variant: gfm
+  github_document:
+    html_preview: false
     toc: true
 always_allow_html: true
 editor_options: 
   chunk_output_type: console
-knit: (function(inputFile, encoding) {
-    rmarkdown::render(inputFile, 
-      encoding = encoding, 
-      output_file = paste0(dirname(inputFile),'/README.md')) })
+knit: (function(input_file, encoding) {
+    rmarkdown::render(input_file,output_file= 'README.md')
+    })
 ---
   
 ```{r setup, include=FALSE}
@@ -24,11 +23,13 @@ knitr::opts_chunk$set(echo = T,
 ```
 
 # 0. Load
-##  - R 
+##  - Load R librarys
+```{r R_update, eval=FALSE, include=FALSE, echo=FALSE}
 BiocManager::install()
+```
 
-BiocManager::install("CorLevelPlot") 
-```{r librarys, include=FALSE}
+```{r librarys, eval=TRUE, include=FALSE, echo=FALSE}
+# 
 
 library(WGCNA)
 library(DESeq2)
@@ -88,11 +89,12 @@ allowWGCNAThreads(nThreads = 40)
 
 # 1. WGCNA
 ## -load dds
-```{r load_dds, out.width="100%",fig.width=12}
+```{r load_dds, out.width="100%",fig.width=12, eval=TRUE, include=FALSE, echo=FALSE}
 load(file=paste(data,"deseq2.dds", sep="/"))
 s75 <- (nrow(colData(dds))*0.75) %>% round()
-dds75 <- dds[rowSums(counts(dds) >= 15) >= 66,]
-nrow(dds75) # 15687 genes left
+gc <- nrow(colData(dds))/ (levels(colData(dds)$condition) %>% length())
+dds75 <- dds[rowSums(counts(dds) >= gc) >= 66,]
+# nrow(dds75) # 15687 genes left
 
 vsd <- vst(dds75, blind = FALSE) #transform while accounting for design 
 # counts <- counts(dds, normalized=TRUE)
@@ -401,6 +403,8 @@ mME %>% ggplot(., aes(x=treatment, y=name, fill=value)) +
 ## -GO terms enrichment
 ```{r goa, fig.width=12, fig.height=6, out.width="100%"}
 
+expr_universe <- rownames(dds)
+
 # Get GO terms of top colors
 modcols <- c("yellow","red")
 module_go <- module_df[module_df$colors %in% modcols,] # Hypoxia
@@ -522,7 +526,7 @@ colData(dds)$tmp <- module.cols[,i]
 names(colData(dds))[names(colData(dds)) == 'tmp'] <- i
 }
 
-save(dds, file=paste(data,"deseq2.dds", sep="/"))
+save(dds, file=paste(data,"deseq2_wgcna.dds", sep="/"))
 
 ```
 

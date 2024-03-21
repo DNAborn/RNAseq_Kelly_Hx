@@ -110,7 +110,18 @@ cbind(resultsNames(dds),c(rep(0,l)))
 
 condition <- colData(dds)$condition
 
-res.Kelly.Hx.vs.Nx <- results(dds, contrast = c("condition",condition[c(2,1)])) %>% cbind(.,mcols(dds)$symbol)
+res.Kelly.Hx.vs.Nx <- results(dds, contrast = c(0,0,0,0,5,0,0,0)) %>% cbind(.,mcols(dds)$symbol)
+res.Kelly.Hx.vs.Nx %>% summary()
+
+
+
+res.Kelly.Hx.vs.Nx_test <- results(dds)
+res.Kelly.Hx.vs.Nx_test %>% summary()
+
+fm <- lm(m.res_WT_D_vs.WT_BL$log2FoldChange ~ res_WT_D_vs.WT_BL$log2FoldChange)
+fm
+plot(m.res_WT_D_vs.WT_BL$log2FoldChange,res_WT_D_vs.WT_BL$log2FoldChange, xlim = c(-5, 5), ylim = c(-5, 5))
+abline(fm, col = "red")
 
 res.Hif1a.Hx.vs.Nx <- results(dds, contrast = c("condition",condition[c(3,3)])) %>% cbind(.,mcols(dds)$symbol)
 res.Hif2a.Hx.vs.Nx <- results(dds, contrast = c("condition",condition[c(6,5)])) %>% cbind(.,mcols(dds)$symbol)

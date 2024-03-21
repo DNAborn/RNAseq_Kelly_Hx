@@ -14,6 +14,12 @@ knit: (function(input_file, encoding) {
     })
 ---
 
+<!-- knit: (function(inputFile, encoding) { -->
+<!--     rmarkdown::render(inputFile,  -->
+<!--       encoding = encoding,  -->
+<!--       output_file = paste0(dirname(inputFile),'/README.md')) }) -->
+      
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T,
                       error=FALSE,
@@ -27,7 +33,7 @@ knitr::opts_chunk$set(echo = T,
 BiocManager::install()
 
 BiocManager::install("animation")
-```{r librarys, eval=TRUE, include=FALSE, echo=FALSE}
+```{r librarys, eval=FALSE}
 
 library(BiocManager)
 library(devtools)
@@ -523,33 +529,6 @@ sample_table_all$condition %>% levels()
 subset(sample_table_all, condition=="HIF1A_Hx" & sequencing =="P2041") %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 ```
-
-```{r files_table, echo=FALSE}
-samples_overview <- data.frame(
-  experiment = levels(sample_table_all$experiment)[c(3,4,2)],
-  sample_table_all$sequencing %>%
-  table(),
-  RNAs = c(
-    sample_table_all$rna_id[sample_table_all$sequencing=="P2041"] %>% table() %>% unname() %>% length(),
-    sample_table_all$rna_id[sample_table_all$sequencing=="P3302"] %>% table() %>% unname() %>% length(),
-    sample_table_all$rna_id[sample_table_all$sequencing=="P557"] %>% table() %>% unname() %>% length()),
-  conditions = c(
-    sample_table_all$condition[sample_table_all$sequencing=="P2041"] %>% factor() %>% levels() %>% paste(collapse = " "),
-    sample_table_all$condition[sample_table_all$sequencing=="P3302"] %>% factor() %>% levels() %>% paste(collapse = " "),
-    sample_table_all$condition[sample_table_all$sequencing=="P557"] %>% factor() %>% levels() %>% paste(collapse = " ")),
-  date = c(
-    sample_table_all$experiment_date[sample_table_all$sequencing=="P2041"] %>% factor() %>% levels() %>% paste(collapse = " "),
-    sample_table_all$experiment_date[sample_table_all$sequencing=="P3302"] %>% factor() %>% levels() %>% paste(collapse = " "),
-    sample_table_all$experiment_date[sample_table_all$sequencing=="P557"] %>% factor() %>% levels() %>% paste(collapse = " "))
-)
-
-colnames(samples_overview)[c(2,3)] <- c("seq_id","Seq_runs")
-
-samples_overview[c(3,1,2),c(1,4,5,6,2,3)] %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
-
-```
-
-
 
 # 2. Process
 ## - Mapping Rates
