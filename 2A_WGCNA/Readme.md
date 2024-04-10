@@ -36,7 +36,7 @@ Kelterborn
 
     ## [1] TRUE
 
-![](README_files/figure-gfm/unnamed-chunk-1-1.png)![](README_files/figure-gfm/unnamed-chunk-1-2.png)
+![](Readme_files/figure-gfm/unnamed-chunk-1-1.png)![](Readme_files/figure-gfm/unnamed-chunk-1-2.png)
 
 ## (-pickSoftThreshold extern)
 
@@ -83,7 +83,7 @@ Kelterborn
     ## 30    48  0.86400 -1.6200          0.986    20.6      6.17    227
     ## 31    50  0.87100 -1.6200          0.989    18.4      5.16    212
 
-![](README_files/figure-gfm/pickSoftThreshold-1.png)<!-- -->
+![](Readme_files/figure-gfm/pickSoftThreshold-1.png)<!-- -->
 
     ##    Power  SFT.R.sq     slope truncated.R.sq   mean.k. median.k.   max.k.
     ## 18    25 0.7972861 -1.356494      0.9793366 100.54602  63.64718 572.1999
@@ -201,7 +201,7 @@ plotDendroAndColors(bwnet$dendrograms[[1]], cbind(bwnet$unmergedColors, bwnet$co
                     guideHang = 0.05)
 ```
 
-<img src="README_files/figure-gfm/eigengenes-1.png" width="100%" />
+<img src="Readme_files/figure-gfm/eigengenes-1.png" width="100%" />
 
 ``` r
 # grey module = all genes that doesn't fall into other modules were assigned to the grey module
@@ -264,7 +264,7 @@ CorLevelPlot(heatmap.data,
              col = viridis(100, option='plasma'))
 ```
 
-<img src="README_files/figure-gfm/eigengenes-2.png" width="100%" />
+<img src="Readme_files/figure-gfm/eigengenes-2.png" width="100%" />
 
 ``` r
              # col = c("blue1", "skyblue", "white", "pink", "red"))
@@ -1323,7 +1323,7 @@ mME %>% ggplot(., aes(x=treatment, y=name, fill=value)) +
   labs(title = "Module-trait Relationships", y = "Modules", fill="corr")
 ```
 
-![](README_files/figure-gfm/TS_analysis-1.png)![](README_files/figure-gfm/TS_analysis-2.png)![](README_files/figure-gfm/TS_analysis-3.png)
+![](Readme_files/figure-gfm/TS_analysis-1.png)![](Readme_files/figure-gfm/TS_analysis-2.png)![](Readme_files/figure-gfm/TS_analysis-3.png)
 
 ## -GO terms enrichment
 
@@ -1386,7 +1386,7 @@ go4 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste(mod
 (go1 + go2) / (go3 + go4) +plot_layout(guides = "collect", axis_titles="collect")
 ```
 
-<img src="README_files/figure-gfm/goa-1.png" width="100%" />
+<img src="Readme_files/figure-gfm/goa-1.png" width="100%" />
 
 ## -module to sample
 
@@ -1847,13 +1847,13 @@ ME.heatmap %>% ggplot(., aes(x=Var2, y=Var1, fill=value)) +
   labs(title = "Module-trait Relationships", y = "Modules", fill="corr")
 ```
 
-![](README_files/figure-gfm/module_sample-1.png)<!-- -->
+![](Readme_files/figure-gfm/module_sample-1.png)<!-- -->
 
 ``` r
 pheatmap(bwnet$MEs)
 ```
 
-![](README_files/figure-gfm/module_sample-2.png)<!-- -->
+![](Readme_files/figure-gfm/module_sample-2.png)<!-- -->
 
 # Export into dds
 
