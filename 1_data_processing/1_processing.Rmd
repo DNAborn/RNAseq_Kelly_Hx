@@ -26,7 +26,7 @@ knitr::opts_chunk$set(echo = T,
 ##  - #R_libraries
 BiocManager::install()
 
-BiocManager::install("animation")
+BiocManager::install("mgcv")
 ```{r librarys, eval=TRUE, include=FALSE, echo=FALSE}
 
 library(BiocManager)
@@ -609,6 +609,7 @@ par(mar=c(4,4,4,4)+.1)
 
 
 ```{r clear_bfc, eval=FALSE, include=FALSE, echo=FALSE}
+library(BiocFileCache)
 # clear the entire linkedTxome table 
 bfcloc <- getTximetaBFC()
 bfc <- BiocFileCache(bfcloc)
@@ -752,9 +753,9 @@ colnames(mcols(gse))
 head(rownames(gse))
 
 getwd()
-save(gse,file=paste(data,"tximeta.txm", sep="/"))
-gse <- 1
-load(file=paste(data,"tximeta.txm", sep="/"))
+# save(gse,file=paste(data,"tximeta.txm", sep="/"))
+# gse <- 1
+# load(file=paste(data,"tximeta.txm", sep="/"))
 
 subset(colData(gse), condition=="HIF1A_Hx" & sequencing =="P2041") %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 # subset(colData(gse), samplename=="RNA_P2041_S45")
@@ -767,7 +768,7 @@ par(mfrow=c(1,1), mar=c(4,4,4,4))
 ah = AnnotationHub()
 query(ah, c("EnsDb", "homo"))
 edb <- ah[["AH116291"]]
-load(file=paste(data,"tximeta.txm", sep="/"))
+# load(file=paste(data,"tximeta.txm", sep="/"))
 listColumns(edb)
 
 mcols(gse)$SYMBOL <- mapIds(edb, keys = mcols(gse)$gene_id, column = "SYMBOL", keytype = "GENEID")
@@ -785,14 +786,14 @@ mcols(gse)$UNIPROTID <- mapIds(edb, keys = mcols(gse)$gene_id, column = "UNIPROT
 # }
 # include tryCatch
 
-save(gse,file=paste(data,"tximeta.txm", sep="/"))
+# save(gse,file=paste(data,"tximeta.txm", sep="/"))
 
 ```
 
 ## - #DESeq2
 ```{r deseq2, warning=FALSE, eval=TRUE, include=FALSE, echo=FALSE}
 
-load(file=paste(data,"tximeta.txm", sep="/"))
+# load(file=paste(data,"tximeta.txm", sep="/"))
 colData(gse)$genotype %>% levels()
 design = ~genotype+treatment+genotype:treatment
 
@@ -807,9 +808,9 @@ dds <- dds[keep.sn,]
 dds <- DESeq(dds)
 
 getwd()
-save(dds,file=paste(data,"deseq2.dds", sep="/"))
-dds <- 1
-load(file=paste(data,"deseq2.dds", sep="/"))
+# save(dds,file=paste(data,"deseq2.dds", sep="/"))
+# dds <- 1
+# load(file=paste(data,"deseq2.dds", sep="/"))
 dds
 
 subset(colData(dds), condition=="HIF1A_Hx" & sequencing =="P2041") %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
@@ -829,7 +830,7 @@ resultsNames(dds)
 # 3. Pre-Analysis
 ### - Data transformations
 ```{r pre_trans, eval=TRUE, include=FALSE, echo=FALSE}
-load(file=paste(data,"deseq2.dds", sep="/"))
+# load(file=paste(data,"deseq2.dds", sep="/"))
 vsd <- vst(dds, blind=FALSE) #Variance stabilized transformation
 ntd <- normTransform(dds)
 ```
@@ -837,9 +838,9 @@ ntd <- normTransform(dds)
 #### -#rlog
 ```{r pre_trans_rlog, eval=FALSE, include=FALSE, echo=FALSE}
 rld <- rlog(dds, blind=FALSE) #regularized logarithm
-save(rld,file=paste(data,"rlog.rld", sep="/"))
-rld <- 1
-load(file=paste(data,"rlog.rld", sep="/"))
+# save(rld,file=paste(data,"rlog.rld", sep="/"))
+# rld <- 1
+# load(file=paste(data,"rlog.rld", sep="/"))
 rld
 ```
 
@@ -887,7 +888,7 @@ pheatmap(sampleDistMatrix,
 ### - Perform principal component analysis
 ```{r pca, warning = FALSE, fig.show="hold", out.width="80%", fig.height=7, eval=TRUE, include=TRUE, echo=FALSE}
 # transform data
-load(file=paste(data,"deseq2.dds", sep="/"))
+# load(file=paste(data,"deseq2.dds", sep="/"))
 vst_dat <- assay(vst(dds))
 # colData(dds) %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
@@ -1088,7 +1089,7 @@ knitr::include_graphics("pca.gif")
 ### - Plot example counts
 ```{r example_counts, fig.show="hold", out.width="50%", eval=TRUE, include=TRUE, echo=FALSE}
 # CA9 & EPO
-load(file=paste(data,"deseq2.dds", sep="/"))
+# load(file=paste(data,"deseq2.dds", sep="/"))
 goi <- c("CA9","EPO")
 # (mcols(dds)$SYMBOL == "CA9") %>% summary()
 
@@ -1146,7 +1147,7 @@ gcounts2 <- ggplot(all_counts, aes(x = condition, y = count, fill=Gene)) +
 
 gcounts3 <- ggplot(all_counts[all_counts$Gene=="CA9",], aes(x = genotype, y = count, fill=treatment, color=treatment)) +
   geom_boxplot(color="black") +
-  geom_point(position=position_dodge(width=0.75), alpha=1) +
+  geom_point(shape=21,color="black",aes(fill=treatment),position=position_dodge(width=0.75), alpha=1) +
   scale_fill_manual(values=cols[c(1,5)]) +
   scale_color_manual(values=cols[c(1,5)]) +
   scale_y_continuous(trans = "log2") +
