@@ -163,10 +163,13 @@ wc -l $log
 ```{bash index, eval=FALSE, include=FALSE, echo=FALSE}
 
 # check newest release http://ftp.ensembl.org/pub/
-release=110
+release="111"
+species="human"
 echo $release
-gdir="/mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/${release}"
+gdir="/mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/genomic_data/ensembl/${release}/${species}"
 echo $gdir
+mkdir $gdir
+
 
 # Donwload genomic data: dna
 wget -P $gdir "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
@@ -205,8 +208,11 @@ cat Homo_sapiens.GRCh38.cdna.all.fa.gz Homo_sapiens.GRCh38.ncrna.fa.gz Homo_sapi
 
 # make index with salmon
 # is salmon activated?
+mamba activate salmon
 cd $gdir
-salmon index -t gentrome_human_ensh38.fa.gz -d decoys_human_ensh38.txt -p 20 -i ../../index/human_ens110_index
+indexname=${species}_ens${release}_index
+echo $indexname
+salmon index -t gentrome_human_ensh38.fa.gz -d decoys_human_ensh38.txt -p 20 -i ../../index/$indexname
 
 ```
 
@@ -608,13 +614,15 @@ par(mar=c(4,4,4,4)+.1)
 ```
 
 
+### clear BFC
 ```{r clear_bfc, eval=FALSE, include=FALSE, echo=FALSE}
 library(BiocFileCache)
 # clear the entire linkedTxome table 
+setTximetaBFC("/home/kelterbs/.cache/R/BiocFileCache")
 bfcloc <- getTximetaBFC()
 bfc <- BiocFileCache(bfcloc)
 show(bfc)
-bfcinfo()
+bfcinfo(bfc)
 bfcquery(bfc, "Homo")
 bfcremove(bfc, bfcquery(bfc, "linkedTxomeTbl")$rid)
 bfcremove(bfc, bfcquery(bfc, "Homo")$rid)
@@ -687,7 +695,7 @@ dim(se)
 colData(se)[c(1,2,87,88),] %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 mcols(se)[c(1,2,87,88),] %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 # meta infos sind da (genotype, treatment,...)
-
+sessionInfo()
 # rename Samples
 # rownames(colData(se)) <- str_remove(rownames(colData(se)), pattern="_quant")
 
@@ -796,6 +804,8 @@ mcols(gse)$UNIPROTID <- mapIds(edb, keys = mcols(gse)$gene_id, column = "UNIPROT
 # load(file=paste(data,"tximeta.txm", sep="/"))
 colData(gse)$genotype %>% levels()
 design = ~genotype+treatment+genotype:treatment
+# design = ~condition
+# design = ~treatment
 
 dds <- DESeqDataSet(gse, design = design)
 dds <- collapseReplicates(dds, dds$samplename, dds$names)
@@ -808,6 +818,7 @@ dds <- dds[keep.sn,]
 dds <- DESeq(dds)
 
 getwd()
+design(dds)
 # save(dds,file=paste(data,"deseq2.dds", sep="/"))
 # dds <- 1
 # load(file=paste(data,"deseq2.dds", sep="/"))
@@ -1081,6 +1092,8 @@ ani.pause()
 [PCA Gif](pca.gif){height=100%, width=100%}
 
 ```{r pca_gif_include, eval=TRUE, echo=FALSE, out.width="100%", fig.height=8}
+source_file <- dirname(rstudioapi::getSourceEditorContext()$path)
+setwd(source_file)
 knitr::include_graphics("pca.gif")
 
 ```
