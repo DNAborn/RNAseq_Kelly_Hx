@@ -8,10 +8,9 @@ Kelterborn
   - [- dds](#--dds)
   - [- functions](#--functions)
 - [1. Make results](#1-make-results)
-  - [Advanced results
-    troubleshooting](#advanced-results-troubleshooting)
+  - [Plot example counts](#plot-example-counts)
 - [2. Data Dive](#2-data-dive)
-  - [Results](#results)
+  - [Results Venn](#results-venn)
   - [Volcanos](#volcanos)
     - [prepare data](#prepare-data)
     - [simple volcano (full)](#simple-volcano-full)
@@ -43,7 +42,7 @@ design(dds)
 ```
 
     ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x562b8ffeb498>
+    ## <environment: 0x55a2604a46f8>
 
 ``` r
 names(results_list)
@@ -53,13 +52,64 @@ names(results_list)
     ##  [4] "Kelly.Hx.vs.Nx"      "Nx.Hif1a.vs.Kelly"   "Nx.Hif2a.vs.Kelly"  
     ##  [7] "Nx.Hif1b.vs.Kelly"   "Hx.Hif1a.vs.Kelly"   "Hx.Hif2a.vs.Kelly"  
     ## [10] "Hx.Hif1b.vs.Kelly"   "Hx.Hif2a.vs.Hif1a"   "Hx.Hif1b.vs.Hif1a"  
-    ## [13] "Hx.Hif1b.vs.Hif2a"   "Hx.Hif1b.vs.Hif12a"  "Hx.Kelly.vs.Hif12ab"
+    ## [13] "Hx.Hif1b.vs.Hif2a"   "Hx.Hif1b.vs.Hif12a"  "Hx.Kelly.vs.allHIFs"
 
-### Advanced results troubleshooting
+#### (Advanced results troubleshooting)
+
+## Plot example counts
+
+``` r
+cols = brewer.pal(n=8,name = 'Paired')
+
+# get 3 sample genes
+topgenes_list <- lapply(results_list,topgenes) %>%  lapply(.,rownames) 
+sample_plots <- list()
+sample_plots_list <- {}
+plot_list <- list()
+li <- results_list %>% length()
+for (i in 1:li){
+  n <- results_list[i] %>% names()
+  goi <- c(topgenes_list[[i]][1],sample(topgenes_list[[i]],size=2))
+  l <- length(goi)
+       for (ig in 1:l){
+  s <- mcols(dds)[goi[ig],"symbol"]
+  if (s ==""){s <- goi[ig]}
+    d <- plotCounts(dds, gene=goi[ig], intgroup=c("condition","experiment","genotype","treatment"), main=s,returnData=TRUE)
+
+  gcounts <- ggplot(d, aes(x = genotype, y = count, fill=treatment, color=treatment)) +
+    geom_boxplot(color="black") +
+    geom_point(shape=21,color="black",aes(fill=treatment),position=position_dodge(width=0.75), alpha=1) +
+    scale_fill_manual(values=cols[c(1,5)]) +
+    scale_color_manual(values=cols[c(1,5)]) +
+    scale_y_continuous(trans = "log2") +
+    labs(title = paste(s,"(",goi[ig],")",sep=" "))
+  assign(paste("gcounts_",ig,sep=""),gcounts)
+  
+  plot_list[[paste(n,s,sep="_")]] <- gcounts
+       }
+  
+  plot <- gcounts_1 + gcounts_2 + gcounts_3 +  
+    plot_annotation(title = n) +
+    plot_layout(guides = "collect", axis_titles="collect") & theme(legend.position = 'bottom',plot.title = element_text(size=10))
+  print(plot)
+}
+```
+
+![](Readme_files/figure-gfm/results_counts-1.png)<!-- -->![](Readme_files/figure-gfm/results_counts-2.png)<!-- -->![](Readme_files/figure-gfm/results_counts-3.png)<!-- -->![](Readme_files/figure-gfm/results_counts-4.png)<!-- -->![](Readme_files/figure-gfm/results_counts-5.png)<!-- -->![](Readme_files/figure-gfm/results_counts-6.png)<!-- -->![](Readme_files/figure-gfm/results_counts-7.png)<!-- -->![](Readme_files/figure-gfm/results_counts-8.png)<!-- -->![](Readme_files/figure-gfm/results_counts-9.png)<!-- -->![](Readme_files/figure-gfm/results_counts-10.png)<!-- -->![](Readme_files/figure-gfm/results_counts-11.png)<!-- -->![](Readme_files/figure-gfm/results_counts-12.png)<!-- -->![](Readme_files/figure-gfm/results_counts-13.png)<!-- -->![](Readme_files/figure-gfm/results_counts-14.png)<!-- -->![](Readme_files/figure-gfm/results_counts-15.png)<!-- -->
+
+``` r
+for (n in names(results_list)){
+pn <-   str_detect(names(plot_list), pattern=n) %>% names(plot_list)[.]
+plot.3 <- patchwork::wrap_plots(plot_list[pn],ncol = 3) + plot_layout(guides = "collect", axis_titles="collect") + plot_annotation(title = str_split(pn[[1]],pattern="_",simplify =TRUE)[1]) & theme(legend.position = 'bottom',plot.title = element_text(size=10))
+        print(plot.3)
+        }            
+```
+
+![](Readme_files/figure-gfm/results_counts-16.png)<!-- -->![](Readme_files/figure-gfm/results_counts-17.png)<!-- -->![](Readme_files/figure-gfm/results_counts-18.png)<!-- -->![](Readme_files/figure-gfm/results_counts-19.png)<!-- -->![](Readme_files/figure-gfm/results_counts-20.png)<!-- -->![](Readme_files/figure-gfm/results_counts-21.png)<!-- -->![](Readme_files/figure-gfm/results_counts-22.png)<!-- -->![](Readme_files/figure-gfm/results_counts-23.png)<!-- -->![](Readme_files/figure-gfm/results_counts-24.png)<!-- -->![](Readme_files/figure-gfm/results_counts-25.png)<!-- -->![](Readme_files/figure-gfm/results_counts-26.png)<!-- -->![](Readme_files/figure-gfm/results_counts-27.png)<!-- -->![](Readme_files/figure-gfm/results_counts-28.png)<!-- -->![](Readme_files/figure-gfm/results_counts-29.png)<!-- -->![](Readme_files/figure-gfm/results_counts-30.png)<!-- -->
 
 # 2. Data Dive
 
-## Results
+## Results Venn
 
 ## Volcanos
 
@@ -119,8 +169,8 @@ ev_hif1b <- eVukcano_SK(n <- "Hif1b.Hx.vs.Nx",
             hscol="darkseagreen1",
             lcol="grey20")
 
-( ev_kelly + ev_hif1b ) + plot_layout(guides = "collect", axis_titles="collect")
-( ev_hif1a + ev_hif2a) + plot_layout(guides = "collect", axis_titles="collect")
+( ev_kelly + ev_hif1b ) + plot_layout(guides = "collect", axis_titles="collect") & theme(legend.position = 'bottom')
+( ev_hif1a + ev_hif2a) + plot_layout(guides = "collect", axis_titles="collect") & theme(legend.position = 'bottom')
 ```
 
 ![](Readme_files/figure-gfm/draw%20vulcano-1.png)![](Readme_files/figure-gfm/draw%20vulcano-2.png)

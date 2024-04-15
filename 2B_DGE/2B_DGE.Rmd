@@ -60,6 +60,7 @@ library(rgl)
 library(impute)
 library(magrittr)     
 library(flashClust)
+library(AnnotationHub)
 
 library(gridExtra)
 library(patchwork)
@@ -82,6 +83,8 @@ data <- paste(dir,"data",sep="/")
 dgedir <- paste(gitdir,"2B_DGE",sep="/")
 
 par(mfrow = c(1,1))
+
+futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
 ```
 
@@ -213,7 +216,7 @@ ev_f <- EnhancedVolcano(res,
     max.overlaps = 10,
     colCustom = keyvals,
     col=c('grey', topcol, topcol, topcol),
-    xlim = c(-xlim, xlim),
+    # xlim = c(-xlim, xlim),
     ylim = c(0, ylim),
     ylab = "Padj (-log10)",
     title = n,
@@ -225,7 +228,9 @@ ev_f <- EnhancedVolcano(res,
     # pointSize = c(ifelse(rownames(res_WT_D_vs.WT_BL) %in% rownames(top_WT_BL_vs.pcry_BL), 8, 1)),
     legendLabels=c('Not sig.','|L2F| > 2.5','p-adj < 0.05',
                    'p-adj & L2F'),
-    legendPosition = 'bottom'
+    legendPosition = 'bottom',
+    legendLabSize = 5,
+    legendIconSize = 2.0
     )
 
 ev_f
@@ -268,7 +273,8 @@ r1$symbol <- mcols(dds)$symbol
 res.Hif1a.Hx.vs.Nx <- r1 #ok
 n<- "Hif1a.Hx.vs.Nx"
 assign(paste("res",n,sep="."),r1)
-results_list[[n]] <- r1 
+results_list[[n]] <- r1
+
 # ok
 # same as res.Hif1a.Hx.vs.Nx_test <- r2 <- results(dds, contrast = list( c("treatment_Hx_vs_Nx","genotypeHIF1A.treatmentHx")))
 
@@ -373,6 +379,8 @@ n<- "Hx.Hif1b.vs.Hif2a"
 assign(paste("res",n,sep="."),r1)
 results_list[[n]] <- r1
 
+
+#------ Group comparisions (Hx) 
 # Hif1B vs. Hifa (Hif1A & Hif2A) (Hx)
 r1 <- results(dds, contrast = c(0,-0.5,-0.5,1,0,-0.5,-0.5,1))
 r1$symbol <- mcols(dds)$symbol
@@ -381,13 +389,18 @@ n<- "Hx.Hif1b.vs.Hif12a"
 assign(paste("res",n,sep="."),r1)
 results_list[[n]] <- r1
 
-#Kelly (Hx) vs. Hifs (Hif1A, Hif2A, Hif1b)
+# Kelly vs. Hifs (Hif1A, Hif2A, Hif1b) (Hx)
 r1 <- results(dds, contrast = c(0,1/3,1/3,1/3,0,1/3,1/3,1/3))
 r1$symbol <- mcols(dds)$symbol
-res.Hx.Kelly.vs.Hif12ab <- r1
-n<- "Hx.Kelly.vs.Hif12ab"
+res.Hx.Kelly.vs.allHIFs <- r1
+n<- "Hx.Kelly.vs.allHIFs"
 assign(paste("res",n,sep="."),r1)
 results_list[[n]] <- r1
+
+
+results_list[["Nx.Hif2a.vs.Kelly"]] %>% summary(alpha=0.05)
+results_list[["Hx.Hif2a.vs.Kelly"]] %>% summary()
+
 
 ```
 
@@ -399,7 +412,7 @@ names(results_list)
 ```
 
 
-### Advanced results troubleshooting
+#### (Advanced results troubleshooting)
 ```{r results_trouble, eval=FALSE, include=FALSE}
 ## Hx vs. Nx (all)
 # ?
@@ -458,11 +471,16 @@ optimize(lm_pred,
 # 
 # Method "SANN" is
 
-optim_res1 <- optim(par=c(0,0,0,1,0.25,0,0),
+optim_res1 <- optim(par=c(0,0,0,0.5,0,0,0),
       # lower=-1,upper=+1,
       # control$ndeps=0.1,
       control = list(fnscale = -1),
-      method = "BFGS"
+      # method = "BFGS",
+      lm_pred)
+
+optim_res1 <- optim(par=c(0,0,0,0.5,0,0,0),
+      control = list(fnscale = -1),
+      # method = "BFGS",
       lm_pred)
 
 summary(fm)$r.squared
@@ -587,10 +605,62 @@ res.Hif1b.vs.Kelly <- results(dds, name="genotype_HIF1B_vs_Kelly")
 
 ```
 
+##  Plot example counts
+```{r, results_counts, fig.height=5}
+
+cols = brewer.pal(n=8,name = 'Paired')
+
+# get 3 sample genes
+topgenes_list <- lapply(results_list,topgenes) %>%  lapply(.,rownames) 
+sample_plots <- list()
+sample_plots_list <- {}
+plot_list <- list()
+li <- results_list %>% length()
+for (i in 1:li){
+  n <- results_list[i] %>% names()
+  goi <- c(topgenes_list[[i]][1],sample(topgenes_list[[i]],size=2))
+  l <- length(goi)
+       for (ig in 1:l){
+  s <- mcols(dds)[goi[ig],"symbol"]
+  if (s ==""){s <- goi[ig]}
+    d <- plotCounts(dds, gene=goi[ig], intgroup=c("condition","experiment","genotype","treatment"), main=s,returnData=TRUE)
+
+  gcounts <- ggplot(d, aes(x = genotype, y = count, fill=treatment, color=treatment)) +
+    geom_boxplot(color="black") +
+    geom_point(shape=21,color="black",aes(fill=treatment),position=position_dodge(width=0.75), alpha=1) +
+    scale_fill_manual(values=cols[c(1,5)]) +
+    scale_color_manual(values=cols[c(1,5)]) +
+    scale_y_continuous(trans = "log2") +
+    labs(title = paste(s,"(",goi[ig],")",sep=" "))
+  assign(paste("gcounts_",ig,sep=""),gcounts)
+  
+  plot_list[[paste(n,s,sep="_")]] <- gcounts
+       }
+  
+  plot <- gcounts_1 + gcounts_2 + gcounts_3 +  
+    plot_annotation(title = n) +
+    plot_layout(guides = "collect", axis_titles="collect") & theme(legend.position = 'bottom',plot.title = element_text(size=10))
+  print(plot)
+}
+
+for (n in names(results_list)){
+pn <-   str_detect(names(plot_list), pattern=n) %>% names(plot_list)[.]
+plot.3 <- patchwork::wrap_plots(plot_list[pn],ncol = 3) + plot_layout(guides = "collect", axis_titles="collect") + plot_annotation(title = str_split(pn[[1]],pattern="_",simplify =TRUE)[1]) & theme(legend.position = 'bottom',plot.title = element_text(size=10))
+        print(plot.3)
+        }            
+
+
+```
 
 
 # 2. Data Dive
-## Results
+## Results Venn
+```{r venn}
+
+
+
+```
+
 ```{r}
 
 
@@ -821,8 +891,8 @@ ev_hif1b <- eVukcano_SK(n <- "Hif1b.Hx.vs.Nx",
             hscol="darkseagreen1",
             lcol="grey20")
 
-( ev_kelly + ev_hif1b ) + plot_layout(guides = "collect", axis_titles="collect")
-( ev_hif1a + ev_hif2a) + plot_layout(guides = "collect", axis_titles="collect")
-
+( ev_kelly + ev_hif1b ) + plot_layout(guides = "collect", axis_titles="collect") & theme(legend.position = 'bottom')
+( ev_hif1a + ev_hif2a) + plot_layout(guides = "collect", axis_titles="collect") & theme(legend.position = 'bottom')
+ 
 ```
 
