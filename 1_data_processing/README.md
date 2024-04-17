@@ -183,7 +183,7 @@ design(dds)
 ```
 
     ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x560d2a8988d8>
+    ## <environment: 0x5634ee6db8b8>
 
 ``` r
 summary(results(dds))
@@ -315,7 +315,7 @@ sessionInfo()
     ## [33] AnnotationDbi_1.64.1        RColorBrewer_1.1-3         
     ## [35] DESeq2_1.42.1               SummarizedExperiment_1.32.0
     ## [37] Biobase_2.62.0              MatrixGenerics_1.14.0      
-    ## [39] matrixStats_1.2.0           GenomicRanges_1.54.1       
+    ## [39] matrixStats_1.3.0           GenomicRanges_1.54.1       
     ## [41] GenomeInfoDb_1.38.8         IRanges_2.36.0             
     ## [43] S4Vectors_0.40.2            BiocGenerics_0.48.1        
     ## [45] tximport_1.30.0             tximeta_1.20.3             
@@ -388,7 +388,7 @@ sessionInfo()
     ## [111] BiocSingular_1.18.0           RCurl_1.98-1.14              
     ## [113] magrittr_2.0.3                GenomeInfoDbData_1.2.11      
     ## [115] ggplotify_0.1.2               munsell_0.5.1                
-    ## [117] Rcpp_1.0.12                   ape_5.7-1                    
+    ## [117] Rcpp_1.0.12                   ape_5.8                      
     ## [119] ggraph_2.2.1                  zlibbioc_1.48.2              
     ## [121] MASS_7.3-60                   pkgbuild_1.4.4               
     ## [123] parallel_4.3.3                Biostrings_2.70.3            

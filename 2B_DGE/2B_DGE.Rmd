@@ -14,6 +14,7 @@ knit: (function(input_file, encoding) {
     })
 ---
 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T,
                       error=FALSE,
@@ -61,6 +62,7 @@ library(impute)
 library(magrittr)     
 library(flashClust)
 library(AnnotationHub)
+library(venn)
 
 library(gridExtra)
 library(patchwork)
@@ -106,8 +108,8 @@ load(file=paste(data,"deseq2_wgcna.dds", sep="/"))
 ## - functions
 ```{r, include=FALSE}
 # topgenes
-topgenes <- function(res){
-a <- subset(res, padj < 0.05 & baseMean > 20 & (log2FoldChange < -0.5 | log2FoldChange > 0.5))
+topgenes_f <- function(res,p=0.05,bM=20,l2FC=1){
+a <- subset(res, padj < p & baseMean > bM & abs(log2FoldChange) > l2FC)
 a <- a[order(a$baseMean, decreasing = T),]
   a$rank.bm <- seq(1:length(rownames(a)))
 a <- a[order(a$padj, decreasing = F),]
@@ -130,7 +132,7 @@ eVukcano_SK <- function(n,
                         ylim=300)
 {
 res <- results_list[[n]]
-top <- topgenes(res)
+top <- topgenes_f(res=res)
 l <- nrow(top)
 
 res_shrink <- lfcShrink(dds, res=res, type="ashr")
@@ -206,32 +208,33 @@ ev_f <- EnhancedVolcano(res,
     y = 'padj',
     lab = res$symbol,
     selectLab  = res[res$istop == TRUE,"symbol"],
-    labSize = 3,
+    labSize = 2,
     drawConnectors = TRUE,
     boxedLabels = TRUE,
     widthConnectors = 0.5,
     colConnectors = lcol,
-    pointSize = c(ifelse(res$istop==TRUE, 4, ifelse(res$ishs==TRUE, 3, 2))),
+    pointSize = c(ifelse(res$istop==TRUE, 2, ifelse(res$ishs==TRUE, 1.5, 1))),
     colAlpha = c(ifelse(res$istop==TRUE, 0.9, ifelse(res$ishs==TRUE, 0.5, 0.2))),
-    max.overlaps = 10,
+    max.overlaps = 15,
     colCustom = keyvals,
     col=c('grey', topcol, topcol, topcol),
-    # xlim = c(-xlim, xlim),
+    xlim = c(-xlim, xlim),
     ylim = c(0, ylim),
     ylab = "Padj (-log10)",
     title = n,
     subtitle = paste("DE genes:",l),
     # sub = "SVF",
-    pCutoff = 10^(-60),
+    pCutoff = 10^(-50),
     FCcutoff = 2,
-   shapeCustom =shape,
+    shapeCustom =shape,
     # pointSize = c(ifelse(rownames(res_WT_D_vs.WT_BL) %in% rownames(top_WT_BL_vs.pcry_BL), 8, 1)),
     legendLabels=c('Not sig.','|L2F| > 2.5','p-adj < 0.05',
                    'p-adj & L2F'),
     legendPosition = 'bottom',
-    legendLabSize = 5,
-    legendIconSize = 2.0
-    )
+    legendLabSize = 8,
+    legendIconSize = 2.0,
+    axisLabSize = 8
+   )
 
 ev_f
 }
@@ -301,6 +304,7 @@ res.Kelly.Hx.vs.Nx <- r1 #ok
 n<- "Kelly.Hx.vs.Nx"
 assign(paste("res",n,sep="."),r1)
 results_list[[n]] <- r1 
+
 
 #------  KO vs. Kelly (Nx)
 ## HIF1A vs. Kelly (Nx)
@@ -380,6 +384,32 @@ assign(paste("res",n,sep="."),r1)
 results_list[[n]] <- r1
 
 
+#----ðð KO (Hx.vs.Nx) vs. Kelly (Hx vs. Nx)
+# Hif1a vs. Kelly (Hx vs. Nx)
+r1 <- results(dds, contrast =  c(0,0,0,0,0,1,0,0))
+r1$symbol <- mcols(dds)$symbol
+res.Hx.vs.Nx.Hif1a.vs.Kelly <- r1
+n<- "Hx.vs.Nx.Hif1a.vs.Kelly"
+assign(paste("res",n,sep="."),r1)
+results_list[[n]] <- r1
+
+# Hif2a vs. Kelly (Hx vs. Nx)
+r1 <- results(dds, contrast =  c(0,0,0,0,0,0,1,0))
+r1$symbol <- mcols(dds)$symbol
+res.Hx.vs.Nx.Hif2a.vs.Kelly <- r1
+n<- "Hx.vs.Nx.Hif2a.vs.Kelly"
+assign(paste("res",n,sep="."),r1)
+results_list[[n]] <- r1
+
+# Hif1b vs. Kelly (Hx vs. Nx)
+r1 <- results(dds, contrast =  c(0,0,0,0,0,0,0,1))
+r1$symbol <- mcols(dds)$symbol
+res.Hx.vs.Nx.Hif1b.vs.Kelly <- r1
+n<- "Hx.vs.Nx.Hif1b.vs.Kelly"
+assign(paste("res",n,sep="."),r1)
+results_list[[n]] <- r1
+
+
 #------ Group comparisions (Hx) 
 # Hif1B vs. Hifa (Hif1A & Hif2A) (Hx)
 r1 <- results(dds, contrast = c(0,-0.5,-0.5,1,0,-0.5,-0.5,1))
@@ -398,19 +428,22 @@ assign(paste("res",n,sep="."),r1)
 results_list[[n]] <- r1
 
 
+#------ Hx vs. Nx
+# Hx vs. Nx over all groups
+r1 <- results(dds, contrast = c(0,0,0,0,1,1/4,1/4,1/4))
+r1$symbol <- mcols(dds)$symbol
+res.Hx.vs.Nx <- r1
+n<- "Hx.vs.Nx"
+assign(paste("res",n,sep="."),r1)
+results_list[[n]] <- r1
+# NOT confirmed
+
+
 results_list[["Nx.Hif2a.vs.Kelly"]] %>% summary(alpha=0.05)
 results_list[["Hx.Hif2a.vs.Kelly"]] %>% summary()
 
 
 ```
-
-```{r results_name}
-
-design(dds)
-names(results_list)
-
-```
-
 
 #### (Advanced results troubleshooting)
 ```{r results_trouble, eval=FALSE, include=FALSE}
@@ -605,13 +638,27 @@ res.Hif1b.vs.Kelly <- results(dds, name="genotype_HIF1B_vs_Kelly")
 
 ```
 
-##  Plot example counts
-```{r, results_counts, fig.height=5}
+### -Generate toplist
+```{r toplist}
+topgenes_list <- lapply(results_list,topgenes_f, p=0.05,bM=50,l2FC=2) %>%  lapply(.,rownames) 
+topgenes_list <- lapply(results_list,topgenes_f) %>%  lapply(.,rownames) 
+
+```
+
+```{r results_name}
+
+design(dds)
+names(results_list)
+
+```
+
+
+##  -Plot example counts
+```{r, results_counts, fig.height=4}
 
 cols = brewer.pal(n=8,name = 'Paired')
 
 # get 3 sample genes
-topgenes_list <- lapply(results_list,topgenes) %>%  lapply(.,rownames) 
 sample_plots <- list()
 sample_plots_list <- {}
 plot_list <- list()
@@ -654,12 +701,117 @@ plot.3 <- patchwork::wrap_plots(plot_list[pn],ncol = 3) + plot_layout(guides = "
 
 
 # 2. Data Dive
-## Results Venn
-```{r venn}
+## Colour sheme
+```{r}
 
-
+colors_paired <- c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00")
+colors_v <- c("#440154FF", "#482878FF", "#3E4A89FF", "#31688EFF", "#26828EFF", "#1F9E89FF", "#35B779FF", "#6DCD59FF", "#B4DE2CFF", "#FDE725FF")
+colors <- c("lavenderblush3","lavenderblush4","#90caf9","#1976d2", "#82e0aa", "#239b56", "#f8c471", "#b9770e") 
+colors4 <- colors[c(1,3,5,7)]
 
 ```
+
+
+## Overlaps (Venn)
+```{r venn,fig.show="hold", out.width="80%", fig.with="50%",fig.height=4}
+
+# Hx vs. Nx
+dev.off()
+plt <- venn.diagram(
+    x = topgenes_list[c(4,3,1,2)],
+    category.names = paste(names(topgenes_list[c(4,3,1,2)]),"\n(",topgenes_list %>% summary() %>% .[c(4,3,1,2)],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Hx vs. Nx", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors4[c(1,4,2,3)])
+grid.draw(plt)
+
+# Hx vs. Hx
+dev.off()
+plt <- venn.diagram(
+    x = topgenes_list[c(8,9,10)],
+    category.names = paste(names(topgenes_list[c(8,9,10)]),"\n(",topgenes_list %>% summary() %>% .[c(8,9,10)],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Hx vs. Hx", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors4[c(2,3,4)])
+grid.draw(plt)
+
+# Hif1a
+dev.off()
+plt <- venn.diagram(
+    x = topgenes_list[c(4,1,5,8)],
+    category.names = paste(names(topgenes_list[c(4,1,5,8)]),"\n(",topgenes_list %>% summary() %>% .[c(4,1,5,8)],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Hif1a", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(2,4,1,3)])
+grid.draw(plt)
+
+# Hif1a_simple
+dev.off()
+choose_list <- c(4,1,8)
+plt <- venn.diagram(
+    x = topgenes_list[choose_list],
+    category.names = paste(names(topgenes_list[choose_list]),"\n(",topgenes_list %>% summary() %>% .[choose_list],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Hif1a", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(1,3,4)])
+grid.draw(plt)
+
+# Hif1a_all
+dev.off()
+choose_list <- c(4,1,8)
+plt <- venn.diagram(
+    x = topgenes_list[choose_list],
+    category.names = paste(names(topgenes_list[choose_list]),"\n(",topgenes_list %>% summary() %>% .[choose_list],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Hif1a", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(1,3,4)])
+grid.draw(plt)
+
+# Hif2a
+dev.off()
+plt <- venn.diagram(
+    x = topgenes_list[c(4,2,6,9)],
+    category.names = paste(names(topgenes_list[c(4,2,6,9)]),"\n(",topgenes_list %>% summary() %>% .[c(4,2,6,9)],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Hif2a", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(2,6,1,5)])
+grid.draw(plt)
+
+# Hif1b
+dev.off()
+plt <- venn.diagram(
+    x = topgenes_list[c(4,3,7,10)],
+    category.names = paste(names(topgenes_list[c(4,3,7,10)]),"\n(",topgenes_list %>% summary() %>% .[c(4,3,7,10)],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Hif2a", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(2,8,1,7)])
+grid.draw(plt)
+
+```
+
+
+
 
 ```{r}
 
@@ -691,7 +843,7 @@ n <- "Kelly.Hx.vs.Nx"
 
 
 res <- results_list[[n]]
-top <- topgenes(res)
+top <- topgenes_f(res)
 l <- nrow(top)
 
 res_shrink <- lfcShrink(dds, res=res, type="ashr")
@@ -842,7 +994,7 @@ plot(x,-log(base=10,x))
 
 
 ### Draw Vulcanos
-```{r draw vulcano,  fig.show="hold", fig.height=6}
+```{r draw vulcano,  fig.show="hold", fig.height=4}
 
 # Input
 
@@ -867,8 +1019,8 @@ ntop <- 100
 
 ev_kelly <- eVukcano_SK(n="Kelly.Hx.vs.Nx", # results name
             ntop=200, # number of top genes
-            topcol="royalblue4", # color top genes
-            hscol="royalblue1", # color highly significant genes
+            topcol=colors[4], # color top genes
+            hscol=colors[3], # color highly significant genes
             lcol="grey20",
             xlim=10,
             ylim=300)
@@ -891,7 +1043,7 @@ ev_hif1b <- eVukcano_SK(n <- "Hif1b.Hx.vs.Nx",
             hscol="darkseagreen1",
             lcol="grey20")
 
-( ev_kelly + ev_hif1b ) + plot_layout(guides = "collect", axis_titles="collect") & theme(legend.position = 'bottom')
+( ev_kelly + ev_hif1b ) + plot_layout(guides = "collect", axes="collect", axis_titles="collect") & theme(legend.position = 'bottom', axis.title=element_text(size=8))
 ( ev_hif1a + ev_hif2a) + plot_layout(guides = "collect", axis_titles="collect") & theme(legend.position = 'bottom')
  
 ```
