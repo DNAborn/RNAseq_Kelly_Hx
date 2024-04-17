@@ -8,7 +8,8 @@ Kelterborn
   - [- dds](#--dds)
   - [- functions](#--functions)
 - [1. Make results](#1-make-results)
-  - [Plot example counts](#plot-example-counts)
+  - [-Generate toplist](#-generate-toplist)
+  - [-Plot example counts](#-plot-example-counts)
 - [2. Data Dive](#2-data-dive)
   - [Colour sheme](#colour-sheme)
   - [Overlaps (Venn)](#overlaps-venn)
@@ -38,33 +39,40 @@ load(file=paste(data,"deseq2_wgcna.dds", sep="/"))
 
 # 1. Make results
 
+#### (Advanced results troubleshooting)
+
+### -Generate toplist
+
+``` r
+topgenes_list <- lapply(results_list,topgenes_f, p=0.05,bM=50,l2FC=2) %>%  lapply(.,rownames) 
+topgenes_list <- lapply(results_list,topgenes_f) %>%  lapply(.,rownames) 
+```
+
 ``` r
 design(dds)
 ```
 
     ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x55c9bb476870>
+    ## <environment: 0x5627308c1018>
 
 ``` r
 names(results_list)
 ```
 
-    ##  [1] "Hif1a.Hx.vs.Nx"      "Hif2a.Hx.vs.Nx"      "Hif1b.Hx.vs.Nx"     
-    ##  [4] "Kelly.Hx.vs.Nx"      "Nx.Hif1a.vs.Kelly"   "Nx.Hif2a.vs.Kelly"  
-    ##  [7] "Nx.Hif1b.vs.Kelly"   "Hx.Hif1a.vs.Kelly"   "Hx.Hif2a.vs.Kelly"  
-    ## [10] "Hx.Hif1b.vs.Kelly"   "Hx.Hif2a.vs.Hif1a"   "Hx.Hif1b.vs.Hif1a"  
-    ## [13] "Hx.Hif1b.vs.Hif2a"   "Hx.Hif1b.vs.Hif12a"  "Hx.Kelly.vs.allHIFs"
-    ## [16] "Hx.vs.Nx"
+    ##  [1] "Hif1a.Hx.vs.Nx"         "Hif2a.Hx.vs.Nx"         "Hif1b.Hx.vs.Nx"        
+    ##  [4] "Kelly.Hx.vs.Nx"         "Nx.Hif1a.vs.Kelly"      "Nx.Hif2a.vs.Kelly"     
+    ##  [7] "Nx.Hif1b.vs.Kelly"      "Hx.Hif1a.vs.Kelly"      "Hx.Hif2a.vs.Kelly"     
+    ## [10] "Hx.Hif1b.vs.Kelly"      "Hx.Hif2a.vs.Hif1a"      "Hx.Hif1b.vs.Hif1a"     
+    ## [13] "Hx.Hif1b.vs.Hif2a"      "Hif1aHxNx.vs.KellyHxNx" "Hif2aHxNx.vs.KellyHxNx"
+    ## [16] "Hif1bHxNx.vs.KellyHxNx" "Hx.Hif1b.vs.Hif12a"     "Hx.Kelly.vs.allHIFs"   
+    ## [19] "Hx.vs.Nx"
 
-#### (Advanced results troubleshooting)
-
-## Plot example counts
+## -Plot example counts
 
 ``` r
 cols = brewer.pal(n=8,name = 'Paired')
 
 # get 3 sample genes
-topgenes_list <- lapply(results_list,topgenes) %>%  lapply(.,rownames) 
 sample_plots <- list()
 sample_plots_list <- {}
 plot_list <- list()
@@ -97,17 +105,15 @@ for (i in 1:li){
 }
 ```
 
-![](Readme_files/figure-gfm/results_counts-1.png)<!-- -->![](Readme_files/figure-gfm/results_counts-2.png)<!-- -->![](Readme_files/figure-gfm/results_counts-3.png)<!-- -->![](Readme_files/figure-gfm/results_counts-4.png)<!-- -->![](Readme_files/figure-gfm/results_counts-5.png)<!-- -->![](Readme_files/figure-gfm/results_counts-6.png)<!-- -->![](Readme_files/figure-gfm/results_counts-7.png)<!-- -->![](Readme_files/figure-gfm/results_counts-8.png)<!-- -->![](Readme_files/figure-gfm/results_counts-9.png)<!-- -->![](Readme_files/figure-gfm/results_counts-10.png)<!-- -->![](Readme_files/figure-gfm/results_counts-11.png)<!-- -->![](Readme_files/figure-gfm/results_counts-12.png)<!-- -->![](Readme_files/figure-gfm/results_counts-13.png)<!-- -->![](Readme_files/figure-gfm/results_counts-14.png)<!-- -->![](Readme_files/figure-gfm/results_counts-15.png)<!-- -->![](Readme_files/figure-gfm/results_counts-16.png)<!-- -->
+![](Readme_files/figure-gfm/results_counts-1.png)<!-- -->![](Readme_files/figure-gfm/results_counts-2.png)<!-- -->![](Readme_files/figure-gfm/results_counts-3.png)<!-- -->![](Readme_files/figure-gfm/results_counts-4.png)<!-- -->![](Readme_files/figure-gfm/results_counts-5.png)<!-- -->![](Readme_files/figure-gfm/results_counts-6.png)<!-- -->![](Readme_files/figure-gfm/results_counts-7.png)<!-- -->![](Readme_files/figure-gfm/results_counts-8.png)<!-- -->![](Readme_files/figure-gfm/results_counts-9.png)<!-- -->![](Readme_files/figure-gfm/results_counts-10.png)<!-- -->![](Readme_files/figure-gfm/results_counts-11.png)<!-- -->![](Readme_files/figure-gfm/results_counts-12.png)<!-- -->![](Readme_files/figure-gfm/results_counts-13.png)<!-- -->![](Readme_files/figure-gfm/results_counts-14.png)<!-- -->![](Readme_files/figure-gfm/results_counts-15.png)<!-- -->![](Readme_files/figure-gfm/results_counts-16.png)<!-- -->![](Readme_files/figure-gfm/results_counts-17.png)<!-- -->![](Readme_files/figure-gfm/results_counts-18.png)<!-- -->![](Readme_files/figure-gfm/results_counts-19.png)<!-- -->
 
 ``` r
 for (n in names(results_list)){
 pn <-   str_detect(names(plot_list), pattern=n) %>% names(plot_list)[.]
 plot.3 <- patchwork::wrap_plots(plot_list[pn],ncol = 3) + plot_layout(guides = "collect", axis_titles="collect") + plot_annotation(title = str_split(pn[[1]],pattern="_",simplify =TRUE)[1]) & theme(legend.position = 'bottom',plot.title = element_text(size=10))
-        print(plot.3)
+#        print(plot.3)
         }            
 ```
-
-![](Readme_files/figure-gfm/results_counts-17.png)<!-- -->![](Readme_files/figure-gfm/results_counts-18.png)<!-- -->![](Readme_files/figure-gfm/results_counts-19.png)<!-- -->![](Readme_files/figure-gfm/results_counts-20.png)<!-- -->![](Readme_files/figure-gfm/results_counts-21.png)<!-- -->![](Readme_files/figure-gfm/results_counts-22.png)<!-- -->![](Readme_files/figure-gfm/results_counts-23.png)<!-- -->![](Readme_files/figure-gfm/results_counts-24.png)<!-- -->![](Readme_files/figure-gfm/results_counts-25.png)<!-- -->![](Readme_files/figure-gfm/results_counts-26.png)<!-- -->![](Readme_files/figure-gfm/results_counts-27.png)<!-- -->![](Readme_files/figure-gfm/results_counts-28.png)<!-- -->![](Readme_files/figure-gfm/results_counts-29.png)<!-- -->![](Readme_files/figure-gfm/results_counts-30.png)<!-- -->![](Readme_files/figure-gfm/results_counts-31.png)<!-- -->![](Readme_files/figure-gfm/results_counts-32.png)<!-- -->
 
 # 2. Data Dive
 
@@ -120,17 +126,34 @@ colors <- c("lavenderblush3","lavenderblush4","#90caf9","#1976d2", "#82e0aa", "#
 colors4 <- colors[c(1,3,5,7)]
 ```
 
+``` r
+library(VennDiagram)
+
+list1<-c("A", "B", "C", "D")
+list2<-c("B", "D", "E")
+list3<-c("A", "D", "Z")
+
+p<-venn.diagram(
+x=list( list1, list2, list3),
+category.names= c("list1", "list2", "list3"),
+filename= NULL
+)
+
+grid.draw(p)
+```
+
+![](Readme_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
 ## Overlaps (Venn)
 
 ``` r
+# ,fig.show="hold", out.width="80%", fig.with="50%",fig.height=4
+
+grid.newpage()
+grid.draw(p)
+
 # Hx vs. Nx
-dev.off()
-```
-
-    ## null device 
-    ##           1
-
-``` r
+# dev.off()
 plt <- venn.diagram(
     x = topgenes_list[c(4,3,1,2)],
     category.names = paste(names(topgenes_list[c(4,3,1,2)]),"\n(",topgenes_list %>% summary() %>% .[c(4,3,1,2)],")",sep=""),
@@ -140,16 +163,42 @@ plt <- venn.diagram(
     lwd = 2,
     lty = 'blank',
     fill = colors4[c(1,4,2,3)])
+grid.newpage
+```
+
+    ## function (recording = TRUE, clearGroups = TRUE) 
+    ## {
+    ##     if (length(as.logical(clearGroups)) != 1) 
+    ##         stop("Invalid 'clearGroups' argument")
+    ##     for (fun in getHook("before.grid.newpage")) {
+    ##         if (is.character(fun)) 
+    ##             fun <- get(fun)
+    ##         try(fun())
+    ##     }
+    ##     .Call(C_newpagerecording)
+    ##     .Call(C_initGPar)
+    ##     .Call(C_newpage)
+    ##     .Call(C_clearDefinitions, as.logical(clearGroups))
+    ##     .Call(C_initViewportStack)
+    ##     if (recording) {
+    ##         .Call(C_initDisplayList)
+    ##         grDevices:::recordPalette()
+    ##         for (fun in getHook("grid.newpage")) {
+    ##             if (is.character(fun)) 
+    ##                 fun <- get(fun)
+    ##             try(fun())
+    ##         }
+    ##     }
+    ##     invisible()
+    ## }
+    ## <bytecode: 0x56277e44ff90>
+    ## <environment: namespace:grid>
+
+``` r
 grid.draw(plt)
 
 # Hx vs. Hx
-dev.off()
-```
-
-    ## null device 
-    ##           1
-
-``` r
+# dev.off()
 plt <- venn.diagram(
     x = topgenes_list[c(8,9,10)],
     category.names = paste(names(topgenes_list[c(8,9,10)]),"\n(",topgenes_list %>% summary() %>% .[c(8,9,10)],")",sep=""),
@@ -160,15 +209,14 @@ plt <- venn.diagram(
     lty = 'blank',
     fill = colors4[c(2,3,4)])
 grid.draw(plt)
-
-# Hif1a
-dev.off()
 ```
 
-    ## null device 
-    ##           1
+![](Readme_files/figure-gfm/venn-1.png)<!-- -->
 
 ``` r
+# Hif1a
+# dev.off()
+grid.newpage()
 plt <- venn.diagram(
     x = topgenes_list[c(4,1,5,8)],
     category.names = paste(names(topgenes_list[c(4,1,5,8)]),"\n(",topgenes_list %>% summary() %>% .[c(4,1,5,8)],")",sep=""),
@@ -179,15 +227,51 @@ plt <- venn.diagram(
     lty = 'blank',
     fill = colors[c(2,4,1,3)])
 grid.draw(plt)
-
-# Hif2a
-dev.off()
 ```
 
-    ## null device 
-    ##           1
+![](Readme_files/figure-gfm/venn-2.png)<!-- -->
 
 ``` r
+# Hif1a_simple
+# dev.off()
+choose_list <- c(4,1,8)
+plt <- venn.diagram(
+    x = topgenes_list[choose_list],
+    category.names = paste(names(topgenes_list[choose_list]),"\n(",topgenes_list %>% summary() %>% .[choose_list],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Hif1a_simple", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(1,3,4)])
+grid.newpage()
+grid.draw(plt)
+```
+
+![](Readme_files/figure-gfm/venn-3.png)<!-- -->
+
+``` r
+# Hif1a_all
+# dev.off()
+choose_list <- c(4,1,8)
+plt <- venn.diagram(
+    x = topgenes_list[choose_list],
+    category.names = paste(names(topgenes_list[choose_list]),"\n(",topgenes_list %>% summary() %>% .[choose_list],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Hif1a_all", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(1,3,4)])
+grid.newpage()
+grid.draw(plt)
+```
+
+![](Readme_files/figure-gfm/venn-4.png)<!-- -->
+
+``` r
+# Hif2a
+# dev.off()
 plt <- venn.diagram(
     x = topgenes_list[c(4,2,6,9)],
     category.names = paste(names(topgenes_list[c(4,2,6,9)]),"\n(",topgenes_list %>% summary() %>% .[c(4,2,6,9)],")",sep=""),
@@ -197,16 +281,15 @@ plt <- venn.diagram(
     lwd = 2,
     lty = 'blank',
     fill = colors[c(2,6,1,5)])
+grid.newpage()
 grid.draw(plt)
-
-# Hif1b
-dev.off()
 ```
 
-    ## null device 
-    ##           1
+![](Readme_files/figure-gfm/venn-5.png)<!-- -->
 
 ``` r
+# Hif1b
+# dev.off()
 plt <- venn.diagram(
     x = topgenes_list[c(4,3,7,10)],
     category.names = paste(names(topgenes_list[c(4,3,7,10)]),"\n(",topgenes_list %>% summary() %>% .[c(4,3,7,10)],")",sep=""),
@@ -216,8 +299,11 @@ plt <- venn.diagram(
     lwd = 2,
     lty = 'blank',
     fill = colors[c(2,8,1,7)])
+grid.newpage()
 grid.draw(plt)
 ```
+
+![](Readme_files/figure-gfm/venn-6.png)<!-- -->
 
 ## Volcanos
 
@@ -253,8 +339,8 @@ ntop <- 100
 
 ev_kelly <- eVukcano_SK(n="Kelly.Hx.vs.Nx", # results name
             ntop=200, # number of top genes
-            topcol="royalblue4", # color top genes
-            hscol="royalblue1", # color highly significant genes
+            topcol=colors[4], # color top genes
+            hscol=colors[3], # color highly significant genes
             lcol="grey20",
             xlim=10,
             ylim=300)

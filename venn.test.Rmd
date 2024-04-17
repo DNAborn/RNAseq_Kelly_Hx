@@ -1,0 +1,31 @@
+---
+title: "Untitled"
+author: "Author"
+date: "10/13/2021"
+output:
+  github_document:
+    html_preview: false
+    toc: true
+always_allow_html: true
+editor_options: 
+  chunk_output_type: console
+knit: (function(input_file, encoding) {
+    rmarkdown::render(input_file,output_file= 'Readme.md')
+    })
+---
+
+```{r}
+library(VennDiagram)
+
+list1<-c("A", "B", "C", "D")
+list2<-c("B", "D", "E")
+list3<-c("A", "D", "Z")
+
+p<-venn.diagram(
+x=list( list1, list2, list3),
+category.names= c("list1", "list2", "list3"),
+filename= NULL
+)
+
+grid.draw(p)
+```

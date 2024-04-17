@@ -86,7 +86,7 @@ dgedir <- paste(gitdir,"2B_DGE",sep="/")
 
 par(mfrow = c(1,1))
 
-futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
+# futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
 ```
 
@@ -388,24 +388,21 @@ results_list[[n]] <- r1
 # Hif1a vs. Kelly (Hx vs. Nx)
 r1 <- results(dds, contrast =  c(0,0,0,0,0,1,0,0))
 r1$symbol <- mcols(dds)$symbol
-res.Hx.vs.Nx.Hif1a.vs.Kelly <- r1
-n<- "Hx.vs.Nx.Hif1a.vs.Kelly"
+n<- "Hif1aHxNx.vs.KellyHxNx"
 assign(paste("res",n,sep="."),r1)
 results_list[[n]] <- r1
 
 # Hif2a vs. Kelly (Hx vs. Nx)
 r1 <- results(dds, contrast =  c(0,0,0,0,0,0,1,0))
 r1$symbol <- mcols(dds)$symbol
-res.Hx.vs.Nx.Hif2a.vs.Kelly <- r1
-n<- "Hx.vs.Nx.Hif2a.vs.Kelly"
+n<- "Hif2aHxNx.vs.KellyHxNx"
 assign(paste("res",n,sep="."),r1)
 results_list[[n]] <- r1
 
 # Hif1b vs. Kelly (Hx vs. Nx)
 r1 <- results(dds, contrast =  c(0,0,0,0,0,0,0,1))
 r1$symbol <- mcols(dds)$symbol
-res.Hx.vs.Nx.Hif1b.vs.Kelly <- r1
-n<- "Hx.vs.Nx.Hif1b.vs.Kelly"
+n<- "Hif1bHxNx.vs.KellyHxNx"
 assign(paste("res",n,sep="."),r1)
 results_list[[n]] <- r1
 
@@ -693,7 +690,7 @@ for (i in 1:li){
 for (n in names(results_list)){
 pn <-   str_detect(names(plot_list), pattern=n) %>% names(plot_list)[.]
 plot.3 <- patchwork::wrap_plots(plot_list[pn],ncol = 3) + plot_layout(guides = "collect", axis_titles="collect") + plot_annotation(title = str_split(pn[[1]],pattern="_",simplify =TRUE)[1]) & theme(legend.position = 'bottom',plot.title = element_text(size=10))
-        print(plot.3)
+#        print(plot.3)
         }            
 
 
@@ -702,7 +699,7 @@ plot.3 <- patchwork::wrap_plots(plot_list[pn],ncol = 3) + plot_layout(guides = "
 
 # 2. Data Dive
 ## Colour sheme
-```{r}
+```{r colors}
 
 colors_paired <- c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00")
 colors_v <- c("#440154FF", "#482878FF", "#3E4A89FF", "#31688EFF", "#26828EFF", "#1F9E89FF", "#35B779FF", "#6DCD59FF", "#B4DE2CFF", "#FDE725FF")
@@ -712,11 +709,33 @@ colors4 <- colors[c(1,3,5,7)]
 ```
 
 
+```{r}
+library(VennDiagram)
+
+list1<-c("A", "B", "C", "D")
+list2<-c("B", "D", "E")
+list3<-c("A", "D", "Z")
+
+p<-venn.diagram(
+x=list( list1, list2, list3),
+category.names= c("list1", "list2", "list3"),
+filename= NULL
+)
+
+grid.draw(p)
+```
+
+
 ## Overlaps (Venn)
-```{r venn,fig.show="hold", out.width="80%", fig.with="50%",fig.height=4}
+```{r venn}
+
+# ,fig.show="hold", out.width="80%", fig.with="50%",fig.height=4
+
+grid.newpage()
+grid.draw(p)
 
 # Hx vs. Nx
-dev.off()
+# dev.off()
 plt <- venn.diagram(
     x = topgenes_list[c(4,3,1,2)],
     category.names = paste(names(topgenes_list[c(4,3,1,2)]),"\n(",topgenes_list %>% summary() %>% .[c(4,3,1,2)],")",sep=""),
@@ -726,10 +745,11 @@ plt <- venn.diagram(
     lwd = 2,
     lty = 'blank',
     fill = colors4[c(1,4,2,3)])
+grid.newpage
 grid.draw(plt)
 
 # Hx vs. Hx
-dev.off()
+# dev.off()
 plt <- venn.diagram(
     x = topgenes_list[c(8,9,10)],
     category.names = paste(names(topgenes_list[c(8,9,10)]),"\n(",topgenes_list %>% summary() %>% .[c(8,9,10)],")",sep=""),
@@ -742,7 +762,8 @@ plt <- venn.diagram(
 grid.draw(plt)
 
 # Hif1a
-dev.off()
+# dev.off()
+grid.newpage()
 plt <- venn.diagram(
     x = topgenes_list[c(4,1,5,8)],
     category.names = paste(names(topgenes_list[c(4,1,5,8)]),"\n(",topgenes_list %>% summary() %>% .[c(4,1,5,8)],")",sep=""),
@@ -755,35 +776,37 @@ plt <- venn.diagram(
 grid.draw(plt)
 
 # Hif1a_simple
-dev.off()
+# dev.off()
 choose_list <- c(4,1,8)
 plt <- venn.diagram(
     x = topgenes_list[choose_list],
     category.names = paste(names(topgenes_list[choose_list]),"\n(",topgenes_list %>% summary() %>% .[choose_list],")",sep=""),
     force.unique = TRUE, na = "remove",
     filename = NULL,
-    main = "Hif1a", main.fontface = "bold",
+    main = "Hif1a_simple", main.fontface = "bold",
     lwd = 2,
     lty = 'blank',
     fill = colors[c(1,3,4)])
+grid.newpage()
 grid.draw(plt)
 
 # Hif1a_all
-dev.off()
+# dev.off()
 choose_list <- c(4,1,8)
 plt <- venn.diagram(
     x = topgenes_list[choose_list],
     category.names = paste(names(topgenes_list[choose_list]),"\n(",topgenes_list %>% summary() %>% .[choose_list],")",sep=""),
     force.unique = TRUE, na = "remove",
     filename = NULL,
-    main = "Hif1a", main.fontface = "bold",
+    main = "Hif1a_all", main.fontface = "bold",
     lwd = 2,
     lty = 'blank',
     fill = colors[c(1,3,4)])
+grid.newpage()
 grid.draw(plt)
 
 # Hif2a
-dev.off()
+# dev.off()
 plt <- venn.diagram(
     x = topgenes_list[c(4,2,6,9)],
     category.names = paste(names(topgenes_list[c(4,2,6,9)]),"\n(",topgenes_list %>% summary() %>% .[c(4,2,6,9)],")",sep=""),
@@ -793,10 +816,11 @@ plt <- venn.diagram(
     lwd = 2,
     lty = 'blank',
     fill = colors[c(2,6,1,5)])
+grid.newpage()
 grid.draw(plt)
 
 # Hif1b
-dev.off()
+# dev.off()
 plt <- venn.diagram(
     x = topgenes_list[c(4,3,7,10)],
     category.names = paste(names(topgenes_list[c(4,3,7,10)]),"\n(",topgenes_list %>% summary() %>% .[c(4,3,7,10)],")",sep=""),
@@ -806,6 +830,7 @@ plt <- venn.diagram(
     lwd = 2,
     lty = 'blank',
     fill = colors[c(2,8,1,7)])
+grid.newpage()
 grid.draw(plt)
 
 ```
