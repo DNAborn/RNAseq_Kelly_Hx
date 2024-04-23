@@ -792,7 +792,7 @@ grid.draw(plt)
 
 # Hif1a_all
 # dev.off()
-choose_list <- c(4,1,8)
+choose_list <- c(4,14,1,8)
 plt <- venn.diagram(
     x = topgenes_list[choose_list],
     category.names = paste(names(topgenes_list[choose_list]),"\n(",topgenes_list %>% summary() %>% .[choose_list],")",sep=""),
@@ -801,7 +801,7 @@ plt <- venn.diagram(
     main = "Hif1a_all", main.fontface = "bold",
     lwd = 2,
     lty = 'blank',
-    fill = colors[c(1,3,4)])
+    fill = colors[c(2,4,1,3)])
 grid.newpage()
 grid.draw(plt)
 
