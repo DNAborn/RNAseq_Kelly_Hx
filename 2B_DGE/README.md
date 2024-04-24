@@ -84,7 +84,7 @@ design(dds)
 ```
 
     ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x55afba111008>
+    ## <environment: 0x55ebd78be798>
 
 ``` r
 names(results_list)
@@ -585,7 +585,7 @@ grid.newpage()
 grid.draw(plt)
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](Readme_files/figure-gfm/venn_overlap-1.png)<!-- -->
 
 ``` r
 # plot example counts
@@ -621,7 +621,7 @@ data.frame(overlap = names(goi),
 plotCounts_SK(goi)
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->
+![](Readme_files/figure-gfm/venn_overlap-2.png)<!-- -->
 
 ### - other
 
@@ -759,6 +759,15 @@ plt <- venn.diagram(
 grid.newpage()
 grid.draw(plt)
 ```
+
+#### -Remove log files
+
+``` r
+venn.logs <- list.files(pattern="VennDiagram.*.log")
+file.remove(venn.logs)
+```
+
+    ## logical(0)
 
 ## Volcanos
 
