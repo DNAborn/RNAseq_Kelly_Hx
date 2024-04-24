@@ -29,17 +29,6 @@ Kelterborn
 
 ## - dds
 
-``` r
-# load(file=paste(data,"deseq2.dds", sep="/"))
-
-load(file=paste(data,"deseq2_treatment.dds", sep="/"))
-dds_t <- dds
-load(file=paste(data,"deseq2_condition.dds", sep="/"))
-dds_c <- dds
-
-load(file=paste(data,"deseq2_wgcna.dds", sep="/"))
-```
-
 ## - functions
 
 # 1. Make results
@@ -48,55 +37,34 @@ load(file=paste(data,"deseq2_wgcna.dds", sep="/"))
 
 ### -Generate toplist
 
-``` r
-deg_genes_list <- lapply(results_list,topgenes_f) %>%  lapply(.,rownames) 
-names(deg_genes_list) <- paste("deg",names(deg_genes_list),sep="_")
-deg_genes_list %>% lapply(., length) %>% as.data.frame() %>% kable()
-```
-
-| deg_Hif1a.Hx.vs.Nx | deg_Hif2a.Hx.vs.Nx | deg_Hif1b.Hx.vs.Nx | deg_Kelly.Hx.vs.Nx | deg_Nx.Hif1a.vs.Kelly | deg_Nx.Hif2a.vs.Kelly | deg_Nx.Hif1b.vs.Kelly | deg_Hx.Hif1a.vs.Kelly | deg_Hx.Hif2a.vs.Kelly | deg_Hx.Hif1b.vs.Kelly | deg_Hx.Hif2a.vs.Hif1a | deg_Hx.Hif1b.vs.Hif1a | deg_Hx.Hif1b.vs.Hif2a | deg_Hif1aHxNx.vs.KellyHxNx | deg_Hif2aHxNx.vs.KellyHxNx | deg_Hif1bHxNx.vs.KellyHxNx | deg_Hx.Hif1b.vs.Hif12a | deg_Hx.Kelly.vs.allHIFs | deg_Hx.vs.Nx |
-|-------------------:|-------------------:|-------------------:|-------------------:|----------------------:|----------------------:|----------------------:|----------------------:|----------------------:|----------------------:|----------------------:|----------------------:|----------------------:|---------------------------:|---------------------------:|---------------------------:|-----------------------:|------------------------:|-------------:|
-|               6098 |               3363 |               1979 |               5300 |                   283 |                   660 |                   951 |                  1022 |                  2505 |                  5640 |                  4101 |                  6187 |                  3653 |                        815 |                       2557 |                       3940 |                   4439 |                    1567 |         3539 |
-
-``` r
-topgenes_list <- lapply(results_list,topgenes_f, p=0.01,bM=100,l2FC=2) %>%  lapply(.,rownames)
-names(topgenes_list) <- paste("top",names(topgenes_list),sep="_")
-topgenes_list %>% lapply(., length) %>% as.data.frame()
-```
-
-    ##   top_Hif1a.Hx.vs.Nx top_Hif2a.Hx.vs.Nx top_Hif1b.Hx.vs.Nx top_Kelly.Hx.vs.Nx
-    ## 1                952                556                309                862
-    ##   top_Nx.Hif1a.vs.Kelly top_Nx.Hif2a.vs.Kelly top_Nx.Hif1b.vs.Kelly
-    ## 1                    29                    80                    55
-    ##   top_Hx.Hif1a.vs.Kelly top_Hx.Hif2a.vs.Kelly top_Hx.Hif1b.vs.Kelly
-    ## 1                    80                   346                   618
-    ##   top_Hx.Hif2a.vs.Hif1a top_Hx.Hif1b.vs.Hif1a top_Hx.Hif1b.vs.Hif2a
-    ## 1                   604                   791                   291
-    ##   top_Hif1aHxNx.vs.KellyHxNx top_Hif2aHxNx.vs.KellyHxNx
-    ## 1                         63                        305
-    ##   top_Hif1bHxNx.vs.KellyHxNx top_Hx.Hif1b.vs.Hif12a top_Hx.Kelly.vs.allHIFs
-    ## 1                        430                    293                     151
-    ##   top_Hx.vs.Nx
-    ## 1          491
-
-``` r
-design(dds)
-```
-
     ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x55ebd78be798>
+    ## <environment: 0x55d0ab590b28>
 
-``` r
-names(results_list)
-```
+|                            | all.DEGs | top.DEGs |
+|:---------------------------|---------:|---------:|
+| deg_Hif1a.Hx.vs.Nx         |     6098 |      952 |
+| deg_Hif2a.Hx.vs.Nx         |     3363 |      556 |
+| deg_Hif1b.Hx.vs.Nx         |     1979 |      309 |
+| deg_Kelly.Hx.vs.Nx         |     5300 |      862 |
+| deg_Nx.Hif1a.vs.Kelly      |      283 |       29 |
+| deg_Nx.Hif2a.vs.Kelly      |      660 |       80 |
+| deg_Nx.Hif1b.vs.Kelly      |      951 |       55 |
+| deg_Hx.Hif1a.vs.Kelly      |     1022 |       80 |
+| deg_Hx.Hif2a.vs.Kelly      |     2505 |      346 |
+| deg_Hx.Hif1b.vs.Kelly      |     5640 |      618 |
+| deg_Hx.Hif2a.vs.Hif1a      |     4101 |      604 |
+| deg_Hx.Hif1b.vs.Hif1a      |     6187 |      791 |
+| deg_Hx.Hif1b.vs.Hif2a      |     3653 |      291 |
+| deg_Hif1aHxNx.vs.KellyHxNx |      815 |       63 |
+| deg_Hif2aHxNx.vs.KellyHxNx |     2557 |      305 |
+| deg_Hif1bHxNx.vs.KellyHxNx |     3940 |      430 |
+| deg_Hx.Hif1b.vs.Hif12a     |     4439 |      293 |
+| deg_Hx.Kelly.vs.allHIFs    |     1567 |      151 |
+| deg_Hx.vs.Nx               |     3539 |      491 |
 
-    ##  [1] "Hif1a.Hx.vs.Nx"         "Hif2a.Hx.vs.Nx"         "Hif1b.Hx.vs.Nx"        
-    ##  [4] "Kelly.Hx.vs.Nx"         "Nx.Hif1a.vs.Kelly"      "Nx.Hif2a.vs.Kelly"     
-    ##  [7] "Nx.Hif1b.vs.Kelly"      "Hx.Hif1a.vs.Kelly"      "Hx.Hif2a.vs.Kelly"     
-    ## [10] "Hx.Hif1b.vs.Kelly"      "Hx.Hif2a.vs.Hif1a"      "Hx.Hif1b.vs.Hif1a"     
-    ## [13] "Hx.Hif1b.vs.Hif2a"      "Hif1aHxNx.vs.KellyHxNx" "Hif2aHxNx.vs.KellyHxNx"
-    ## [16] "Hif1bHxNx.vs.KellyHxNx" "Hx.Hif1b.vs.Hif12a"     "Hx.Kelly.vs.allHIFs"   
-    ## [19] "Hx.vs.Nx"
+    ## cutoffs
+    ## differential expressed: p=0.05,bM=10,l2FC=1
+    ## top genes:              p=0.01,bM=100,l2FC=2
 
 ## -Plot example counts
 
@@ -149,15 +117,6 @@ plot.3 <- patchwork::wrap_plots(plot_list[pn],ncol = 3) + plot_layout(guides = "
 # 2. Data Dive
 
 ## Colour sheme
-
-``` r
-colors_paired <- c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00")
-colors_v <- c("#440154FF", "#482878FF", "#3E4A89FF", "#31688EFF", "#26828EFF", "#1F9E89FF", "#35B779FF", "#6DCD59FF", "#B4DE2CFF", "#FDE725FF")
-colors <- c("lavenderblush3","lavenderblush4","#90caf9","#1976d2", "#82e0aa", "#239b56", "#f8c471", "#b9770e") 
-colors4 <- colors[c(1,3,5,7)]
-# Vulcano colors
-colors_vul <- c(colors[4:3],"orangered3","salmon1","hotpink4","hotpink1","darkseagreen4","darkseagreen1")
-```
 
 ## Overlaps (Venn)
 
