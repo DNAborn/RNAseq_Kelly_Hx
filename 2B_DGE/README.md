@@ -5,7 +5,7 @@ Kelterborn
 
 - [0. Load](#0-load)
   - [- Load R librarys](#--load-r-librarys)
-  - [- dds](#--dds)
+  - [- Load dds](#--load-dds)
   - [- functions](#--functions)
 - [1. Make results](#1-make-results)
   - [-Generate toplist](#-generate-toplist)
@@ -27,7 +27,7 @@ Kelterborn
 
 ## - Load R librarys
 
-## - dds
+## - Load dds
 
 ## - functions
 
@@ -35,12 +35,17 @@ Kelterborn
 
 #### (Advanced results troubleshooting)
 
+<figure>
+<img src="Contrasts.png" alt="Contrasts_overview" />
+<figcaption aria-hidden="true">Contrasts_overview</figcaption>
+</figure>
+
 ### -Generate toplist
 
     ## design
 
     ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x55d70d980a88>
+    ## <environment: 0x56201949b9f8>
 
     ## cutoffs
     ## differential expressed: p=0.05,bM=10,l2FC=1
@@ -68,14 +73,51 @@ Kelterborn
 | deg_Hx.Kelly.vs.allHIFs    |     1567 |      151 |
 | deg_Hx.vs.Nx               |     3539 |      491 |
 
-<figure>
-<img src="Contrasts.png" alt="Contrasts_overview" />
-<figcaption aria-hidden="true">Contrasts_overview</figcaption>
-</figure>
-
 ## -Plot example counts
 
 ![](Readme_files/figure-gfm/results_counts-1.png)<!-- -->![](Readme_files/figure-gfm/results_counts-2.png)<!-- -->![](Readme_files/figure-gfm/results_counts-3.png)<!-- -->![](Readme_files/figure-gfm/results_counts-4.png)<!-- -->![](Readme_files/figure-gfm/results_counts-5.png)<!-- -->![](Readme_files/figure-gfm/results_counts-6.png)<!-- -->![](Readme_files/figure-gfm/results_counts-7.png)<!-- -->![](Readme_files/figure-gfm/results_counts-8.png)<!-- -->![](Readme_files/figure-gfm/results_counts-9.png)<!-- -->![](Readme_files/figure-gfm/results_counts-10.png)<!-- -->![](Readme_files/figure-gfm/results_counts-11.png)<!-- -->![](Readme_files/figure-gfm/results_counts-12.png)<!-- -->![](Readme_files/figure-gfm/results_counts-13.png)<!-- -->![](Readme_files/figure-gfm/results_counts-14.png)<!-- -->![](Readme_files/figure-gfm/results_counts-15.png)<!-- -->![](Readme_files/figure-gfm/results_counts-16.png)<!-- -->![](Readme_files/figure-gfm/results_counts-17.png)<!-- -->![](Readme_files/figure-gfm/results_counts-18.png)<!-- -->![](Readme_files/figure-gfm/results_counts-19.png)<!-- -->
+
+    ## log2 fold change (MLE): 0,0,0,+1,0,0,0,0 
+    ## Wald test p-value: 0,0,0,+1,0,0,0,0 
+    ## DataFrame with 30652 rows and 7 columns
+    ##                    baseMean log2FoldChange     lfcSE      stat    pvalue
+    ##                   <numeric>      <numeric> <numeric> <numeric> <numeric>
+    ## ENSG00000000003 1212.220785     -0.1244440 0.1698153  -0.73282 0.4636682
+    ## ENSG00000000419 1484.573879     -0.2353784 0.1157700  -2.03316 0.0420368
+    ## ENSG00000000457  748.387116      0.0950423 0.0516299   1.84084 0.0656451
+    ## ENSG00000000460 1145.062251     -0.2071205 0.0998252  -2.07483 0.0380022
+    ## ENSG00000000971    0.546527      0.4341926 1.1880391   0.36547 0.7147606
+    ## ...                     ...            ...       ...       ...       ...
+    ## ENSG00000293552   26.437467       0.240664  0.451257  0.533319  0.593813
+    ## ENSG00000293553    1.042137      -1.503534  0.950541 -1.581768  0.113703
+    ## ENSG00000293556    0.275175      -0.636069  1.925324 -0.330370  0.741121
+    ## ENSG00000293557    0.594178      -1.238368  1.156689 -1.070614  0.284343
+    ## ENSG00000293560    0.240057      -0.275416  2.689902 -0.102389  0.918448
+    ##                      padj      symbol
+    ##                 <numeric> <character>
+    ## ENSG00000000003  0.640873      TSPAN6
+    ## ENSG00000000419  0.129553        DPM1
+    ## ENSG00000000457  0.174881       SCYL3
+    ## ENSG00000000460  0.121181       FIRRM
+    ## ENSG00000000971        NA         CFH
+    ## ...                   ...         ...
+    ## ENSG00000293552  0.747126            
+    ## ENSG00000293553  0.255074            
+    ## ENSG00000293556        NA            
+    ## ENSG00000293557        NA            
+    ## ENSG00000293560        NA
+
+    ## log2 fold change (MLE): 0,0,0,+1,0,0,0,0 
+    ## Wald test p-value: 0,0,0,+1,0,0,0,0 
+    ## DataFrame with 1 row and 7 columns
+    ##                  baseMean log2FoldChange     lfcSE      stat      pvalue
+    ##                 <numeric>      <numeric> <numeric> <numeric>   <numeric>
+    ## ENSG00000234964    163.78       -29.9727   3.99772  -7.49745 6.50735e-14
+    ##                        padj      symbol
+    ##                   <numeric> <character>
+    ## ENSG00000234964 2.16515e-11     FABP5P7
+
+![](Readme_files/figure-gfm/results_counts-20.png)<!-- -->
 
 # 2. Data Dive
 
@@ -150,42 +192,9 @@ Kelterborn
 
 ### - Hif2a
 
-``` r
-## get top list for Hif2a
-### compare ALL degs in Kelly with TOP in HIF2A and vice versa
-# Hif2a Hx-Nx - Kelly Hx-Nx
-cat("Hif2a")
-```
-
     ## Hif2a
 
-``` r
-input_list <- c(deg_genes_list[c(4,2)],topgenes_list[c(4,2)])
-plt <- venn.diagram(
-    x = input_list,
-    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
-    force.unique = TRUE, na = "remove",
-    filename = NULL,
-    main = "Hif2a Hx-Nx vs. Kelly Hx-Nx", main.fontface = "bold",
-    lwd = 2,
-    lty = 'blank',
-    fill = colors[c(1,5,2,6)],
-    cat.col=colors[c(2,6,2,6)],
-    cat.fontface = "bold",
-    # inverted=length(input_list[[1]]) < length(input_list[[2]])
-    )
-
-grid.newpage()
-grid.draw(plt)
-```
-
 ![](Readme_files/figure-gfm/venn_hif2a-1.png)<!-- -->
-
-``` r
-# plot example counts
-overlaps <- calculate.overlap(input_list)
-getVennElements(plt)
-```
 
     ## [1] "Element=12 (200) --> a4(200)"
     ## [1] "Element=14 (397) --> a6(397)"
@@ -196,67 +205,13 @@ getVennElements(plt)
     ## [1] "Element=22 (869) --> a14(869)"
     ## [1] "Element=23 (1673) --> a15(1673)"
 
-``` r
-# get each top gene
-goi <- c(overlaps$a4[1:3],overlaps$a8[1:3])
-plotCounts_SK(overlaps$a4[1:9],n="Hx_in_Kelly_but_NOT_in_Hif2A")
-```
-
-![](Readme_files/figure-gfm/venn_hif2a-2.png)<!-- -->
-
-``` r
-plotCounts_SK(overlaps$a8[1:9],n="Hx_in_HIF2A_but_NOT_in_Kelly")
-```
-
-![](Readme_files/figure-gfm/venn_hif2a-3.png)<!-- -->
-
-``` r
-top_hif2a <- results_list$Hif2a.Hx.vs.Nx[c(overlaps$a4,overlaps$a8),] %>% .[order(abs(.$log2FoldChange), decreasing=TRUE),]
-
-# correlation with network analysis
-pie(mcols(dds)[top_hif2a %>% rownames(),"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[top_hif2a %>% rownames(),"colors"] %>% summary() %>% names())
-```
-
-![](Readme_files/figure-gfm/venn_hif2a-4.png)<!-- -->
+![](Readme_files/figure-gfm/venn_hif2a-2.png)<!-- -->![](Readme_files/figure-gfm/venn_hif2a-3.png)<!-- -->![](Readme_files/figure-gfm/venn_hif2a-4.png)<!-- -->
 
 ### - Hif1b
 
-``` r
-## get top list for Hif1b
-### compare ALL degs in Kelly with TOP in HIF1B and vice versa
-# Hif1b Hx-Nx - Kelly Hx-Nx
-cat("Hif1b")
-```
-
     ## Hif1b
 
-``` r
-input_list <- c(deg_genes_list[c(4,3)],topgenes_list[c(4,3)])
-plt <- venn.diagram(
-    x = input_list,
-    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
-    force.unique = TRUE, na = "remove",
-    filename = NULL,
-    main = "HIF1B Hx-Nx vs. Kelly Hx-Nx", main.fontface = "bold",
-    lwd = 2,
-    lty = 'blank',
-    fill = colors[c(1,7,2,8)],
-    cat.col=colors[c(2,8,2,8)],
-    cat.fontface = "bold",
-    # inverted=length(input_list[[1]]) < length(input_list[[2]])
-    )
-
-grid.newpage()
-grid.draw(plt)
-```
-
 ![](Readme_files/figure-gfm/venn_hif1b-1.png)<!-- -->
-
-``` r
-# plot example counts
-overlaps <- calculate.overlap(input_list)
-getVennElements(plt)
-```
 
     ## [1] "Element=12 (370) --> a4(370)"
     ## [1] "Element=14 (240) --> a6(240)"
@@ -267,28 +222,7 @@ getVennElements(plt)
     ## [1] "Element=22 (526) --> a14(526)"
     ## [1] "Element=23 (892) --> a15(892)"
 
-``` r
-# get each top gene
-goi <- c(overlaps$a4[1:3],overlaps$a8[1:3])
-plotCounts_SK(overlaps$a4[1:9],n="Hx_in_Kelly_but_NOT_in_Hif1B")
-```
-
-![](Readme_files/figure-gfm/venn_hif1b-2.png)<!-- -->
-
-``` r
-plotCounts_SK(overlaps$a8[1:9],n="Hx_in_HIF1B_but_NOT_in_Kelly")
-```
-
-![](Readme_files/figure-gfm/venn_hif1b-3.png)<!-- -->
-
-``` r
-top_hif1b <- results_list$Hif1b.Hx.vs.Nx[c(overlaps$a4,overlaps$a8),] %>% .[order(abs(.$log2FoldChange), decreasing=TRUE),]
-
-# correlation with network analysis
-pie(mcols(dds)[top_hif1b %>% rownames(),"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[top_hif1b %>% rownames(),"colors"] %>% summary() %>% names())
-```
-
-![](Readme_files/figure-gfm/venn_hif1b-4.png)<!-- -->
+![](Readme_files/figure-gfm/venn_hif1b-2.png)<!-- -->![](Readme_files/figure-gfm/venn_hif1b-3.png)<!-- -->![](Readme_files/figure-gfm/venn_hif1b-4.png)<!-- -->
 
 ### - overlap
 

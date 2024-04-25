@@ -91,7 +91,7 @@ futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 ```
 
 
-## - dds
+## - Load dds
 ```{r dds, include=FALSE}
 # load(file=paste(data,"deseq2.dds", sep="/"))
 
@@ -141,7 +141,14 @@ plotCounts_SK <- function(goi,n="plotCounts"){
   plotCounts_SK_list[[paste(n,goi[ig],sep="_")]] <- gcounts
        }
  
-patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) + plot_layout(guides = "collect", axis_titles="collect") + plot_annotation(title = n) & theme(legend.position = 'bottom',plot.title = element_text(size=10))
+patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) + 
+  plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & 
+  plot_annotation(title = n) & 
+  theme(legend.position = 'bottom',
+        plot.title = element_text(size=6),
+        axis.text=element_text(size=6),
+        axis.title=element_text(size=6),
+        legend.text=element_text(size=6))
         }          
 
 
@@ -673,6 +680,7 @@ res.Hif1b.vs.Kelly <- results(dds, name="genotype_HIF1B_vs_Kelly")
 ```
 
 
+![Contrasts_overview](Contrasts.png)
 
 ### -Generate toplist
 ```{r toplist, echo=FALSE}
@@ -697,11 +705,10 @@ data.frame(all.DEGs= (deg_genes_list %>% lapply(., length) %>% unlist()),
 
 ```
 
-![Contrasts_overview](Contrasts.png)
 
 
 ##  -Plot example counts
-```{r results_counts, echo=FALSE, fig.height=4}
+```{r results_counts, echo=FALSE, fig.height=3}
 
 cols = brewer.pal(n=8,name = 'Paired')
 
@@ -739,10 +746,19 @@ for (i in 1:li){
 
 for (n in names(results_list)){
 pn <-   str_detect(names(plot_list), pattern=n) %>% names(plot_list)[.]
-plot.3 <- patchwork::wrap_plots(plot_list[pn],ncol = 3) + plot_layout(guides = "collect", axis_titles="collect") + plot_annotation(title = str_split(pn[[1]],pattern="_",simplify =TRUE)[1]) & theme(legend.position = 'bottom',plot.title = element_text(size=10))
+plot.3 <- patchwork::wrap_plots(plot_list[pn],ncol = 3) + 
+  plot_layout(guides = "collect", axis_titles="collect") & 
+  plot_annotation(title = str_split(pn[[1]],pattern="_",simplify =TRUE)[1]) & 
+  theme(legend.position = 'bottom',plot.title = element_text(size=10))
 #        print(plot.3)
         }            
 
+subset(results_list[["Nx.Hif1b.vs.Kelly"]],symbol="FABP5P7")
+
+results_list[["Nx.Hif1b.vs.Kelly"]][results_list[["Nx.Hif1b.vs.Kelly"]]$symbol=="FABP5P7",]
+
+goi <- c("ENSG00000234964")
+plotCounts_SK(goi) + ~plotCounts(dds, gene=goi, intgroup = c("experiment"),col=colData(dds)$experiment, main = )
 
 ```
 
@@ -772,7 +788,7 @@ df <- data.frame(n=c(1:8),
 
 ## Overlaps (Venn)
 ### - Hif1a
-```{r venn_hif1a, include=TRUE, echo=FALSE, eval=TRUE,fig.show="hold", out.width="100%", fig.height=4}
+```{r venn_hif1a, include=TRUE, echo=FALSE, eval=TRUE,fig.show="hold", out.width="100%", fig.height=5}
 
 # https://stackoverflow.com/questions/37450698/the-output-order-of-function-calculate-overlap correct names for venn
 
@@ -856,7 +872,7 @@ plotCounts_SK(overlaps$a8[1:9],n="Hx_in_HIF1A_but_NOT_in_Kelly")
 top_hif1a <- results_list$Hif1a.Hx.vs.Nx[c(overlaps$a4,overlaps$a8),] %>% .[order(abs(.$log2FoldChange), decreasing=TRUE),]
 
 # correlation with network analysis
-pie(mcols(dds)[top_hif1a %>% rownames(),"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[top_hif1a %>% rownames(),"colors"] %>% summary() %>% names())
+pie(mcols(dds)[top_hif1a %>% rownames(),"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[top_hif1a %>% rownames(),"colors"] %>% summary() %>% names(), main="Correlation with WGCNA")
 
 
 
@@ -905,8 +921,7 @@ results_list$Hif1a.Hx.vs.Nx["ENSG00000105880",] %>% kable()
 ```
 
 ### - Hif2a
-```{r venn_hif2a}
-
+```{r venn_hif2a, echo=FALSE}
 
 ## get top list for Hif2a
 ### compare ALL degs in Kelly with TOP in HIF2A and vice versa
@@ -942,14 +957,14 @@ plotCounts_SK(overlaps$a8[1:9],n="Hx_in_HIF2A_but_NOT_in_Kelly")
 top_hif2a <- results_list$Hif2a.Hx.vs.Nx[c(overlaps$a4,overlaps$a8),] %>% .[order(abs(.$log2FoldChange), decreasing=TRUE),]
 
 # correlation with network analysis
-pie(mcols(dds)[top_hif2a %>% rownames(),"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[top_hif2a %>% rownames(),"colors"] %>% summary() %>% names())
+pie(mcols(dds)[top_hif2a %>% rownames(),"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[top_hif2a %>% rownames(),"colors"] %>% summary() %>% names(), main="Correlation with WGCNA")
 
 
 
 ```
 
 ### - Hif1b
-```{r venn_hif1b}
+```{r venn_hif1b, echo=FALSE}
 
 ## get top list for Hif1b
 ### compare ALL degs in Kelly with TOP in HIF1B and vice versa
@@ -985,7 +1000,7 @@ plotCounts_SK(overlaps$a8[1:9],n="Hx_in_HIF1B_but_NOT_in_Kelly")
 top_hif1b <- results_list$Hif1b.Hx.vs.Nx[c(overlaps$a4,overlaps$a8),] %>% .[order(abs(.$log2FoldChange), decreasing=TRUE),]
 
 # correlation with network analysis
-pie(mcols(dds)[top_hif1b %>% rownames(),"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[top_hif1b %>% rownames(),"colors"] %>% summary() %>% names())
+pie(mcols(dds)[top_hif1b %>% rownames(),"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[top_hif1b %>% rownames(),"colors"] %>% summary() %>% names(), main="Correlation with WGCNA")
 
 
 ```
