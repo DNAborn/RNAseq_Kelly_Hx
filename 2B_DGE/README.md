@@ -12,16 +12,16 @@ Kelterborn
   - [-Plot example counts](#-plot-example-counts)
 - [2. Data Dive](#2-data-dive)
   - [Colour sheme](#colour-sheme)
+  - [Volcanos](#volcanos)
+    - [Draw Vulcanos](#draw-vulcanos)
+    - [(prepare data)](#prepare-data)
+    - [(simple volcano (full))](#simple-volcano-full)
   - [Overlaps (Venn)](#overlaps-venn)
     - [- Hif1a](#--hif1a)
     - [- Hif2a](#--hif2a)
     - [- Hif1b](#--hif1b)
     - [- overlap](#--overlap)
     - [- other](#--other)
-  - [Volcanos](#volcanos)
-    - [Draw Vulcanos](#draw-vulcanos)
-    - [(prepare data)](#prepare-data)
-    - [(simple volcano (full))](#simple-volcano-full)
 
 # 0. Load
 
@@ -45,7 +45,7 @@ Kelterborn
     ## design
 
     ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x56201949b9f8>
+    ## <environment: 0x562f4fc4db08>
 
     ## cutoffs
     ## differential expressed: p=0.05,bM=10,l2FC=1
@@ -77,45 +77,9 @@ Kelterborn
 
 ![](Readme_files/figure-gfm/results_counts-1.png)<!-- -->![](Readme_files/figure-gfm/results_counts-2.png)<!-- -->![](Readme_files/figure-gfm/results_counts-3.png)<!-- -->![](Readme_files/figure-gfm/results_counts-4.png)<!-- -->![](Readme_files/figure-gfm/results_counts-5.png)<!-- -->![](Readme_files/figure-gfm/results_counts-6.png)<!-- -->![](Readme_files/figure-gfm/results_counts-7.png)<!-- -->![](Readme_files/figure-gfm/results_counts-8.png)<!-- -->![](Readme_files/figure-gfm/results_counts-9.png)<!-- -->![](Readme_files/figure-gfm/results_counts-10.png)<!-- -->![](Readme_files/figure-gfm/results_counts-11.png)<!-- -->![](Readme_files/figure-gfm/results_counts-12.png)<!-- -->![](Readme_files/figure-gfm/results_counts-13.png)<!-- -->![](Readme_files/figure-gfm/results_counts-14.png)<!-- -->![](Readme_files/figure-gfm/results_counts-15.png)<!-- -->![](Readme_files/figure-gfm/results_counts-16.png)<!-- -->![](Readme_files/figure-gfm/results_counts-17.png)<!-- -->![](Readme_files/figure-gfm/results_counts-18.png)<!-- -->![](Readme_files/figure-gfm/results_counts-19.png)<!-- -->
 
-    ## log2 fold change (MLE): 0,0,0,+1,0,0,0,0 
-    ## Wald test p-value: 0,0,0,+1,0,0,0,0 
-    ## DataFrame with 30652 rows and 7 columns
-    ##                    baseMean log2FoldChange     lfcSE      stat    pvalue
-    ##                   <numeric>      <numeric> <numeric> <numeric> <numeric>
-    ## ENSG00000000003 1212.220785     -0.1244440 0.1698153  -0.73282 0.4636682
-    ## ENSG00000000419 1484.573879     -0.2353784 0.1157700  -2.03316 0.0420368
-    ## ENSG00000000457  748.387116      0.0950423 0.0516299   1.84084 0.0656451
-    ## ENSG00000000460 1145.062251     -0.2071205 0.0998252  -2.07483 0.0380022
-    ## ENSG00000000971    0.546527      0.4341926 1.1880391   0.36547 0.7147606
-    ## ...                     ...            ...       ...       ...       ...
-    ## ENSG00000293552   26.437467       0.240664  0.451257  0.533319  0.593813
-    ## ENSG00000293553    1.042137      -1.503534  0.950541 -1.581768  0.113703
-    ## ENSG00000293556    0.275175      -0.636069  1.925324 -0.330370  0.741121
-    ## ENSG00000293557    0.594178      -1.238368  1.156689 -1.070614  0.284343
-    ## ENSG00000293560    0.240057      -0.275416  2.689902 -0.102389  0.918448
-    ##                      padj      symbol
-    ##                 <numeric> <character>
-    ## ENSG00000000003  0.640873      TSPAN6
-    ## ENSG00000000419  0.129553        DPM1
-    ## ENSG00000000457  0.174881       SCYL3
-    ## ENSG00000000460  0.121181       FIRRM
-    ## ENSG00000000971        NA         CFH
-    ## ...                   ...         ...
-    ## ENSG00000293552  0.747126            
-    ## ENSG00000293553  0.255074            
-    ## ENSG00000293556        NA            
-    ## ENSG00000293557        NA            
-    ## ENSG00000293560        NA
-
-    ## log2 fold change (MLE): 0,0,0,+1,0,0,0,0 
-    ## Wald test p-value: 0,0,0,+1,0,0,0,0 
-    ## DataFrame with 1 row and 7 columns
-    ##                  baseMean log2FoldChange     lfcSE      stat      pvalue
-    ##                 <numeric>      <numeric> <numeric> <numeric>   <numeric>
-    ## ENSG00000234964    163.78       -29.9727   3.99772  -7.49745 6.50735e-14
-    ##                        padj      symbol
-    ##                   <numeric> <character>
-    ## ENSG00000234964 2.16515e-11     FABP5P7
+|                 | symbol  | baseMean | log2FoldChange |   lfcSE |      stat | pvalue | padj |
+|:----------------|:--------|---------:|---------------:|--------:|----------:|-------:|-----:|
+| ENSG00000234964 | FABP5P7 | 163.7803 |      -29.97269 | 3.99772 | -7.497445 |      0 |    0 |
 
 ![](Readme_files/figure-gfm/results_counts-20.png)<!-- -->
 
@@ -123,45 +87,55 @@ Kelterborn
 
 ## Colour sheme
 
+## Volcanos
+
+### Draw Vulcanos
+
+![](Readme_files/figure-gfm/draw%20vulcano-1.png)![](Readme_files/figure-gfm/draw%20vulcano-2.png)
+
+### (prepare data)
+
+### (simple volcano (full))
+
+#### (check cutoff)
+
 ## Overlaps (Venn)
 
 ### - Hif1a
 
     ## [1] "Element=7 (682) --> a3(682)"
 
-|                 |   baseMean | log2FoldChange |     lfcSE |       stat |    pvalue |      padj | symbol   |
-|:----------------|-----------:|---------------:|----------:|-----------:|----------:|----------:|:---------|
-| ENSG00000073060 | 11958.5958 |       1.932024 | 0.0581472 |  33.226438 | 0.0000000 | 0.0000000 | SCARB1   |
-| ENSG00000186469 |  8085.8271 |       1.868578 | 0.0881975 |  21.186295 | 0.0000000 | 0.0000000 | GNG2     |
-| ENSG00000132382 |  6908.7023 |      -1.877496 | 0.0861601 | -21.790778 | 0.0000000 | 0.0000000 | MYBBP1A  |
-| ENSG00000117016 |  6871.5369 |      -1.775943 | 0.0952610 | -18.642909 | 0.0000000 | 0.0000000 | RIMS3    |
-| ENSG00000189241 | 11177.4084 |       1.723613 | 0.0621241 |  27.744699 | 0.0000000 | 0.0000000 | TSPYL1   |
-| ENSG00000179222 | 22237.0960 |       1.579043 | 0.0932115 |  16.940433 | 0.0000000 | 0.0000000 | MAGED1   |
-| ENSG00000154545 |  6001.2779 |       1.982714 | 0.1351638 |  14.668968 | 0.0000000 | 0.0000000 | MAGED4   |
-| ENSG00000158560 |  1423.2990 |       1.596266 | 0.1132662 |  14.093046 | 0.0000000 | 0.0000000 | DYNC1I1  |
-| ENSG00000164687 |  5980.6695 |      -1.725272 | 0.0865765 | -19.927701 | 0.0000000 | 0.0000000 | FABP5    |
-| ENSG00000290450 |  2317.1551 |       1.773685 | 0.0737018 |  24.065704 | 0.0000000 | 0.0000000 |          |
-| ENSG00000163536 |   746.7734 |       0.486356 | 0.2028700 |   2.397378 | 0.0165129 | 0.0298354 | SERPINI1 |
-| ENSG00000184867 |  2232.8724 |       1.815987 | 0.0839786 |  21.624395 | 0.0000000 | 0.0000000 | ARMCX2   |
+<img src="Readme_files/figure-gfm/venn_hif1a-1.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-2.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-3.png" width="100%" />
 
-|                 |   baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol   |
-|:----------------|-----------:|---------------:|----------:|----------:|-------:|-----:|:---------|
-| ENSG00000073060 | 11958.5958 |       2.487525 | 0.0690276 |  36.03667 |      0 |    0 | SCARB1   |
-| ENSG00000186469 |  8085.8271 |       2.569116 | 0.1048760 |  24.49671 |      0 |    0 | GNG2     |
-| ENSG00000132382 |  6908.7023 |      -2.547188 | 0.1025339 | -24.84239 |      0 |    0 | MYBBP1A  |
-| ENSG00000117016 |  6871.5369 |      -2.615055 | 0.1133557 | -23.06946 |      0 |    0 | RIMS3    |
-| ENSG00000189241 | 11177.4084 |       2.215089 | 0.0737492 |  30.03545 |      0 |    0 | TSPYL1   |
-| ENSG00000179222 | 22237.0960 |       2.337556 | 0.1107831 |  21.10031 |      0 |    0 | MAGED1   |
-| ENSG00000154545 |  6001.2779 |       2.798396 | 0.1606150 |  17.42300 |      0 |    0 | MAGED4   |
-| ENSG00000158560 |  1423.2990 |       2.873208 | 0.1339924 |  21.44306 |      0 |    0 | DYNC1I1  |
-| ENSG00000164687 |  5980.6695 |      -2.318165 | 0.1029412 | -22.51931 |      0 |    0 | FABP5    |
-| ENSG00000290450 |  2317.1551 |       2.366045 | 0.0869459 |  27.21283 |      0 |    0 |          |
-| ENSG00000163536 |   746.7734 |       4.487014 | 0.2489374 |  18.02467 |      0 |    0 | SERPINI1 |
-| ENSG00000184867 |  2232.8724 |       2.443798 | 0.1000008 |  24.43777 |      0 |    0 | ARMCX2   |
+|                 |  baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol  |
+|:----------------|----------:|---------------:|----------:|----------:|-------:|-----:|:--------|
+| ENSG00000073060 | 11958.596 |       1.932024 | 0.0581472 |  33.22644 |      0 |    0 | SCARB1  |
+| ENSG00000186469 |  8085.827 |       1.868578 | 0.0881975 |  21.18629 |      0 |    0 | GNG2    |
+| ENSG00000132382 |  6908.702 |      -1.877496 | 0.0861601 | -21.79078 |      0 |    0 | MYBBP1A |
+| ENSG00000117016 |  6871.537 |      -1.775943 | 0.0952610 | -18.64291 |      0 |    0 | RIMS3   |
+| ENSG00000189241 | 11177.408 |       1.723613 | 0.0621241 |  27.74470 |      0 |    0 | TSPYL1  |
+| ENSG00000179222 | 22237.096 |       1.579043 | 0.0932115 |  16.94043 |      0 |    0 | MAGED1  |
+| ENSG00000154545 |  6001.278 |       1.982714 | 0.1351638 |  14.66897 |      0 |    0 | MAGED4  |
+| ENSG00000158560 |  1423.299 |       1.596266 | 0.1132662 |  14.09305 |      0 |    0 | DYNC1I1 |
+| ENSG00000164687 |  5980.669 |      -1.725272 | 0.0865765 | -19.92770 |      0 |    0 | FABP5   |
+
+|                 |  baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol  |
+|:----------------|----------:|---------------:|----------:|----------:|-------:|-----:|:--------|
+| ENSG00000073060 | 11958.596 |       2.487525 | 0.0690276 |  36.03667 |      0 |    0 | SCARB1  |
+| ENSG00000186469 |  8085.827 |       2.569116 | 0.1048760 |  24.49671 |      0 |    0 | GNG2    |
+| ENSG00000132382 |  6908.702 |      -2.547188 | 0.1025339 | -24.84239 |      0 |    0 | MYBBP1A |
+| ENSG00000117016 |  6871.537 |      -2.615055 | 0.1133557 | -23.06946 |      0 |    0 | RIMS3   |
+| ENSG00000189241 | 11177.408 |       2.215089 | 0.0737492 |  30.03545 |      0 |    0 | TSPYL1  |
+| ENSG00000179222 | 22237.096 |       2.337556 | 0.1107831 |  21.10031 |      0 |    0 | MAGED1  |
+| ENSG00000154545 |  6001.278 |       2.798396 | 0.1606150 |  17.42300 |      0 |    0 | MAGED4  |
+| ENSG00000158560 |  1423.299 |       2.873208 | 0.1339924 |  21.44306 |      0 |    0 | DYNC1I1 |
+| ENSG00000164687 |  5980.669 |      -2.318165 | 0.1029412 | -22.51931 |      0 |    0 | FABP5   |
 
     ## cutoffs
     ## differential expressed: p=0.05,bM=10,l2FC=1
     ## top genes:              p=0.01,bM=100,l2FC=2
+
+<img src="Readme_files/figure-gfm/venn_hif1a-4.png" width="100%" />
 
     ## [1] "Element=12 (32) --> a4(32)"
     ## [1] "Element=14 (682) --> a6(682)"
@@ -172,13 +146,19 @@ Kelterborn
     ## [1] "Element=22 (1698) --> a14(1698)"
     ## [1] "Element=23 (3300) --> a15(3300)"
 
+<img src="Readme_files/figure-gfm/venn_hif1a-5.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-6.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-7.png" width="100%" />
+
     ## compare results with contrast vsvs (Hif1a Hx vs. Nx  VS.  Kelly Hx vs. Nx
+
+<img src="Readme_files/figure-gfm/venn_hif1a-8.png" width="100%" />
 
     ## [1] "Element=7 (5) --> a1(5)"
     ## [1] "Element=8 (43) --> a2(43)"
     ## [1] "Element=9 (709) --> a3(709)"
     ## [1] "Element=10 (25) --> a5(25)"
     ## [1] "Element=11 (38) --> a6(38)"
+
+<img src="Readme_files/figure-gfm/venn_hif1a-9.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-10.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-11.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-12.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-13.png" width="100%" />
 
 |                 | baseMean | log2FoldChange |     lfcSE |      stat |    pvalue |      padj | symbol |
 |:----------------|---------:|---------------:|----------:|----------:|----------:|----------:|:-------|
@@ -187,8 +167,6 @@ Kelterborn
 |                 | baseMean | log2FoldChange |     lfcSE |     stat | pvalue | padj | symbol |
 |:----------------|---------:|---------------:|----------:|---------:|-------:|-----:|:-------|
 | ENSG00000105880 | 618.9299 |       1.950451 | 0.2754171 | 7.081806 |      0 |    0 | DLX5   |
-
-<img src="Readme_files/figure-gfm/venn_hif1a-1.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-2.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-3.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-4.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-5.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-6.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-7.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-8.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-9.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-10.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-11.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-12.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-13.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-14.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-15.png" width="100%" />
 
 ### - Hif2a
 
@@ -226,39 +204,9 @@ Kelterborn
 
 ### - overlap
 
-``` r
-cat("overlap of overlaps")
-```
-
     ## overlap of overlaps
 
-``` r
-input_list <- list("top_hif1a"=top_hif1a %>% rownames(),
-                   "top_hif2a"=top_hif2a %>% rownames(),
-                   "top_hif1b"=top_hif1b %>% rownames())
-plt <- venn.diagram(
-    x = input_list,
-    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
-    force.unique = TRUE, na = "remove",
-    filename = NULL,
-    main = "Hif1a Hx-Nx vs. Kelly Hx-Nx", main.fontface = "bold",
-    lwd = 2,
-    lty = 'blank',
-    fill = colors[c(3,5,7)],
-    cat.col=c(colors[c(4,6,8)]),
-    cat.fontface = "bold")
-
-grid.newpage()
-grid.draw(plt)
-```
-
 ![](Readme_files/figure-gfm/venn_overlap-1.png)<!-- -->
-
-``` r
-# plot example counts
-overlaps <- calculate.overlap(input_list)
-getVennElements(plt)
-```
 
     ## [1] "Element=7 (43) --> a1(43)"
     ## [1] "Element=8 (21) --> a2(21)"
@@ -267,13 +215,6 @@ getVennElements(plt)
     ## [1] "Element=11 (1) --> a5(1)"
     ## [1] "Element=12 (160) --> a6(160)"
     ## [1] "Element=13 (225) --> a7(225)"
-
-``` r
-# plot each 1 gene
-goi <- sapply(overlaps,"[[",1)
-data.frame(overlap = names(goi),
-           gene = mcols(dds)[goi,"symbol"])
-```
 
     ##   overlap     gene
     ## 1      a5     CDH7
@@ -284,31 +225,8 @@ data.frame(overlap = names(goi),
     ## 6      a3       U2
     ## 7      a7    PCGF2
 
-``` r
-plotCounts_SK(goi)
-```
-
 ![](Readme_files/figure-gfm/venn_overlap-2.png)<!-- -->
 
 ### - other
 
 #### -Remove log files
-
-``` r
-venn.logs <- list.files(pattern="VennDiagram.*.log")
-file.remove(venn.logs)
-```
-
-    ## logical(0)
-
-## Volcanos
-
-### Draw Vulcanos
-
-![](Readme_files/figure-gfm/draw%20vulcano-1.png)![](Readme_files/figure-gfm/draw%20vulcano-2.png)
-
-### (prepare data)
-
-### (simple volcano (full))
-
-#### (check cutoff)
