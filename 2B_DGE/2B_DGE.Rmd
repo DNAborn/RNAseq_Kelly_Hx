@@ -767,7 +767,7 @@ df <- data.frame(n=c(1:8),
 
 ## Overlaps (Venn)
 ### - Hif1a
-```{r venn_hif1a, include=FALSE ,fig.show="hold", out.width="100%", fig.height=4}
+```{r venn_hif1a, include=TRUE, echo=FALSE, eval=TRUE,fig.show="hold", out.width="100%", fig.height=4}
 
 # https://stackoverflow.com/questions/37450698/the-output-order-of-function-calculate-overlap correct names for venn
 
