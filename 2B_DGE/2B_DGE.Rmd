@@ -164,15 +164,16 @@ if( identical (
 Vulcano_SK <- function(n,
                         ntop=100,
                         topcol="royalblue4",
-                        hscol="royalblue1",
+                        degcol="royalblue1",
+                        hscol="lightblue1",
                         lcol="grey20",
                         xlim=10,
                         ylim=300)
 {
 res <- results_list[[n]]
-top <- topgenes_list[[n]]
-deg <- topgenes_list[[n]]
-l <- nrow(top)
+top <- topgenes_list[str_detect(names(topgenes_list),pattern=n)] %>% .[[1]]
+deg <- deg_genes_list[str_detect(names(deg_genes_list),pattern=n)] %>% .[[1]]
+l <- length(top)
 
 res_shrink <- lfcShrink(dds, res=res, type="ashr")
 res_shrink$symbol <- res$symbol
@@ -185,10 +186,15 @@ c_plimit <- 50
 L2Flimit <- 1
 a_L2Flimit <- -c_plimit/(L2Flimit^2)
 
-res_shrink$ishs <- ifelse((a_L2Flimit*(res_shrink$log2FoldChange^2) + c_plimit) < -log(res_shrink$padj, base=10),TRUE,FALSE)
-res_shrink$istop <- ifelse(rownames(res_shrink) %in% rownames(top)[1:ntop],TRUE,FALSE)
+res_shrink$ishs <- ifelse(is.na(res_shrink$padj),FALSE,(a_L2Flimit*(res_shrink$log2FoldChange^2) + c_plimit) < -log(res_shrink$padj, base=10))
+
+res_shrink$istop <- rownames(res_shrink) %in% top
+res_shrink$isdeg <- rownames(res_shrink) %in% deg
+
 res <- res_shrink
+res <- res[order(abs(res$log2FoldChange), decreasing = T),]
 res <- res[order(res$ishs, decreasing = F),]
+res <- res[order(res$isdeg, decreasing = F),]
 res <- res[order(res$istop, decreasing = F),]
 
 # remove nas
@@ -209,34 +215,19 @@ res$log2FoldChange[res$log2FoldChange < -xlim] <- -xlim
 res$padj[res$padj < 10^-ylim] <- 10^-ylim
 summary(res$padj < 10^-ylim)
 
-# change colour if in top genes
-## according to ishs
-keyvals <- ifelse(
-    res$ishs == TRUE, topcol,
-      'grey')
-keyvals[is.na(keyvals)] <- 'grey'
-  names(keyvals)[keyvals == topcol] <- 'highly significant'
-  names(keyvals)[keyvals == 'grey'] <- 'other'
-dim(res)[1] == length(keyvals)
 
-## according to top
-keyvals <- ifelse(
-    res$istop == TRUE, topcol,
-      'grey')
-keyvals[is.na(keyvals)] <- 'grey'
-  names(keyvals)[keyvals == topcol] <- 'top 100'
-  names(keyvals)[keyvals == 'grey'] <- 'other'
-dim(res)[1] == length(keyvals)
-
-## combine top & hs
+## combine top, deg & hs
 keyvals <- ifelse(
     res$istop == TRUE, topcol,
     ifelse(
+    res$isdeg == TRUE, degcol,
+    ifelse(
     res$ishs == TRUE, hscol,
-    'grey') )
+    'grey') ) )
     
 keyvals[is.na(keyvals)] <- 'grey'
-  names(keyvals)[keyvals == topcol] <- 'top 100'
+  names(keyvals)[keyvals == topcol] <- 'top'
+  names(keyvals)[keyvals == degcol] <- 'degs'
   names(keyvals)[keyvals == hscol] <- 'highly significant'
   names(keyvals)[keyvals == 'grey'] <- 'other'
 
@@ -263,8 +254,15 @@ ev_f <- EnhancedVolcano(res,
     title = n,
     subtitle = paste("DE genes:",l),
     # sub = "SVF",
-    pCutoff = 10^(-50),
-    FCcutoff = 2,
+    pCutoff = 10^(-c_plimit),
+    FCcutoff = L2Flimit,
+    hline = c(0.05,
+              0.01),
+    hlineCol = c(degcol, topcol),
+    hlineWidth = c(0.4, 0.4),
+    vline = c(-2,2),
+    vlineCol = c(topcol, topcol),
+    vlineWidth = c(0.4, 0.4),
     shapeCustom =shape,
     # pointSize = c(ifelse(rownames(res_WT_D_vs.WT_BL) %in% rownames(top_WT_BL_vs.pcry_BL), 8, 1)),
     legendLabels=c('Not sig.','|L2F| > 2.5','p-adj < 0.05',
@@ -1018,7 +1016,7 @@ plotCounts_SK(goi)
 
 
 ### - other
-```{r venn_other, eval=FALSE}
+```{r venn_other, eval=FALSE, include=FALSE}
 
 # Hx vs. Nx
 # dev.off()
@@ -1173,7 +1171,66 @@ file.remove(venn.logs)
 
 
 ## Volcanos
-### prepare data
+### Draw Vulcanos
+```{r draw vulcano,  include=FALSE, fig.show="hold", fig.height=4}
+
+# Input
+
+# results name
+n <- "Hif1a.Hx.vs.Nx"
+
+# colours
+topcol <- "royalblue4"
+hscol <- "royalblue1"
+lcol <- "grey20"
+
+# limits
+xlim <- 10
+ylim <- 300
+
+# number of top genes
+ntop <- 100
+
+###################
+
+# names(results_list)
+
+colors <- c("lavenderblush3","lavenderblush4","#90caf9","#1976d2", "#82e0aa", "#239b56", "#f8c471", "#b9770e") 
+
+ev_kelly <- Vulcano_SK(n="Kelly.Hx.vs.Nx", # results name
+            ntop=200, # number of top genes
+            topcol="grey30",
+            degcol=colors[2], # color top genes
+            hscol=colors[1], # color highly significant genes
+            lcol="grey20",
+            xlim=10,
+            ylim=300)
+
+ev_hif1a <- Vulcano_SK(
+            n <- "Hif1a.Hx.vs.Nx",
+            topcol="royalblue4",
+            degcol=colors[4],
+            hscol=colors[3])
+
+ev_hif2a <- Vulcano_SK(
+            n <- "Hif2a.Hx.vs.Nx",
+            topcol="darkgreen",
+            degcol=colors[6],
+            hscol=colors[5])
+
+ev_hif1b <- Vulcano_SK(
+            n <- "Hif1b.Hx.vs.Nx",
+            topcol="tan4",
+            degcol=colors[8],
+            hscol=colors[7])
+
+( ev_kelly + ev_hif1b ) + plot_layout(guides = "collect", axes="collect", axis_titles="collect") & theme(legend.position = 'bottom', axis.title=element_text(size=8))
+( ev_hif1a + ev_hif2a) + plot_layout(guides = "collect", axis_titles="collect") & theme(legend.position = 'bottom')
+ 
+```
+
+
+### (prepare data)
 ```{r volcano_data, eval=FALSE, include=FALSE}
 names(results_list)
 
@@ -1261,7 +1318,7 @@ rownames(res) <- res$symbol
 
 ```
 
-### simple volcano (full)
+### (simple volcano (full))
 ```{r volcano full, eval=FALSE, include=FALSE}
 length(rownames(res))==length(shape)
 length(rownames(res))==length(keyvals)
@@ -1299,7 +1356,7 @@ ev
 
 ```
 
-#### check cutoff
+#### (check cutoff)
 ```{r check_cutoff, eval=FALSE, include=FALSE}
 a=a_L2Flimit
 b=0
@@ -1344,59 +1401,4 @@ plot(x,-log(base=10,x))
 
 ```
 
-
-### Draw Vulcanos
-```{r draw vulcano,  fig.show="hold", fig.height=4}
-
-# Input
-
-# results name
-n <- "Hif1a.Hx.vs.Nx"
-
-# colours
-topcol <- "royalblue4"
-hscol <- "royalblue1"
-lcol <- "grey20"
-
-# limits
-xlim <- 10
-ylim <- 300
-
-# number of top genes
-ntop <- 100
-
-###################
-
-# names(results_list)
-
-ev_kelly <- Vulcano_SK(n="Kelly.Hx.vs.Nx", # results name
-            ntop=200, # number of top genes
-            topcol=colors[2], # color top genes
-            hscol=colors[1], # color highly significant genes
-            lcol="grey20",
-            xlim=10,
-            ylim=300)
-
-ev_hif1a <- Vulcano_SK(n <- "Hif1a.Hx.vs.Nx",
-            ntop=200,
-            topcol=colors[4],
-            hscol=colors[3],
-            lcol="grey20")
-
-ev_hif2a <- Vulcano_SK(n <- "Hif2a.Hx.vs.Nx",
-            ntop=200,
-            topcol=colors[6],
-            hscol=colors[5],
-            lcol="grey20")
-
-ev_hif1b <- Vulcano_SK(n <- "Hif1b.Hx.vs.Nx",
-            ntop=200,
-            topcol=colors[8],
-            hscol=colors[7],
-            lcol="grey20")
-
-( ev_kelly + ev_hif1b ) + plot_layout(guides = "collect", axes="collect", axis_titles="collect") & theme(legend.position = 'bottom', axis.title=element_text(size=8))
-( ev_hif1a + ev_hif2a) + plot_layout(guides = "collect", axis_titles="collect") & theme(legend.position = 'bottom')
- 
-```
 

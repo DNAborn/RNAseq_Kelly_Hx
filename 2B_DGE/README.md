@@ -19,9 +19,9 @@ Kelterborn
     - [- overlap](#--overlap)
     - [- other](#--other)
   - [Volcanos](#volcanos)
-    - [prepare data](#prepare-data)
-    - [simple volcano (full)](#simple-volcano-full)
     - [Draw Vulcanos](#draw-vulcanos)
+    - [(prepare data)](#prepare-data)
+    - [(simple volcano (full))](#simple-volcano-full)
 
 # 0. Load
 
@@ -38,7 +38,7 @@ Kelterborn
 ### -Generate toplist
 
     ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x55d0ab590b28>
+    ## <environment: 0x5616d599df28>
 
 |                            | all.DEGs | top.DEGs |
 |:---------------------------|---------:|---------:|
@@ -584,141 +584,6 @@ plotCounts_SK(goi)
 
 ### - other
 
-``` r
-# Hx vs. Nx
-# dev.off()
-input_list <- topgenes_list[c(4,3,1,2)]
-plt <- venn.diagram(
-    x = input_list,
-    category.names = paste(names(topgenes_list[c(4,3,1,2)]),"\n(",topgenes_list %>% summary() %>% .[c(4,3,1,2)],")",sep=""),
-    force.unique = TRUE, na = "remove",
-    filename = NULL,
-    main = "Hx vs. Nx", main.fontface = "bold",
-    lwd = 2,
-    lty = 'blank',
-    fill = colors4[c(1,4,2,3)])
-
-grid.newpage()
-grid.draw(plt)
-
-# Hx vs. Hx
-# dev.off()
-plt <- venn.diagram(
-    x = topgenes_list[c(8,9,10)],
-    category.names = paste(names(topgenes_list[c(8,9,10)]),"\n(",topgenes_list %>% summary() %>% .[c(8,9,10)],")",sep=""),
-    force.unique = TRUE, na = "remove",
-    filename = NULL,
-    main = "Hx vs. Hx", main.fontface = "bold",
-    lwd = 2,
-    lty = 'blank',
-    fill = colors4[c(2,3,4)])
-grid.draw(plt)
-
-# Hif1a
-# dev.off()
-grid.newpage()
-plt <- venn.diagram(
-    x = topgenes_list[c(4,1,5,8)],
-    category.names = paste(names(topgenes_list[c(4,1,5,8)]),"\n(",topgenes_list %>% summary() %>% .[c(4,1,5,8)],")",sep=""),
-    force.unique = TRUE, na = "remove",
-    filename = NULL,
-    main = "Hif1a", main.fontface = "bold",
-    lwd = 2,
-    lty = 'blank',
-    fill = colors[c(2,4,1,3)])
-grid.draw(plt)
-
-# Hif1a_simple
-# dev.off()
-input_list <- topgenes_list[c(4,1,8)]
-plt <- venn.diagram(
-    x = input_list,
-    category.names = paste(names(input_list),"\n(",topgenes_list %>% summary() %>% .[choose_list],")",sep=""),
-    force.unique = TRUE, na = "remove",
-    filename = NULL,
-    main = "Hif1a_simple", main.fontface = "bold",
-    lwd = 2,
-    lty = 'blank',
-    fill = colors[c(1,3,4)])
-
-overlaps <- calculate.overlap(input_list)
-lapply(overlaps,length)
-
-l <- plt %>% length()
-for (i in 1:l){
-#   print(i)
-#   print(plt[[i]]$label)
-# print (plt[[i]]$label == lapply(overlaps,length))
-# print(names(overlaps)[plt[[i]]$label == lapply(overlaps,length)])
-# print(length(overlaps[plt[[i]]$label == lapply(overlaps,length)]))
-
-if( identical (
-  names(overlaps)[plt[[i]]$label == lapply(overlaps,length)],character(0) 
-)) {} else  {
- paste("Element=",i," (",plt[[i]]$label,")", " --> ",
-      names(overlaps)[plt[[i]]$label == lapply(overlaps,length)],
-      "(",length(overlaps[plt[[i]]$label == lapply(overlaps,length)]),")",sep="") %>%
-  print()
-}
-}
-
-
-
-## label names
-plt[[7]]$label <- paste(plt[[7]]$label,"a1",sep="\n")
-plt[[9]]$label <- paste(plt[[9]]$label,"a2",sep="\n")
-
-plt[[9]]$label <- paste(overlaps[[1]], collapse = "\n") 
-
-plt[[10]]$label <- paste(overlaps[[6]], collapse = "\n") 
-
-grid.newpage()
-grid.draw(plt)
-
-# Hif1a_all
-# dev.off()
-choose_list <- c(4,14,1,8)
-plt <- venn.diagram(
-    x = topgenes_list[choose_list],
-    category.names = paste(names(topgenes_list[choose_list]),"\n(",topgenes_list %>% summary() %>% .[choose_list],")",sep=""),
-    force.unique = TRUE, na = "remove",
-    filename = NULL,
-    main = "Hif1a_all", main.fontface = "bold",
-    lwd = 2,
-    lty = 'blank',
-    fill = colors[c(2,4,1,3)])
-grid.newpage()
-grid.draw(plt)
-
-# Hif2a
-# dev.off()
-plt <- venn.diagram(
-    x = topgenes_list[c(4,2,6,9)],
-    category.names = paste(names(topgenes_list[c(4,2,6,9)]),"\n(",topgenes_list %>% summary() %>% .[c(4,2,6,9)],")",sep=""),
-    force.unique = TRUE, na = "remove",
-    filename = NULL,
-    main = "Hif2a", main.fontface = "bold",
-    lwd = 2,
-    lty = 'blank',
-    fill = colors[c(2,6,1,5)])
-grid.newpage()
-grid.draw(plt)
-
-# Hif1b
-# dev.off()
-plt <- venn.diagram(
-    x = topgenes_list[c(4,3,7,10)],
-    category.names = paste(names(topgenes_list[c(4,3,7,10)]),"\n(",topgenes_list %>% summary() %>% .[c(4,3,7,10)],")",sep=""),
-    force.unique = TRUE, na = "remove",
-    filename = NULL,
-    main = "Hif2a", main.fontface = "bold",
-    lwd = 2,
-    lty = 'blank',
-    fill = colors[c(2,8,1,7)])
-grid.newpage()
-grid.draw(plt)
-```
-
 #### -Remove log files
 
 ``` r
@@ -730,64 +595,10 @@ file.remove(venn.logs)
 
 ## Volcanos
 
-### prepare data
-
-### simple volcano (full)
-
-#### check cutoff
-
 ### Draw Vulcanos
 
-``` r
-# Input
+### (prepare data)
 
-# results name
-n <- "Hif1a.Hx.vs.Nx"
+### (simple volcano (full))
 
-# colours
-topcol <- "royalblue4"
-hscol <- "royalblue1"
-lcol <- "grey20"
-
-# limits
-xlim <- 10
-ylim <- 300
-
-# number of top genes
-ntop <- 100
-
-###################
-
-# names(results_list)
-
-ev_kelly <- Vulcano_SK(n="Kelly.Hx.vs.Nx", # results name
-            ntop=200, # number of top genes
-            topcol=colors[2], # color top genes
-            hscol=colors[1], # color highly significant genes
-            lcol="grey20",
-            xlim=10,
-            ylim=300)
-
-ev_hif1a <- Vulcano_SK(n <- "Hif1a.Hx.vs.Nx",
-            ntop=200,
-            topcol=colors[4],
-            hscol=colors[3],
-            lcol="grey20")
-
-ev_hif2a <- Vulcano_SK(n <- "Hif2a.Hx.vs.Nx",
-            ntop=200,
-            topcol=colors[6],
-            hscol=colors[5],
-            lcol="grey20")
-
-ev_hif1b <- Vulcano_SK(n <- "Hif1b.Hx.vs.Nx",
-            ntop=200,
-            topcol=colors[8],
-            hscol=colors[7],
-            lcol="grey20")
-
-( ev_kelly + ev_hif1b ) + plot_layout(guides = "collect", axes="collect", axis_titles="collect") & theme(legend.position = 'bottom', axis.title=element_text(size=8))
-( ev_hif1a + ev_hif2a) + plot_layout(guides = "collect", axis_titles="collect") & theme(legend.position = 'bottom')
-```
-
-![](Readme_files/figure-gfm/draw%20vulcano-1.png)![](Readme_files/figure-gfm/draw%20vulcano-2.png)
+#### (check cutoff)
