@@ -40,7 +40,7 @@ Kelterborn
     ## design
 
     ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x5579c0009b38>
+    ## <environment: 0x55d70d980a88>
 
     ## cutoffs
     ## differential expressed: p=0.05,bM=10,l2FC=1
@@ -68,7 +68,14 @@ Kelterborn
 | deg_Hx.Kelly.vs.allHIFs    |     1567 |      151 |
 | deg_Hx.vs.Nx               |     3539 |      491 |
 
+<figure>
+<img src="Contrasts.png" alt="Contrasts_overview" />
+<figcaption aria-hidden="true">Contrasts_overview</figcaption>
+</figure>
+
 ## -Plot example counts
+
+![](Readme_files/figure-gfm/results_counts-1.png)<!-- -->![](Readme_files/figure-gfm/results_counts-2.png)<!-- -->![](Readme_files/figure-gfm/results_counts-3.png)<!-- -->![](Readme_files/figure-gfm/results_counts-4.png)<!-- -->![](Readme_files/figure-gfm/results_counts-5.png)<!-- -->![](Readme_files/figure-gfm/results_counts-6.png)<!-- -->![](Readme_files/figure-gfm/results_counts-7.png)<!-- -->![](Readme_files/figure-gfm/results_counts-8.png)<!-- -->![](Readme_files/figure-gfm/results_counts-9.png)<!-- -->![](Readme_files/figure-gfm/results_counts-10.png)<!-- -->![](Readme_files/figure-gfm/results_counts-11.png)<!-- -->![](Readme_files/figure-gfm/results_counts-12.png)<!-- -->![](Readme_files/figure-gfm/results_counts-13.png)<!-- -->![](Readme_files/figure-gfm/results_counts-14.png)<!-- -->![](Readme_files/figure-gfm/results_counts-15.png)<!-- -->![](Readme_files/figure-gfm/results_counts-16.png)<!-- -->![](Readme_files/figure-gfm/results_counts-17.png)<!-- -->![](Readme_files/figure-gfm/results_counts-18.png)<!-- -->![](Readme_files/figure-gfm/results_counts-19.png)<!-- -->
 
 # 2. Data Dive
 
@@ -131,7 +138,15 @@ Kelterborn
     ## [1] "Element=10 (25) --> a5(25)"
     ## [1] "Element=11 (38) --> a6(38)"
 
-<img src="Readme_files/figure-gfm/venn_hif1a-1.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-2.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-3.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-4.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-5.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-6.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-7.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-8.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-9.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-10.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-11.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-12.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-13.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-14.png" width="100%" />
+|                 | baseMean | log2FoldChange |     lfcSE |      stat |    pvalue |      padj | symbol |
+|:----------------|---------:|---------------:|----------:|----------:|----------:|----------:|:-------|
+| ENSG00000105880 | 618.9299 |     -0.3613847 | 0.2320159 | -1.557586 | 0.1193314 | 0.1777573 | DLX5   |
+
+|                 | baseMean | log2FoldChange |     lfcSE |     stat | pvalue | padj | symbol |
+|:----------------|---------:|---------------:|----------:|---------:|-------:|-----:|:-------|
+| ENSG00000105880 | 618.9299 |       1.950451 | 0.2754171 | 7.081806 |      0 |    0 | DLX5   |
+
+<img src="Readme_files/figure-gfm/venn_hif1a-1.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-2.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-3.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-4.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-5.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-6.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-7.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-8.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-9.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-10.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-11.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-12.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-13.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-14.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-15.png" width="100%" />
 
 ### - Hif2a
 
@@ -355,6 +370,8 @@ file.remove(venn.logs)
 ## Volcanos
 
 ### Draw Vulcanos
+
+![](Readme_files/figure-gfm/draw%20vulcano-1.png)![](Readme_files/figure-gfm/draw%20vulcano-2.png)
 
 ### (prepare data)
 

@@ -26,7 +26,7 @@ knitr::opts_chunk$set(echo = T,
 
 # 0. Load
 ##  - Load R librarys
-```{r R_update, eval=FALSE, include=FALSE, echo=FALSE}
+```{r R_update, eval=FALSE, include=FALSE}
 BiocManager::install()
 ```
 
@@ -92,7 +92,7 @@ futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
 
 ## - dds
-```{r dds, echo=FALSE}
+```{r dds, include=FALSE}
 # load(file=paste(data,"deseq2.dds", sep="/"))
 
 load(file=paste(data,"deseq2_treatment.dds", sep="/"))
@@ -672,6 +672,8 @@ res.Hif1b.vs.Kelly <- results(dds, name="genotype_HIF1B_vs_Kelly")
 
 ```
 
+
+
 ### -Generate toplist
 ```{r toplist, echo=FALSE}
 cat("design")
@@ -695,9 +697,11 @@ data.frame(all.DEGs= (deg_genes_list %>% lapply(., length) %>% unlist()),
 
 ```
 
+![Contrasts_overview](Contrasts.png)
+
 
 ##  -Plot example counts
-```{r, results_counts, fig.height=4, include=FALSE}
+```{r results_counts, echo=FALSE, fig.height=4}
 
 cols = brewer.pal(n=8,name = 'Paired')
 
@@ -741,6 +745,7 @@ plot.3 <- patchwork::wrap_plots(plot_list[pn],ncol = 3) + plot_layout(guides = "
 
 
 ```
+
 
 
 # 2. Data Dive
@@ -807,6 +812,8 @@ plotCounts_SK(diff1[1:12],n="only_Kelly")
 # get results
 results_list$Kelly.Hx.vs.Nx[diff2[1:12],] %>% kable()
 results_list$Hif1a.Hx.vs.Nx[diff2[1:12],] %>% kable()
+
+plotCounts(dds, gene="ENSG00000073060")
 
 # plot counts
 
@@ -889,6 +896,10 @@ plotCounts_SK(overlaps$a5 %>% sample(size=9),n="hif1a & top") # a5=25
 plotCounts_SK(overlaps$a6 %>% sample(size=9),n="only tops") # a6=38
 # naja
 plotCounts_SK(overlaps$a3 %>% sample(size=9),n="only degs") # a3=709
+
+
+results_list$Kelly.Hx.vs.Nx["ENSG00000105880",] %>% kable()
+results_list$Hif1a.Hx.vs.Nx["ENSG00000105880",] %>% kable()
 
 
 ```
@@ -1018,7 +1029,7 @@ plotCounts_SK(goi)
 
 
 ### - other
-```{r venn_other, eval=FALSE, include=FALSE}
+```{r venn_other, eval=FALSE, echo=FALSE}
 
 # Hx vs. Nx
 # dev.off()
@@ -1174,7 +1185,7 @@ file.remove(venn.logs)
 
 ## Volcanos
 ### Draw Vulcanos
-```{r draw vulcano,  include=FALSE, fig.show="hold", fig.height=4}
+```{r draw vulcano,  echo=FALSE, fig.show="hold", fig.height=4}
 
 # Input
 
@@ -1233,7 +1244,7 @@ ev_hif1b <- Vulcano_SK(
 
 
 ### (prepare data)
-```{r volcano_data, eval=FALSE, include=FALSE}
+```{r volcano_data, eval=FALSE, echo=FALSE}
 names(results_list)
 
 # colours
@@ -1321,7 +1332,7 @@ rownames(res) <- res$symbol
 ```
 
 ### (simple volcano (full))
-```{r volcano full, eval=FALSE, include=FALSE}
+```{r volcano full, eval=FALSE, echo=FALSE}
 length(rownames(res))==length(shape)
 length(rownames(res))==length(keyvals)
 
@@ -1359,7 +1370,7 @@ ev
 ```
 
 #### (check cutoff)
-```{r check_cutoff, eval=FALSE, include=FALSE}
+```{r check_cutoff, eval=FALSE, echo=FALSE}
 a=a_L2Flimit
 b=0
 c=plimit
