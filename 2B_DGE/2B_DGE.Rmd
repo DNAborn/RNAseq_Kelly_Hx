@@ -674,7 +674,7 @@ res.Hif1b.vs.Kelly <- results(dds, name="genotype_HIF1B_vs_Kelly")
 
 ### -Generate toplist
 ```{r toplist, echo=FALSE}
-
+cat("design")
 design(dds)
 
 deg_genes_list <- lapply(results_list,topgenes_f) %>%  lapply(.,rownames) 
@@ -682,19 +682,22 @@ names(deg_genes_list) <- paste("deg",names(deg_genes_list),sep="_")
 
 topgenes_list <- lapply(results_list,topgenes_f, p=0.01,bM=100,l2FC=2) %>%  lapply(.,rownames)
 names(topgenes_list) <- paste("top",names(topgenes_list),sep="_")
-data.frame(all.DEGs= (deg_genes_list %>% lapply(., length) %>% unlist()),
-              top.DEGs = (topgenes_list %>% lapply(., length) %>% unlist())
-              ) %>% kable()
 
 cat("cutoffs",
       "differential expressed: p=0.05,bM=10,l2FC=1",
       "top genes:              p=0.01,bM=100,l2FC=2",
       sep="\n")
+
+data.frame(all.DEGs= (deg_genes_list %>% lapply(., length) %>% unlist()),
+              top.DEGs = (topgenes_list %>% lapply(., length) %>% unlist())
+              ) %>% kable()
+
+
 ```
 
 
 ##  -Plot example counts
-```{r, results_counts, fig.height=4}
+```{r, results_counts, fig.height=4, include=FALSE}
 
 cols = brewer.pal(n=8,name = 'Paired')
 
@@ -764,8 +767,7 @@ df <- data.frame(n=c(1:8),
 
 ## Overlaps (Venn)
 ### - Hif1a
-```{r venn_hif1a}
-# ,fig.show="hold", out.width="80%", fig.with="50%",fig.height=4
+```{r venn_hif1a, include=FALSE ,fig.show="hold", out.width="100%", fig.height=4}
 
 # https://stackoverflow.com/questions/37450698/the-output-order-of-function-calculate-overlap correct names for venn
 
