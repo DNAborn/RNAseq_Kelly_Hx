@@ -1,28 +1,8 @@
-Untitled
-================
-Author
-10/13/2021
+# Kelly Hypoxia RNA-Seq
+RNA-Seq of Hif1a, Hif2a & Hif1b gene knock-outs
 
-``` r
-library(VennDiagram)
-```
+1.)   [Data processing](1_data_processing)
 
-    ## Lade nötiges Paket: grid
+2. A) [network analysis](2A_WGCNA)
 
-    ## Lade nötiges Paket: futile.logger
-
-``` r
-list1<-c("A", "B", "C", "D")
-list2<-c("B", "D", "E")
-list3<-c("A", "D", "Z")
-
-p<-venn.diagram(
-x=list( list1, list2, list3),
-category.names= c("list1", "list2", "list3"),
-filename= NULL
-)
-
-grid.draw(p)
-```
-
-![](Readme_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+   B)  [Differential gene expression](2B_DGE)
