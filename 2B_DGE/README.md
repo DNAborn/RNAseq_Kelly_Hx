@@ -45,7 +45,7 @@ Kelterborn
     ## design
 
     ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x562f4fc4db08>
+    ## <environment: 0x55f409b2f0d0>
 
     ## cutoffs
     ## differential expressed: p=0.05,bM=10,l2FC=1
@@ -107,6 +107,8 @@ Kelterborn
 
 <img src="Readme_files/figure-gfm/venn_hif1a-1.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-2.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-3.png" width="100%" />
 
+    ## Kelly.Hx.vs.Nx
+
 |                 |  baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol  |
 |:----------------|----------:|---------------:|----------:|----------:|-------:|-----:|:--------|
 | ENSG00000073060 | 11958.596 |       1.932024 | 0.0581472 |  33.22644 |      0 |    0 | SCARB1  |
@@ -119,6 +121,8 @@ Kelterborn
 | ENSG00000158560 |  1423.299 |       1.596266 | 0.1132662 |  14.09305 |      0 |    0 | DYNC1I1 |
 | ENSG00000164687 |  5980.669 |      -1.725272 | 0.0865765 | -19.92770 |      0 |    0 | FABP5   |
 
+    ## Hif1a.Hx.vs.Nx
+
 |                 |  baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol  |
 |:----------------|----------:|---------------:|----------:|----------:|-------:|-----:|:--------|
 | ENSG00000073060 | 11958.596 |       2.487525 | 0.0690276 |  36.03667 |      0 |    0 | SCARB1  |
@@ -130,10 +134,6 @@ Kelterborn
 | ENSG00000154545 |  6001.278 |       2.798396 | 0.1606150 |  17.42300 |      0 |    0 | MAGED4  |
 | ENSG00000158560 |  1423.299 |       2.873208 | 0.1339924 |  21.44306 |      0 |    0 | DYNC1I1 |
 | ENSG00000164687 |  5980.669 |      -2.318165 | 0.1029412 | -22.51931 |      0 |    0 | FABP5   |
-
-    ## cutoffs
-    ## differential expressed: p=0.05,bM=10,l2FC=1
-    ## top genes:              p=0.01,bM=100,l2FC=2
 
 <img src="Readme_files/figure-gfm/venn_hif1a-4.png" width="100%" />
 
@@ -217,12 +217,12 @@ Kelterborn
     ## [1] "Element=13 (225) --> a7(225)"
 
     ##   overlap     gene
-    ## 1      a5     CDH7
+    ## 1      a1 SERPINI1
     ## 2      a2  FABP5P7
-    ## 3      a4  MT-RNR1
-    ## 4      a6  CYP26B1
-    ## 5      a1 SERPINI1
-    ## 6      a3       U2
+    ## 3      a3       U2
+    ## 4      a4  MT-RNR1
+    ## 5      a5     CDH7
+    ## 6      a6  CYP26B1
     ## 7      a7    PCGF2
 
 ![](Readme_files/figure-gfm/venn_overlap-2.png)<!-- -->
