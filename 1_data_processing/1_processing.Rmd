@@ -21,6 +21,10 @@ knitr::opts_chunk$set(echo = T,
                       warning=FALSE,
                       message=FALSE,
                       dpi=300)
+
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+allnew <- TRUE
+
 ```
 
 # 0. Load
@@ -801,10 +805,10 @@ mcols(gse)$UNIPROTID <- mapIds(edb, keys = mcols(gse)$gene_id, column = "UNIPROT
 
 ## - #DESeq2
 ```{r deseq2, warning=FALSE, eval=TRUE, include=FALSE, echo=FALSE}
-
+data
 # load(file=paste(data,"tximeta.txm", sep="/"))
 colData(gse)$genotype %>% levels()
-design = ~genotype+treatment+genotype:treatment
+design = ~experiment+genotype+treatment+genotype:treatment
 # design = ~condition
 # design = ~treatment
 
@@ -820,7 +824,7 @@ dds <- DESeq(dds)
 
 getwd()
 design(dds)
-# save(dds,file=paste(data,"deseq2.dds", sep="/"))
+save(dds,file=paste(data,"deseq2_experiment.dds", sep="/"))
 # dds <- 1
 # load(file=paste(data,"deseq2.dds", sep="/"))
 dds
@@ -848,9 +852,9 @@ ntd <- normTransform(dds)
 ```
 
 #### -#rlog
-```{r pre_trans_rlog, eval=FALSE, include=FALSE, echo=FALSE}
+```{r pre_trans_rlog, eval=TRUE, include=FALSE, echo=FALSE}
 rld <- rlog(dds, blind=FALSE) #regularized logarithm
-# save(rld,file=paste(data,"rlog.rld", sep="/"))
+save(rld,file=paste(data,"rlog_experiment.rld", sep="/"))
 # rld <- 1
 # load(file=paste(data,"rlog.rld", sep="/"))
 rld
@@ -858,7 +862,7 @@ rld
 
 
 ```{r pre_trans_fig, figures-side, fig.show="hold", out.width="33%"}
-load(file=paste(data,"rlog.rld", sep="/"))
+# load(file=paste(data,"rlog.rld", sep="/"))
 meanSdPlot(assay(ntd))
 meanSdPlot(assay(vsd))
 meanSdPlot(assay(rld))
@@ -1092,7 +1096,7 @@ ani.pause()
 
 [PCA Gif](pca.gif){height=100%, width=100%}
 
-```{r pca_gif_include, eval=TRUE, echo=FALSE, out.width="100%", fig.height=8}
+```{r pca_gif_include, eval=FALSE, echo=FALSE, out.width="100%", fig.height=8}
 source_file <- dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(source_file)
 knitr::include_graphics("pca.gif")

@@ -8,20 +8,14 @@ Kelterborn
   - [- Load dds](#--load-dds)
   - [- functions](#--functions)
 - [1. Make results](#1-make-results)
-  - [-Generate toplist](#-generate-toplist)
   - [-Plot example counts](#-plot-example-counts)
 - [2. Data Dive](#2-data-dive)
   - [Colour sheme](#colour-sheme)
   - [Volcanos](#volcanos)
-    - [Draw Vulcanos](#draw-vulcanos)
-    - [(prepare data)](#prepare-data)
-    - [(simple volcano (full))](#simple-volcano-full)
   - [Overlaps (Venn)](#overlaps-venn)
-    - [- Hif1a](#--hif1a)
-    - [- Hif2a](#--hif2a)
-    - [- Hif1b](#--hif1b)
-    - [- overlap](#--overlap)
-    - [- other](#--other)
+  - [Heatmaps](#heatmaps)
+- [Tutorials:](#tutorials)
+- [](#section)
 
 # 0. Load
 
@@ -45,7 +39,6 @@ Kelterborn
     ## design
 
     ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x55f409b2f0d0>
 
     ## cutoffs
     ## differential expressed: p=0.05,bM=10,l2FC=1
@@ -92,6 +85,102 @@ Kelterborn
 ### Draw Vulcanos
 
 ![](Readme_files/figure-gfm/draw%20vulcano-1.png)![](Readme_files/figure-gfm/draw%20vulcano-2.png)
+
+### (continuous Vulcanos)
+
+``` r
+# gradient is fixed to padj = y-axis
+
+# Vulcano
+lcol="grey20"
+xlim=10
+ylim=300
+n <- "Kelly.Hx.vs.Nx"
+res <- results_list[[n]]
+l <- length(res)
+
+res_shrink <- lfcShrink(dds, res=res, type="ashr")
+res_shrink$symbol <- res$symbol
+
+# remove nas
+res <- res[!is.na(res$padj),]
+res <- res[!is.na(res$log2FoldChange),]
+
+# rename genes
+rownames(res) <- res$symbol
+
+# change shape of outliers
+shape <- ifelse(abs(res$log2FoldChange) > xlim, 18,
+                ifelse(res$padj < 10^-ylim,18,16))
+summary(is.na(shape))
+
+# shape[is.na(shape)] <- 2
+names(shape)[shape == 18] <- 'out of scale'
+names(shape)[shape == 16] <- 'in range'
+
+# move outliers to coord. max.
+res$log2FoldChange[res$log2FoldChange > xlim] <- xlim
+res$log2FoldChange[res$log2FoldChange < -xlim] <- -xlim
+res$padj[res$padj < 10^-ylim] <- 10^-ylim
+summary(res$padj < 10^-ylim)
+
+ p1 <- EnhancedVolcano(res,
+    lab = res$symbol,
+    x = 'log2FoldChange',
+    y = 'padj',
+    pCutoff = 10^(-50),
+    FCcutoff = 2,
+    xlim = c(-xlim, xlim),
+    pointSize = c(ifelse(res$log2FoldChange>2, 8, 1)),
+    labSize = 6.0,
+    shape = c(6, 6, 19, 16),
+    title = "DESeq2 results",
+    subtitle = "Differential expression",
+    caption = bquote(~Log[2]~ "fold change cutoff, 2; p-value cutoff, 10e-4"),
+    legendPosition = "right",
+    legendLabSize = 14,
+    colAlpha = 0.9,
+    colGradient = c('red3', 'royalblue'),
+    drawConnectors = TRUE,
+    hline = c(10e-8),
+    widthConnectors = 0.5)
+
+  p1
+
+ev_f <- EnhancedVolcano(res,
+    x = 'log2FoldChange',
+    y = 'padj',
+    lab = res$symbol,
+    labSize = 1.5,
+    drawConnectors = TRUE,
+    boxedLabels = TRUE,
+    widthConnectors = 0.5,
+    colConnectors = lcol,
+    max.overlaps = 17,
+    colGradient = c('red3', 'royalblue'),
+    xlim = c(-xlim, xlim),
+    ylim = c(0, ylim),
+    ylab = "Padj (-log10)",
+    title = n,
+    subtitle = paste("DE genes:",l),
+    # sub = "SVF",
+
+    FCcutoff = 2,
+    # pointSize = c(ifelse(rownames(res_WT_D_vs.WT_BL) %in% rownames(top_WT_BL_vs.pcry_BL), 8, 1)),
+    legendLabels=c('Not sig.','|L2F| > 2.5','p-adj < 0.05',
+                   'p-adj & L2F'),
+    legendPosition = 'bottom',
+    legendLabSize = 8,
+    legendIconSize = 2.0,
+    axisLabSize = 8,
+    titleLabSize = 8,
+    subtitleLabSize = 8,
+    captionLabSize = 8,
+    caption = {}
+   )
+
+ev_f
+```
 
 ### (prepare data)
 
@@ -168,6 +257,38 @@ Kelterborn
 |:----------------|---------:|---------------:|----------:|---------:|-------:|-----:|:-------|
 | ENSG00000105880 | 618.9299 |       1.950451 | 0.2754171 | 7.081806 |      0 |    0 | DLX5   |
 
+<img src="Readme_files/figure-gfm/venn_hif1a-14.png" width="100%" />
+
+    ## [1] "Element=7 (2121) --> a1(2121)"
+    ## [1] "Element=8 (128) --> a2(128)"
+    ## [1] "Element=9 (440) --> a3(440)"
+    ## [1] "Element=10 (95) --> a4(95)"
+    ## [1] "Element=11 (336) --> a5(336)"
+    ## [1] "Element=12 (277) --> a6(277)"
+    ## [1] "Element=13 (107) --> a7(107)"
+
+### Vulcano lists
+
+![](Readme_files/figure-gfm/vulcano_lists-1.png)<!-- -->![](Readme_files/figure-gfm/vulcano_lists-2.png)<!-- -->![](Readme_files/figure-gfm/vulcano_lists-3.png)<!-- -->
+
+|                 | baseMean | log2FoldChange |     lfcSE |     stat | pvalue | padj | symbol |
+|:----------------|---------:|---------------:|----------:|---------:|-------:|-----:|:-------|
+| ENSG00000130427 | 4146.305 |       12.38892 | 0.4416378 | 28.05223 |      0 |    0 | EPO    |
+
+|                 | baseMean | log2FoldChange |     lfcSE |     stat | pvalue | padj | symbol |
+|:----------------|---------:|---------------:|----------:|---------:|-------:|-----:|:-------|
+| ENSG00000130427 | 4146.305 |       12.35454 | 0.4616653 | 26.76081 |      0 |    0 | EPO    |
+
+|                 | baseMean | log2FoldChange |     lfcSE |     stat |   pvalue |     padj | symbol |
+|:----------------|---------:|---------------:|----------:|---------:|---------:|---------:|:-------|
+| ENSG00000130427 | 4146.305 |       1.079559 | 0.5340003 | 2.021645 | 0.043213 | 0.363693 | EPO    |
+
+|                 | baseMean | log2FoldChange |     lfcSE |     stat |    pvalue |      padj | symbol |
+|:----------------|---------:|---------------:|----------:|---------:|----------:|----------:|:-------|
+| ENSG00000130427 | 4146.305 |       1.045172 | 0.3507456 | 2.979859 | 0.0028838 | 0.0141054 | EPO    |
+
+![](Readme_files/figure-gfm/vulcano_lists-4.png)<!-- -->
+
 ### - Hif2a
 
     ## Hif2a
@@ -230,3 +351,72 @@ Kelterborn
 ### - other
 
 #### -Remove log files
+
+## Heatmaps
+
+# Tutorials:
+
+# 
+
+``` r
+# https://slowkow.com/notes/pheatmap-tutorial/
+# Complex heatmap https://github.com/jokergoo/ComplexHeatmap/
+
+# combined results
+pick_genes <- str_detect(names(results_list),pattern="Hif1aHxNx")
+pick_results <- c(4,1,5,8,14)
+names(results_list)[pick_results]
+pick_genes <- topgenes_list[pick_genes] %>% unlist() %>% unname() %>% unique()
+pick_genes <- lapply(topgenes_list,'[',1:10) %>% unlist() %>% unname() %>% unique()
+pick_genes <- c(lapply(res_hif1a,'[',1:5),
+                lapply(res_1_ab,'[',1:5),
+                lapply(res_2_ab,'[',1:5)) %>% unlist() %>% unname() %>% unique()
+pick_genes <- res_hif1a[[1]][1:30]
+res_comb <- res.Kelly.Hx.vs.Nx[pick_genes,c(7,1)] %>% data.frame(.)
+res_comb <- cbind(res_comb,lapply(results_list[pick_results],function(i) i[pick_genes,2]) %>% do.call(cbind,.) %>% data.frame(.))
+res_comb_matrix <- as.matrix(res_comb[,c(-1,-2)])
+res_comb_matrix[res_comb_matrix<1 & res_comb_matrix>-1] <- 0
+rownames(res_comb_matrix) <- res_comb$symbol
+
+# adapt colors to uniform breaks
+mat_breaks <- quantile_breaks(res_comb_matrix, n = 20)
+vir_cols <- viridis(length(mat_breaks))
+vir_cols[6] <- "white"
+cols <- colorRamp2(mat_breaks,vir_cols)
+
+hm <- Heatmap(res_comb_matrix,
+        col = cols,
+        column_title = "Compare results",
+        na_col = "black",
+        row_names_gp = gpar(fontsize = 10)
+        ) 
+hm
+
+plotCounts_SK(goi=pick_genes[1:3], n="only res 1")
+
+
++ c_graphic
+
+patchwork::wrap_elements((c_graphic)) + 
+
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+anno_col <- as.data.frame(colData(vsd)[,c("experiment","treatment","genotype")])
+anno_colors <- list(treatment = c("lightcoral","skyblue1"),
+                    genotype = c("grey","seagreen3","turquoise3","tan2"),
+                    experiment = viridis(4, option="plasma"))
+
+names(anno_colors$treatment) <- levels(anno_col$treatment)
+names(anno_colors$genotype) <- levels(anno_col$genotype)
+names(anno_colors$experiment) <- levels(anno_col$experiment)
+
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         annotation_col=anno_col,
+         annotation_colors = anno_colors,
+         show_colnames     = FALSE,
+         col=viridis(20),
+         cutree_rows = 8,
+         cutree_cols = 8,
+         fontsize_row = 5)
+```
