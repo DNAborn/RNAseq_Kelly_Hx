@@ -169,44 +169,38 @@ P3302
 design(dds)
 ```
 
-    ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x5557a6478950>
+    ## ~experiment + genotype + treatment + genotype:treatment
+    ## <environment: 0x55595faaa960>
 
 ``` r
 summary(results(dds))
 ```
 
     ## 
-    ## out of 30642 with nonzero total read count
+    ## out of 30649 with nonzero total read count
     ## adjusted p-value < 0.1
-    ## LFC > 0 (up)       : 5330, 17%
-    ## LFC < 0 (down)     : 6584, 21%
-    ## outliers [1]       : 9, 0.029%
-    ## low counts [2]     : 4169, 14%
+    ## LFC > 0 (up)       : 6000, 20%
+    ## LFC < 0 (down)     : 7146, 23%
+    ## outliers [1]       : 27, 0.088%
+    ## low counts [2]     : 3569, 12%
     ## (mean count < 1)
     ## [1] see 'cooksCutoff' argument of ?results
     ## [2] see 'independentFiltering' argument of ?results
 
 ``` r
 plotMA(dds)
-```
-
-![](Readme_files/figure-gfm/dds_design-1.png)<!-- -->
-
-``` r
 plotDispEsts(dds)
-```
-
-![](Readme_files/figure-gfm/dds_design-2.png)<!-- -->
-
-``` r
 resultsNames(dds)
 ```
 
-    ## [1] "Intercept"                 "genotype_HIF1A_vs_Kelly"  
-    ## [3] "genotype_HIF2A_vs_Kelly"   "genotype_HIF1B_vs_Kelly"  
-    ## [5] "treatment_Hx_vs_Nx"        "genotypeHIF1A.treatmentHx"
-    ## [7] "genotypeHIF2A.treatmentHx" "genotypeHIF1B.treatmentHx"
+    ##  [1] "Intercept"                       "experiment_Katharina_vs_Control"
+    ##  [3] "experiment_Simon_vs_Control"     "experiment_Ulrike_vs_Control"   
+    ##  [5] "genotype_HIF1A_vs_Kelly"         "genotype_HIF2A_vs_Kelly"        
+    ##  [7] "genotype_HIF1B_vs_Kelly"         "treatment_Hx_vs_Nx"             
+    ##  [9] "genotypeHIF1A.treatmentHx"       "genotypeHIF2A.treatmentHx"      
+    ## [11] "genotypeHIF1B.treatmentHx"
+
+<img src="Readme_files/figure-gfm/dds_design-1.png" width="50%" /><img src="Readme_files/figure-gfm/dds_design-2.png" width="50%" />
 
 # 3. Pre-Analysis
 
@@ -215,7 +209,7 @@ resultsNames(dds)
 #### -#rlog
 
 ``` r
-load(file=paste(data,"rlog.rld", sep="/"))
+load(file=paste(data,"rlog_experiment.rld", sep="/"))
 meanSdPlot(assay(ntd))
 meanSdPlot(assay(vsd))
 meanSdPlot(assay(rld))
@@ -241,8 +235,6 @@ meanSdPlot(assay(rld))
 ###### – \#PCA gif
 
 <a href="pca.gif" height="100%," width="100%">PCA Gif</a>
-
-<img src="pca.gif" width="100%" />
 
 ### - Plot example counts
 

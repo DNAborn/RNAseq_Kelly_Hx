@@ -20,7 +20,7 @@ knitr::opts_chunk$set(echo = T,
                       error=FALSE,
                       warning=FALSE,
                       message=FALSE,
-                      dpi=300)
+                      dpi=200)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 allnew <- TRUE
@@ -597,7 +597,7 @@ sample_table_all$mappingrates <- mappingrates[17:204]
 
 
 ### Plot mapping rates
-```{r plot_mappingr, fig.height=15, include=TRUE, echo=FALSE}
+```{r plot_mappingr, fig.height=10, include=TRUE, echo=FALSE}
 
 # Colours
 
@@ -611,7 +611,7 @@ par(mar=c(2,5,2,2)+.1)
 # barplot(height=mappingrates, names=samplename, horiz=T, las=1)
 
 xx <- barplot(height=mappingrates, cex.names=0.5, names=samplename, horiz=T, las=1, xlim=c(0,100))
-text(x = mappingrates, y = xx, label = mappingrates, pos = 4, cex = 0.5, col = "red")
+text(x = mappingrates, y = xx, label = mappingrates, pos = 4, cex = 0.2, col = "red")
 
 par(mar=c(4,4,4,4)+.1)
 
@@ -806,9 +806,9 @@ mcols(gse)$UNIPROTID <- mapIds(edb, keys = mcols(gse)$gene_id, column = "UNIPROT
 ## - #DESeq2
 ```{r deseq2, warning=FALSE, eval=TRUE, include=FALSE, echo=FALSE}
 data
-# load(file=paste(data,"tximeta.txm", sep="/"))
+load(file=paste(data,"tximeta.txm", sep="/"))
 colData(gse)$genotype %>% levels()
-design = ~experiment+genotype+treatment+genotype:treatment
+design = ~genotype+treatment+genotype:treatment
 # design = ~condition
 # design = ~treatment
 
@@ -824,7 +824,7 @@ dds <- DESeq(dds)
 
 getwd()
 design(dds)
-save(dds,file=paste(data,"deseq2_experiment.dds", sep="/"))
+# save(dds,file=paste(data,"deseq2_experiment.dds", sep="/"))
 # dds <- 1
 # load(file=paste(data,"deseq2.dds", sep="/"))
 dds
@@ -833,12 +833,13 @@ subset(colData(dds), condition=="HIF1A_Hx" & sequencing =="P2041") %>% kable() %
 
 ```
 
-```{r dds_design}
+```{r dds_design, fig.show='hold', out.width="50%", fig.height=5, fig.width=5}
 design(dds)
 summary(results(dds))
 plotMA(dds)
 plotDispEsts(dds)
 resultsNames(dds)
+
 
 ```
 
@@ -852,9 +853,9 @@ ntd <- normTransform(dds)
 ```
 
 #### -#rlog
-```{r pre_trans_rlog, eval=TRUE, include=FALSE, echo=FALSE}
+```{r pre_trans_rlog, eval=FALSE, include=FALSE, echo=FALSE}
 rld <- rlog(dds, blind=FALSE) #regularized logarithm
-save(rld,file=paste(data,"rlog_experiment.rld", sep="/"))
+# save(rld,file=paste(data,"rlog_experiment.rld", sep="/"))
 # rld <- 1
 # load(file=paste(data,"rlog.rld", sep="/"))
 rld
@@ -862,7 +863,7 @@ rld
 
 
 ```{r pre_trans_fig, figures-side, fig.show="hold", out.width="33%"}
-# load(file=paste(data,"rlog.rld", sep="/"))
+load(file=paste(data,"rlog_experiment.rld", sep="/"))
 meanSdPlot(assay(ntd))
 meanSdPlot(assay(vsd))
 meanSdPlot(assay(rld))
@@ -902,7 +903,7 @@ pheatmap(sampleDistMatrix,
 
 
 ### - Perform principal component analysis
-```{r pca, warning = FALSE, fig.show="hold", out.width="80%", fig.height=7, eval=TRUE, include=TRUE, echo=FALSE}
+```{r pca, warning = FALSE, fig.show="hold", out.width="80%", fig.height=6, eval=TRUE, include=TRUE, echo=FALSE}
 # transform data
 # load(file=paste(data,"deseq2.dds", sep="/"))
 vst_dat <- assay(vst(dds))

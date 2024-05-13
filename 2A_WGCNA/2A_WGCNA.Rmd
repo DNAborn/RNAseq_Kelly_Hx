@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = T,
                       error=FALSE,
                       warning=FALSE,
                       message=FALSE,
-                      dpi=300)
+                      dpi=200)
 ```
 
 # 0. Load
@@ -90,19 +90,23 @@ allowWGCNAThreads(nThreads = 40)
 # 1. WGCNA
 ## -load dds
 ```{r load_dds, out.width="100%",fig.width=12, eval=TRUE, include=FALSE, echo=FALSE}
-load(file=paste(data,"deseq2.dds", sep="/"))
-s75 <- (nrow(colData(dds))*0.75) %>% round()
-gc <- nrow(colData(dds))/ (levels(colData(dds)$condition) %>% length())
-dds75 <- dds[rowSums(counts(dds) >= gc) >= s75,]
+load(file=paste(data,"deseq2_experiment.dds", sep="/"))
+# s75 <- (nrow(colData(dds))*0.75) %>% round()
+# gc <- nrow(colData(dds))/ (levels(colData(dds)$condition) %>% length())
+# dds75 <- dds[rowSums(counts(dds) >= gc) >= s75,]
+sample.number <- nrow(colData(dds)) / colData(dds)$genotype %>% levels() %>% length()
+keep.sn <- rowSums(counts(dds)) >= sample.number
+keep.sn %>% summary()
+dds <- dds[keep.sn,]
 # nrow(dds75) # 16268 genes left
 
-vsd <- vst(dds75, blind = FALSE) #transform while accounting for design 
+vsd <- vst(dds, blind = FALSE) #transform while accounting for design 
 # counts <- counts(dds, normalized=TRUE)
 # mcols(dds)$SYMBOL %>% head()
 # input_mat = t(counts)
 # input_mat[1:10,1:10]
 
-colData <- colData(dds75)
+colData <- colData(dds)
 norm.counts <- assay(vsd) %>% 
   t()
 dim(norm.counts)
@@ -417,7 +421,7 @@ mME %>% ggplot(., aes(x=treatment, y=name, fill=value)) +
 expr_universe <- rownames(dds)
 
 # Get GO terms of top colors
-modcols <- c("yellow","red")
+modcols <- c("green")
 module_go <- module_df[module_df$colors %in% modcols,] # Hypoxia
 module_go_ens <- module_go$gene_id
 go_enrich_test <- enrichGO(gene = module_go_ens,
@@ -430,7 +434,7 @@ go_enrich_test <- enrichGO(gene = module_go_ens,
                       qvalueCutoff = 0.5)
 go1 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste(modcols, collapse=" & "))
 
-modcols <- c("magenta","turquoise","brown")
+modcols <- c("brown")
 module_go <- module_df[module_df$colors %in% modcols,] # Hypoxia
 module_go_ens <- module_go$gene_id
 go_enrich_test <- enrichGO(gene = module_go_ens,
@@ -443,7 +447,7 @@ go_enrich_test <- enrichGO(gene = module_go_ens,
                       qvalueCutoff = 0.5)
 go2 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste(modcols, collapse=" & "))
 
-modcols <- c("purple","green")
+modcols <- c("blue")
 module_go <- module_df[module_df$colors %in% modcols,] # Hypoxia
 module_go_ens <- module_go$gene_id
 go_enrich_test <- enrichGO(gene = module_go_ens,
@@ -456,7 +460,7 @@ go_enrich_test <- enrichGO(gene = module_go_ens,
                       qvalueCutoff = 0.5)
 go3 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste(modcols, collapse=" & "))
 
-modcols <- c("pink","blue","black")
+modcols <- c("turquoise")
 module_go <- module_df[module_df$colors %in% modcols,] # Hypoxia
 module_go_ens <- module_go$gene_id
 go_enrich_test <- enrichGO(gene = module_go_ens,
@@ -510,7 +514,7 @@ ME.heatmap %>% ggplot(., aes(x=Var2, y=Var1, fill=value)) +
   theme(axis.text.x = element_text(angle=90)) +
   labs(title = "Module-trait Relationships", y = "Modules", fill="corr")
 
-pheatmap(bwnet$MEs)
+pheatmap(bwnet$MEs %>% data.matrix())
 
 ```
 
@@ -518,7 +522,7 @@ pheatmap(bwnet$MEs)
 # Export into dds
 ```{r export_in_dds, eval=TRUE, include=TRUE, echo=TRUE}
 
-load(file=paste(data,"deseq2.dds", sep="/"))
+# load(file=paste(data,"deseq2_experiment.dds", sep="/"))
 load(file=paste(data,"bwnet_TS.RDS", sep="/"))
 
 # color per gene
@@ -537,7 +541,7 @@ colData(dds)$tmp <- module.cols[,i]
 names(colData(dds))[names(colData(dds)) == 'tmp'] <- i
 }
 
-save(dds, file=paste(data,"deseq2_wgcna.dds", sep="/"))
+save(dds, file=paste(data,"deseq2_experiment_wgcna.dds", sep="/"))
 
 ```
 
