@@ -29,6 +29,7 @@ knitr::opts_chunk$set(echo = T,
 ##  - Load R librarys
 ```{r R_update, eval=FALSE, include=FALSE}
 BiocManager::install()
+# update.packages(oldPkgs = old.packages())
 BiocManager::install("")
 
 ```
@@ -134,7 +135,7 @@ a
 ```
 
 ```{r plotCounts_SK, include=FALSE}
-# plot Counts
+
 plotCounts_SK <- function(goi,n="plotCounts"){
  plotCounts_SK_list <- list()
   l <- length(goi)
@@ -153,7 +154,7 @@ plotCounts_SK <- function(goi,n="plotCounts"){
   plotCounts_SK_list[[paste(n,goi[ig],sep="_")]] <- gcounts
        }
  
-patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) & 
+patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) + 
   plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & 
   plot_annotation(title = n) & 
   theme(legend.position = 'bottom',
@@ -366,7 +367,6 @@ res$log2FoldChange[res$log2FoldChange > xlim] <- xlim
 res$log2FoldChange[res$log2FoldChange < -xlim] <- -xlim
 res$padj[res$padj < 10^-ylim] <- 10^-ylim
 summary(res$padj < 10^-ylim)
-
 
 ## combine top, deg & hs
 keyvals <- ifelse(
@@ -1294,7 +1294,7 @@ goi <- c(diff1[1],overlaps$a3[1],diff2[1])
 # grid.newpage()
 patchwork::wrap_elements((plt)) / plotCounts_SK(goi)
 
-plotCounts_SK(diff1[1:9],n="only_Kelly")
+plotCounts_SK(diff1[1:9],n="only_Kelly") 
 plotCounts_SK(diff2[1:9],n="only_Hif1a")
 
 # get results

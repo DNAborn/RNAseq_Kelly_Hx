@@ -806,14 +806,15 @@ mcols(gse)$UNIPROTID <- mapIds(edb, keys = mcols(gse)$gene_id, column = "UNIPROT
 ## - #DESeq2
 ```{r deseq2, warning=FALSE, eval=TRUE, include=FALSE, echo=FALSE}
 data
+# [1] "/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/data"
 load(file=paste(data,"tximeta.txm", sep="/"))
 colData(gse)$genotype %>% levels()
-design = ~genotype+treatment+genotype:treatment
+design = ~experiment+genotype+treatment+genotype:treatment
 # design = ~condition
 # design = ~treatment
 
 dds <- DESeqDataSet(gse, design = design)
-dds <- collapseReplicates(dds, dds$samplename, dds$names)
+# dds <- collapseReplicates(dds, dds$samplename, dds$names)
 
 sample.number <- nrow(colData(dds)) / colData(gse)$genotype %>% levels() %>% length()
 keep.sn <- rowSums(counts(dds)) >= sample.number
@@ -821,6 +822,7 @@ keep.sn %>% summary()
 dds <- dds[keep.sn,]
 
 dds <- DESeq(dds)
+summary(results(dds))
 
 getwd()
 design(dds)
