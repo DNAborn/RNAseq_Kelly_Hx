@@ -15,7 +15,6 @@ knit: (function(input_file, encoding) {
     })
 ---
 
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T,
                       error=FALSE,
@@ -26,7 +25,9 @@ knitr::opts_chunk$set(echo = T,
 ```
 
 # 0. Load
-##  - Load R librarys
+
+## - Load R librarys
+
 ```{r R_update, eval=FALSE, include=FALSE}
 BiocManager::install()
 # update.packages(oldPkgs = old.packages())
@@ -101,8 +102,8 @@ futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
 ```
 
-
 ## - Load dds
+
 ```{r dds, include=FALSE}
 # load(file=paste(data,"deseq2.dds", sep="/"))
 
@@ -115,8 +116,8 @@ load(file=paste(data,"deseq2_experiment_wgcna.dds", sep="/"))
 
 ```
 
-
 ## - functions
+
 ```{r topgenes, include=FALSE}
 # topgenes
 topgenes_f <- function(res,p=0.05,bM=10,l2FC=1){
@@ -438,8 +439,8 @@ quantile_breaks <- function(xs, n = 10) {
 
 ```
 
-
 # 1. Make results
+
 ```{r results, include=FALSE}
 
 design(dds)
@@ -639,6 +640,7 @@ results_list[["Hx.Hif2a.vs.Kelly"]] %>% summary()
 ```
 
 #### (Advanced results troubleshooting)
+
 ```{r results_trouble, eval=FALSE, include=FALSE}
 ## Hx vs. Nx (all)
 # ?
@@ -831,10 +833,10 @@ res.Hif1b.vs.Kelly <- results(dds, name="genotype_HIF1B_vs_Kelly")
 
 ```
 
-
 ![Contrasts_overview](Contrasts.png)
 
 ### -Generate toplist
+
 ```{r toplist, echo=FALSE}
 cat("design")
 design(dds)
@@ -857,9 +859,8 @@ data.frame(all.DEGs= (deg_genes_list %>% lapply(., length) %>% unlist()),
 
 ```
 
+## -Plot example counts
 
-
-##  -Plot example counts
 ```{r results_counts, echo=FALSE, fig.height=3}
 
 cols = brewer.pal(n=8,name = 'Paired')
@@ -892,10 +893,10 @@ plotCounts_SK(goi) + ~plotCounts(dds, gene=goi, intgroup = c("experiment"),col=c
 
 ```
 
-
-
 # 2. Data Dive
+
 ## Colour sheme
+
 ```{r colors, echo=FALSE}
 
 colors_paired <- c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00")
@@ -915,9 +916,10 @@ df <- data.frame(n=c(1:8),
 
 ```
 
-
 ## Volcanos
+
 ### Draw Vulcanos
+
 ```{r draw vulcano,  echo=FALSE, fig.show="hold", fig.height=5}
 
 # Input
@@ -980,10 +982,8 @@ ev_hif1b <- Vulcano_SK(
  
 ```
 
-
-
-
 ### (continuous Vulcanos)
+
 ```{r vulcano_cont, eval=FALSE}
 
 # gradient is fixed to padj = y-axis
@@ -1084,8 +1084,8 @@ ev_f
 
 ```
 
-
 ### (prepare data)
+
 ```{r volcano_data, eval=FALSE, echo=FALSE}
 names(results_list)
 
@@ -1174,6 +1174,7 @@ rownames(res) <- res$symbol
 ```
 
 ### (simple volcano (full))
+
 ```{r volcano full, eval=FALSE, echo=FALSE}
 length(rownames(res))==length(shape)
 length(rownames(res))==length(keyvals)
@@ -1212,6 +1213,7 @@ ev
 ```
 
 #### (check cutoff)
+
 ```{r check_cutoff, eval=FALSE, echo=FALSE}
 a=a_L2Flimit
 b=0
@@ -1256,9 +1258,10 @@ plot(x,-log(base=10,x))
 
 ```
 
-
 ## Overlaps (Venn)
+
 ### - Hif1a
+
 ```{r venn_hif1a, include=TRUE, echo=FALSE, eval=TRUE, out.width="100%", fig.height=5}
 
 # https://stackoverflow.com/questions/37450698/the-output-order-of-function-calculate-overlap correct names for venn
@@ -1432,110 +1435,6 @@ getVennElements(plt, olf=res_hif1a)
 
 ```
 
-```{r wgcna_correlation, eval=TRUE, echo=FALSE, fig.show='hold',out.width='33%'}
-
-input_list <- list(res_1, res_2, res_3)
-names(input_list)
-
-# correlation with network analysis
-pie(mcols(dds)[input_list[[1]],"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[input_list[[1]] %>% rownames(),"colors"] %>% summary() %>% names(), main="WGCNA of Res 1")
-pie(mcols(dds)[input_list[[2]],"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[input_list[[2]] %>% rownames(),"colors"] %>% summary() %>% names(), main="WGCNA of Res 2")
-pie(mcols(dds)[input_list[[3]],"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[input_list[[3]] %>% rownames(),"colors"] %>% summary() %>% names(), main="WGCNA of Res 3")
-
-```
-
-
-
-### Vulcano lists
-```{r vulcano_lists, eval=TRUE, echo=FALSE}
-
-# Compare Hx.vs.Nx with interaction
-n <- "Kelly.Hx.vs.Nx"
-
-hif1a_deg_ol <- calculate.overlap(list(
-  deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
-  deg_genes_list[["deg_Hif1a.Hx.vs.Nx"]]))
-hif1a_deg <- c(setdiff(hif1a_deg_ol[[1]],hif1a_deg_ol[[3]]),
-               setdiff(hif1a_deg_ol[[2]],hif1a_deg_ol[[3]]))
-
-ev_kelly_lists <- Vulcano_SK2(n="Kelly.Hx.vs.Nx",
-            list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
-            list2=hif1a_deg,
-            l1.n= "interaction (3)",
-            l2.n= "Hx.vs.Nx (1)",
-            l1.col="purple",
-            l2.col="orangered",
-            lol.col="royalblue1",
-            xlim=10,
-            ylim=200)
-
-ev_hif1a_lists <- Vulcano_SK2(n="Hif1a.Hx.vs.Nx",
-            list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
-            list2=hif1a_deg,
-            l1.n= "interaction (3)",
-            l2.n= "Hx.vs.Nx (1)",
-            l1.col="purple",
-            l2.col="orangered",
-            lol.col="royalblue1",
-            xlim=10,
-            ylim=200)
-
- ( ev_kelly_lists + ev_hif1a_lists )  +
-  plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
-  theme(legend.position = 'bottom', axis.title=element_text(size=8))
-
-
-# Compare Hx.vs.Hx with interaction
-
-hif1a_Hx.vs.Hx.deg <- c(deg_genes_list[["deg_Nx.Hif1a.vs.Kelly"]],
-                deg_genes_list[["deg_Hx.Hif1a.vs.Kelly"]]) %>% unique()
-
-ev_kelly_lists <- Vulcano_SK2(n="Kelly.Hx.vs.Nx",
-            list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
-            list2=hif1a_Hx.vs.Hx.deg,
-            l1.n= "interaction (3)",
-            l2.n= "Hx.vs.Hx (2)",
-            l1.col="purple",
-            l2.col="green3",
-            lol.col="royalblue1",
-            xlim=10,
-            ylim=200)
-
-ev_hif1a_lists <- Vulcano_SK2(n="Hif1a.Hx.vs.Nx",
-            list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
-            list2=hif1a_Hx.vs.Hx.deg,
-            l1.n= "interaction (3)",
-            l2.n= "Hx.vs.Hx (2)",
-            l1.col="purple",
-            l2.col="green3",
-            lol.col="royalblue1",
-            xlim=10,
-            ylim=200)
-
- ( ev_kelly_lists + ev_hif1a_lists )  +
-  plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
-  theme(legend.position = 'bottom', axis.title=element_text(size=8))
-
-goi <- c("PDK1","LAMA4","TCF3","SCIRT")
-goi <- results_list[[1]][results_list[[1]]$symbol %in% goi,] %>% rownames()
-plotCounts_SK(goi=goi)
-
-# Kelly.Hx.vs.Nx (1)
-results_list$Kelly.Hx.vs.Nx[goi,] %>% kable()
-# Hif1a.Hx.vs.Nx (1)
-results_list$Hif1a.Hx.vs.Nx[goi,] %>% kable()
-# Nx.Hif1a.vs.Kelly (2)
-results_list$Nx.Hif1a.vs.Kelly[goi,] %>% kable()
-# Hx.Hif1a.vs.Kelly (2)
-results_list$Hx.Hif1a.vs.Kelly[goi,] %>% kable()
-# Hif1aHxNx.vs.KellyHxNx (3)
-results_list$Hif1aHxNx.vs.KellyHxNx[goi,] %>% kable()
-
-
-```
-
-
-
 ### (- Hif2a)
 
 ```{r venn_hif2a, eval=TRUE, echo=FALSE, fig.height=5}
@@ -1584,8 +1483,6 @@ pie(mcols(dds)[pie_list,"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[
 
 ```
 
-
-
 ```{r venn_hif2a_old, eval=FALSE, echo=FALSE, fig.height=5}
 
 ## get top list for Hif2a
@@ -1629,6 +1526,7 @@ pie(mcols(dds)[top_hif2a %>% rownames(),"colors"] %>% .[!is.na(.)] %>% summary()
 ```
 
 ### (- Hif1b)
+
 ```{r venn_hif1b, echo=FALSE, fig.height=5}
 
 ## get top list for Hif1b
@@ -1676,8 +1574,8 @@ pie(mcols(dds)[pie_list,"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[
 
 ```
 
-
 ### (- overlap)
+
 ```{r venn_overlap_res1, echo=FALSE, fig.height=4}
 cat("overlap of overlaps")
 
@@ -1751,10 +1649,8 @@ plotCounts_SK(goi)
 
 ```
 
-
-
-
 ### (- other)
+
 ```{r venn_other, eval=FALSE, include=FALSE}
 
 # Hx vs. Nx
@@ -1892,8 +1788,179 @@ grid.draw(plt)
 
 ```
 
+### Compare Results 1 2 3
+
+#### Vulcano lists
+
+```{r vulcano_lists, eval=TRUE, echo=FALSE}
+
+# Compare Hx.vs.Nx with interaction
+n <- "Kelly.Hx.vs.Nx"
+
+hif1a_deg_ol <- calculate.overlap(list(
+  deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
+  deg_genes_list[["deg_Hif1a.Hx.vs.Nx"]]))
+hif1a_deg <- c(setdiff(hif1a_deg_ol[[1]],hif1a_deg_ol[[3]]),
+               setdiff(hif1a_deg_ol[[2]],hif1a_deg_ol[[3]]))
+
+ev_kelly_lists <- Vulcano_SK2(n="Kelly.Hx.vs.Nx",
+            list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+            list2=hif1a_deg,
+            l1.n= "interaction (3)",
+            l2.n= "Hx.vs.Nx (1)",
+            l1.col="orchid3",
+            l2.col="salmon3",
+            lol.col="royalblue1",
+            xlim=10,
+            ylim=200)
+
+ev_hif1a_lists <- Vulcano_SK2(n="Hif1a.Hx.vs.Nx",
+            list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+            list2=hif1a_deg,
+            l1.n= "interaction (3)",
+            l2.n= "Hx.vs.Nx (1)",
+            l1.col="orchid3",
+            l2.col="salmon3",
+            lol.col="royalblue1",
+            xlim=10,
+            ylim=200)
+
+ ( ev_kelly_lists + ev_hif1a_lists )  +
+  plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
+  theme(legend.position = 'bottom', axis.title=element_text(size=8))
 
 
+# Compare Hx.vs.Hx with interaction
+
+hif1a_Hx.vs.Hx.deg <- c(deg_genes_list[["deg_Nx.Hif1a.vs.Kelly"]],
+                deg_genes_list[["deg_Hx.Hif1a.vs.Kelly"]]) %>% unique()
+
+ev_kelly_lists <- Vulcano_SK2(n="Kelly.Hx.vs.Nx",
+            list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+            list2=hif1a_Hx.vs.Hx.deg,
+            l1.n= "interaction (3)",
+            l2.n= "Hx.vs.Hx (2)",
+            l1.col="orchid3",
+            l2.col="seagreen3",
+            lol.col="royalblue1",
+            xlim=10,
+            ylim=200)
+
+ev_hif1a_lists <- Vulcano_SK2(n="Hif1a.Hx.vs.Nx",
+            list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+            list2=hif1a_Hx.vs.Hx.deg,
+            l1.n= "interaction (3)",
+            l2.n= "Hx.vs.Hx (2)",
+            l1.col="orchid3",
+            l2.col="seagreen3",
+            lol.col="royalblue1",
+            xlim=10,
+            ylim=200)
+
+ ( ev_kelly_lists + ev_hif1a_lists )  +
+  plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
+  theme(legend.position = 'bottom', axis.title=element_text(size=8))
+
+goi <- c("PDK1","LAMA4","TCF3","SCIRT", "HNF1A","LFNG")
+goi <- results_list[[1]][results_list[[1]]$symbol %in% goi,] %>% rownames()
+plotCounts_SK(goi=goi)
+
+# Kelly.Hx.vs.Nx (1)
+results_list$Kelly.Hx.vs.Nx[goi,] %>% kable()
+# Hif1a.Hx.vs.Nx (1)
+results_list$Hif1a.Hx.vs.Nx[goi,] %>% kable()
+# Nx.Hif1a.vs.Kelly (2)
+results_list$Nx.Hif1a.vs.Kelly[goi,] %>% kable()
+# Hx.Hif1a.vs.Kelly (2)
+results_list$Hx.Hif1a.vs.Kelly[goi,] %>% kable()
+# Hif1aHxNx.vs.KellyHxNx (3)
+results_list$Hif1aHxNx.vs.KellyHxNx[goi,] %>% kable()
+
+
+```
+
+#### WGCNA RES1,2,3
+
+```{r wgcna_res123, eval=TRUE, echo=FALSE, fig.show='hold',out.width='33%'}
+
+input_list <- list(res_1, res_2, res_3)
+
+# correlation with network analysis
+pie(mcols(dds)[input_list[[1]],"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[input_list[[1]] %>% rownames(),"colors"] %>% summary() %>% names(), main="WGCNA of Res 1")
+pie(mcols(dds)[input_list[[2]],"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[input_list[[2]] %>% rownames(),"colors"] %>% summary() %>% names(), main="WGCNA of Res 2")
+pie(mcols(dds)[input_list[[3]],"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[input_list[[3]] %>% rownames(),"colors"] %>% summary() %>% names(), main="WGCNA of Res 3")
+
+```
+
+### Compare KO
+
+```{r}
+
+cat("Results 3 of Hif1a, Hif2a, Hif1b")
+
+names(results_list)
+deg_genes_list
+
+input_list <- deg_genes_list[c("deg_Hif1aHxNx.vs.KellyHxNx","deg_Hif2aHxNx.vs.KellyHxNx","deg_Hif1bHxNx.vs.KellyHxNx")]
+plt <- venn.diagram(
+    x = input_list,
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Hif1a Hx-Nx vs. Kelly Hx-Nx", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(3,5,7)],
+    cat.col=c(colors[c(4,6,8)]),
+    cat.fontface = "bold")
+
+grid.newpage()
+grid.draw(plt)
+
+# plot example counts
+overlaps <- calculate.overlap(input_list)
+overlaps <- overlaps[order(names(overlaps))]
+names(overlaps)
+getVennElements(plt)
+
+# plot each 1 gene
+goi <- sapply(overlaps,"[[",1) %>% .[order(names(.))]
+ 
+data.frame(overlap = names(goi),
+           gene = mcols(dds)[goi,"symbol"])
+
+plotCounts_SK(goi)
+
+
+```
+
+#### WGCNA KOs
+
+```{r wgcna_ko, eval=TRUE, echo=FALSE, fig.show='hold',out.width='33%'}
+
+input_list <- deg_genes_list[c("deg_Hif1aHxNx.vs.KellyHxNx","deg_Hif2aHxNx.vs.KellyHxNx","deg_Hif1bHxNx.vs.KellyHxNx")]
+
+# correlation with network analysis
+pie(mcols(dds)[input_list[[1]],"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[input_list[[1]] %>% rownames(),"colors"] %>% summary() %>% names(), main=names(input_list[1]))
+pie(mcols(dds)[input_list[[2]],"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[input_list[[2]] %>% rownames(),"colors"] %>% summary() %>% names(), main=names(input_list[2]))
+pie(mcols(dds)[input_list[[3]],"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[input_list[[3]] %>% rownames(),"colors"] %>% summary() %>% names(), main=names(input_list[3]))
+
+```
+
+#### WGCNA overlapped KOs
+
+```{r wgcna_ko_overlaps, eval=TRUE, echo=FALSE, fig.show='hold',out.width='33%'}
+
+input_list <- overlaps
+names(input_list)
+
+# correlation with network analysis
+for (i in names(input_list)){
+pie(mcols(dds)[input_list[[i]],"colors"] %>% .[!is.na(.)] %>% summary(),col=mcols(dds)[input_list[[i]] %>% rownames(),"colors"] %>% summary() %>% names(), main=i)
+}
+
+
+```
 
 ```{r}
 
@@ -1902,15 +1969,17 @@ grid.draw(plt)
 ```
 
 #### -Remove log files
+
 ```{r venn_rmlogs, include=FALSE}
 venn.logs <- list.files(pattern="VennDiagram.*.log")
 file.remove(venn.logs)
 
 ```
 
-
 ## Heatmaps
+
 ### -Compare results
+
 ```{r heatmap, eval=FALSE}
 # https://slowkow.com/notes/pheatmap-tutorial/
 # Complex heatmap https://github.com/jokergoo/ComplexHeatmap/
@@ -1956,7 +2025,7 @@ patchwork::wrap_elements((c_graphic))
 
 ### -Top genes
 
-Complex Heatmap: https://jokergoo.github.io/ComplexHeatmap-reference/book/
+Complex Heatmap: <https://jokergoo.github.io/ComplexHeatmap-reference/book/>
 
 ```{r sample_dist, eval=FALSE}
 ht_opt$fast_hclust = TRUE
@@ -2053,4 +2122,3 @@ pheatmap(mat,
 
 
 ```
-
