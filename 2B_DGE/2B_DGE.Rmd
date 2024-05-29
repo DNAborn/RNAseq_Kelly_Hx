@@ -1898,8 +1898,7 @@ pie(mcols(dds)[input_list[[3]],"colors"] %>% .[!is.na(.)] %>% summary(),col=mcol
 
 cat("Results 3 of Hif1a, Hif2a, Hif1b")
 
-names(results_list)
-deg_genes_list
+names(deg_genes_list)
 
 input_list <- deg_genes_list[c("deg_Hif1aHxNx.vs.KellyHxNx","deg_Hif2aHxNx.vs.KellyHxNx","deg_Hif1bHxNx.vs.KellyHxNx")]
 plt <- venn.diagram(
