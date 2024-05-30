@@ -18,7 +18,11 @@ design = \~experiment+genotype+treatment+genotype:treatment
 
 MA plot & Dispersion
 
-<img src="1_data_processing/Readme_files/figure-gfm/dds_design-1.png" width="50%"/><img src="1_data_processing/Readme_files/figure-gfm/dds_design-2.png" width="50%"/>
+<img src="1_data_processing/Readme_files/figure-gfm/dds_design-1.png" width="50%"/>
+
+<img src="1_data_processing/Readme_files/figure-gfm/dds_design-2_hist1.png" width="50%"/><img src="1_data_processing/Readme_files/figure-gfm/dds_design-2.png" width="50%"/>
+
+Before and after adding "experiment" to design
 
 Transformations
 
@@ -30,7 +34,7 @@ Sample distance
 
 Principal component analysis
 
-<img src="1_data_processing/Readme_files/figure-gfm/pca-1.png" width="80%"/>
+<img src="1_data_processing/Readme_files/figure-gfm/pca-1.png" width="40%"/>
 
 Plot example counts
 
@@ -38,15 +42,13 @@ Plot example counts
 
 # 2. A) [network analysis](2A_WGCNA)
 
-<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-1.png" width="100%"/>
+<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-1.png" width="90%"/>
 
-<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-2.png" width="100%"/>
+<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-2.png" width="90%"/>
 
-<img src="2A_WGCNA/Readme_files/figure-gfm/goa-1.png" width="100%"/>
+<img src="2A_WGCNA/Readme_files/figure-gfm/goa-1.png" width="90%"/>
 
 # B) [Differential gene expression](2B_DGE)
-
-<img src="2B_DGE/Contrasts.png" alt="Contrasts_overview"/>
 
 Contrasts_overview
 
@@ -129,7 +131,11 @@ Contrasts_overview
 
 <img src="2B_DGE/Readme_files/figure-gfm/venn_hif1a-13.png" width="100%"/>
 
-![](2B_DGE/Readme_files/figure-gfm/vulcano_lists-1.png)<!-- -->![](2B_DGE/Readme_files/figure-gfm/vulcano_lists-2.png)<!-- -->
+<img src="2B_DGE/Readme_files/figure-gfm/vulcano_lists-1.png" width="80%"/>
+<img src="2B_DGE/Readme_files/figure-gfm/vulcano_lists-2.png" width="80%"/>
+
+
+
 
 Kelly.Hx.vs.Nx (1)
 
@@ -186,7 +192,10 @@ Hif1aHxNx.vs.KellyHxNx (3)
 | ENSG00000167721 | 6351.7523 |     -0.8039486 | 0.0709857 | -11.3255047 | 0.0000000 | 0.0000000 | TSR1   |
 | ENSG00000203727 |  564.2991 |      0.4763208 | 0.4272718 |   1.1147958 | 0.2649379 | 0.5193756 | SAMD5  |
 
-![](2B_DGE/Readme_files/figure-gfm/vulcano_lists-3.png)<!-- -->
+
+<img src="2B_DGE/Readme_files/figure-gfm/vulcano_lists-3.png" width="70%"/>
+
+<!-- -->
 
 #### WGCNA RES1,2,3
 
@@ -194,23 +203,19 @@ Hif1aHxNx.vs.KellyHxNx (3)
 
 ## Results 3 of Hif1a, Hif2a, Hif1b
 
-![](2B_DGE/Readme_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+<img src="2B_DGE/Readme_files/figure-gfm/unnamed-chunk-1-1.png" width="75%"/>
+
+<!-- -->
 
 |     | overlap | gene  |
 |:----|--------:|:------|
 | 1   |      a1 | BNIP3 |
-
-| 2 \| a2 \| AM162A \|
-
-| 3 \| a3 \| CLSTN2 \|
-
-| 4 \| a4 \| PFKFB3 \|
-
-| 5 \| a5 \| BHLHE41 \|
-
-| 6 \| a6 \| ARHGEF6 \|
-
-| 7 \| a7 \| TNXB \|
+| 2 | a2 | AM162A |
+| 3 | a3 | CLSTN2 |
+| 4 | a4 | PFKFB3 |
+| 5 | a5 | BHLHE41 |
+| 6 | a6 | ARHGEF6 |
+| 7 | a7 | TNXB |
 
 ![](2B_DGE/Readme_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->
 
