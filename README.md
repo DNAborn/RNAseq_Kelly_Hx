@@ -2,7 +2,7 @@
 
 RNA-Seq of Hif1a, Hif2a & Hif1b gene knock-outs
 
-1.) [Data processing](1_data_processing)
+# 1.) [Data processing](1_data_processing)
 
 ### combine sample list
 
@@ -34,13 +34,9 @@ Principal component analysis
 
 Plot example counts
 
-<img src="1_data_processing/Readme_files/figure-gfm/example_counts-1.png" width="50%"/><img src="1_data_processing/Readme_files/figure-gfm/example_counts-2.png" width="50%"/>
+<img src="1_data_processing/Readme_files/figure-gfm/example_counts-1.png" width="50%"/><img src="1_data_processing/Readme_files/figure-gfm/example_counts-2.png" width="50%"/> <!-- -->
 
-2.  
-
-<!-- -->
-
-A)  [network analysis](2A_WGCNA)
+# 2. A) [network analysis](2A_WGCNA)
 
 <img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-1.png" width="100%"/>
 
@@ -48,13 +44,17 @@ A)  [network analysis](2A_WGCNA)
 
 <img src="2A_WGCNA/Readme_files/figure-gfm/goa-1.png" width="100%"/>
 
-B)  [Differential gene expression](2B_DGE)
+# B) [Differential gene expression](2B_DGE)
 
 <img src="2B_DGE/Contrasts.png" alt="Contrasts_overview"/>
 
 Contrasts_overview
 
-\## cutoffs \## differential expressed: p=0.05,bM=10,l2FC=1 \## top genes: p=0.01,bM=100,l2FC=2
+cutoffs
+
+differential expressed: p=0.05,bM=10,l2FC=1
+
+top genes: p=0.01,bM=100,l2FC=2
 
 |                            | all.DEGs | top.DEGs |
 |:---------------------------|---------:|---------:|
@@ -112,6 +112,20 @@ SCARB1 doesn't fit!
 | ENSG00000186469 |  8085.827 |       2.579589 | 0.1081358 |  23.85510 |      0 |    0 | GNG2    |
 
 ## compare results with contrast vsvs (Hif1a Hx vs. Nx VS. Kelly Hx vs. Nx
+
+<figure>
+
+<img src="Contrasts.png" alt="Contrasts_overview"/>
+
+<figcaption aria-hidden="true">
+
+Contrasts_overview
+
+</figcaption>
+
+</figure>
+
+<!-- -->
 
 <img src="2B_DGE/Readme_files/figure-gfm/venn_hif1a-13.png" width="100%"/>
 
@@ -182,13 +196,20 @@ Hif1aHxNx.vs.KellyHxNx (3)
 
 ![](2B_DGE/Readme_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
-|   \| overlap \| gene \|
-| 1 \| a1 \| BNIP3 \|
-| 2 \| a2 \| FAM162A \|
+|     | overlap | gene  |
+|:----|--------:|:------|
+| 1   |      a1 | BNIP3 |
+
+| 2 \| a2 \| AM162A \|
+
 | 3 \| a3 \| CLSTN2 \|
+
 | 4 \| a4 \| PFKFB3 \|
+
 | 5 \| a5 \| BHLHE41 \|
+
 | 6 \| a6 \| ARHGEF6 \|
+
 | 7 \| a7 \| TNXB \|
 
 ![](2B_DGE/Readme_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->
@@ -207,13 +228,10 @@ Hif1aHxNx.vs.KellyHxNx (3)
 
 ## GO Terms
 
-![](Readme_files/figure-gfm/GO%20terms-1.png)<!-- -->
+![](2B_DGE/Readme_files/figure-gfm/GO%20terms-1.png)<!-- -->
 
-![](Readme_files/figure-gfm/GO%20terms-2.png)<!-- -->
+![](2B_DGE/Readme_files/figure-gfm/GO%20terms-2.png)<!-- -->
 
-![](Readme_files/figure-gfm/GO%20terms-3.png)<!-- -->
+![](2B_DGE/Readme_files/figure-gfm/GO%20terms-3.png)<!-- -->
 
-![](Readme_files/figure-gfm/GO%20terms-4.png)<!-- -->
-
-
-
+![](Readme_files/figure-gfm/GO%20terms-6.png)<!-- -->
