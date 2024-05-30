@@ -331,53 +331,6 @@ ev_f
 
 #### Vulcano lists
 
-![](Readme_files/figure-gfm/vulcano_lists-1.png)<!-- -->![](Readme_files/figure-gfm/vulcano_lists-2.png)<!-- -->![](Readme_files/figure-gfm/vulcano_lists-3.png)<!-- -->
-
-|                 |  baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol |
-|:----------------|----------:|---------------:|----------:|----------:|-------:|-----:|:-------|
-| ENSG00000106003 |  928.0982 |     -3.0186727 | 0.1254119 | -24.07007 |      0 |    0 | LFNG   |
-| ENSG00000107807 |  208.0512 |     11.6537315 | 0.5831457 |  19.98425 |      0 |    0 | TLX1   |
-| ENSG00000135100 |  504.0646 |     10.5449933 | 0.3781407 |  27.88643 |      0 |    0 | HNF1A  |
-| ENSG00000166573 |  262.6861 |      5.1605974 | 0.1932943 |  26.69814 |      0 |    0 | GALR1  |
-| ENSG00000167721 | 6351.7523 |     -0.6084289 | 0.0455138 | -13.36802 |      0 |    0 | TSR1   |
-| ENSG00000203727 |  564.2991 |      7.6035536 | 0.3019904 |  25.17813 |      0 |    0 | SAMD5  |
-
-|                 |  baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol |
-|:----------------|----------:|---------------:|----------:|----------:|-------:|-----:|:-------|
-| ENSG00000106003 |  928.0982 |      -4.089051 | 0.1510384 | -27.07293 |      0 |    0 | LFNG   |
-| ENSG00000107807 |  208.0512 |       8.675303 | 0.4457337 |  19.46297 |      0 |    0 | TLX1   |
-| ENSG00000135100 |  504.0646 |      11.057737 | 0.6902547 |  16.01979 |      0 |    0 | HNF1A  |
-| ENSG00000166573 |  262.6861 |       3.683771 | 0.2238573 |  16.45589 |      0 |    0 | GALR1  |
-| ENSG00000167721 | 6351.7523 |      -1.412378 | 0.0544483 | -25.93979 |      0 |    0 | TSR1   |
-| ENSG00000203727 |  564.2991 |       8.079874 | 0.3107448 |  26.00164 |      0 |    0 | SAMD5  |
-
-|                 |  baseMean | log2FoldChange |     lfcSE |       stat |    pvalue |      padj | symbol |
-|:----------------|----------:|---------------:|----------:|-----------:|----------:|----------:|:-------|
-| ENSG00000106003 |  928.0982 |      0.2291789 | 0.1441730 |  1.5896108 | 0.1119226 | 0.6088678 | LFNG   |
-| ENSG00000107807 |  208.0512 |      2.6027800 | 0.6875930 |  3.7853501 | 0.0001535 | 0.0071082 | TLX1   |
-| ENSG00000135100 |  504.0646 |     -1.8502210 | 0.7711634 | -2.3992594 | 0.0164283 | 0.2265094 | HNF1A  |
-| ENSG00000166573 |  262.6861 |      0.3740673 | 0.2333341 |  1.6031405 | 0.1089036 | 0.6015277 | GALR1  |
-| ENSG00000167721 | 6351.7523 |      0.0381098 | 0.0532221 |  0.7160529 | 0.4739587 | 0.9238699 | TSR1   |
-| ENSG00000203727 |  564.2991 |      1.3192206 | 0.3511169 |  3.7572123 | 0.0001718 | 0.0077108 | SAMD5  |
-
-|                 |  baseMean | log2FoldChange |     lfcSE |       stat |    pvalue |      padj | symbol |
-|:----------------|----------:|---------------:|----------:|-----------:|----------:|----------:|:-------|
-| ENSG00000106003 |  928.0982 |     -0.8411990 | 0.1332788 |  -6.311576 | 0.0000000 | 0.0000000 | LFNG   |
-| ENSG00000107807 |  208.0512 |     -0.3756490 | 0.2560870 |  -1.466880 | 0.1424087 | 0.2836432 | TLX1   |
-| ENSG00000135100 |  504.0646 |     -1.3374769 | 0.1528782 |  -8.748644 | 0.0000000 | 0.0000000 | HNF1A  |
-| ENSG00000166573 |  262.6861 |     -1.1027587 | 0.1785562 |  -6.175977 | 0.0000000 | 0.0000000 | GALR1  |
-| ENSG00000167721 | 6351.7523 |     -0.7658388 | 0.0468307 | -16.353345 | 0.0000000 | 0.0000000 | TSR1   |
-| ENSG00000203727 |  564.2991 |      1.7955414 | 0.2428351 |   7.394076 | 0.0000000 | 0.0000000 | SAMD5  |
-
-|                 |  baseMean | log2FoldChange |     lfcSE |        stat |    pvalue |      padj | symbol |
-|:----------------|----------:|---------------:|----------:|------------:|----------:|----------:|:-------|
-| ENSG00000106003 |  928.0982 |     -1.0703779 | 0.1965294 |  -5.4464020 | 0.0000001 | 0.0000022 | LFNG   |
-| ENSG00000107807 |  208.0512 |     -2.9784290 | 0.7342144 |  -4.0566202 | 0.0000498 | 0.0008405 | TLX1   |
-| ENSG00000135100 |  504.0646 |      0.5127441 | 0.7862990 |   0.6520982 | 0.5143379 | 0.7404637 | HNF1A  |
-| ENSG00000166573 |  262.6861 |     -1.4768260 | 0.2941323 |  -5.0209578 | 0.0000005 | 0.0000165 | GALR1  |
-| ENSG00000167721 | 6351.7523 |     -0.8039486 | 0.0709857 | -11.3255047 | 0.0000000 | 0.0000000 | TSR1   |
-| ENSG00000203727 |  564.2991 |      0.4763208 | 0.4272718 |   1.1147958 | 0.2649379 | 0.5193756 | SAMD5  |
-
 #### WGCNA RES1,2,3
 
 <img src="Readme_files/figure-gfm/wgcna_res123-1.png" width="33%" /><img src="Readme_files/figure-gfm/wgcna_res123-2.png" width="33%" /><img src="Readme_files/figure-gfm/wgcna_res123-3.png" width="33%" />
@@ -733,19 +686,19 @@ GO_3 <- enrichGO(interaction_deg[[3]],
                   pAdjustMethod = "fdr")
 GO_3 <- simplify(GO_3)
 
-barplot(GO_1, split = "ONTOLOGY", font.size = 8, showCategory = 10, title = "Hif1a") + facet_grid(ONTOLOGY~., scale="free") + scale_y_discrete(labels=function(x)  str_wrap(x, width=80)) + scale_fill_viridis() + theme(panel.grid.major.y = element_blank(), panel.background = element_rect(fill = NA), panel.ontop = TRUE, panel.grid.major.x = element_line(color = "white", size = 0.5, linetype = 1), panel.grid.minor.x = element_line(color = "white", size = 0.25, linetype = 1)) + scale_x_continuous(expand = c(0,0))
+barplot(GO_1, split = "ONTOLOGY", font.size = 6, showCategory = 10, title = "Hif1a") + facet_grid(ONTOLOGY~., scale="free") + scale_y_discrete(labels=function(x)  str_wrap(x, width=80)) + scale_fill_viridis() + theme(panel.grid.major.y = element_blank(), panel.background = element_rect(fill = NA), panel.ontop = TRUE, panel.grid.major.x = element_line(color = "white", size = 0.5, linetype = 1), panel.grid.minor.x = element_line(color = "white", size = 0.25, linetype = 1)) + scale_x_continuous(expand = c(0,0))
 ```
 
 ![](Readme_files/figure-gfm/GO%20terms-1.png)<!-- -->
 
 ``` r
-barplot(GO_2, split = "ONTOLOGY", font.size = 8, showCategory = 10, title = "Hif2a") + facet_grid(ONTOLOGY~., scale="free") + scale_y_discrete(labels=function(x)  str_wrap(x, width=80)) + scale_fill_viridis() + theme(panel.grid.major.y = element_blank(), panel.background = element_rect(fill = NA), panel.ontop = TRUE, panel.grid.major.x = element_line(color = "white", size = 0.5, linetype = 1), panel.grid.minor.x = element_line(color = "white", size = 0.25, linetype = 1)) + scale_x_continuous(expand = c(0,0))
+barplot(GO_2, split = "ONTOLOGY", font.size = 6, showCategory = 10, title = "Hif2a") + facet_grid(ONTOLOGY~., scale="free") + scale_y_discrete(labels=function(x)  str_wrap(x, width=80)) + scale_fill_viridis() + theme(panel.grid.major.y = element_blank(), panel.background = element_rect(fill = NA), panel.ontop = TRUE, panel.grid.major.x = element_line(color = "white", size = 0.5, linetype = 1), panel.grid.minor.x = element_line(color = "white", size = 0.25, linetype = 1)) + scale_x_continuous(expand = c(0,0))
 ```
 
 ![](Readme_files/figure-gfm/GO%20terms-2.png)<!-- -->
 
 ``` r
-barplot(GO_3, split = "ONTOLOGY", font.size = 8, showCategory = 10, title = "Hif1b") + facet_grid(ONTOLOGY~., scale="free") + scale_y_discrete(labels=function(x)  str_wrap(x, width=80)) + scale_fill_viridis() + theme(panel.grid.major.y = element_blank(), panel.background = element_rect(fill = NA), panel.ontop = TRUE, panel.grid.major.x = element_line(color = "white", size = 0.5, linetype = 1), panel.grid.minor.x = element_line(color = "white", size = 0.25, linetype = 1)) + scale_x_continuous(expand = c(0,0))
+barplot(GO_3, split = "ONTOLOGY", font.size = 6, showCategory = 10, title = "Hif1b") + facet_grid(ONTOLOGY~., scale="free") + scale_y_discrete(labels=function(x)  str_wrap(x, width=80)) + scale_fill_viridis() + theme(panel.grid.major.y = element_blank(), panel.background = element_rect(fill = NA), panel.ontop = TRUE, panel.grid.major.x = element_line(color = "white", size = 0.5, linetype = 1), panel.grid.minor.x = element_line(color = "white", size = 0.25, linetype = 1)) + scale_x_continuous(expand = c(0,0))
 ```
 
 ![](Readme_files/figure-gfm/GO%20terms-3.png)<!-- -->
