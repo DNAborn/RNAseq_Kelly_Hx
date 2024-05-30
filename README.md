@@ -7,7 +7,7 @@ RNA-Seq of Hif1a, Hif2a & Hif1b gene knock-outs
 ### combine sample list
 
 |     | experiment | RNAs | conditions                                            | date                                        | seq_id | Seq_runs |
-|:--------|:--------|--------:|:-----------------|:------------|:--------|--------:|
+|:----------|:----------|----------:|:----------|:----------|:----------|----------:|
 | 3   | Katharina  |   16 | Kelly_Nx Kelly_Hx HIF1A_Hx HIF2A_Hx                   | 2018-09-13 2018-09-14                       | P557   |       16 |
 | 1   | Simon      |   22 | Kelly_Nx Kelly_Hx HIF1A_Nx HIF1A_Hx HIF1B_Nx HIF1B_Hx | 2017-05-04 2021-06-16 2021-08-25 2021-08-27 | P2041  |       22 |
 | 2   | Ulrike     |   50 | Kelly_Nx Kelly_Hx HIF1A_Nx HIF1A_Hx HIF2A_Nx HIF2A_Hx | 2023-06-02 2023-06-08 2023-06-15 2023-06-28 | P3302  |      150 |
@@ -115,7 +115,9 @@ SCARB1 doesn't fit!
 
 <img src="2B_DGE/Readme_files/figure-gfm/venn_hif1a-13.png" width="100%"/>
 
-![](2B_DGE/Readme_files/figure-gfm/vulcano_lists-1.png)<!-- -->![](2B_DGE/Readme_files/figure-gfm/vulcano_lists-2.png)<!-- -->![](2B_DGE/Readme_files/figure-gfm/vulcano_lists-3.png)<!-- -->
+![](2B_DGE/Readme_files/figure-gfm/vulcano_lists-1.png)<!-- -->![](2B_DGE/Readme_files/figure-gfm/vulcano_lists-2.png)<!-- -->
+
+Kelly.Hx.vs.Nx (1)
 
 |                 |     baseMean | log2FoldChange |     lfcSE |       stat | pvalue |    padj | symbol |
 |:--------|--------:|--------:|--------:|--------:|--------:|--------:|:--------|
@@ -126,6 +128,8 @@ SCARB1 doesn't fit!
 | ENSG00000277281 |    25.443292 |      7.1782518 | 0.7898129 |   9.088547 |  0e+00 | 0.0e+00 | MUC6   |
 | ENSG00000277518 |    78.175102 |      8.2832674 | 0.5290099 |  15.658058 |  0e+00 | 0.0e+00 | MUC6   |
 
+Hif1a.Hx.vs.Nx (1)
+
 |                 |     baseMean | log2FoldChange |     lfcSE |       stat | pvalue |  padj | symbol |
 |:--------|--------:|--------:|--------:|--------:|--------:|--------:|:--------|
 | ENSG00000071564 |  9467.750079 |     -1.2049716 | 0.0452621 | -26.622069 |  0e+00 | 0e+00 | TCF3   |
@@ -134,6 +138,8 @@ SCARB1 doesn't fit!
 | ENSG00000184956 |     4.096474 |      6.4912275 | 1.2493264 |   5.195782 |  2e-07 | 6e-07 | MUC6   |
 | ENSG00000277281 |    25.443292 |      9.7681812 | 0.9917797 |   9.849144 |  0e+00 | 0e+00 | MUC6   |
 | ENSG00000277518 |    78.175102 |     11.6609184 | 0.7652311 |  15.238427 |  0e+00 | 0e+00 | MUC6   |
+
+Nx.Hif1a.vs.Kelly (2)
 
 |                 |     baseMean | log2FoldChange |     lfcSE |       stat |    pvalue |      padj | symbol |
 |:--------|--------:|--------:|--------:|--------:|--------:|--------:|:--------|
@@ -144,6 +150,8 @@ SCARB1 doesn't fit!
 | ENSG00000277281 |    25.443292 |     -1.3709444 | 1.1052519 | -1.2403909 | 0.2148308 | 0.7665003 | MUC6   |
 | ENSG00000277518 |    78.175102 |     -2.0326978 | 0.8770967 | -2.3175298 | 0.0204749 | 0.2605060 | MUC6   |
 
+Hx.Hif1a.vs.Kelly (2)
+
 |                 |     baseMean | log2FoldChange |     lfcSE |       stat |    pvalue |      padj | symbol |
 |:--------|--------:|--------:|--------:|--------:|--------:|--------:|:--------|
 | ENSG00000071564 |  9467.750079 |     -0.3022319 | 0.0389838 |  -7.752763 | 0.0000000 | 0.0000000 | TCF3   |
@@ -152,6 +160,8 @@ SCARB1 doesn't fit!
 | ENSG00000184956 |     4.096474 |      0.9696906 | 0.9143511 |   1.060523 | 0.2889066 | 0.4732703 | MUC6   |
 | ENSG00000277281 |    25.443292 |      1.2189850 | 0.6173119 |   1.974666 | 0.0483061 | 0.1233455 | MUC6   |
 | ENSG00000277518 |    78.175102 |      1.3449531 | 0.3034700 |   4.431915 | 0.0000093 | 0.0000701 | MUC6   |
+
+Hif1aHxNx.vs.KellyHxNx (3)
 
 |                 |     baseMean | log2FoldChange |     lfcSE |        stat |    pvalue |      padj | symbol |
 |:--------|--------:|--------:|--------:|--------:|--------:|--------:|:--------|
@@ -162,6 +172,31 @@ SCARB1 doesn't fit!
 | ENSG00000277281 |    25.443292 |      2.5899294 | 1.2684382 |   2.0418255 | 0.0411688 | 0.1582562 | MUC6   |
 | ENSG00000277518 |    78.175102 |      3.3776510 | 0.9293690 |   3.6343486 | 0.0002787 | 0.0034209 | MUC6   |
 
-![](2B_DGE/Readme_files/figure-gfm/vulcano_lists-4.png)<!-- -->
+![](2B_DGE/Readme_files/figure-gfm/vulcano_lists-3.png)<!-- -->
 
+#### WGCNA RES1,2,3
 
+<img src="2B_DGE/Readme_files/figure-gfm/wgcna_res123-1.png" width="33%"/><img src="2B_DGE/Readme_files/figure-gfm/wgcna_res123-2.png" width="33%"/><img src="2B_DGE/Readme_files/figure-gfm/wgcna_res123-3.png" width="33%"/>
+
+## Results 3 of Hif1a, Hif2a, Hif1b
+
+![](2B_DGE/Readme_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+
+  overlap    gene
+1      a1   BNIP3
+2      a2 FAM162A
+3      a3  CLSTN2
+4      a4  PFKFB3
+5      a5 BHLHE41
+6      a6 ARHGEF6
+7      a7    TNXB
+
+![](2B_DGE/Readme_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->
+
+#### WGCNA KOs
+
+<img src="2B_DGE/Readme_files/figure-gfm/wgcna_ko-1.png" width="33%"/><img src="2B_DGE/Readme_files/figure-gfm/wgcna_ko-2.png" width="33%"/><img src="2B_DGE/Readme_files/figure-gfm/wgcna_ko-3.png" width="33%"/>
+
+#### WGCNA overlapped KOs
+
+<img src="2B_DGE/Readme_files/figure-gfm/wgcna_ko_overlaps-1.png" width="33%"/><img src="2B_DGE/Readme_files/figure-gfm/wgcna_ko_overlaps-2.png" width="33%"/><img src="2B_DGE/Readme_files/figure-gfm/wgcna_ko_overlaps-3.png" width="33%"/><img src="2B_DGE/Readme_files/figure-gfm/wgcna_ko_overlaps-4.png" width="33%"/><img src="2B_DGE/Readme_files/figure-gfm/wgcna_ko_overlaps-5.png" width="33%"/><img src="2B_DGE/Readme_files/figure-gfm/wgcna_ko_overlaps-6.png" width="33%"/><img src="2B_DGE/Readme_files/figure-gfm/wgcna_ko_overlaps-7.png" width="33%"/>

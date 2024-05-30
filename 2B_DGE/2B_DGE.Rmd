@@ -319,7 +319,9 @@ Vulcano_SK2 <- function(n,list1,list2,
                         l1.n= "list 1",
                         l2.n= "list 2",
                         xlim=10,
-                        ylim=200,...)
+                        ylim=200,
+                        lab=NULL,
+                        ...)
 {
 
 res <- results_list[[n]]
@@ -386,11 +388,17 @@ keyvals[is.na(keyvals)] <- 'grey'
 
 rownames(res) <- res$symbol
 
+if (is.null(lab)){
+  lab <- res[res$isl1 == TRUE | res$isl2 == TRUE,"symbol"]
+} else {
+  lab <- res[lab,"symbol"]
+}
+
 ev_f <- EnhancedVolcano(res,
     x = 'log2FoldChange',
     y = 'padj',
     lab = res$symbol,
-    selectLab  = res[res$islol == TRUE | res$isl1 == TRUE | res$isl2 == TRUE,"symbol"],
+    selectLab  = lab,
     labSize = 2,
     drawConnectors = TRUE,
     boxedLabels = TRUE,
@@ -398,7 +406,7 @@ ev_f <- EnhancedVolcano(res,
     colConnectors = lcol,
     pointSize = c(ifelse(res$islol==TRUE, 2, ifelse(res$isl1==TRUE | res$isl2==TRUE, 1.5, 1))),
     colAlpha = c(ifelse(res$islol==TRUE, 0.9, ifelse(res$isl1==TRUE | res$isl2==TRUE, 0.5, 0.2))),
-    max.overlaps = 16,
+    max.overlaps = 30,
     colCustom = keyvals,
     col=c('grey', l1.col, l2.col, lol.col),
     xlim = c(-xlim, xlim),
@@ -1803,9 +1811,16 @@ hif1a_deg_ol <- calculate.overlap(list(
 hif1a_deg <- c(setdiff(hif1a_deg_ol[[1]],hif1a_deg_ol[[3]]),
                setdiff(hif1a_deg_ol[[2]],hif1a_deg_ol[[3]]))
 
+list1 <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]]
+list2 <- hif1a_deg
+
+ol_list <- calculate.overlap(list(list1,list2))
+labs <- c(setdiff(ol_list[[1]],ol_list[[3]]),
+          setdiff(ol_list[[2]],ol_list[[3]]))
+
 ev_kelly_lists <- Vulcano_SK2(n="Kelly.Hx.vs.Nx",
-            list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
-            list2=hif1a_deg,
+            list1=list1,
+            list2=list2,
             l1.n= "interaction (3)",
             l2.n= "Hx.vs.Nx (1)",
             l1.col="orchid3",
@@ -1861,7 +1876,7 @@ ev_hif1a_lists <- Vulcano_SK2(n="Hif1a.Hx.vs.Nx",
   plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
   theme(legend.position = 'bottom', axis.title=element_text(size=8))
 
-goi <- c("PDK1","LAMA4","TCF3","SCIRT", "HNF1A","LFNG")
+goi <- c("TSR1","GALR1","LFNG","TLX1","SAMD5", "HNF1A")
 goi <- results_list[[1]][results_list[[1]]$symbol %in% goi,] %>% rownames()
 plotCounts_SK(goi=goi)
 
@@ -1979,7 +1994,7 @@ file.remove(venn.logs)
 
 ### -Compare results
 
-```{r heatmap, eval=FALSE}
+```{r heatmap_res123, eval=TRUE}
 # https://slowkow.com/notes/pheatmap-tutorial/
 # Complex heatmap https://github.com/jokergoo/ComplexHeatmap/
 
@@ -1995,6 +2010,8 @@ pick_genes <- c(lapply(res_hif1a,'[',1:5),
 pick_genes <- res_hif1a[[1]][1:30]
 pick_genes <- lapply(res3_list,'[',1:10) %>% unlist() %>% unname() %>% unique()
 pick_genes <- res3_list[[1]][1:30]
+
+
 
 res_comb <- res.Kelly.Hx.vs.Nx[pick_genes,c(7,1)] %>% data.frame(.)
 res_comb <- cbind(res_comb,lapply(results_list[pick_results],function(i) i[pick_genes,2]) %>% do.call(cbind,.) %>% data.frame(.))
@@ -2022,21 +2039,58 @@ patchwork::wrap_elements((c_graphic))
 
 ```
 
+
+### -Compare KOs
+```{r heatmap_ko, eval=FALSE}
+pick_genes <- topgenes_list[c("top_Hif1aHxNx.vs.KellyHxNx","top_Hif2aHxNx.vs.KellyHxNx","top_Hif1bHxNx.vs.KellyHxNx")] %>% unlist()
+
+res_comb <- res.Kelly.Hx.vs.Nx[pick_genes,c(7,1)] %>% data.frame(.)
+res_comb <- cbind(res_comb,lapply(results_list[pick_results],function(i) i[pick_genes,2]) %>% do.call(cbind,.) %>% data.frame(.))
+res_comb_matrix <- as.matrix(res_comb[,c(-1,-2)])
+res_comb_matrix[res_comb_matrix<1 & res_comb_matrix>-1] <- 0
+rownames(res_comb_matrix) <- res_comb$symbol
+
+# adapt colors to uniform breaks
+mat_breaks <- quantile_breaks(res_comb_matrix, n = 20)
+vir_cols <- viridis(length(mat_breaks))
+vir_cols[4] <- "white"
+hm_cols <- colorRamp2(mat_breaks,vir_cols)
+
+hm <- Heatmap(res_comb_matrix,
+        col = hm_cols,
+        column_title = "Compare results",
+        na_col = "black",
+        row_names_gp = gpar(fontsize = 10)
+        ) 
+hm
+
+
+```
+
+
 ### -Top genes
 
 Complex Heatmap: <https://jokergoo.github.io/ComplexHeatmap-reference/book/>
 
-```{r sample_dist, eval=FALSE}
+```{r heatmap1, eval=TRUE}
 ht_opt$fast_hclust = TRUE
 
 # Choose genes
-pick_genes <- lapply(res3_list,'[',1:10) %>% unlist() %>% unname() %>% unique()
+
+interaction_top <- topgenes_list[c("top_Hif1aHxNx.vs.KellyHxNx","top_Hif2aHxNx.vs.KellyHxNx","top_Hif1bHxNx.vs.KellyHxNx")]
+
+interaction_top_ol <- calculate.overlap(interaction_top)
+
+
+pick_genes <- lapply(interaction_top_ol,'[',1:5) %>% unlist() %>% unname() %>% unique()
+pick_genes <- pick_genes[!is.na(pick_genes)]
+
 
 # Get counts, with summarized replicates
 dds_heat <- collapseReplicates(dds, dds$condition,dds$names)
 vsd <- vst(dds_heat, blind=TRUE) #Variance stabilized transformation
 ntd <- normTransform(dds_heat)
-rld <- rlog(dds_heat)
+# rld <- rlog(dds_heat)
 mat <- assay(vsd)
 # mat <- assay(ntd)
 # mat <- assay(rld)
@@ -2079,10 +2133,14 @@ hm <- Heatmap(mat,
       clustering_method_rows = "centroid",
       # clustering_distance_rows = "kendall",
       row_km = 6,
-  right_annotation = rowAnnotation(WGCNA = WGCNA, col=list(WGCNA=WGCNA))
+ #  right_annotation = rowAnnotation(WGCNA = WGCNA, col=list(WGCNA=WGCNA))
        )
 hm
 
+```
+
+#### (heatmap test)
+```{r heatmap testing, eval=FALSE}
 
 list(bar = c("a" = "red", "b" = "green", "c" = "blue"))
 
@@ -2121,3 +2179,108 @@ pheatmap(mat,
 
 
 ```
+
+## GO terms
+```{r GO terms, eval=TRUE}
+
+###################################### GO
+
+interaction_top <- topgenes_list[c("top_Hif1aHxNx.vs.KellyHxNx","top_Hif2aHxNx.vs.KellyHxNx","top_Hif1bHxNx.vs.KellyHxNx")]
+interaction_deg <- deg_genes_list[c("deg_Hif1aHxNx.vs.KellyHxNx","deg_Hif2aHxNx.vs.KellyHxNx","deg_Hif1bHxNx.vs.KellyHxNx")]
+
+interaction_deg[[3]] <- interaction_deg[[3]][1:3000]
+
+names(interaction_deg)
+interaction_deg_entrez_list <- list(Hif1a=mcols(dds)[interaction_deg[[1]],"entrezid"] %>% unlist() %>% unname(),
+                                    Hif2a=mcols(dds)[interaction_deg[[2]],"entrezid"] %>% unlist() %>% unname(),
+                                    Hif1b=mcols(dds)[interaction_deg[[3]],"entrezid"] %>% unlist() %>% unname()) %>% lapply(.,na.omit)
+
+
+GO_1 <- enrichGO(interaction_deg[[1]],
+                  keyType = "ENSEMBL",
+                  ont = "ALL",
+                  minGSSize = 15,
+                  maxGSSize = 800,
+                  pvalueCutoff = 0.05,
+                  OrgDb = "org.Hs.eg.db",
+                  pAdjustMethod = "fdr")
+GO_1 <- simplify(GO_1)
+
+GO_2 <- enrichGO(interaction_deg[[2]],
+                  keyType = "ENSEMBL",
+                  ont = "ALL",
+                  minGSSize = 15,
+                  maxGSSize = 800,
+                  pvalueCutoff = 0.05,
+                  OrgDb = "org.Hs.eg.db",
+                  pAdjustMethod = "fdr")
+GO_2 <- simplify(GO_2)
+
+GO_3 <- enrichGO(interaction_deg[[3]],
+                  keyType = "ENSEMBL",
+                  ont = "ALL",
+                  minGSSize = 15,
+                  maxGSSize = 800,
+                  pvalueCutoff = 0.05,
+                  OrgDb = "org.Hs.eg.db",
+                  pAdjustMethod = "fdr")
+GO_3 <- simplify(GO_3)
+
+barplot(GO_1, split = "ONTOLOGY", font.size = 8, showCategory = 10, title = "Hif1a") + facet_grid(ONTOLOGY~., scale="free") + scale_y_discrete(labels=function(x)  str_wrap(x, width=80)) + scale_fill_viridis() + theme(panel.grid.major.y = element_blank(), panel.background = element_rect(fill = NA), panel.ontop = TRUE, panel.grid.major.x = element_line(color = "white", size = 0.5, linetype = 1), panel.grid.minor.x = element_line(color = "white", size = 0.25, linetype = 1)) + scale_x_continuous(expand = c(0,0))
+
+barplot(GO_2, split = "ONTOLOGY", font.size = 8, showCategory = 10, title = "Hif2a") + facet_grid(ONTOLOGY~., scale="free") + scale_y_discrete(labels=function(x)  str_wrap(x, width=80)) + scale_fill_viridis() + theme(panel.grid.major.y = element_blank(), panel.background = element_rect(fill = NA), panel.ontop = TRUE, panel.grid.major.x = element_line(color = "white", size = 0.5, linetype = 1), panel.grid.minor.x = element_line(color = "white", size = 0.25, linetype = 1)) + scale_x_continuous(expand = c(0,0))
+
+barplot(GO_3, split = "ONTOLOGY", font.size = 8, showCategory = 10, title = "Hif1b") + facet_grid(ONTOLOGY~., scale="free") + scale_y_discrete(labels=function(x)  str_wrap(x, width=80)) + scale_fill_viridis() + theme(panel.grid.major.y = element_blank(), panel.background = element_rect(fill = NA), panel.ontop = TRUE, panel.grid.major.x = element_line(color = "white", size = 0.5, linetype = 1), panel.grid.minor.x = element_line(color = "white", size = 0.25, linetype = 1)) + scale_x_continuous(expand = c(0,0))
+
+godot1 <- dotplot(clusterProfiler::simplify(GO_1))+labs(title = "Hif1a")
+godot2 <- dotplot(clusterProfiler::simplify(GO_2))+labs(title = "Hif2a")
+godot3 <- dotplot(clusterProfiler::simplify(GO_3))+labs(title = "Hif1b")
+godot1 + godot2 + godot3
+
+
+# Compare cluster
+ck <- compareCluster(geneCluster = interaction_deg, fun = "enrichGO",
+                  OrgDb = "org.Hs.eg.db",
+                  keyType = "ENSEMBL",
+                  ont = "ALL",
+                  pvalueCutoff = 0.05,
+                  pAdjustMethod = "fdr")
+
+ck <- setReadable(ck, OrgDb = org.Hs.eg.db, )
+head(ck)[1:7]
+dotplot(ck)
+dotplot(ck, showCategory=15)
+
+# KEGG
+ckk <- compareCluster(geneCluster = interaction_deg, fun = "enrichKEGG", organism="hsa", pvalueCutoff=0.05)
+
+
+hif1a_entrez <- mcols(dds)[interaction_deg[[1]],"entrezid"] %>% unlist() %>% unname() %>% unique()
+hif1a_entrez <- hif1a_entrez[!is.na(hif1a_entrez)]
+
+hif2a_entrez <- mcols(dds)[interaction_deg[[2]],"entrezid"] %>% unlist() %>% unname() %>% unique()
+hif2a_entrez <- hif2a_entrez[!is.na(hif2a_entrez)]
+
+hif1b_entrez <- mcols(dds)[interaction_deg[[3]],"entrezid"] %>% unlist() %>% unname() %>% unique()
+hif1b_entrez <- hif1b_entrez[!is.na(hif1b_entrez)]
+
+interaction_deg_entrez <- list(hif1a_entrez,hif2a_entrez,hif1b_entrez)
+
+ek1 <- enrichKEGG(hif1a_entrez,organism="hsa", pvalueCutoff=0.05)
+ek2 <- enrichKEGG(hif2a_entrez,organism="hsa", pvalueCutoff=0.05)
+ek3 <- enrichKEGG(hif1b_entrez,organism="hsa", pvalueCutoff=0.05)
+
+dotplot(ek1) + dotplot(ek2) + dotplot(ek3)
+
+# ckk <- compareCluster(geneCluster = interaction_deg_entrez, fun = "enrichKEGG", organism="hsa", pvalueCutoff=0.5)
+
+
+
+
+
+
+
+```
+
+
+
