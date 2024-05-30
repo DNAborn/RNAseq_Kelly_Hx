@@ -14,6 +14,7 @@ Kelterborn
   - [Volcanos](#volcanos)
   - [Overlaps (Venn)](#overlaps-venn)
   - [Heatmaps](#heatmaps)
+  - [GO terms](#go-terms)
 
 # 0. Load
 
@@ -332,50 +333,50 @@ ev_f
 
 ![](Readme_files/figure-gfm/vulcano_lists-1.png)<!-- -->![](Readme_files/figure-gfm/vulcano_lists-2.png)<!-- -->![](Readme_files/figure-gfm/vulcano_lists-3.png)<!-- -->
 
-|                 |    baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol |
-|:----------------|------------:|---------------:|----------:|----------:|-------:|-----:|:-------|
-| ENSG00000071564 |  9467.75008 |     -0.8376478 | 0.0379823 | -22.05366 |      0 |    0 | TCF3   |
-| ENSG00000106003 |   928.09823 |     -3.0186727 | 0.1254119 | -24.07007 |      0 |    0 | LFNG   |
-| ENSG00000112769 |   367.38256 |     -2.9390195 | 0.1661520 | -17.68874 |      0 |    0 | LAMA4  |
-| ENSG00000135100 |   504.06456 |     10.5449933 | 0.3781407 |  27.88643 |      0 |    0 | HNF1A  |
-| ENSG00000152256 | 12032.53494 |      2.3886419 | 0.0897902 |  26.60247 |      0 |    0 | PDK1   |
-| ENSG00000237686 |    43.53667 |      4.2463036 | 0.2722903 |  15.59477 |      0 |    0 | SCIRT  |
+|                 |  baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol |
+|:----------------|----------:|---------------:|----------:|----------:|-------:|-----:|:-------|
+| ENSG00000106003 |  928.0982 |     -3.0186727 | 0.1254119 | -24.07007 |      0 |    0 | LFNG   |
+| ENSG00000107807 |  208.0512 |     11.6537315 | 0.5831457 |  19.98425 |      0 |    0 | TLX1   |
+| ENSG00000135100 |  504.0646 |     10.5449933 | 0.3781407 |  27.88643 |      0 |    0 | HNF1A  |
+| ENSG00000166573 |  262.6861 |      5.1605974 | 0.1932943 |  26.69814 |      0 |    0 | GALR1  |
+| ENSG00000167721 | 6351.7523 |     -0.6084289 | 0.0455138 | -13.36802 |      0 |    0 | TSR1   |
+| ENSG00000203727 |  564.2991 |      7.6035536 | 0.3019904 |  25.17813 |      0 |    0 | SAMD5  |
 
-|                 |    baseMean | log2FoldChange |     lfcSE |       stat | pvalue | padj | symbol |
-|:----------------|------------:|---------------:|----------:|-----------:|-------:|-----:|:-------|
-| ENSG00000071564 |  9467.75008 |     -1.2049716 | 0.0452621 | -26.622069 |      0 |    0 | TCF3   |
-| ENSG00000106003 |   928.09823 |     -4.0890506 | 0.1510384 | -27.072928 |      0 |    0 | LFNG   |
-| ENSG00000112769 |   367.38256 |     -1.7922770 | 0.1939710 |  -9.239923 |      0 |    0 | LAMA4  |
-| ENSG00000135100 |   504.06456 |     11.0577374 | 0.6902547 |  16.019793 |      0 |    0 | HNF1A  |
-| ENSG00000152256 | 12032.53494 |      0.7461557 | 0.1076933 |   6.928522 |      0 |    0 | PDK1   |
-| ENSG00000237686 |    43.53667 |      5.5992032 | 0.3501121 |  15.992602 |      0 |    0 | SCIRT  |
+|                 |  baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol |
+|:----------------|----------:|---------------:|----------:|----------:|-------:|-----:|:-------|
+| ENSG00000106003 |  928.0982 |      -4.089051 | 0.1510384 | -27.07293 |      0 |    0 | LFNG   |
+| ENSG00000107807 |  208.0512 |       8.675303 | 0.4457337 |  19.46297 |      0 |    0 | TLX1   |
+| ENSG00000135100 |  504.0646 |      11.057737 | 0.6902547 |  16.01979 |      0 |    0 | HNF1A  |
+| ENSG00000166573 |  262.6861 |       3.683771 | 0.2238573 |  16.45589 |      0 |    0 | GALR1  |
+| ENSG00000167721 | 6351.7523 |      -1.412378 | 0.0544483 | -25.93979 |      0 |    0 | TSR1   |
+| ENSG00000203727 |  564.2991 |       8.079874 | 0.3107448 |  26.00164 |      0 |    0 | SAMD5  |
 
-|                 |    baseMean | log2FoldChange |     lfcSE |      stat |    pvalue |      padj | symbol |
-|:----------------|------------:|---------------:|----------:|----------:|----------:|----------:|:-------|
-| ENSG00000071564 |  9467.75008 |      0.0650920 | 0.0443193 |  1.468704 | 0.1419131 | 0.6665731 | TCF3   |
-| ENSG00000106003 |   928.09823 |      0.2291789 | 0.1441730 |  1.589611 | 0.1119226 | 0.6088678 | LFNG   |
-| ENSG00000112769 |   367.38256 |     -1.0438988 | 0.1851363 | -5.638544 | 0.0000000 | 0.0000028 | LAMA4  |
-| ENSG00000135100 |   504.06456 |     -1.8502210 | 0.7711634 | -2.399259 | 0.0164283 | 0.2265094 | HNF1A  |
-| ENSG00000152256 | 12032.53494 |     -0.9768009 | 0.1059285 | -9.221322 | 0.0000000 | 0.0000000 | PDK1   |
-| ENSG00000237686 |    43.53667 |     -0.6947345 | 0.3908038 | -1.777707 | 0.0754521 | 0.5144705 | SCIRT  |
+|                 |  baseMean | log2FoldChange |     lfcSE |       stat |    pvalue |      padj | symbol |
+|:----------------|----------:|---------------:|----------:|-----------:|----------:|----------:|:-------|
+| ENSG00000106003 |  928.0982 |      0.2291789 | 0.1441730 |  1.5896108 | 0.1119226 | 0.6088678 | LFNG   |
+| ENSG00000107807 |  208.0512 |      2.6027800 | 0.6875930 |  3.7853501 | 0.0001535 | 0.0071082 | TLX1   |
+| ENSG00000135100 |  504.0646 |     -1.8502210 | 0.7711634 | -2.3992594 | 0.0164283 | 0.2265094 | HNF1A  |
+| ENSG00000166573 |  262.6861 |      0.3740673 | 0.2333341 |  1.6031405 | 0.1089036 | 0.6015277 | GALR1  |
+| ENSG00000167721 | 6351.7523 |      0.0381098 | 0.0532221 |  0.7160529 | 0.4739587 | 0.9238699 | TSR1   |
+| ENSG00000203727 |  564.2991 |      1.3192206 | 0.3511169 |  3.7572123 | 0.0001718 | 0.0077108 | SAMD5  |
 
-|                 |    baseMean | log2FoldChange |     lfcSE |       stat |    pvalue |      padj | symbol |
-|:----------------|------------:|---------------:|----------:|-----------:|----------:|----------:|:-------|
-| ENSG00000071564 |  9467.75008 |     -0.3022319 | 0.0389838 |  -7.752763 | 0.0000000 | 0.0000000 | TCF3   |
-| ENSG00000106003 |   928.09823 |     -0.8411990 | 0.1332788 |  -6.311576 | 0.0000000 | 0.0000000 | LFNG   |
-| ENSG00000112769 |   367.38256 |      0.1028437 | 0.1769762 |   0.581116 | 0.5611623 | 0.7263930 | LAMA4  |
-| ENSG00000135100 |   504.06456 |     -1.3374769 | 0.1528782 |  -8.748644 | 0.0000000 | 0.0000000 | HNF1A  |
-| ENSG00000152256 | 12032.53494 |     -2.6192870 | 0.0915034 | -28.625009 | 0.0000000 | 0.0000000 | PDK1   |
-| ENSG00000237686 |    43.53667 |      0.6581651 | 0.2038346 |   3.228918 | 0.0012426 | 0.0056239 | SCIRT  |
+|                 |  baseMean | log2FoldChange |     lfcSE |       stat |    pvalue |      padj | symbol |
+|:----------------|----------:|---------------:|----------:|-----------:|----------:|----------:|:-------|
+| ENSG00000106003 |  928.0982 |     -0.8411990 | 0.1332788 |  -6.311576 | 0.0000000 | 0.0000000 | LFNG   |
+| ENSG00000107807 |  208.0512 |     -0.3756490 | 0.2560870 |  -1.466880 | 0.1424087 | 0.2836432 | TLX1   |
+| ENSG00000135100 |  504.0646 |     -1.3374769 | 0.1528782 |  -8.748644 | 0.0000000 | 0.0000000 | HNF1A  |
+| ENSG00000166573 |  262.6861 |     -1.1027587 | 0.1785562 |  -6.175977 | 0.0000000 | 0.0000000 | GALR1  |
+| ENSG00000167721 | 6351.7523 |     -0.7658388 | 0.0468307 | -16.353345 | 0.0000000 | 0.0000000 | TSR1   |
+| ENSG00000203727 |  564.2991 |      1.7955414 | 0.2428351 |   7.394076 | 0.0000000 | 0.0000000 | SAMD5  |
 
-|                 |    baseMean | log2FoldChange |     lfcSE |        stat |    pvalue |      padj | symbol |
-|:----------------|------------:|---------------:|----------:|------------:|----------:|----------:|:-------|
-| ENSG00000071564 |  9467.75008 |     -0.3673238 | 0.0591161 |  -6.2135963 | 0.0000000 | 0.0000000 | TCF3   |
-| ENSG00000106003 |   928.09823 |     -1.0703779 | 0.1965294 |  -5.4464020 | 0.0000001 | 0.0000022 | LFNG   |
-| ENSG00000112769 |   367.38256 |      1.1467425 | 0.2566489 |   4.4681375 | 0.0000079 | 0.0001808 | LAMA4  |
-| ENSG00000135100 |   504.06456 |      0.5127441 | 0.7862990 |   0.6520982 | 0.5143379 | 0.7404637 | HNF1A  |
-| ENSG00000152256 | 12032.53494 |     -1.6424862 | 0.1401892 | -11.7162070 | 0.0000000 | 0.0000000 | PDK1   |
-| ENSG00000237686 |    43.53667 |      1.3528996 | 0.4411382 |   3.0668383 | 0.0021634 | 0.0174763 | SCIRT  |
+|                 |  baseMean | log2FoldChange |     lfcSE |        stat |    pvalue |      padj | symbol |
+|:----------------|----------:|---------------:|----------:|------------:|----------:|----------:|:-------|
+| ENSG00000106003 |  928.0982 |     -1.0703779 | 0.1965294 |  -5.4464020 | 0.0000001 | 0.0000022 | LFNG   |
+| ENSG00000107807 |  208.0512 |     -2.9784290 | 0.7342144 |  -4.0566202 | 0.0000498 | 0.0008405 | TLX1   |
+| ENSG00000135100 |  504.0646 |      0.5127441 | 0.7862990 |   0.6520982 | 0.5143379 | 0.7404637 | HNF1A  |
+| ENSG00000166573 |  262.6861 |     -1.4768260 | 0.2941323 |  -5.0209578 | 0.0000005 | 0.0000165 | GALR1  |
+| ENSG00000167721 | 6351.7523 |     -0.8039486 | 0.0709857 | -11.3255047 | 0.0000000 | 0.0000000 | TSR1   |
+| ENSG00000203727 |  564.2991 |      0.4763208 | 0.4272718 |   1.1147958 | 0.2649379 | 0.5193756 | SAMD5  |
 
 #### WGCNA RES1,2,3
 
@@ -492,6 +493,12 @@ plotCounts_SK(goi)
 pick_genes <- str_detect(names(results_list),pattern="Hif1aHxNx")
 pick_results <- c(4,1,5,8,14)
 names(results_list)[pick_results]
+```
+
+    ## [1] "Kelly.Hx.vs.Nx"         "Hif1a.Hx.vs.Nx"         "Nx.Hif1a.vs.Kelly"     
+    ## [4] "Hx.Hif1a.vs.Kelly"      "Hif1aHxNx.vs.KellyHxNx"
+
+``` r
 pick_genes <- topgenes_list[pick_genes] %>% unlist() %>% unname() %>% unique()
 pick_genes <- lapply(topgenes_list,'[',1:10) %>% unlist() %>% unname() %>% unique()
 pick_genes <- c(lapply(res_hif1a,'[',1:5),
@@ -500,6 +507,8 @@ pick_genes <- c(lapply(res_hif1a,'[',1:5),
 pick_genes <- res_hif1a[[1]][1:30]
 pick_genes <- lapply(res3_list,'[',1:10) %>% unlist() %>% unname() %>% unique()
 pick_genes <- res3_list[[1]][1:30]
+
+
 
 res_comb <- res.Kelly.Hx.vs.Nx[pick_genes,c(7,1)] %>% data.frame(.)
 res_comb <- cbind(res_comb,lapply(results_list[pick_results],function(i) i[pick_genes,2]) %>% do.call(cbind,.) %>% data.frame(.))
@@ -520,10 +529,46 @@ hm <- Heatmap(res_comb_matrix,
         row_names_gp = gpar(fontsize = 10)
         ) 
 hm
+```
 
+![](Readme_files/figure-gfm/heatmap_res123-1.png)<!-- -->
+
+``` r
 plotCounts_SK(goi=pick_genes[1:3])
+```
 
+![](Readme_files/figure-gfm/heatmap_res123-2.png)<!-- -->
+
+``` r
 patchwork::wrap_elements((c_graphic))
+```
+
+![](Readme_files/figure-gfm/heatmap_res123-3.png)<!-- -->
+
+### -Compare KOs
+
+``` r
+pick_genes <- topgenes_list[c("top_Hif1aHxNx.vs.KellyHxNx","top_Hif2aHxNx.vs.KellyHxNx","top_Hif1bHxNx.vs.KellyHxNx")] %>% unlist()
+
+res_comb <- res.Kelly.Hx.vs.Nx[pick_genes,c(7,1)] %>% data.frame(.)
+res_comb <- cbind(res_comb,lapply(results_list[pick_results],function(i) i[pick_genes,2]) %>% do.call(cbind,.) %>% data.frame(.))
+res_comb_matrix <- as.matrix(res_comb[,c(-1,-2)])
+res_comb_matrix[res_comb_matrix<1 & res_comb_matrix>-1] <- 0
+rownames(res_comb_matrix) <- res_comb$symbol
+
+# adapt colors to uniform breaks
+mat_breaks <- quantile_breaks(res_comb_matrix, n = 20)
+vir_cols <- viridis(length(mat_breaks))
+vir_cols[4] <- "white"
+hm_cols <- colorRamp2(mat_breaks,vir_cols)
+
+hm <- Heatmap(res_comb_matrix,
+        col = hm_cols,
+        column_title = "Compare results",
+        na_col = "black",
+        row_names_gp = gpar(fontsize = 10)
+        ) 
+hm
 ```
 
 ### -Top genes
@@ -535,13 +580,21 @@ Complex Heatmap:
 ht_opt$fast_hclust = TRUE
 
 # Choose genes
-pick_genes <- lapply(res3_list,'[',1:10) %>% unlist() %>% unname() %>% unique()
+
+interaction_top <- topgenes_list[c("top_Hif1aHxNx.vs.KellyHxNx","top_Hif2aHxNx.vs.KellyHxNx","top_Hif1bHxNx.vs.KellyHxNx")]
+
+interaction_top_ol <- calculate.overlap(interaction_top)
+
+
+pick_genes <- lapply(interaction_top_ol,'[',1:5) %>% unlist() %>% unname() %>% unique()
+pick_genes <- pick_genes[!is.na(pick_genes)]
+
 
 # Get counts, with summarized replicates
 dds_heat <- collapseReplicates(dds, dds$condition,dds$names)
 vsd <- vst(dds_heat, blind=TRUE) #Variance stabilized transformation
 ntd <- normTransform(dds_heat)
-rld <- rlog(dds_heat)
+# rld <- rlog(dds_heat)
 mat <- assay(vsd)
 # mat <- assay(ntd)
 # mat <- assay(rld)
@@ -584,11 +637,16 @@ hm <- Heatmap(mat,
       clustering_method_rows = "centroid",
       # clustering_distance_rows = "kendall",
       row_km = 6,
-  right_annotation = rowAnnotation(WGCNA = WGCNA, col=list(WGCNA=WGCNA))
+ #  right_annotation = rowAnnotation(WGCNA = WGCNA, col=list(WGCNA=WGCNA))
        )
 hm
+```
 
+![](Readme_files/figure-gfm/heatmap1-1.png)<!-- -->
 
+#### (heatmap test)
+
+``` r
 list(bar = c("a" = "red", "b" = "green", "c" = "blue"))
 
 col_fun = colorRamp2(c(0, 5, 10), c("blue", "white", "red"))
@@ -621,4 +679,151 @@ pheatmap(mat,
          cutree_rows = 8,
          cutree_cols = 8,
          fontsize_row = 5)
+```
+
+## GO terms
+
+``` r
+###################################### GO
+
+interaction_top <- topgenes_list[c("top_Hif1aHxNx.vs.KellyHxNx","top_Hif2aHxNx.vs.KellyHxNx","top_Hif1bHxNx.vs.KellyHxNx")]
+interaction_deg <- deg_genes_list[c("deg_Hif1aHxNx.vs.KellyHxNx","deg_Hif2aHxNx.vs.KellyHxNx","deg_Hif1bHxNx.vs.KellyHxNx")]
+
+interaction_deg[[3]] <- interaction_deg[[3]][1:3000]
+
+names(interaction_deg)
+```
+
+    ## [1] "deg_Hif1aHxNx.vs.KellyHxNx" "deg_Hif2aHxNx.vs.KellyHxNx"
+    ## [3] "deg_Hif1bHxNx.vs.KellyHxNx"
+
+``` r
+interaction_deg_entrez_list <- list(Hif1a=mcols(dds)[interaction_deg[[1]],"entrezid"] %>% unlist() %>% unname(),
+                                    Hif2a=mcols(dds)[interaction_deg[[2]],"entrezid"] %>% unlist() %>% unname(),
+                                    Hif1b=mcols(dds)[interaction_deg[[3]],"entrezid"] %>% unlist() %>% unname()) %>% lapply(.,na.omit)
+
+
+GO_1 <- enrichGO(interaction_deg[[1]],
+                  keyType = "ENSEMBL",
+                  ont = "ALL",
+                  minGSSize = 15,
+                  maxGSSize = 800,
+                  pvalueCutoff = 0.05,
+                  OrgDb = "org.Hs.eg.db",
+                  pAdjustMethod = "fdr")
+GO_1 <- simplify(GO_1)
+
+GO_2 <- enrichGO(interaction_deg[[2]],
+                  keyType = "ENSEMBL",
+                  ont = "ALL",
+                  minGSSize = 15,
+                  maxGSSize = 800,
+                  pvalueCutoff = 0.05,
+                  OrgDb = "org.Hs.eg.db",
+                  pAdjustMethod = "fdr")
+GO_2 <- simplify(GO_2)
+
+GO_3 <- enrichGO(interaction_deg[[3]],
+                  keyType = "ENSEMBL",
+                  ont = "ALL",
+                  minGSSize = 15,
+                  maxGSSize = 800,
+                  pvalueCutoff = 0.05,
+                  OrgDb = "org.Hs.eg.db",
+                  pAdjustMethod = "fdr")
+GO_3 <- simplify(GO_3)
+
+barplot(GO_1, split = "ONTOLOGY", font.size = 8, showCategory = 10, title = "Hif1a") + facet_grid(ONTOLOGY~., scale="free") + scale_y_discrete(labels=function(x)  str_wrap(x, width=80)) + scale_fill_viridis() + theme(panel.grid.major.y = element_blank(), panel.background = element_rect(fill = NA), panel.ontop = TRUE, panel.grid.major.x = element_line(color = "white", size = 0.5, linetype = 1), panel.grid.minor.x = element_line(color = "white", size = 0.25, linetype = 1)) + scale_x_continuous(expand = c(0,0))
+```
+
+![](Readme_files/figure-gfm/GO%20terms-1.png)<!-- -->
+
+``` r
+barplot(GO_2, split = "ONTOLOGY", font.size = 8, showCategory = 10, title = "Hif2a") + facet_grid(ONTOLOGY~., scale="free") + scale_y_discrete(labels=function(x)  str_wrap(x, width=80)) + scale_fill_viridis() + theme(panel.grid.major.y = element_blank(), panel.background = element_rect(fill = NA), panel.ontop = TRUE, panel.grid.major.x = element_line(color = "white", size = 0.5, linetype = 1), panel.grid.minor.x = element_line(color = "white", size = 0.25, linetype = 1)) + scale_x_continuous(expand = c(0,0))
+```
+
+![](Readme_files/figure-gfm/GO%20terms-2.png)<!-- -->
+
+``` r
+barplot(GO_3, split = "ONTOLOGY", font.size = 8, showCategory = 10, title = "Hif1b") + facet_grid(ONTOLOGY~., scale="free") + scale_y_discrete(labels=function(x)  str_wrap(x, width=80)) + scale_fill_viridis() + theme(panel.grid.major.y = element_blank(), panel.background = element_rect(fill = NA), panel.ontop = TRUE, panel.grid.major.x = element_line(color = "white", size = 0.5, linetype = 1), panel.grid.minor.x = element_line(color = "white", size = 0.25, linetype = 1)) + scale_x_continuous(expand = c(0,0))
+```
+
+![](Readme_files/figure-gfm/GO%20terms-3.png)<!-- -->
+
+``` r
+godot1 <- dotplot(clusterProfiler::simplify(GO_1))+labs(title = "Hif1a")
+godot2 <- dotplot(clusterProfiler::simplify(GO_2))+labs(title = "Hif2a")
+godot3 <- dotplot(clusterProfiler::simplify(GO_3))+labs(title = "Hif1b")
+godot1 + godot2 + godot3
+```
+
+![](Readme_files/figure-gfm/GO%20terms-4.png)<!-- -->
+
+``` r
+# Compare cluster
+ck <- compareCluster(geneCluster = interaction_deg, fun = "enrichGO",
+                  OrgDb = "org.Hs.eg.db",
+                  keyType = "ENSEMBL",
+                  ont = "ALL",
+                  pvalueCutoff = 0.05,
+                  pAdjustMethod = "fdr")
+
+ck <- setReadable(ck, OrgDb = org.Hs.eg.db, )
+head(ck)[1:7]
+```
+
+    ##                      Cluster ONTOLOGY         ID                    Description
+    ## 1 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0072006            nephron development
+    ## 2 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0072001       renal system development
+    ## 3 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0072009 nephron epithelium development
+    ## 4 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0007411                  axon guidance
+    ## 5 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0097485     neuron projection guidance
+    ## 6 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0007409                   axonogenesis
+    ##   GeneRatio   BgRatio       pvalue
+    ## 1    19/466 167/21288 4.965905e-09
+    ## 2    27/466 350/21288 1.731357e-08
+    ## 3    16/466 129/21288 2.375836e-08
+    ## 4    22/466 247/21288 2.953019e-08
+    ## 5    22/466 247/21288 2.953019e-08
+    ## 6    31/466 483/21288 1.058437e-07
+
+``` r
+dotplot(ck)
+```
+
+![](Readme_files/figure-gfm/GO%20terms-5.png)<!-- -->
+
+``` r
+dotplot(ck, showCategory=15)
+```
+
+![](Readme_files/figure-gfm/GO%20terms-6.png)<!-- -->
+
+``` r
+# KEGG
+ckk <- compareCluster(geneCluster = interaction_deg, fun = "enrichKEGG", organism="hsa", pvalueCutoff=0.05)
+
+
+hif1a_entrez <- mcols(dds)[interaction_deg[[1]],"entrezid"] %>% unlist() %>% unname() %>% unique()
+hif1a_entrez <- hif1a_entrez[!is.na(hif1a_entrez)]
+
+hif2a_entrez <- mcols(dds)[interaction_deg[[2]],"entrezid"] %>% unlist() %>% unname() %>% unique()
+hif2a_entrez <- hif2a_entrez[!is.na(hif2a_entrez)]
+
+hif1b_entrez <- mcols(dds)[interaction_deg[[3]],"entrezid"] %>% unlist() %>% unname() %>% unique()
+hif1b_entrez <- hif1b_entrez[!is.na(hif1b_entrez)]
+
+interaction_deg_entrez <- list(hif1a_entrez,hif2a_entrez,hif1b_entrez)
+
+ek1 <- enrichKEGG(hif1a_entrez,organism="hsa", pvalueCutoff=0.05)
+ek2 <- enrichKEGG(hif2a_entrez,organism="hsa", pvalueCutoff=0.05)
+ek3 <- enrichKEGG(hif1b_entrez,organism="hsa", pvalueCutoff=0.05)
+
+dotplot(ek1) + dotplot(ek2) + dotplot(ek3)
+```
+
+![](Readme_files/figure-gfm/GO%20terms-7.png)<!-- -->
+
+``` r
+# ckk <- compareCluster(geneCluster = interaction_deg_entrez, fun = "enrichKEGG", organism="hsa", pvalueCutoff=0.5)
 ```

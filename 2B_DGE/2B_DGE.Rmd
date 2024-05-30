@@ -980,11 +980,11 @@ ev_hif1b <- Vulcano_SK(
             degcol=colors[8],
             hscol=colors[7])
 
-( ev_kelly + ev_hif1b ) + 
+( ev_kelly + ev_hif1a  ) + 
   plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
   theme(legend.position = 'bottom', axis.title=element_text(size=8))
 
-( ev_hif1a + ev_hif2a) + 
+( ev_hif2a + ev_hif1b ) + 
   plot_layout(guides = "collect", axis_titles="collect") & 
   theme(legend.position = 'bottom', axis.title=element_text(size=8))
  
