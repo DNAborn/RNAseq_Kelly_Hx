@@ -30,11 +30,11 @@ Transformations
 
 Sample distance
 
-<img src="1_data_processing/Readme_files/figure-gfm/pre_sample_dist-1.png" width="100%"/>
+<img src="1_data_processing/Readme_files/figure-gfm/pre_sample_dist-1.png" width="60%"/>
 
 Principal component analysis
 
-<img src="1_data_processing/Readme_files/figure-gfm/pca-1.png" width="40%"/>
+<img src="1_data_processing/Readme_files/figure-gfm/pca-1.png" width="60%"/>
 
 Plot example counts
 
@@ -42,11 +42,11 @@ Plot example counts
 
 # 2. A) [network analysis](2A_WGCNA)
 
-<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-1.png" width="90%"/>
+<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-1.png" width="60%"/>
 
-<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-2.png" width="90%"/>
+<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-2.png" width="60%"/>
 
-<img src="2A_WGCNA/Readme_files/figure-gfm/goa-1.png" width="90%"/>
+<img src="2A_WGCNA/Readme_files/figure-gfm/goa-1.png" width="60%"/>
 
 # B) [Differential gene expression](2B_DGE)
 
@@ -229,7 +229,7 @@ Hif1aHxNx.vs.KellyHxNx (3)
 
 ### Heatmap of TOP genes
 
-![](2B_DGE/Readme_files/figure-gfm/heatmap1-1.png)<!-- -->
+<img src="2B_DGE/Readme_files/figure-gfm/heatmap1-1.png" width="70%"/><!-- -->
 
 ## GO Terms
 
@@ -239,4 +239,4 @@ Hif1aHxNx.vs.KellyHxNx (3)
 
 ![](2B_DGE/Readme_files/figure-gfm/GO%20terms-3.png)<!-- -->
 
-![](Readme_files/figure-gfm/GO%20terms-6.png)<!-- -->
+![](2B_DGE/Readme_files/figure-gfm/GO%20terms-6.png)<!-- -->
