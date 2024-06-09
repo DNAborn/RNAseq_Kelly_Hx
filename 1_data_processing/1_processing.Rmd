@@ -791,6 +791,11 @@ mcols(gse)$DESCRIPTION <- mapIds(edb, keys = mcols(gse)$gene_id, column = "DESCR
 mcols(gse)$GENEBIOTYPE <- mapIds(edb, keys = mcols(gse)$gene_id, column = "GENEBIOTYPE", keytype = "GENEID")
 mcols(gse)$UNIPROTID <- mapIds(edb, keys = mcols(gse)$gene_id, column = "UNIPROTID", keytype = "GENEID")
 
+# columns with unique symbols
+mcols(gse)$ens.symbol <- mcols(gse)$gene_name
+mcols(gse)$ens.symbol[mcols(gse)$ens.symbol == ""] <- mcols(gse)$gene_id[mcols(gse)$ens.symbol == ""]
+mcols(gse)$ens.symbol[duplicated(mcols(gse)$ens.symbol)] <- mcols(gse)$gene_id[duplicated(mcols(gse)$ens.symbol)]
+
 # columns <- listColumns(edb) %>% toupper() 
 # for (i in columns[c(-1,-2,-3,-4,-6,-7,-8,-9,-10,-11,-12,-13,-14,-16)]){
 #   # print(i)

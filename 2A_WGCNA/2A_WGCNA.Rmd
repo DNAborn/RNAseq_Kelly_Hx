@@ -520,9 +520,9 @@ pheatmap(bwnet$MEs %>% data.matrix())
 
 
 # Export into dds
-```{r export_in_dds, eval=TRUE, include=TRUE, echo=TRUE}
+```{r export_in_dds, eval=FALSE, include=TRUE, echo=TRUE}
 
-# load(file=paste(data,"deseq2_experiment.dds", sep="/"))
+load(file=paste(data,"deseq2_experiment.dds", sep="/"))
 load(file=paste(data,"bwnet_TS.RDS", sep="/"))
 
 # color per gene

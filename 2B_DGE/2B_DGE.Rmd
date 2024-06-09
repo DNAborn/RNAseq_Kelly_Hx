@@ -31,7 +31,9 @@ knitr::opts_chunk$set(echo = T,
 ```{r R_update, eval=FALSE, include=FALSE}
 BiocManager::install()
 # update.packages(oldPkgs = old.packages())
-BiocManager::install("")
+BiocManager::install("tsne")
+install.packages("reticulate")
+https://github.com/DNAborn/Rhihy1
 
 ```
 
@@ -85,6 +87,11 @@ library(RColorBrewer)
 library(circlize)
 library(devtools)
 
+library(plotly) 
+library(stats) 
+library(tsne)
+library(umap)
+library(Rtsne)
 
 requireNamespace('png', quietly = TRUE)
 
@@ -1385,7 +1392,7 @@ overlaps <- calculate.overlap(input_list)
 getVennElements(plt)
 
 # plot counts
-plotCounts_SK(overlaps$a1[1:4],n="only hif1a") # a1=5
+# plotCounts_SK(overlaps$a1[1:4],n="only hif1a") # a1=5
 # -> nicht interessant
 plotCounts_SK(overlaps$a2 %>% sample(size=9),n="hif1a & degs") # a2=43
 # passt
@@ -2044,6 +2051,8 @@ patchwork::wrap_elements((c_graphic))
 ```{r heatmap_ko, eval=FALSE}
 pick_genes <- topgenes_list[c("top_Hif1aHxNx.vs.KellyHxNx","top_Hif2aHxNx.vs.KellyHxNx","top_Hif1bHxNx.vs.KellyHxNx")] %>% unlist()
 
+pick_results <- c("Hif1aHxNx.vs.KellyHxNx","Hif2aHxNx.vs.KellyHxNx","Hif1bHxNx.vs.KellyHxNx")
+
 res_comb <- res.Kelly.Hx.vs.Nx[pick_genes,c(7,1)] %>% data.frame(.)
 res_comb <- cbind(res_comb,lapply(results_list[pick_results],function(i) i[pick_genes,2]) %>% do.call(cbind,.) %>% data.frame(.))
 res_comb_matrix <- as.matrix(res_comb[,c(-1,-2)])
@@ -2053,14 +2062,16 @@ rownames(res_comb_matrix) <- res_comb$symbol
 # adapt colors to uniform breaks
 mat_breaks <- quantile_breaks(res_comb_matrix, n = 20)
 vir_cols <- viridis(length(mat_breaks))
-vir_cols[4] <- "white"
+vir_cols[which(unname(mat_breaks) == 0)] <- "white"
+
 hm_cols <- colorRamp2(mat_breaks,vir_cols)
 
 hm <- Heatmap(res_comb_matrix,
         col = hm_cols,
         column_title = "Compare results",
         na_col = "black",
-        row_names_gp = gpar(fontsize = 10)
+        row_names_gp = gpar(fontsize = 10),
+        cluster_rows = TRUE,
         ) 
 hm
 
@@ -2082,7 +2093,7 @@ interaction_top <- topgenes_list[c("top_Hif1aHxNx.vs.KellyHxNx","top_Hif2aHxNx.v
 interaction_top_ol <- calculate.overlap(interaction_top)
 
 
-pick_genes <- lapply(interaction_top_ol,'[',1:5) %>% unlist() %>% unname() %>% unique()
+pick_genes <- lapply(interaction_top_ol,'[',1:10) %>% unlist() %>% unname() %>% unique()
 pick_genes <- pick_genes[!is.na(pick_genes)]
 
 
@@ -2179,6 +2190,197 @@ pheatmap(mat,
 
 
 ```
+
+
+## Cluster results
+```{r cluster_results}
+pick_genes <- deg_genes_list[c("deg_Hif1aHxNx.vs.KellyHxNx", "deg_Hif2aHxNx.vs.KellyHxNx", "deg_Hif1bHxNx.vs.KellyHxNx")] %>% unlist() %>% unname() %>% unique()
+
+# "deg_Kelly.Hx.vs.Nx",
+
+("ENSG00000123095.1" == pick_genes) %>% summary()
+
+pick_results <- c("Kelly.Hx.vs.Nx","Hif1aHxNx.vs.KellyHxNx","Hif2aHxNx.vs.KellyHxNx","Hif1bHxNx.vs.KellyHxNx")
+res_comb <- res.Kelly.Hx.vs.Nx[pick_genes,c(7,1)]
+res_comb$gene_id <- rownames(res_comb)
+res_comb <- res_comb %>% data.frame(.)
+res_comb <- cbind(res_comb,lapply(results_list[pick_results],function(i) i[pick_genes,2]) %>% do.call(cbind,.) %>% data.frame(.))
+dim(res_comb)
+
+rownames(res_comb) <- mcols(dds)[res_comb$gene_id,"ens.symbol"]
+res_comb_matrix <- as.matrix(res_comb[,c(-1,-2,-3)])
+
+# res_comb_matrix[res_comb_matrix<1 & res_comb_matrix>-1] <- 0
+
+plot(res_comb_matrix[,"Hif1aHxNx.vs.KellyHxNx"],res_comb_matrix[,"Hif2aHxNx.vs.KellyHxNx"])
+
+g1 <- ggplot(res_comb_matrix,aes(x=Hif1aHxNx.vs.KellyHxNx,y=Hif2aHxNx.vs.KellyHxNx, color=Kelly.Hx.vs.Nx)) +
+  geom_point(alpha = 0.3) +
+  geom_hline(yintercept=c(-1,1)) +
+  geom_vline(xintercept=c(-1,1)) +
+ scale_color_viridis_c(option = 'D',limits = c(-2, 2)) +
+ coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+
+g2 <- ggplot(res_comb_matrix,aes(x=Hif1aHxNx.vs.KellyHxNx,y=Hif2aHxNx.vs.KellyHxNx, color=Hif1bHxNx.vs.KellyHxNx)) +
+  geom_point(alpha = 0.3) +
+  geom_hline(yintercept=c(-1,1)) +
+  geom_vline(xintercept=c(-1,1)) +
+ scale_color_viridis_c(option = 'D',limits = c(-2, 2)) +
+ coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+
+g1 + g2 + plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & plot_annotation(title = "all hypoxia genes") & 
+  theme(legend.position = 'bottom')
+
+
+
+
+
+# Only Hif1a Hif2a Genes
+
+pick_genes <- deg_genes_list[c("deg_Hif1aHxNx.vs.KellyHxNx", "deg_Hif2aHxNx.vs.KellyHxNx")] %>% unlist() %>% unname() %>% unique()
+pick_results <- c("Kelly.Hx.vs.Nx","Hif1aHxNx.vs.KellyHxNx","Hif2aHxNx.vs.KellyHxNx","Hif1bHxNx.vs.KellyHxNx")
+res_comb <- res.Kelly.Hx.vs.Nx[pick_genes,c(7,1)]
+res_comb$gene_id <- rownames(res_comb)
+res_comb <- res_comb %>% data.frame(.)
+res_comb <- cbind(res_comb,lapply(results_list[pick_results],function(i) i[pick_genes,2]) %>% do.call(cbind,.) %>% data.frame(.))
+dim(res_comb)
+
+rownames(res_comb) <- mcols(dds)[res_comb$gene_id,"ens.symbol"]
+res_comb_matrix_12 <- as.matrix(res_comb[,c(-1,-2,-3)])
+
+# res_comb_matrix[res_comb_matrix<1 & res_comb_matrix>-1] <- 0
+
+plot(res_comb_matrix_12[,"Hif1aHxNx.vs.KellyHxNx"],res_comb_matrix_12[,"Hif2aHxNx.vs.KellyHxNx"])
+
+g1 <- ggplot(res_comb_matrix_12,aes(x=Hif1aHxNx.vs.KellyHxNx,y=Hif2aHxNx.vs.KellyHxNx, color=Kelly.Hx.vs.Nx)) +
+  geom_point(alpha = 0.3) +
+  geom_hline(yintercept=c(-1,1)) +
+  geom_vline(xintercept=c(-1,1)) +
+ scale_color_viridis_c(option = 'D',limits = c(-2, 2)) +
+ coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+
+g2 <- ggplot(res_comb_matrix_12,aes(x=Hif1aHxNx.vs.KellyHxNx,y=Hif2aHxNx.vs.KellyHxNx, color=Hif1bHxNx.vs.KellyHxNx)) +
+  geom_point(alpha = 0.3) +
+  geom_hline(yintercept=c(-1,1)) +
+  geom_vline(xintercept=c(-1,1)) +
+ scale_color_viridis_c(option = 'D',limits = c(-2, 2)) +
+ coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+
+g1 + g2 + plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & plot_annotation(title = "all hypoxia genes") & 
+  theme(legend.position = 'bottom')
+
+
+
+
+
+# Color according to category
+
+keyvals <- ifelse(abs(res_comb_matrix_12[,"Hif1aHxNx.vs.KellyHxNx"]-res_comb_matrix_12[,"Hif2aHxNx.vs.KellyHxNx"]) < 1, "hotpink1",
+            ifelse( (res_comb_matrix_12[,"Hif1aHxNx.vs.KellyHxNx"] > 1 & 
+                     res_comb_matrix_12[,"Hif2aHxNx.vs.KellyHxNx"] < -1) |
+                    (res_comb_matrix_12[,"Hif1aHxNx.vs.KellyHxNx"] < -1 & 
+                     res_comb_matrix_12[,"Hif2aHxNx.vs.KellyHxNx"] > 1) , colors[8],
+            ifelse( (res_comb_matrix_12[,"Hif1aHxNx.vs.KellyHxNx"] > 1 &               
+                    (res_comb_matrix_12[,"Hif1aHxNx.vs.KellyHxNx"] > res_comb_matrix_12[,"Hif2aHxNx.vs.KellyHxNx"])) |
+                    (res_comb_matrix_12[,"Hif1aHxNx.vs.KellyHxNx"] < -1 &               
+                    (res_comb_matrix_12[,"Hif1aHxNx.vs.KellyHxNx"] < res_comb_matrix_12[,"Hif2aHxNx.vs.KellyHxNx"])),colors[6],
+            ifelse( (res_comb_matrix_12[,"Hif2aHxNx.vs.KellyHxNx"] > 1 |
+                    (res_comb_matrix_12[,"Hif2aHxNx.vs.KellyHxNx"] < -1 )),colors[4],  
+    'grey'))) )
+res_comb_12 <- data.frame(res_comb_matrix_12,keyvals)
+
+# res_comb_matrix_12[,"Hif1aHxNx.vs.KellyHxNx"] > 1 & res_comb_matrix_12[,"Hif2aHxNx.vs.KellyHxNx"] > 1
+    
+keyvals[is.na(keyvals)] <- 'grey'
+  names(keyvals)[keyvals == "hotpink1"] <- 'Hif1a & Hif2a'
+  names(keyvals)[keyvals == colors[8]] <- 'anti Hif1a & Hif2a'
+  names(keyvals)[keyvals == colors[6]] <- 'Hif1a'
+  names(keyvals)[keyvals == colors[4]] <- 'Hif2a'
+
+g3 <- ggplot(res_comb_matrix_12,aes(x=Hif1aHxNx.vs.KellyHxNx,y=Hif2aHxNx.vs.KellyHxNx, color=names(keyvals))) +
+  geom_point(alpha = 0.3, show.legend = TRUE) +
+  geom_hline(yintercept=c(-1,1)) +
+  geom_vline(xintercept=c(-1,1)) +
+  geom_abline(slope=1, intercept = 0, color="grey", linetype = 'dashed') +
+  # geom_ribbon(aes(ymin = -1, ymax = +1), fill="grey") + 
+  geom_abline(slope=1, intercept = -1) +
+  geom_abline(slope=1, intercept = +1) +
+  scale_color_manual(values = keyvals) + 
+  coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+g3
+
+g1 + g2 + plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & plot_annotation(title = "all hypoxia genes") & 
+  theme(legend.position = 'bottom')
+
+
+```
+
+
+
+
+### Corrplot
+```{r corrplot}
+
+plot(res_comb_matrix[,2],res_comb_matrix[,3])
+
+M <- cor(res_comb_matrix)
+corrplot::corrplot(M)
+
+
+
+```
+
+
+### PCA of genes
+```{r pca_genes}
+
+
+res_comb_matrix_t <- t(res_comb_matrix_12)
+p <- pca(res_comb_matrix_t, removeVar = 0.1)
+biplot(p,
+       xlim=c(-5,5),
+       ylim=c(-5,5)
+       )
+
+ggplot(p$rotated,aes(x=PC1,y=PC2, color=names(keyvals)))+
+  geom_point(alpha = 0.3) +
+  scale_color_manual(values = keyvals) + 
+  coord_cartesian(xlim = c(-10, 8),ylim = c(-5,8))
+  
+
+# bi <- biplot(p,x="PC3",y="PC1",
+#     lab = p$metadata$experiment,
+#     colby = 'condition',colkey = viridis(8),
+#     hline = 0, vline = 0,
+#     encircle = TRUE, encircleFill = TRUE,
+#     labSize = 3, legendIconSize = 4.0,
+#     legendPosition = 'bottom',
+#     sizeLoadingsNames = 3,
+#     axisLabSize = 10,
+#     captionLabSize = 1)
+
+
+
+```
+
+#### UMAP
+```{r}
+
+umap <- umap(res_comb_matrix_12)
+
+df <- data.frame(x = umap$layout[,1],
+                 y = umap$layout[,2])
+
+ggplot(df, aes(x, y, color=names(keyvals))) +
+  geom_point(alpha = 0.5) +
+  scale_color_manual(values = keyvals)
+
+```
+
+
+
+
+
 
 ## GO terms
 ```{r GO terms, eval=TRUE}
