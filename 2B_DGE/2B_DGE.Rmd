@@ -33,7 +33,7 @@ BiocManager::install()
 # update.packages(oldPkgs = old.packages())
 BiocManager::install("tsne")
 install.packages("reticulate")
-https://github.com/DNAborn/Rhihy1
+
 
 ```
 
@@ -192,9 +192,9 @@ if( identical (
 
 ```
 
-```{r Vulcano1, include=FALSE}
-# Vulcano
-Vulcano_SK <- function(n,
+```{r Volcano1, include=FALSE}
+# Volcano
+Volcano_SK <- function(n,
                         ntop=100,
                         topcol="royalblue4",
                         degcol="royalblue1",
@@ -315,10 +315,10 @@ ev_f
 
 ```
 
-```{r Vulcano2, include=FALSE}
+```{r Volcano2, include=FALSE}
 
-### Vulcano2 list ######
-Vulcano_SK2 <- function(n,list1,list2,
+### Volcano2 list ######
+Volcano_SK2 <- function(n,list1,list2,
                         l1.col="chartreuse2",
                         l2.col="orangered",
                         lol.col="yellow2",
@@ -326,7 +326,7 @@ Vulcano_SK2 <- function(n,list1,list2,
                         l1.n= "list 1",
                         l2.n= "list 2",
                         xlim=10,
-                        ylim=200,
+                        ylim=500,
                         lab=NULL,
                         ...)
 {
@@ -337,7 +337,7 @@ res <- results_list[[n]]
 
 list_ol <- calculate.overlap(list(list1,list2))
 
-l <- length(res)
+l <- length(res %>% rownames())
 
 res_shrink <- lfcShrink(dds, res=res, type="ashr")
 res_shrink$symbol <- res$symbol
@@ -377,6 +377,8 @@ res$log2FoldChange[res$log2FoldChange > xlim] <- xlim
 res$log2FoldChange[res$log2FoldChange < -xlim] <- -xlim
 res$padj[res$padj < 10^-ylim] <- 10^-ylim
 summary(res$padj < 10^-ylim)
+
+min(res$padj[res$padj > 0], na.rm = TRUE)
 
 ## combine top, deg & hs
 keyvals <- ifelse(
@@ -918,7 +920,7 @@ colors_paired <- c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A
 colors_v <- c("#440154FF", "#482878FF", "#3E4A89FF", "#31688EFF", "#26828EFF", "#1F9E89FF", "#35B779FF", "#6DCD59FF", "#B4DE2CFF", "#FDE725FF")
 colors <- c("lavenderblush3","lavenderblush4","#90caf9","#1976d2", "#82e0aa", "#239b56", "#f8c471", "#b9770e") 
 colors4 <- colors[c(1,3,5,7)]
-# Vulcano colors
+# Volcano colors
 colors_vul <- c(colors[4:3],"orangered3","salmon1","hotpink4","hotpink1","darkseagreen4","darkseagreen1")
 
 df <- data.frame(n=c(1:8),
@@ -933,9 +935,9 @@ df <- data.frame(n=c(1:8),
 
 ## Volcanos
 
-### Draw Vulcanos
+### Draw Volcanos
 
-```{r draw vulcano,  echo=FALSE, fig.show="hold", fig.height=5}
+```{r draw volcano,  echo=FALSE, fig.show="hold", fig.height=5}
 
 # Input
 
@@ -960,7 +962,7 @@ ntop <- 100
 
 colors <- c("lavenderblush3","lavenderblush4","#90caf9","#1976d2", "#82e0aa", "#239b56", "#f8c471", "#b9770e") 
 
-ev_kelly <- Vulcano_SK(n="Kelly.Hx.vs.Nx", # results name
+ev_kelly <- Volcano_SK(n="Kelly.Hx.vs.Nx", # results name
             ntop=200, # number of top genes
             topcol="grey30",
             degcol=colors[2], # color top genes
@@ -969,19 +971,19 @@ ev_kelly <- Vulcano_SK(n="Kelly.Hx.vs.Nx", # results name
             xlim=10,
             ylim=300)
 
-ev_hif1a <- Vulcano_SK(
+ev_hif1a <- Volcano_SK(
             n <- "Hif1a.Hx.vs.Nx",
             topcol="royalblue4",
             degcol=colors[4],
             hscol=colors[3])
 
-ev_hif2a <- Vulcano_SK(
+ev_hif2a <- Volcano_SK(
             n <- "Hif2a.Hx.vs.Nx",
             topcol="darkgreen",
             degcol=colors[6],
             hscol=colors[5])
 
-ev_hif1b <- Vulcano_SK(
+ev_hif1b <- Volcano_SK(
             n <- "Hif1b.Hx.vs.Nx",
             topcol="tan4",
             degcol=colors[8],
@@ -997,13 +999,13 @@ ev_hif1b <- Vulcano_SK(
  
 ```
 
-### (continuous Vulcanos)
+### (continuous Volcanos)
 
-```{r vulcano_cont, eval=FALSE}
+```{r volcano_cont, eval=FALSE}
 
 # gradient is fixed to padj = y-axis
 
-# Vulcano
+# Volcano
 lcol="grey20"
 xlim=10
 ylim=300
@@ -1805,9 +1807,9 @@ grid.draw(plt)
 
 ### Compare Results 1 2 3
 
-#### Vulcano lists
+#### Volcano lists
 
-```{r vulcano_lists, eval=TRUE, include=FALSE}
+```{r volcano_lists, eval=TRUE, include=FALSE}
 
 # Compare Hx.vs.Nx with interaction
 n <- "Kelly.Hx.vs.Nx"
@@ -1825,7 +1827,7 @@ ol_list <- calculate.overlap(list(list1,list2))
 labs <- c(setdiff(ol_list[[1]],ol_list[[3]]),
           setdiff(ol_list[[2]],ol_list[[3]]))
 
-ev_kelly_lists <- Vulcano_SK2(n="Kelly.Hx.vs.Nx",
+ev_kelly_lists <- Volcano_SK2(n="Kelly.Hx.vs.Nx",
             list1=list1,
             list2=list2,
             l1.n= "interaction (3)",
@@ -1836,7 +1838,7 @@ ev_kelly_lists <- Vulcano_SK2(n="Kelly.Hx.vs.Nx",
             xlim=10,
             ylim=200)
 
-ev_hif1a_lists <- Vulcano_SK2(n="Hif1a.Hx.vs.Nx",
+ev_hif1a_lists <- Volcano_SK2(n="Hif1a.Hx.vs.Nx",
             list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
             list2=hif1a_deg,
             l1.n= "interaction (3)",
@@ -1857,7 +1859,7 @@ ev_hif1a_lists <- Vulcano_SK2(n="Hif1a.Hx.vs.Nx",
 hif1a_Hx.vs.Hx.deg <- c(deg_genes_list[["deg_Nx.Hif1a.vs.Kelly"]],
                 deg_genes_list[["deg_Hx.Hif1a.vs.Kelly"]]) %>% unique()
 
-ev_kelly_lists <- Vulcano_SK2(n="Kelly.Hx.vs.Nx",
+ev_kelly_lists <- Volcano_SK2(n="Kelly.Hx.vs.Nx",
             list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
             list2=hif1a_Hx.vs.Hx.deg,
             l1.n= "interaction (3)",
@@ -1868,7 +1870,7 @@ ev_kelly_lists <- Vulcano_SK2(n="Kelly.Hx.vs.Nx",
             xlim=10,
             ylim=200)
 
-ev_hif1a_lists <- Vulcano_SK2(n="Hif1a.Hx.vs.Nx",
+ev_hif1a_lists <- Volcano_SK2(n="Hif1a.Hx.vs.Nx",
             list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
             list2=hif1a_Hx.vs.Hx.deg,
             l1.n= "interaction (3)",
@@ -1915,6 +1917,270 @@ pie(mcols(dds)[input_list[[3]],"colors"] %>% .[!is.na(.)] %>% summary(),col=mcol
 ```
 
 ### Compare KO
+
+#### Volcano KO
+
+```{r volcano_kos, eval=TRUE, include=FALSE}
+
+# Compare Hx.vs.Nx with interaction
+n <- "Kelly.Hx.vs.Nx"
+res <- results_list[[n]]
+colors <- c("lavenderblush3","lavenderblush4","#90caf9","#1976d2", "#82e0aa", "#239b56", "#f8c471", "#b9770e") 
+
+
+list1 <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]]
+list2 <- deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]
+
+ol_list <- calculate.overlap(list(list1,list2))
+labs <- c(setdiff(ol_list[[1]],ol_list[[3]]),
+          setdiff(ol_list[[2]],ol_list[[3]]))
+
+ev_kelly_ko1 <- Volcano_SK2(n="Kelly.Hx.vs.Nx",
+            list1=list1,
+            list2=list2,
+            l1.n= "Hif1a",
+            l2.n= "Hif2a",
+            l1.col="#1976d2",
+            l2.col="#239b56",
+            lol.col="#f8c471",
+            xlim=12,
+            ylim=400)
+
+
+labs <- setdiff(ol_list[[1]],ol_list[[3]])
+          
+ev_kelly_ko2 <- Volcano_SK2(n="Hif1aHxNx.vs.KellyHxNx",
+            list1=list1,
+            list2=list2,
+            l1.n= "Hif1a",
+            l2.n= "Hif2a",
+            l1.col="#1976d2",
+            l2.col="#239b56",
+            lol.col="#f8c471",
+            labs=labs,
+            xlim=10,
+            ylim=150)
+
+labs <- setdiff(ol_list[[2]],ol_list[[3]])
+
+ev_kelly_ko3 <- Volcano_SK2(n="Hif2aHxNx.vs.KellyHxNx",
+            list1=list1,
+            list2=list2,
+            l1.n= "Hif1a",
+            l2.n= "Hif2a",
+            l1.col="#1976d2",
+            l2.col="#239b56",
+            lol.col="#f8c471",
+            xlim=10,
+            ylim=300)
+
+ev_kelly_ko4 <- Volcano_SK2(n="Hif1bHxNx.vs.KellyHxNx",
+            list1=list1,
+            list2=list2,
+            l1.n= "Hif1a",
+            l2.n= "Hif2a",
+            l1.col="#1976d2",
+            l2.col="#239b56",
+            lol.col="#f8c471",
+            xlim=10,
+            ylim=200)
+
+ ( ev_kelly_ko1 / (ev_kelly_ko2 + ev_kelly_ko3 + ev_kelly_ko4 ))  +
+  plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
+  theme(legend.position = 'bottom', axis.title=element_text(size=8))
+
+
+
+```
+
+#### Volcano KO2 manual
+
+```{r volcano_kos2_maunal, eval=TRUE, include=FALSE}
+
+n <- "Kelly.Hx.vs.Nx"
+list1 <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]]
+list2 <- deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]
+l1.n <- "Hif1a"
+l2.n <- "Hif2a"
+l1.col <- "#1976d2"
+l2.col <- "#239b56"
+lol.col <- "#f8c471"
+xlim <- 10
+ylim <- 400
+
+# get results and add symbol
+res <- results_list[[n]]
+l <- length(res %>% rownames())
+res_shrink <- lfcShrink(dds, res=res, type="ashr")
+res_shrink$symbol <- mcols(dds)$ens.symbol
+
+# list overlaps
+ol_list <- calculate.overlap(list(list1,list2))
+
+# define lists
+res_shrink$isl1 <- rownames(res_shrink) %in% list1
+res_shrink$isl2 <- rownames(res_shrink) %in% list2
+res_shrink$islol <- rownames(res_shrink) %in% list_ol$a3
+
+# order res
+res <- res_shrink
+res <- res[order(abs(res$log2FoldChange), decreasing = T),]
+res <- res[order(res$isl1, decreasing = F),]
+res <- res[order(res$isl2, decreasing = F),]
+res <- res[order(res$islol, decreasing = F),]
+
+# remove nas
+res <- res[!is.na(res$padj),]
+res <- res[!is.na(res$log2FoldChange),]
+
+# change shape of outliers
+shape <- ifelse(abs(res$log2FoldChange) > xlim, 18,
+                ifelse(res$padj < 10^-ylim,18,16))
+summary(is.na(shape))
+# shape[is.na(shape)] <- 2
+names(shape)[shape == 18] <- 'out of scale'
+names(shape)[shape == 16] <- 'in range'
+
+# move outliers to coord. max.
+res$log2FoldChange[res$log2FoldChange > xlim] <- xlim
+res$log2FoldChange[res$log2FoldChange < -xlim] <- -xlim
+res$padj[res$padj < 10^-ylim] <- 10^-ylim
+summary(res$padj < 10^-ylim)
+
+min(res$padj[res$padj > 0], na.rm = TRUE)
+
+## combine top, deg & hs
+keyvals <- ifelse(
+    res$islol == TRUE, lol.col,
+     ifelse(
+    res$isl1 == TRUE, l1.col,
+    ifelse(
+    res$isl2 == TRUE, l2.col,
+    'grey') ) )
+    
+keyvals[is.na(keyvals)] <- 'grey'
+  names(keyvals)[keyvals == l1.col] <- l1.n
+  names(keyvals)[keyvals == l2.col] <- l2.n
+  names(keyvals)[keyvals == lol.col] <- 'overlap'
+  names(keyvals)[keyvals == 'grey'] <- 'other'
+
+rownames(res) <- res$symbol
+
+lab <- mcols(dds)[ol_list$a3,"ens.symbol"]
+
+if (is.null(lab)){
+  lab <- res[res$isl1 == TRUE | res$isl2 == TRUE,"symbol"]
+}
+
+EnhancedVolcano(results_list[[4]],
+    x = 'log2FoldChange',
+    y = 'padj',
+    lab=rownames(results_list[[4]]))
+
+ev_f <- EnhancedVolcano(res,
+    x = 'log2FoldChange',
+    y = 'padj',
+    lab = res$symbol,
+    selectLab  = lab,
+    labSize = 2,
+    drawConnectors = TRUE,
+    boxedLabels = TRUE,
+    widthConnectors = 0.5,
+    colConnectors = lcol,
+    pointSize = c(ifelse(res$islol==TRUE, 2, ifelse(res$isl1==TRUE | res$isl2==TRUE, 1.5, 1))),
+    colAlpha = c(ifelse(res$islol==TRUE, 0.9, ifelse(res$isl1==TRUE | res$isl2==TRUE, 0.5, 0.2))),
+    max.overlaps = 30,
+    colCustom = keyvals,
+    col=c('grey', l1.col, l2.col, lol.col),
+    xlim = c(-xlim, xlim),
+    ylim = c(0, ylim),
+    ylab = "Padj (-log10)",
+    title = n,
+    subtitle = paste("DE genes:",l),
+    # sub = "SVF",
+    pCutoff = 10^(-c_plimit),
+    FCcutoff = L2Flimit,
+    shapeCustom =shape,
+    # pointSize = c(ifelse(rownames(res_WT_D_vs.WT_BL) %in% rownames(top_WT_BL_vs.pcry_BL), 8, 1)),
+    legendLabels=c('Not sig.','|L2F| > 2.5','p-adj < 0.05',
+                   'p-adj & L2F'),
+    legendPosition = 'bottom',
+    legendLabSize = 8,
+    legendIconSize = 2.0,
+    axisLabSize = 8,
+    titleLabSize = 8,
+    subtitleLabSize = 8,
+    captionLabSize = 8,
+    caption = {}
+   )
+
+ev_f
+
+
+
+
+
+ev_kelly_ko1 <- Volcano_SK2(n="Kelly.Hx.vs.Nx",
+            list1=list1,
+            list2=list2,
+            l1.n= "Hif1a",
+            l2.n= "Hif2a",
+            l1.col="#1976d2",
+            l2.col="#239b56",
+            lol.col="#f8c471",
+            xlim=12,
+            ylim=400)
+
+
+labs <- setdiff(ol_list[[1]],ol_list[[3]])
+          
+ev_kelly_ko2 <- Volcano_SK2(n="Hif1aHxNx.vs.KellyHxNx",
+            list1=list1,
+            list2=list2,
+            l1.n= "Hif1a",
+            l2.n= "Hif2a",
+            l1.col="#1976d2",
+            l2.col="#239b56",
+            lol.col="#f8c471",
+            labs=labs,
+            xlim=10,
+            ylim=150)
+
+labs <- setdiff(ol_list[[2]],ol_list[[3]])
+
+ev_kelly_ko3 <- Volcano_SK2(n="Hif2aHxNx.vs.KellyHxNx",
+            list1=list1,
+            list2=list2,
+            l1.n= "Hif1a",
+            l2.n= "Hif2a",
+            l1.col="#1976d2",
+            l2.col="#239b56",
+            lol.col="#f8c471",
+            xlim=10,
+            ylim=300)
+
+ev_kelly_ko4 <- Volcano_SK2(n="Hif1bHxNx.vs.KellyHxNx",
+            list1=list1,
+            list2=list2,
+            l1.n= "Hif1a",
+            l2.n= "Hif2a",
+            l1.col="#1976d2",
+            l2.col="#239b56",
+            lol.col="#f8c471",
+            xlim=10,
+            ylim=200)
+
+ ( ev_kelly_ko1 / (ev_kelly_ko2 + ev_kelly_ko3 + ev_kelly_ko4 ))  +
+  plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
+  theme(legend.position = 'bottom', axis.title=element_text(size=8))
+
+
+
+```
+
+
+
+
 
 ```{r}
 
@@ -2363,7 +2629,7 @@ ggplot(p$rotated,aes(x=PC1,y=PC2, color=names(keyvals)))+
 
 ```
 
-#### UMAP
+### UMAP
 ```{r}
 
 umap <- umap(res_comb_matrix_12)
@@ -2374,6 +2640,9 @@ df <- data.frame(x = umap$layout[,1],
 ggplot(df, aes(x, y, color=names(keyvals))) +
   geom_point(alpha = 0.5) +
   scale_color_manual(values = keyvals)
+
+
+
 
 ```
 
