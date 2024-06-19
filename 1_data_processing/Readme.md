@@ -13,8 +13,8 @@ Kelterborn
   - [- Sample names](#--sample-names)
 - [2. Process](#2-process)
   - [- Mapping Rates](#--mapping-rates)
-  - [- \#Tximeta](#--tximeta)
-  - [- \#DESeq2](#--deseq2)
+  - [- Tximeta](#--tximeta)
+  - [- DESeq2](#--deseq2)
 - [3. Pre-Analysis](#3-pre-analysis)
 
 # 0. Load
@@ -80,7 +80,7 @@ Seq_runs
 3
 </td>
 <td style="text-align:left;">
-Katharina
+Control
 </td>
 <td style="text-align:right;">
 16
@@ -159,30 +159,30 @@ P3302
 
 ### clear BFC
 
-## - \#Tximeta
+## - Tximeta
 
 ### add gene symbols
 
-## - \#DESeq2
+## - DESeq2
 
 ``` r
 design(dds)
 ```
 
-    ## ~experiment + genotype + treatment + genotype:treatment
-    ## <environment: 0x562b54574960>
+    ## ~genotype + treatment + genotype:treatment
+    ## <environment: 0x560e688ac570>
 
 ``` r
-summary(results(dds))
+summary(results(dds, name="treatment_Hx_vs_Nx"))
 ```
 
     ## 
-    ## out of 27806 with nonzero total read count
+    ## out of 23451 with nonzero total read count
     ## adjusted p-value < 0.1
-    ## LFC > 0 (up)       : 6105, 22%
-    ## LFC < 0 (down)     : 7402, 27%
-    ## outliers [1]       : 31, 0.11%
-    ## low counts [2]     : 1617, 5.8%
+    ## LFC > 0 (up)       : 9006, 38%
+    ## LFC < 0 (down)     : 6574, 28%
+    ## outliers [1]       : 12, 0.051%
+    ## low counts [2]     : 0, 0%
     ## (mean count < 0)
     ## [1] see 'cooksCutoff' argument of ?results
     ## [2] see 'independentFiltering' argument of ?results
@@ -193,14 +193,65 @@ plotDispEsts(dds)
 resultsNames(dds)
 ```
 
-    ##  [1] "Intercept"                       "experiment_Katharina_vs_Control"
-    ##  [3] "experiment_Simon_vs_Control"     "experiment_Ulrike_vs_Control"   
-    ##  [5] "genotype_HIF1A_vs_Kelly"         "genotype_HIF2A_vs_Kelly"        
-    ##  [7] "genotype_HIF1B_vs_Kelly"         "treatment_Hx_vs_Nx"             
-    ##  [9] "genotypeHIF1A.treatmentHx"       "genotypeHIF2A.treatmentHx"      
-    ## [11] "genotypeHIF1B.treatmentHx"
+    ## [1] "Intercept"                 "genotype_HIF1A_vs_Kelly"  
+    ## [3] "genotype_HIF2A_vs_Kelly"   "genotype_HIF1B_vs_Kelly"  
+    ## [5] "treatment_Hx_vs_Nx"        "genotypeHIF1A.treatmentHx"
+    ## [7] "genotypeHIF2A.treatmentHx" "genotypeHIF1B.treatmentHx"
 
-<img src="Readme_files/figure-gfm/dds_design-1.png" width="50%" /><img src="Readme_files/figure-gfm/dds_design-2.png" width="50%" />
+``` r
+mcols(dds)$dispOutlier %>% table()
+```
+
+    ## .
+    ## FALSE  TRUE 
+    ## 22856   595
+
+``` r
+plot(x=log(mcols(dds)$baseMean),y=log(mcols(dds)$dispGeneEst))
+
+mcols(dds)$dispGeneEst[log(mcols(dds)$dispGeneEst) < -5] %>% length()
+```
+
+    ## [1] 288
+
+<img src="Readme_files/figure-gfm/dds_design-1.png" width="50%" /><img src="Readme_files/figure-gfm/dds_design-2.png" width="50%" /><img src="Readme_files/figure-gfm/dds_design-3.png" width="50%" />
+
+### -remove outlier
+
+DEseq2 with all samples, design = ~experiment + genotype + treatment +
+genotype:treatment -\> outlier: 2480, dispOutlier: 681 DEseq2 with all
+samples, design = ~genotype + treatment + genotype:treatment -\>
+outlier: 27, dispOutlier: 288
+
+``` r
+# Remove Outlier samples: "Control", "P2041_HIF1A_Hx_42"
+# dds <- dds[!colData(dds)$experiment=="Control",]
+dds <- dds[,!colnames(dds)=="P2041_Kelly_Nx_51"]
+
+
+dds <- DESeq(dds)
+
+stats <- data.frame("mean" = colMeans(assays(dds)[["cooks"]]),
+                    "g.mean" = colMedians(assays(dds)[["cooks"]]),
+                    "min" = colMins(assays(dds)[["cooks"]]),
+                    "max" = colMaxs(assays(dds)[["cooks"]]))
+pheatmap(log(stats))
+
+par(mar=c(10,3,2,2)+.1)
+boxplot(log10(assays(dds)[["cooks"]]), range=0, las=2, color=colData(dds)$experiment)
+
+resultsNames(dds)
+summary(results(dds, name="treatment_Hx_vs_Nx"))
+
+getwd()
+design(dds)
+# save(dds,file=paste(data,"deseq2.dds", sep="/"))
+# dds <- 1
+# load(file=paste(data,"deseq2.dds", sep="/"))
+dds
+
+subset(colData(dds), condition=="HIF1A_Hx" & sequencing =="P2041") %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
+```
 
 # 3. Pre-Analysis
 
@@ -209,7 +260,7 @@ resultsNames(dds)
 #### -#rlog
 
 ``` r
-load(file=paste(data,"rlog_experiment.rld", sep="/"))
+load(file=paste(data,"rlog.rld", sep="/"))
 meanSdPlot(assay(ntd))
 meanSdPlot(assay(vsd))
 meanSdPlot(assay(rld))
@@ -227,8 +278,8 @@ meanSdPlot(assay(rld))
 
 ###### – Advanced PCA
 
-    ## PC8 
-    ##   8
+    ## PC5 
+    ##   5
 
 <img src="Readme_files/figure-gfm/pca_advanced-1.png" width="80%" /><img src="Readme_files/figure-gfm/pca_advanced-2.png" width="80%" /><img src="Readme_files/figure-gfm/pca_advanced-3.png" width="80%" /><img src="Readme_files/figure-gfm/pca_advanced-4.png" width="80%" />
 
@@ -238,13 +289,13 @@ meanSdPlot(assay(rld))
 
 ### - Plot example counts
 
-    ## [1] 27807
+    ## [1] 23451
 
-    ## [1] 27807
+    ## [1] 23451
 
-    ## [1] 20616
+    ## [1] 19281
 
-    ## [1] 20615
+    ## [1] 19281
 
 <img src="Readme_files/figure-gfm/example_counts-1.png" width="50%" /><img src="Readme_files/figure-gfm/example_counts-2.png" width="50%" />
 
@@ -294,7 +345,7 @@ sessionInfo()
     ## [33] AnnotationDbi_1.66.0        RColorBrewer_1.1-3         
     ## [35] DESeq2_1.44.0               SummarizedExperiment_1.34.0
     ## [37] Biobase_2.64.0              MatrixGenerics_1.16.0      
-    ## [39] matrixStats_1.3.0           GenomicRanges_1.56.0       
+    ## [39] matrixStats_1.3.0           GenomicRanges_1.56.1       
     ## [41] GenomeInfoDb_1.40.1         IRanges_2.38.0             
     ## [43] S4Vectors_0.42.0            BiocGenerics_0.50.0        
     ## [45] tximport_1.32.0             tximeta_1.22.1             
@@ -318,7 +369,7 @@ sessionInfo()
     ##  [13] urlchecker_1.0.1          withr_3.0.0              
     ##  [15] prettyunits_1.2.0         preprocessCore_1.66.0    
     ##  [17] cli_3.6.2                 formatR_1.14             
-    ##  [19] scatterpie_0.2.2          labeling_0.4.3           
+    ##  [19] scatterpie_0.2.3          labeling_0.4.3           
     ##  [21] systemfonts_1.1.0         Rsamtools_2.20.0         
     ##  [23] yulab.utils_0.1.4         gson_0.1.0               
     ##  [25] txdbmaker_1.0.0           svglite_2.1.3            
@@ -341,15 +392,15 @@ sessionInfo()
     ##  [59] remotes_2.5.0             vctrs_0.6.5              
     ##  [61] png_0.1-8                 treeio_1.28.0            
     ##  [63] cellranger_1.1.0          gtable_0.3.5             
-    ##  [65] cachem_1.1.0              xfun_0.44                
+    ##  [65] cachem_1.1.0              xfun_0.45                
     ##  [67] S4Arrays_1.4.1            mime_0.12                
     ##  [69] tidygraph_1.3.1           statmod_1.5.0            
-    ##  [71] ellipsis_0.3.2            nlme_3.1-164             
+    ##  [71] ellipsis_0.3.2            nlme_3.1-165             
     ##  [73] ggtree_3.12.0             bit64_4.0.5              
     ##  [75] progress_1.2.3            filelock_1.0.3           
     ##  [77] affyio_1.74.0             irlba_2.3.5.1            
     ##  [79] KernSmooth_2.23-24        colorspace_2.1-0         
-    ##  [81] DBI_1.2.2                 tidyselect_1.2.1         
+    ##  [81] DBI_1.2.3                 tidyselect_1.2.1         
     ##  [83] bit_4.0.5                 compiler_4.4.0           
     ##  [85] extrafontdb_1.0           httr2_1.0.1              
     ##  [87] xml2_1.3.6                DelayedArray_0.30.1      
@@ -361,7 +412,7 @@ sessionInfo()
     ##  [99] htmltools_0.5.8.1         pkgconfig_2.0.3          
     ## [101] extrafont_0.19            sparseMatrixStats_1.16.0 
     ## [103] highr_0.11                fastmap_1.2.0            
-    ## [105] rlang_1.1.3               htmlwidgets_1.6.4        
+    ## [105] rlang_1.1.4               htmlwidgets_1.6.4        
     ## [107] UCSC.utils_1.0.0          shiny_1.8.1.1            
     ## [109] DelayedMatrixStats_1.26.0 farver_2.1.2             
     ## [111] jsonlite_1.8.8            BiocParallel_1.38.0      
@@ -370,19 +421,19 @@ sessionInfo()
     ## [117] ggplotify_0.1.2           munsell_0.5.1            
     ## [119] Rcpp_1.0.12               ape_5.8                  
     ## [121] ggraph_2.2.1              zlibbioc_1.50.0          
-    ## [123] MASS_7.3-60.2             pkgbuild_1.4.4           
-    ## [125] parallel_4.4.0            Biostrings_2.72.0        
+    ## [123] MASS_7.3-61               pkgbuild_1.4.4           
+    ## [125] parallel_4.4.0            Biostrings_2.72.1        
     ## [127] graphlayouts_1.1.1        splines_4.4.0            
     ## [129] hms_1.1.3                 locfit_1.5-9.9           
     ## [131] igraph_2.0.3              reshape2_1.4.4           
     ## [133] ScaledMatrix_1.12.0       pkgload_1.3.4            
     ## [135] futile.options_1.0.1      BiocVersion_3.19.1       
-    ## [137] XML_3.99-0.16.1           evaluate_0.23            
+    ## [137] XML_3.99-0.16.1           evaluate_0.24.0          
     ## [139] lambda.r_1.2.4            tzdb_0.4.0               
     ## [141] tweenr_2.0.3              httpuv_1.6.15            
     ## [143] Rttf2pt1_1.3.12           polyclip_1.10-6          
     ## [145] ggforce_0.4.2             rsvd_1.0.5               
     ## [147] xtable_1.8-4              restfulr_0.0.15          
     ## [149] tidytree_0.4.6            later_1.3.2              
-    ## [151] aplot_0.2.2               memoise_2.0.1            
+    ## [151] aplot_0.2.3               memoise_2.0.1            
     ## [153] GenomicAlignments_1.40.0  timechange_0.3.0

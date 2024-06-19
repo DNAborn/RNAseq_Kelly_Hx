@@ -513,7 +513,7 @@ sample_table_all$genotype <- sample_table_all$genotype %>% as.factor() %>% relev
 sample_table_all$condition <- paste(sample_table_all$genotype,sample_table_all$treatment,sep="_")
 # sample_table_all$condition[order(sample_table_all$condition)]
 sample_table_all$condition <- sample_table_all$condition %>% factor(levels=c("Kelly_Nx", "Kelly_Hx","HIF1A_Nx","HIF1A_Hx","HIF2A_Nx","HIF2A_Hx","HIF1B_Nx","HIF1B_Hx"))
-sample_table_all$experiment <- sample_table_all$experiment %>% as.factor()
+sample_table_all$experiment <- sample_table_all$experiment %>% as.factor() %>% relevel(ref="Katharina")
 
 
 dim(sample_table_all)
@@ -557,6 +557,7 @@ samples_overview <- data.frame(
 colnames(samples_overview)[c(2,3)] <- c("seq_id","Seq_runs")
 
 samples_overview[c(3,1,2),c(1,4,5,6,2,3)] %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
+
 
 ```
 
@@ -634,7 +635,7 @@ bfcremove(bfc, bfcquery(bfc, "Homo")$rid)
 ```
 
 
-## - #Tximeta
+## - Tximeta
 ```{r tximeta, fig.height=12, eval=TRUE, include=FALSE, echo=FALSE}
 # prepare coldata table
 # quant_file_table %>% head() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
@@ -780,7 +781,7 @@ par(mfrow=c(1,1), mar=c(4,4,4,4))
 ```{r annotationhub, eval=TRUE, include=FALSE, echo=FALSE}
 ah = AnnotationHub()
 query(ah, c("EnsDb", "homo"))
-edb <- ah[["AH116291"]]
+edb <- ah[["AH116860"]]
 # load(file=paste(data,"tximeta.txm", sep="/"))
 listColumns(edb)
 
@@ -808,44 +809,117 @@ mcols(gse)$ens.symbol[duplicated(mcols(gse)$ens.symbol)] <- mcols(gse)$gene_id[d
 
 ```
 
-## - #DESeq2
+## - DESeq2
 ```{r deseq2, warning=FALSE, eval=TRUE, include=FALSE, echo=FALSE}
 data
 # [1] "/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/data"
-load(file=paste(data,"tximeta.txm", sep="/"))
+# load(file=paste(data,"tximeta.txm", sep="/"))
 colData(gse)$genotype %>% levels()
-design = ~experiment+genotype+treatment+genotype:treatment
+# design = ~experiment+genotype+treatment+genotype:treatment
+design = ~genotype+treatment+genotype:treatment
 # design = ~condition
 # design = ~treatment
 
 dds <- DESeqDataSet(gse, design = design)
-# dds <- collapseReplicates(dds, dds$samplename, dds$names)
 
-sample.number <- nrow(colData(dds)) / colData(gse)$genotype %>% levels() %>% length()
-keep.sn <- rowSums(counts(dds)) >= sample.number
+# collapse technical replicates
+dds <- collapseReplicates(dds, dds$samplename, dds$names)
+
+# collapse repetitions Ulrike
+colData(dds)$Ulrike_rep <- colData(dds)$names
+colData(dds)$Ulrike_rep[str_detect(colData(dds)$Ulrike_rep,pattern="P3302")] <- colData(dds)$exp_rep[str_detect(colData(dds)$exp_rep, pattern="Ulrike")]
+colData(dds)$collapse_rep <- paste(colData(dds)$Ulrike_rep,colData(dds)$condition, sep="_")
+
+colData(dds)$collapse_rep %>% factor()
+colData(dds)[colData(dds)$experiment=="Simon","condition"] %>% table()
+colData(dds)[colData(dds)$experiment=="Katharina","condition"] %>% table()
+colData(dds)[colData(dds)$experiment=="Ulrike","condition"] %>% table()
+
+dds <- collapseReplicates(dds, dds$collapse_rep, dds$names)
+colnames(dds) <- dds$names
+
+sample.number <- colData(dds)$condition %>% table() %>% min()
+keep.sn <- rowSums(counts(dds) > 10) >= sample.number # keep genes with at least x samples with a count of 10 or higher
 keep.sn %>% summary()
 dds <- dds[keep.sn,]
 
 dds <- DESeq(dds)
-summary(results(dds))
+
+mcols(dds)[mcols(dds)$betaConv,]
+betaconv <- mcols(dds)$betaConv
+betaconv %>% is.na() %>% table()
+
+# pheatmap(assays(dds)[["cooks"]])
+max(assays(dds)[["cooks"]])
+stats <- data.frame("mean" = colMeans(assays(dds)[["cooks"]]),
+                    "g.mean" = colMedians(assays(dds)[["cooks"]]),
+                    "min" = colMins(assays(dds)[["cooks"]]),
+                    "max" = colMaxs(assays(dds)[["cooks"]]))
+pheatmap(log(stats))
+
+par(mar=c(10,3,2,2)+.1)
+boxplot(log10(assays(dds)[["cooks"]]), range=0, las=2, color=colData(dds)$experiment)
+
+resultsNames(dds)
+summary(results(dds, name="treatment_Hx_vs_Nx"))
+
+
+
+
+```
+
+```{r dds_design, fig.show='hold', out.width="50%", fig.height=5, fig.width=5}
+design(dds)
+summary(results(dds, name="treatment_Hx_vs_Nx"))
+plotMA(dds)
+plotDispEsts(dds)
+resultsNames(dds)
+mcols(dds)$dispOutlier %>% table()
+
+plot(x=log(mcols(dds)$baseMean),y=log(mcols(dds)$dispGeneEst))
+
+mcols(dds)$dispGeneEst[log(mcols(dds)$dispGeneEst) < -5] %>% length()
+
+```
+
+### -remove outlier
+DEseq2 with all samples, design = ~experiment + genotype + treatment + genotype:treatment
+-> outlier: 2480, dispOutlier: 681
+DEseq2 with all samples, design = ~genotype + treatment + genotype:treatment
+-> outlier: 27, dispOutlier: 288
+
+
+
+```{r deseq2 without outlier, eval=FALSE}
+
+# Remove Outlier samples: "Control", "P2041_HIF1A_Hx_42"
+# dds <- dds[!colData(dds)$experiment=="Control",]
+dds <- dds[,!colnames(dds)=="P2041_Kelly_Nx_51"]
+
+
+dds <- DESeq(dds)
+
+stats <- data.frame("mean" = colMeans(assays(dds)[["cooks"]]),
+                    "g.mean" = colMedians(assays(dds)[["cooks"]]),
+                    "min" = colMins(assays(dds)[["cooks"]]),
+                    "max" = colMaxs(assays(dds)[["cooks"]]))
+pheatmap(log(stats))
+
+par(mar=c(10,3,2,2)+.1)
+boxplot(log10(assays(dds)[["cooks"]]), range=0, las=2, color=colData(dds)$experiment)
+
+resultsNames(dds)
+summary(results(dds, name="treatment_Hx_vs_Nx"))
 
 getwd()
 design(dds)
-# save(dds,file=paste(data,"deseq2_experiment.dds", sep="/"))
+# save(dds,file=paste(data,"deseq2.dds", sep="/"))
 # dds <- 1
 # load(file=paste(data,"deseq2.dds", sep="/"))
 dds
 
 subset(colData(dds), condition=="HIF1A_Hx" & sequencing =="P2041") %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
-```
-
-```{r dds_design, fig.show='hold', out.width="50%", fig.height=5, fig.width=5}
-design(dds)
-summary(results(dds))
-plotMA(dds)
-plotDispEsts(dds)
-resultsNames(dds)
 
 
 ```
@@ -862,7 +936,7 @@ ntd <- normTransform(dds)
 #### -#rlog
 ```{r pre_trans_rlog, eval=FALSE, include=FALSE, echo=FALSE}
 rld <- rlog(dds, blind=FALSE) #regularized logarithm
-# save(rld,file=paste(data,"rlog_experiment.rld", sep="/"))
+# save(rld,file=paste(data,"rlog.rld", sep="/"))
 # rld <- 1
 # load(file=paste(data,"rlog.rld", sep="/"))
 rld
@@ -870,7 +944,7 @@ rld
 
 
 ```{r pre_trans_fig, figures-side, fig.show="hold", out.width="33%"}
-load(file=paste(data,"rlog_experiment.rld", sep="/"))
+load(file=paste(data,"rlog.rld", sep="/"))
 meanSdPlot(assay(ntd))
 meanSdPlot(assay(vsd))
 meanSdPlot(assay(rld))
@@ -1005,19 +1079,19 @@ elbow
 # plot Scree
 # find explaining PCs
 # horn <- parallelPCA(vst_dat)
-# horn$n = 7
+# horn$n = 6
 # warnings()
 
 horn <- list()
-horn$n <- 7
+horn$n <- 6
 
 screeplot(p,
     components = getComponents(p, 1:20),
     vline = c(horn$n, elbow)) +
     geom_label(aes(x = horn$n + 1, y = 30,
-      label = 'Horn\'s=7', vjust = -1, size = 8)) +
+      label = paste("Horn\'s=",horn$n), vjust = -1, size = 8)) +
     geom_label(aes(x = elbow + 1, y = 50,
-      label = 'Elbow=6', vjust = -1, size = 8))
+      label = paste("Elbow=",elbow), vjust = -1, size = 8))
 
 bi <- biplot(p,x="PC3",y="PC1",
     lab = p$metadata$experiment,
@@ -1171,19 +1245,19 @@ gcounts2 <- ggplot(all_counts, aes(x = condition, y = count, fill=Gene)) +
   scale_y_continuous(trans = "log2")
 
 
-gcounts3 <- ggplot(all_counts[all_counts$Gene=="CA9",], aes(x = genotype, y = count, fill=treatment, color=treatment)) +
-  geom_boxplot(color="black") +
-  geom_point(shape=21,color="black",aes(fill=treatment),position=position_dodge(width=0.75), alpha=1) +
-  scale_fill_manual(values=cols[c(1,5)]) +
+gcounts3 <- ggplot(all_counts[all_counts$Gene=="CA9",], aes(x = condition, y = count, fill=treatment, color=treatment)) +
+  geom_boxplot(color="black", outliers = FALSE) +
+  geom_point(shape=21,color="black",aes(fill=experiment),position=position_dodge(width=0.75), alpha=1) +
+  scale_fill_manual(values=c(cols[c(1,5)],viridis(4))) +
   scale_color_manual(values=cols[c(1,5)]) +
   scale_y_continuous(trans = "log2") +
   labs(title = "CA9")
 gcounts3
 
-gcounts4 <- ggplot(all_counts[all_counts$Gene=="EPO",], aes(x = genotype, y = count, fill=treatment, color=treatment)) +
+gcounts4 <- ggplot(all_counts[all_counts$Gene=="EPO",], aes(x = condition, y = count, fill=treatment, color=treatment)) +
   geom_boxplot(color="black") +
-  geom_point(shape=21,color="black",aes(fill=treatment),position=position_dodge(width=0.75), alpha=1) +
-  scale_fill_manual(values=cols[c(1,5)]) +
+  geom_point(shape=21,color="black",aes(fill=experiment),position=position_dodge(width=0.75), alpha=1) +
+  scale_fill_manual(values=c(cols[c(1,5)],viridis(4))) +
   scale_color_manual(values=cols[c(1,5)]) +
   scale_y_continuous(trans = "log2") +
   labs(title = "EPO")

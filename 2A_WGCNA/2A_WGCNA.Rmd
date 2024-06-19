@@ -90,7 +90,7 @@ allowWGCNAThreads(nThreads = 40)
 # 1. WGCNA
 ## -load dds
 ```{r load_dds, out.width="100%",fig.width=12, eval=TRUE, include=FALSE, echo=FALSE}
-load(file=paste(data,"deseq2_experiment.dds", sep="/"))
+load(file=paste(data,"deseq2.dds", sep="/"))
 # s75 <- (nrow(colData(dds))*0.75) %>% round()
 # gc <- nrow(colData(dds))/ (levels(colData(dds)$condition) %>% length())
 # dds75 <- dds[rowSums(counts(dds) >= gc) >= s75,]
@@ -245,7 +245,7 @@ bwnet <- blockwiseModules(norm.counts,
                           verbose = 3)
 cor <- temp_cor
 
-save(bwnet,file=paste(data,"bwnet_TS.RDS", sep="/"))
+# save(bwnet,file=paste(data,"bwnet_TS.RDS", sep="/"))
 
 ```
 
@@ -541,7 +541,7 @@ colData(dds)$tmp <- module.cols[,i]
 names(colData(dds))[names(colData(dds)) == 'tmp'] <- i
 }
 
-save(dds, file=paste(data,"deseq2_experiment_wgcna.dds", sep="/"))
+# save(dds, file=paste(data,"deseq2_experiment_wgcna.dds", sep="/"))
 
 ```
 
