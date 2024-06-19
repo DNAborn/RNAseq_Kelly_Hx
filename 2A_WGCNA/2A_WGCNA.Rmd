@@ -91,20 +91,8 @@ allowWGCNAThreads(nThreads = 40)
 ## -load dds
 ```{r load_dds, out.width="100%",fig.width=12, eval=TRUE, include=FALSE, echo=FALSE}
 load(file=paste(data,"deseq2.dds", sep="/"))
-# s75 <- (nrow(colData(dds))*0.75) %>% round()
-# gc <- nrow(colData(dds))/ (levels(colData(dds)$condition) %>% length())
-# dds75 <- dds[rowSums(counts(dds) >= gc) >= s75,]
-sample.number <- nrow(colData(dds)) / colData(dds)$genotype %>% levels() %>% length()
-keep.sn <- rowSums(counts(dds)) >= sample.number
-keep.sn %>% summary()
-dds <- dds[keep.sn,]
-# nrow(dds75) # 16268 genes left
 
 vsd <- vst(dds, blind = FALSE) #transform while accounting for design 
-# counts <- counts(dds, normalized=TRUE)
-# mcols(dds)$SYMBOL %>% head()
-# input_mat = t(counts)
-# input_mat[1:10,1:10]
 
 colData <- colData(dds)
 norm.counts <- assay(vsd) %>% 
@@ -151,7 +139,7 @@ g
 
 ## (-pickSoftThreshold extern)
 ```{r pickSoftThreshold_ext, eval=FALSE, include=FALSE}
-power <- c(c(1:10), seq(from = 12, to = 50, by = 2))
+power <- c(seq(from = 1, to = 25, by = 2),26:29,seq(from = 30, to = 50, by = 2))
 # Run in R Script
 cat('sft <- pickSoftThreshold(norm.counts,powerVector = power,verbose = 5,networkType = "signed")' ,file = paste(wdir,"pickSoftThreshold.R", sep="/"))
 source(file=paste(wdir,"pickSoftThreshold.R",sep="/"), local = knitr::knit_global())
@@ -159,11 +147,11 @@ source(file=paste(wdir,"pickSoftThreshold.R",sep="/"), local = knitr::knit_globa
 ```
 
 ## -pickSoftThreshold
-```{r pickSoftThreshold, eval=TRUE, include=TRUE, echo=FALSE}
+```{r pickSoftThreshold, eval=FALSE, include=TRUE, echo=FALSE}
 
 # Choose a set of soft-thresholding powers
 
-power <- c(c(1:10), seq(from = 12, to = 24, by = 2),25,seq(from = 26, to = 50, by = 2))
+power <- c(seq(from = 1, to = 25, by = 2),26:29,seq(from = 30, to = 50, by = 2))
 
 sft <- pickSoftThreshold(norm.counts,
                          powerVector = power,
@@ -188,8 +176,8 @@ a2 <- ggplot(sft.data, aes(Power, mean.k., label = Power)) +
   theme_classic()
 
 grid.arrange(a1, a2, nrow = 2)
-sft.data[18:19,]
-# power 26
+sft.data[13:18,]
+# power 28
 
 ```
 
@@ -199,7 +187,7 @@ sft.data[18:19,]
 # convert matrix to numeric
 norm.counts[] <- sapply(norm.counts, as.numeric)
 
-soft_power <- 26
+soft_power <- 28
 temp_cor <- cor
 cor <- WGCNA::cor
 
@@ -251,7 +239,7 @@ cor <- temp_cor
 
 ## -Module Eigengenes 
 ```{r eigengenes, fig.width=12, out.width="100%"}
-load(file=paste(data,"bwnet_TS.RDS", sep="/"))
+# load(file=paste(data,"bwnet_TS.RDS", sep="/"))
 
 module_eigengenes <- bwnet$MEs
 
@@ -335,6 +323,13 @@ module.gene.mapping <- as.data.frame(bwnet$colors)
 # module.gene.mapping %>% 
 #  dplyr::filter(`bwnet$colors` == 'turquoise') %>% 
 #  rownames() %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
+modules_cor <- abs(module.trait.corr)
+
+trait.col.Hx <- modules_cor[order(modules_cor[,"Hypoxia"], decreasing = TRUE),"Hypoxia"]
+trait.col.HIF1A_Hx <- modules_cor[order(modules_cor[,"HIF1A_Hx"], decreasing = TRUE),"HIF1A_Hx"]
+trait.col.HIF2A_Hx <- modules_cor[order(modules_cor[,"HIF2A_Hx"], decreasing = TRUE),"HIF2A_Hx"]
+trait.col.HIF1B_Hx <- modules_cor[order(modules_cor[,"HIF1B_Hx"], decreasing = TRUE),"HIF1B_Hx"]
+
 
 ```
 
@@ -388,7 +383,8 @@ MEs0 <- moduleEigengenes(norm.counts, moduleLabelsAutomatic20)$eigengenes
 MEs0 <- orderMEs(MEs0)
 module_order = names(MEs0) %>% gsub("ME","", .)
 
-plotEigengeneNetworks(MEs0, "", marDendro = c(0, 4, 1, 2), marHeatmap = c(3, 
+par(mar=c(2,2,2,2)+.1)
+plotEigengeneNetworks(MEs0, "", marDendro = c(0, 4, 0, 4.5), marHeatmap = c(3, 
     4, 1, 2), cex.lab = 0.8, xLabelsAngle = 90)
 
 # Add treatment names
@@ -418,12 +414,25 @@ mME %>% ggplot(., aes(x=treatment, y=name, fill=value)) +
 ## -GO terms enrichment
 ```{r goa, fig.width=12, fig.height=6, out.width="100%"}
 
+# Choose colors and combine similar colors
+ncols <- colnames(MEs0) %>% length()
+plotEigengeneNetworks(MEs0[-ncols], "", marDendro = c(0, 4, 0, 4.5), marHeatmap = c(3, 
+    4, 1, 2), cex.lab = 0.8, xLabelsAngle = 90)
+table(bwnet$colors)
+
+trait.col.Hx
+trait.col.HIF1A_Hx
+trait.col.HIF2A_Hx
+trait.col.HIF1B_Hx
+
 expr_universe <- rownames(dds)
 
 # Get GO terms of top colors
-modcols <- c("green")
-module_go <- module_df[module_df$colors %in% modcols,] # Hypoxia
+# Hypoxia
+modcols <- names(trait.col.Hx[c(1,3)]) %>% str_remove(pattern="ME")
+module_go <- module_df[module_df$colors %in% modcols,]
 module_go_ens <- module_go$gene_id
+length(module_go_ens)
 go_enrich_test <- enrichGO(gene = module_go_ens,
                       universe = expr_universe,
                       OrgDb = "org.Hs.eg.db", 
@@ -432,11 +441,14 @@ go_enrich_test <- enrichGO(gene = module_go_ens,
                       ont = "BP",
                       pvalueCutoff = 0.1, 
                       qvalueCutoff = 0.5)
-go1 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste(modcols, collapse=" & "))
+go1 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste("Hx:",paste(modcols, collapse=" & ")))
 
-modcols <- c("brown")
-module_go <- module_df[module_df$colors %in% modcols,] # Hypoxia
+
+# Hif1A
+modcols <- names(trait.col.HIF1A_Hx[c(1,3)]) %>% str_remove(pattern="ME")
+module_go <- module_df[module_df$colors %in% modcols,]
 module_go_ens <- module_go$gene_id
+length(module_go_ens)
 go_enrich_test <- enrichGO(gene = module_go_ens,
                       universe = expr_universe,
                       OrgDb = "org.Hs.eg.db", 
@@ -445,11 +457,13 @@ go_enrich_test <- enrichGO(gene = module_go_ens,
                       ont = "BP",
                       pvalueCutoff = 0.1, 
                       qvalueCutoff = 0.5)
-go2 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste(modcols, collapse=" & "))
+go2 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste("Hif1A:",paste(modcols, collapse=" & ")))
 
-modcols <- c("blue")
-module_go <- module_df[module_df$colors %in% modcols,] # Hypoxia
+# HIF2A 
+modcols <- names(trait.col.HIF2A_Hx[c(1,2)]) %>% str_remove(pattern="ME")
+module_go <- module_df[module_df$colors %in% modcols,]
 module_go_ens <- module_go$gene_id
+length(module_go_ens)
 go_enrich_test <- enrichGO(gene = module_go_ens,
                       universe = expr_universe,
                       OrgDb = "org.Hs.eg.db", 
@@ -458,11 +472,13 @@ go_enrich_test <- enrichGO(gene = module_go_ens,
                       ont = "BP",
                       pvalueCutoff = 0.1, 
                       qvalueCutoff = 0.5)
-go3 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste(modcols, collapse=" & "))
+go3 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste("Hif2A:",paste(modcols, collapse=" & ")))
 
-modcols <- c("turquoise")
-module_go <- module_df[module_df$colors %in% modcols,] # Hypoxia
+# Hif1B
+modcols <- names(trait.col.HIF1B_Hx[c(3)]) %>% str_remove(pattern="ME")
+module_go <- module_df[module_df$colors %in% modcols,]
 module_go_ens <- module_go$gene_id
+length(module_go_ens)
 go_enrich_test <- enrichGO(gene = module_go_ens,
                       universe = expr_universe,
                       OrgDb = "org.Hs.eg.db", 
@@ -471,9 +487,10 @@ go_enrich_test <- enrichGO(gene = module_go_ens,
                       ont = "BP",
                       pvalueCutoff = 0.1, 
                       qvalueCutoff = 0.5)
-go4 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste(modcols, collapse=" & "))
 
-(go1 + go2) / (go3 + go4) +plot_layout(guides = "collect", axis_titles="collect")
+go4 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste("Hif1B:",paste(modcols, collapse=" & ")))
+
+(go1 + go2) / (go3 + go4) + plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') 
 
 
 
@@ -495,12 +512,12 @@ head(mydata)
 cormat <- round(cor(mydata),2)
 head(cormat)
 class(cormat)
-melted_cormat <- melt(cormat)
+melted_cormat <- reshape2::melt(cormat)
 head(melted_cormat)
 
 bwnet$MEs %>% class()
 bwnet$MEs %>% data.matrix() %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
-ME.heatmap <- bwnet$MEs %>% data.matrix() %>% melt()
+ME.heatmap <- bwnet$MEs %>% data.matrix() %>% reshape2::melt()
 
 ME.heatmap %>% ggplot(., aes(x=Var2, y=Var1, fill=value)) +
   geom_tile() +
@@ -522,8 +539,8 @@ pheatmap(bwnet$MEs %>% data.matrix())
 # Export into dds
 ```{r export_in_dds, eval=FALSE, include=TRUE, echo=TRUE}
 
-load(file=paste(data,"deseq2_experiment.dds", sep="/"))
-load(file=paste(data,"bwnet_TS.RDS", sep="/"))
+# load(file=paste(data,"deseq2.dds", sep="/"))
+# load(file=paste(data,"bwnet_TS.RDS", sep="/"))
 
 # color per gene
 mcols(dds)$colors <- bwnet$colors[match(mcols(dds)$gene_id, names(bwnet$colors))] %>% 
@@ -541,7 +558,7 @@ colData(dds)$tmp <- module.cols[,i]
 names(colData(dds))[names(colData(dds)) == 'tmp'] <- i
 }
 
-# save(dds, file=paste(data,"deseq2_experiment_wgcna.dds", sep="/"))
+# save(dds, file=paste(data,"deseq2_wgcna.dds", sep="/"))
 
 ```
 

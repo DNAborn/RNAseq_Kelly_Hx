@@ -30,8 +30,8 @@ Kelterborn
 ### -plot sample dist.
 
     ##             Length Class  Mode   
-    ## goodGenes   16268  -none- logical
-    ## goodSamples    88  -none- logical
+    ## goodGenes   23451  -none- logical
+    ## goodSamples    62  -none- logical
     ## allOK           1  -none- logical
 
     ## [1] TRUE
@@ -42,60 +42,13 @@ Kelterborn
 
 ## -pickSoftThreshold
 
-    ## pickSoftThreshold: will use block size 2750.
-    ##  pickSoftThreshold: calculating connectivity for given powers...
-    ##    ..working on genes 1 through 2750 of 16268
-    ##    ..working on genes 2751 through 5500 of 16268
-    ##    ..working on genes 5501 through 8250 of 16268
-    ##    ..working on genes 8251 through 11000 of 16268
-    ##    ..working on genes 11001 through 13750 of 16268
-    ##    ..working on genes 13751 through 16268 of 16268
-    ##    Power SFT.R.sq   slope truncated.R.sq mean.k. median.k. max.k.
-    ## 1      1  0.00640 16.8000          0.931  8140.0   8140.00   8240
-    ## 2      2  0.15500  3.3900          0.824  4880.0   4910.00   5540
-    ## 3      3  0.33300  1.8300          0.886  3250.0   3300.00   4190
-    ## 4      4  0.18800  0.7890          0.838  2320.0   2360.00   3400
-    ## 5      5  0.03790  0.2530          0.764  1740.0   1770.00   2870
-    ## 6      6  0.00269 -0.0554          0.728  1340.0   1360.00   2480
-    ## 7      7  0.07170 -0.2660          0.740  1070.0   1080.00   2180
-    ## 8      8  0.20400 -0.4360          0.781   869.0    864.00   1940
-    ## 9      9  0.32900 -0.5660          0.821   718.0    703.00   1740
-    ## 10    10  0.42700 -0.6760          0.853   602.0    578.00   1580
-    ## 11    12  0.56400 -0.8610          0.896   437.0    403.00   1320
-    ## 12    14  0.64500 -0.9890          0.925   329.0    289.00   1120
-    ## 13    16  0.69300 -1.0900          0.943   255.0    212.00    973
-    ## 14    18  0.72900 -1.1700          0.956   202.0    159.00    851
-    ## 15    20  0.75700 -1.2400          0.968   163.0    121.00    752
-    ## 16    22  0.78300 -1.2800          0.978   133.0     92.60    671
-    ## 17    24  0.79400 -1.3300          0.980   110.0     71.90    602
-    ## 18    25  0.79700 -1.3600          0.979   101.0     63.60    572
-    ## 19    26  0.80300 -1.3800          0.981    92.1     56.40    544
-    ## 20    28  0.81000 -1.4200          0.980    77.9     44.70    494
-    ## 21    30  0.81900 -1.4600          0.981    66.4     35.60    451
-    ## 22    32  0.82800 -1.4800          0.984    57.0     28.70    413
-    ## 23    34  0.83500 -1.5000          0.985    49.3     23.30    379
-    ## 24    36  0.84500 -1.5200          0.988    42.9     19.00    350
-    ## 25    38  0.85300 -1.5400          0.990    37.5     15.60    323
-    ## 26    40  0.86000 -1.5500          0.991    33.0     12.90    300
-    ## 27    42  0.86400 -1.5700          0.990    29.1     10.60    279
-    ## 28    44  0.86800 -1.5800          0.991    25.8      8.84    260
-    ## 29    46  0.86600 -1.6000          0.989    23.0      7.40    242
-    ## 30    48  0.86400 -1.6200          0.986    20.6      6.17    227
-    ## 31    50  0.87100 -1.6200          0.989    18.4      5.16    212
-
-![](Readme_files/figure-gfm/pickSoftThreshold-1.png)<!-- -->
-
-    ##    Power  SFT.R.sq     slope truncated.R.sq   mean.k. median.k.   max.k.
-    ## 18    25 0.7972861 -1.356494      0.9793366 100.54602  63.64718 572.1999
-    ## 19    26 0.8029531 -1.377792      0.9806661  92.11529  56.42164 544.1937
-
 ## -network construction
 
 ``` r
 # convert matrix to numeric
 norm.counts[] <- sapply(norm.counts, as.numeric)
 
-soft_power <- 26
+soft_power <- 28
 temp_cor <- cor
 cor <- WGCNA::cor
 
@@ -157,8 +110,9 @@ bwnet <- blockwiseModules(norm.counts,
     ##  ....detecting modules..
     ##  ....calculating module eigengenes..
     ##  ....checking kME in modules..
-    ##      ..removing 1 genes from module 29 because their KME is too low.
-    ##      ..removing 1 genes from module 42 because their KME is too low.
+    ##      ..removing 1 genes from module 6 because their KME is too low.
+    ##      ..removing 3 genes from module 9 because their KME is too low.
+    ##      ..removing 1 genes from module 23 because their KME is too low.
     ##  ..merging modules that are too close..
     ##      mergeCloseModules: Merging modules whose distance is less than 0.25
     ##        Calculating new MEs...
@@ -166,13 +120,13 @@ bwnet <- blockwiseModules(norm.counts,
 ``` r
 cor <- temp_cor
 
-save(bwnet,file=paste(data,"bwnet_TS.RDS", sep="/"))
+# save(bwnet,file=paste(data,"bwnet_TS.RDS", sep="/"))
 ```
 
 ## -Module Eigengenes
 
 ``` r
-load(file=paste(data,"bwnet_TS.RDS", sep="/"))
+# load(file=paste(data,"bwnet_TS.RDS", sep="/"))
 
 module_eigengenes <- bwnet$MEs
 
@@ -185,11 +139,11 @@ table(bwnet$colors)
 
     ## 
     ##       black        blue       brown        cyan       green greenyellow 
-    ##        1019        2499        2426          76        1510         154 
+    ##         290        3506        3477          50        1914         126 
     ##        grey     magenta        pink      purple         red      salmon 
-    ##         450         496         962         177        1022         131 
+    ##        2685         272         273         135         668         117 
     ##         tan   turquoise      yellow 
-    ##         141        3124        2081
+    ##         121        6733        3084
 
 ``` r
 # Plot the dendrogram and the module colors before and after merging underneath
@@ -275,6 +229,12 @@ module.gene.mapping <- as.data.frame(bwnet$colors)
 # module.gene.mapping %>% 
 #  dplyr::filter(`bwnet$colors` == 'turquoise') %>% 
 #  rownames() %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
+modules_cor <- abs(module.trait.corr)
+
+trait.col.Hx <- modules_cor[order(modules_cor[,"Hypoxia"], decreasing = TRUE),"Hypoxia"]
+trait.col.HIF1A_Hx <- modules_cor[order(modules_cor[,"HIF1A_Hx"], decreasing = TRUE),"HIF1A_Hx"]
+trait.col.HIF2A_Hx <- modules_cor[order(modules_cor[,"HIF2A_Hx"], decreasing = TRUE),"HIF2A_Hx"]
+trait.col.HIF1B_Hx <- modules_cor[order(modules_cor[,"HIF1B_Hx"], decreasing = TRUE),"HIF1B_Hx"]
 ```
 
 ## -Intramodular analysis: Identifying driver genes
@@ -321,7 +281,7 @@ ENSG00000001461
 ENSG00000001497
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-ENSG00000001617
+ENSG00000001561
 </th>
 </tr>
 </thead>
@@ -331,209 +291,34 @@ ENSG00000001617
 MEbrown
 </td>
 <td style="text-align:right;">
--0.2548163
+-0.4756069
 </td>
 <td style="text-align:right;">
-0.3835913
+0.7332664
 </td>
 <td style="text-align:right;">
--0.7964666
+0.1185630
 </td>
 <td style="text-align:right;">
-0.9328351
+-0.1332228
 </td>
 <td style="text-align:right;">
-0.5130433
+0.4612033
 </td>
 <td style="text-align:right;">
-0.6542792
+0.5343858
 </td>
 <td style="text-align:right;">
--0.2781453
+-0.4457856
 </td>
 <td style="text-align:right;">
--0.8718433
+-0.2162283
 </td>
 <td style="text-align:right;">
-0.8947011
+-0.2950493
 </td>
 <td style="text-align:right;">
--0.1471881
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-MEgreen
-</td>
-<td style="text-align:right;">
--0.4786721
-</td>
-<td style="text-align:right;">
-0.8533198
-</td>
-<td style="text-align:right;">
--0.4799353
-</td>
-<td style="text-align:right;">
-0.5795083
-</td>
-<td style="text-align:right;">
-0.7074275
-</td>
-<td style="text-align:right;">
-0.7822774
-</td>
-<td style="text-align:right;">
--0.5503786
-</td>
-<td style="text-align:right;">
--0.7567056
-</td>
-<td style="text-align:right;">
-0.4096604
-</td>
-<td style="text-align:right;">
--0.3875060
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-MEsalmon
-</td>
-<td style="text-align:right;">
-0.6786161
-</td>
-<td style="text-align:right;">
--0.1598559
-</td>
-<td style="text-align:right;">
-0.3695897
-</td>
-<td style="text-align:right;">
--0.1072858
-</td>
-<td style="text-align:right;">
--0.2279364
-</td>
-<td style="text-align:right;">
--0.5420069
-</td>
-<td style="text-align:right;">
-0.0499154
-</td>
-<td style="text-align:right;">
-0.2344174
-</td>
-<td style="text-align:right;">
--0.3685222
-</td>
-<td style="text-align:right;">
-0.0636799
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-MEpink
-</td>
-<td style="text-align:right;">
-0.6536159
-</td>
-<td style="text-align:right;">
--0.7876569
-</td>
-<td style="text-align:right;">
-0.2664018
-</td>
-<td style="text-align:right;">
--0.2162103
-</td>
-<td style="text-align:right;">
--0.6413139
-</td>
-<td style="text-align:right;">
--0.7623657
-</td>
-<td style="text-align:right;">
-0.5163500
-</td>
-<td style="text-align:right;">
-0.4716704
-</td>
-<td style="text-align:right;">
--0.1160821
-</td>
-<td style="text-align:right;">
-0.3402889
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-MEturquoise
-</td>
-<td style="text-align:right;">
-0.2674448
-</td>
-<td style="text-align:right;">
--0.2728222
-</td>
-<td style="text-align:right;">
--0.5563340
-</td>
-<td style="text-align:right;">
-0.7093303
-</td>
-<td style="text-align:right;">
--0.0208291
-</td>
-<td style="text-align:right;">
-0.0162399
-</td>
-<td style="text-align:right;">
-0.1436616
-</td>
-<td style="text-align:right;">
--0.4520571
-</td>
-<td style="text-align:right;">
-0.7673475
-</td>
-<td style="text-align:right;">
-0.1439595
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-MEblack
-</td>
-<td style="text-align:right;">
--0.3343860
-</td>
-<td style="text-align:right;">
-0.7012574
-</td>
-<td style="text-align:right;">
-0.2821298
-</td>
-<td style="text-align:right;">
--0.2218551
-</td>
-<td style="text-align:right;">
-0.2983879
-</td>
-<td style="text-align:right;">
-0.3783966
-</td>
-<td style="text-align:right;">
--0.3347173
-</td>
-<td style="text-align:right;">
--0.1310596
-</td>
-<td style="text-align:right;">
--0.4155377
-</td>
-<td style="text-align:right;">
--0.4931315
+-0.0868401
 </td>
 </tr>
 <tr>
@@ -541,104 +326,209 @@ MEblack
 MEred
 </td>
 <td style="text-align:right;">
--0.5373699
+0.0479424
 </td>
 <td style="text-align:right;">
-0.3541931
+-0.1806676
 </td>
 <td style="text-align:right;">
-0.1908512
+0.1409011
 </td>
 <td style="text-align:right;">
--0.4405965
+-0.4650630
 </td>
 <td style="text-align:right;">
-0.2413935
+0.1969480
 </td>
 <td style="text-align:right;">
-0.3167674
+-0.3894489
 </td>
 <td style="text-align:right;">
--0.2990997
+-0.4073297
 </td>
 <td style="text-align:right;">
-0.2349852
+0.7342237
 </td>
 <td style="text-align:right;">
--0.4046701
+-0.4147932
 </td>
 <td style="text-align:right;">
--0.0590650
+0.1223559
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-MEpurple
+MEsalmon
 </td>
 <td style="text-align:right;">
-0.1988043
+-0.2309730
 </td>
 <td style="text-align:right;">
--0.0976320
+0.4690880
 </td>
 <td style="text-align:right;">
-0.6615223
+-0.3288617
 </td>
 <td style="text-align:right;">
--0.4716665
+0.1688205
 </td>
 <td style="text-align:right;">
--0.6735426
+0.8457085
 </td>
 <td style="text-align:right;">
--0.1922573
+0.2439683
 </td>
 <td style="text-align:right;">
-0.5835958
+-0.8319730
 </td>
 <td style="text-align:right;">
-0.0843186
+0.0081070
 </td>
 <td style="text-align:right;">
--0.5384024
+0.0472279
 </td>
 <td style="text-align:right;">
--0.6913231
+0.2272272
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-MEblue
+MEblack
 </td>
 <td style="text-align:right;">
-0.0208187
+0.5987000
 </td>
 <td style="text-align:right;">
--0.0514062
+-0.0229694
 </td>
 <td style="text-align:right;">
-0.7928315
+0.3874594
 </td>
 <td style="text-align:right;">
--0.8853670
+-0.1078282
 </td>
 <td style="text-align:right;">
--0.3571309
+-0.1321624
 </td>
 <td style="text-align:right;">
--0.3452664
+-0.4531916
 </td>
 <td style="text-align:right;">
-0.1699360
+-0.0756165
 </td>
 <td style="text-align:right;">
-0.6555042
+0.1851441
 </td>
 <td style="text-align:right;">
--0.9109243
+-0.4348235
 </td>
 <td style="text-align:right;">
--0.1383717
+0.0278380
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MEgreenyellow
+</td>
+<td style="text-align:right;">
+0.1554303
+</td>
+<td style="text-align:right;">
+-0.0348145
+</td>
+<td style="text-align:right;">
+0.6830841
+</td>
+<td style="text-align:right;">
+-0.4891002
+</td>
+<td style="text-align:right;">
+-0.6205075
+</td>
+<td style="text-align:right;">
+-0.1425591
+</td>
+<td style="text-align:right;">
+0.5430558
+</td>
+<td style="text-align:right;">
+0.0565735
+</td>
+<td style="text-align:right;">
+-0.5501163
+</td>
+<td style="text-align:right;">
+-0.4527260
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MEturquoise
+</td>
+<td style="text-align:right;">
+0.0617329
+</td>
+<td style="text-align:right;">
+-0.1196818
+</td>
+<td style="text-align:right;">
+0.7716219
+</td>
+<td style="text-align:right;">
+-0.9202984
+</td>
+<td style="text-align:right;">
+-0.3975610
+</td>
+<td style="text-align:right;">
+-0.4049086
+</td>
+<td style="text-align:right;">
+0.1407009
+</td>
+<td style="text-align:right;">
+0.7351155
+</td>
+<td style="text-align:right;">
+-0.8987440
+</td>
+<td style="text-align:right;">
+-0.2320198
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MEcyan
+</td>
+<td style="text-align:right;">
+-0.4951188
+</td>
+<td style="text-align:right;">
+0.1463442
+</td>
+<td style="text-align:right;">
+-0.5361234
+</td>
+<td style="text-align:right;">
+0.5931743
+</td>
+<td style="text-align:right;">
+0.3181586
+</td>
+<td style="text-align:right;">
+0.5995816
+</td>
+<td style="text-align:right;">
+-0.0993158
+</td>
+<td style="text-align:right;">
+-0.6330579
+</td>
+<td style="text-align:right;">
+0.6921200
+</td>
+<td style="text-align:right;">
+0.4107608
 </td>
 </tr>
 <tr>
@@ -646,34 +536,104 @@ MEblue
 MEyellow
 </td>
 <td style="text-align:right;">
-0.3415250
+-0.3495257
 </td>
 <td style="text-align:right;">
--0.6022128
+0.5372756
 </td>
 <td style="text-align:right;">
-0.6801317
+-0.7141764
 </td>
 <td style="text-align:right;">
--0.8508983
+0.8718023
 </td>
 <td style="text-align:right;">
--0.5593854
+0.6275023
 </td>
 <td style="text-align:right;">
--0.7636993
+0.7194011
 </td>
 <td style="text-align:right;">
-0.3353450
+-0.3243628
 </td>
 <td style="text-align:right;">
-0.9423342
+-0.9065709
 </td>
 <td style="text-align:right;">
--0.7505036
+0.7634801
 </td>
 <td style="text-align:right;">
-0.3591655
+0.1671509
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MEblue
+</td>
+<td style="text-align:right;">
+0.1635009
+</td>
+<td style="text-align:right;">
+-0.2960081
+</td>
+<td style="text-align:right;">
+-0.6187105
+</td>
+<td style="text-align:right;">
+0.7318138
+</td>
+<td style="text-align:right;">
+0.0007076
+</td>
+<td style="text-align:right;">
+0.0523237
+</td>
+<td style="text-align:right;">
+0.1826301
+</td>
+<td style="text-align:right;">
+-0.4455986
+</td>
+<td style="text-align:right;">
+0.8266009
+</td>
+<td style="text-align:right;">
+0.1773062
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MEtan
+</td>
+<td style="text-align:right;">
+-0.0860964
+</td>
+<td style="text-align:right;">
+-0.1375955
+</td>
+<td style="text-align:right;">
+-0.7025580
+</td>
+<td style="text-align:right;">
+0.5136805
+</td>
+<td style="text-align:right;">
+0.5104660
+</td>
+<td style="text-align:right;">
+0.0711204
+</td>
+<td style="text-align:right;">
+-0.4133775
+</td>
+<td style="text-align:right;">
+-0.0489963
+</td>
+<td style="text-align:right;">
+0.6112291
+</td>
+<td style="text-align:right;">
+0.4235157
 </td>
 </tr>
 </tbody>
@@ -720,7 +680,7 @@ ENSG00000001461
 ENSG00000001497
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-ENSG00000001617
+ENSG00000001561
 </th>
 </tr>
 </thead>
@@ -730,209 +690,34 @@ ENSG00000001617
 MEbrown
 </td>
 <td style="text-align:right;">
-0.0165794
-</td>
-<td style="text-align:right;">
-0.0002250
+0.0000936
 </td>
 <td style="text-align:right;">
 0.0000000
 </td>
 <td style="text-align:right;">
-0.0000000
+0.3587186
 </td>
 <td style="text-align:right;">
-0.0000003
+0.3019508
 </td>
 <td style="text-align:right;">
-0.0000000
+0.0001615
 </td>
 <td style="text-align:right;">
-0.0086924
+0.0000077
 </td>
 <td style="text-align:right;">
-0.0000000
+0.0002822
 </td>
 <td style="text-align:right;">
-0.0000000
+0.0914174
 </td>
 <td style="text-align:right;">
-0.1711647
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-MEgreen
+0.0199106
 </td>
 <td style="text-align:right;">
-0.0000024
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0000022
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0000739
-</td>
-<td style="text-align:right;">
-0.0001915
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-MEsalmon
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.1368235
-</td>
-<td style="text-align:right;">
-0.0003944
-</td>
-<td style="text-align:right;">
-0.3197777
-</td>
-<td style="text-align:right;">
-0.0326907
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.6441952
-</td>
-<td style="text-align:right;">
-0.0279266
-</td>
-<td style="text-align:right;">
-0.0004112
-</td>
-<td style="text-align:right;">
-0.5555741
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-MEpink
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0121124
-</td>
-<td style="text-align:right;">
-0.0430494
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0000003
-</td>
-<td style="text-align:right;">
-0.0000035
-</td>
-<td style="text-align:right;">
-0.2814702
-</td>
-<td style="text-align:right;">
-0.0011789
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-MEturquoise
-</td>
-<td style="text-align:right;">
-0.0117672
-</td>
-<td style="text-align:right;">
-0.0101204
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.8472558
-</td>
-<td style="text-align:right;">
-0.8806263
-</td>
-<td style="text-align:right;">
-0.1817669
-</td>
-<td style="text-align:right;">
-0.0000098
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.1808534
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-MEblack
-</td>
-<td style="text-align:right;">
-0.0014518
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0077424
-</td>
-<td style="text-align:right;">
-0.0377654
-</td>
-<td style="text-align:right;">
-0.0047468
-</td>
-<td style="text-align:right;">
-0.0002779
-</td>
-<td style="text-align:right;">
-0.0014351
-</td>
-<td style="text-align:right;">
-0.2235558
-</td>
-<td style="text-align:right;">
-0.0000567
-</td>
-<td style="text-align:right;">
-0.0000011
+0.5021353
 </td>
 </tr>
 <tr>
@@ -940,95 +725,150 @@ MEblack
 MEred
 </td>
 <td style="text-align:right;">
-0.0000001
+0.7113604
 </td>
 <td style="text-align:right;">
-0.0007103
+0.1599556
 </td>
 <td style="text-align:right;">
-0.0748872
+0.2746844
 </td>
 <td style="text-align:right;">
-0.0000174
+0.0001399
 </td>
 <td style="text-align:right;">
-0.0234691
+0.1249606
 </td>
 <td style="text-align:right;">
-0.0026393
+0.0017562
 </td>
 <td style="text-align:right;">
-0.0046432
+0.0010170
 </td>
 <td style="text-align:right;">
-0.0275387
+0.0000000
 </td>
 <td style="text-align:right;">
-0.0000921
+0.0008023
 </td>
 <td style="text-align:right;">
-0.5846303
+0.3434400
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-MEpurple
+MEsalmon
 </td>
 <td style="text-align:right;">
-0.0633304
+0.0708903
 </td>
 <td style="text-align:right;">
-0.3654981
+0.0001202
 </td>
 <td style="text-align:right;">
-0.0000000
+0.0090598
 </td>
 <td style="text-align:right;">
-0.0000035
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0727291
+0.1896286
 </td>
 <td style="text-align:right;">
 0.0000000
 </td>
 <td style="text-align:right;">
-0.4347667
+0.0560177
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.9501357
+</td>
+<td style="text-align:right;">
+0.7154785
+</td>
+<td style="text-align:right;">
+0.0757181
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MEblack
+</td>
+<td style="text-align:right;">
+0.0000003
+</td>
+<td style="text-align:right;">
+0.8593480
+</td>
+<td style="text-align:right;">
+0.0018628
+</td>
+<td style="text-align:right;">
+0.4041699
+</td>
+<td style="text-align:right;">
+0.3058495
+</td>
+<td style="text-align:right;">
+0.0002166
+</td>
+<td style="text-align:right;">
+0.5591361
+</td>
+<td style="text-align:right;">
+0.1496846
+</td>
+<td style="text-align:right;">
+0.0004131
+</td>
+<td style="text-align:right;">
+0.8299412
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MEgreenyellow
+</td>
+<td style="text-align:right;">
+0.2277019
+</td>
+<td style="text-align:right;">
+0.7882127
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0000549
 </td>
 <td style="text-align:right;">
 0.0000001
 </td>
 <td style="text-align:right;">
-0.0000000
+0.2690191
+</td>
+<td style="text-align:right;">
+0.0000051
+</td>
+<td style="text-align:right;">
+0.6622968
+</td>
+<td style="text-align:right;">
+0.0000036
+</td>
+<td style="text-align:right;">
+0.0002203
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-MEblue
+MEturquoise
 </td>
 <td style="text-align:right;">
-0.8473312
+0.6336126
 </td>
 <td style="text-align:right;">
-0.6343220
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0006363
-</td>
-<td style="text-align:right;">
-0.0009859
-</td>
-<td style="text-align:right;">
-0.1134480
+0.3541689
 </td>
 <td style="text-align:right;">
 0.0000000
@@ -1037,7 +877,57 @@ MEblue
 0.0000000
 </td>
 <td style="text-align:right;">
-0.1985560
+0.0013758
+</td>
+<td style="text-align:right;">
+0.0010970
+</td>
+<td style="text-align:right;">
+0.2753739
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0695860
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MEcyan
+</td>
+<td style="text-align:right;">
+0.0000429
+</td>
+<td style="text-align:right;">
+0.2563803
+</td>
+<td style="text-align:right;">
+0.0000071
+</td>
+<td style="text-align:right;">
+0.0000004
+</td>
+<td style="text-align:right;">
+0.0117336
+</td>
+<td style="text-align:right;">
+0.0000003
+</td>
+<td style="text-align:right;">
+0.4424871
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0009126
 </td>
 </tr>
 <tr>
@@ -1045,7 +935,10 @@ MEblue
 MEyellow
 </td>
 <td style="text-align:right;">
-0.0011280
+0.0053598
+</td>
+<td style="text-align:right;">
+0.0000067
 </td>
 <td style="text-align:right;">
 0.0000000
@@ -1060,10 +953,7 @@ MEyellow
 0.0000000
 </td>
 <td style="text-align:right;">
-0.0000000
-</td>
-<td style="text-align:right;">
-0.0014039
+0.0101111
 </td>
 <td style="text-align:right;">
 0.0000000
@@ -1072,7 +962,77 @@ MEyellow
 0.0000000
 </td>
 <td style="text-align:right;">
-0.0005892
+0.1941089
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MEblue
+</td>
+<td style="text-align:right;">
+0.2041658
+</td>
+<td style="text-align:right;">
+0.0194938
+</td>
+<td style="text-align:right;">
+0.0000001
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.9956448
+</td>
+<td style="text-align:right;">
+0.6862942
+</td>
+<td style="text-align:right;">
+0.1553908
+</td>
+<td style="text-align:right;">
+0.0002841
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.1680030
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+MEtan
+</td>
+<td style="text-align:right;">
+0.5058173
+</td>
+<td style="text-align:right;">
+0.2862151
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+0.0000196
+</td>
+<td style="text-align:right;">
+0.0000225
+</td>
+<td style="text-align:right;">
+0.5827980
+</td>
+<td style="text-align:right;">
+0.0008396
+</td>
+<td style="text-align:right;">
+0.7053019
+</td>
+<td style="text-align:right;">
+0.0000001
+</td>
+<td style="text-align:right;">
+0.0006039
 </td>
 </tr>
 </tbody>
@@ -1104,7 +1064,7 @@ gene.hypoxia.corr %>% head() %>% kable() %>% kable_styling("striped", full_width
 ENSG00000000003
 </td>
 <td style="text-align:right;">
-0.1802528
+0.1808813
 </td>
 </tr>
 <tr>
@@ -1112,7 +1072,7 @@ ENSG00000000003
 ENSG00000000419
 </td>
 <td style="text-align:right;">
--0.3779426
+-0.3233918
 </td>
 </tr>
 <tr>
@@ -1120,7 +1080,7 @@ ENSG00000000419
 ENSG00000000457
 </td>
 <td style="text-align:right;">
-0.5622608
+0.5310463
 </td>
 </tr>
 <tr>
@@ -1128,7 +1088,7 @@ ENSG00000000457
 ENSG00000000460
 </td>
 <td style="text-align:right;">
--0.7735153
+-0.7443804
 </td>
 </tr>
 <tr>
@@ -1136,7 +1096,7 @@ ENSG00000000460
 ENSG00000001084
 </td>
 <td style="text-align:right;">
--0.3086314
+-0.3281154
 </td>
 </tr>
 <tr>
@@ -1144,7 +1104,7 @@ ENSG00000001084
 ENSG00000001167
 </td>
 <td style="text-align:right;">
--0.5921564
+-0.5500371
 </td>
 </tr>
 </tbody>
@@ -1178,18 +1138,26 @@ V1
 <tbody>
 <tr>
 <td style="text-align:left;">
-ENSG00000114268
+ENSG00000185633
 </td>
 <td style="text-align:right;">
-63.19177
+44.43094
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-ENSG00000185633
+ENSG00000114268
 </td>
 <td style="text-align:right;">
-63.01567
+42.84945
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ENSG00000135100
+</td>
+<td style="text-align:right;">
+40.43249
 </td>
 </tr>
 <tr>
@@ -1197,7 +1165,7 @@ ENSG00000185633
 ENSG00000186918
 </td>
 <td style="text-align:right;">
-58.83606
+39.11250
 </td>
 </tr>
 <tr>
@@ -1205,7 +1173,7 @@ ENSG00000186918
 ENSG00000148926
 </td>
 <td style="text-align:right;">
-56.50996
+37.37160
 </td>
 </tr>
 <tr>
@@ -1213,7 +1181,7 @@ ENSG00000148926
 ENSG00000134107
 </td>
 <td style="text-align:right;">
-55.12680
+36.83632
 </td>
 </tr>
 <tr>
@@ -1221,7 +1189,7 @@ ENSG00000134107
 ENSG00000196968
 </td>
 <td style="text-align:right;">
-53.48278
+36.08591
 </td>
 </tr>
 <tr>
@@ -1229,7 +1197,7 @@ ENSG00000196968
 ENSG00000182379
 </td>
 <td style="text-align:right;">
-53.36257
+35.71899
 </td>
 </tr>
 <tr>
@@ -1237,23 +1205,15 @@ ENSG00000182379
 ENSG00000122884
 </td>
 <td style="text-align:right;">
-53.09573
+35.67005
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-ENSG00000107819
+ENSG00000121966
 </td>
 <td style="text-align:right;">
-51.79683
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-ENSG00000112715
-</td>
-<td style="text-align:right;">
-51.27317
+34.92876
 </td>
 </tr>
 </tbody>
@@ -1282,13 +1242,13 @@ module_df <- data.frame(
 length(moduleLabelsAutomatic20)
 ```
 
-    ## [1] 16268
+    ## [1] 23451
 
 ``` r
 ncol(norm.counts)
 ```
 
-    ## [1] 16268
+    ## [1] 23451
 
 ``` r
 MEs0 <- moduleEigengenes(norm.counts, moduleLabelsAutomatic20)$eigengenes
@@ -1297,7 +1257,8 @@ MEs0 <- moduleEigengenes(norm.counts, moduleLabelsAutomatic20)$eigengenes
 MEs0 <- orderMEs(MEs0)
 module_order = names(MEs0) %>% gsub("ME","", .)
 
-plotEigengeneNetworks(MEs0, "", marDendro = c(0, 4, 1, 2), marHeatmap = c(3, 
+par(mar=c(2,2,2,2)+.1)
+plotEigengeneNetworks(MEs0, "", marDendro = c(0, 4, 0, 4.5), marHeatmap = c(3, 
     4, 1, 2), cex.lab = 0.8, xLabelsAngle = 90)
 
 # Add treatment names
@@ -1328,65 +1289,160 @@ mME %>% ggplot(., aes(x=treatment, y=name, fill=value)) +
 ## -GO terms enrichment
 
 ``` r
-expr_universe <- rownames(dds)
-
-# Get GO terms of top colors
-modcols <- c("yellow","red")
-module_go <- module_df[module_df$colors %in% modcols,] # Hypoxia
-module_go_ens <- module_go$gene_id
-go_enrich_test <- enrichGO(gene = module_go_ens,
-                      universe = expr_universe,
-                      OrgDb = "org.Hs.eg.db", 
-                      keyType = 'ENSEMBL',
-                      readable = T,
-                      ont = "BP",
-                      pvalueCutoff = 0.1, 
-                      qvalueCutoff = 0.5)
-go1 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste(modcols, collapse=" & "))
-
-modcols <- c("magenta","turquoise","brown")
-module_go <- module_df[module_df$colors %in% modcols,] # Hypoxia
-module_go_ens <- module_go$gene_id
-go_enrich_test <- enrichGO(gene = module_go_ens,
-                      universe = expr_universe,
-                      OrgDb = "org.Hs.eg.db", 
-                      keyType = 'ENSEMBL',
-                      readable = T,
-                      ont = "BP",
-                      pvalueCutoff = 0.1, 
-                      qvalueCutoff = 0.5)
-go2 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste(modcols, collapse=" & "))
-
-modcols <- c("purple","green")
-module_go <- module_df[module_df$colors %in% modcols,] # Hypoxia
-module_go_ens <- module_go$gene_id
-go_enrich_test <- enrichGO(gene = module_go_ens,
-                      universe = expr_universe,
-                      OrgDb = "org.Hs.eg.db", 
-                      keyType = 'ENSEMBL',
-                      readable = T,
-                      ont = "BP",
-                      pvalueCutoff = 0.1, 
-                      qvalueCutoff = 0.5)
-go3 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste(modcols, collapse=" & "))
-
-modcols <- c("pink","blue","black")
-module_go <- module_df[module_df$colors %in% modcols,] # Hypoxia
-module_go_ens <- module_go$gene_id
-go_enrich_test <- enrichGO(gene = module_go_ens,
-                      universe = expr_universe,
-                      OrgDb = "org.Hs.eg.db", 
-                      keyType = 'ENSEMBL',
-                      readable = T,
-                      ont = "BP",
-                      pvalueCutoff = 0.1, 
-                      qvalueCutoff = 0.5)
-go4 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste(modcols, collapse=" & "))
-
-(go1 + go2) / (go3 + go4) +plot_layout(guides = "collect", axis_titles="collect")
+# Choose colors and combine similar colors
+ncols <- colnames(MEs0) %>% length()
+plotEigengeneNetworks(MEs0[-ncols], "", marDendro = c(0, 4, 0, 4.5), marHeatmap = c(3, 
+    4, 1, 2), cex.lab = 0.8, xLabelsAngle = 90)
 ```
 
 <img src="Readme_files/figure-gfm/goa-1.png" width="100%" />
+
+``` r
+table(bwnet$colors)
+```
+
+    ## 
+    ##       black        blue       brown        cyan       green greenyellow 
+    ##         290        3506        3477          50        1914         126 
+    ##        grey     magenta        pink      purple         red      salmon 
+    ##        2685         272         273         135         668         117 
+    ##         tan   turquoise      yellow 
+    ##         121        6733        3084
+
+``` r
+trait.col.Hx
+```
+
+    ##      MEyellow   MEturquoise        MEcyan         MEred        MEblue 
+    ##    0.85085516    0.77302616    0.73388540    0.71789110    0.56088492 
+    ##      MEpurple        MEpink       MEgreen       MEblack        MEgrey 
+    ##    0.51139090    0.50592914    0.45174807    0.31657637    0.13645651 
+    ##         MEtan      MEsalmon     MEmagenta MEgreenyellow       MEbrown 
+    ##    0.10442497    0.09817153    0.06265919    0.05791211    0.05266846
+
+``` r
+trait.col.HIF1A_Hx
+```
+
+    ## MEgreenyellow         MEtan   MEturquoise      MEsalmon      MEyellow 
+    ##    0.77662632    0.76937226    0.64516595    0.59524147    0.57537114 
+    ##        MEblue        MEcyan       MEgreen      MEpurple        MEpink 
+    ##    0.45996864    0.40928451    0.32655164    0.25546994    0.20707563 
+    ##       MEblack         MEred        MEgrey     MEmagenta       MEbrown 
+    ##    0.15239538    0.13848326    0.10387674    0.08889512    0.06870829
+
+``` r
+trait.col.HIF2A_Hx
+```
+
+    ##      MEsalmon         MEred MEgreenyellow         MEtan        MEpink 
+    ##    0.69747851    0.68523539    0.60250580    0.54031874    0.41799586 
+    ##       MEblack     MEmagenta        MEgrey        MEblue       MEgreen 
+    ##    0.23694214    0.22001267    0.19267923    0.16859857    0.13706084 
+    ##       MEbrown   MEturquoise      MEyellow        MEcyan      MEpurple 
+    ##    0.11799390    0.04405011    0.03978918    0.03921413    0.02232732
+
+``` r
+trait.col.HIF1B_Hx
+```
+
+    ##       MEbrown        MEpink         MEtan MEgreenyellow        MEblue 
+    ##    0.47103905    0.45550007    0.37740017    0.37235788    0.36373180 
+    ##       MEgreen     MEmagenta      MEpurple   MEturquoise       MEblack 
+    ##    0.35456946    0.34002535    0.21541960    0.17531606    0.10567732 
+    ##      MEsalmon      MEyellow        MEcyan        MEgrey         MEred 
+    ##    0.10363438    0.08904681    0.07703606    0.03659305    0.03588616
+
+``` r
+expr_universe <- rownames(dds)
+
+# Get GO terms of top colors
+# Hypoxia
+modcols <- names(trait.col.Hx[c(1,3)]) %>% str_remove(pattern="ME")
+module_go <- module_df[module_df$colors %in% modcols,]
+module_go_ens <- module_go$gene_id
+length(module_go_ens)
+```
+
+    ## [1] 6783
+
+``` r
+go_enrich_test <- enrichGO(gene = module_go_ens,
+                      universe = expr_universe,
+                      OrgDb = "org.Hs.eg.db", 
+                      keyType = 'ENSEMBL',
+                      readable = T,
+                      ont = "BP",
+                      pvalueCutoff = 0.1, 
+                      qvalueCutoff = 0.5)
+go1 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste("Hx:",paste(modcols, collapse=" & ")))
+
+
+# Hif1A
+modcols <- names(trait.col.HIF1A_Hx[c(1,3)]) %>% str_remove(pattern="ME")
+module_go <- module_df[module_df$colors %in% modcols,]
+module_go_ens <- module_go$gene_id
+length(module_go_ens)
+```
+
+    ## [1] 958
+
+``` r
+go_enrich_test <- enrichGO(gene = module_go_ens,
+                      universe = expr_universe,
+                      OrgDb = "org.Hs.eg.db", 
+                      keyType = 'ENSEMBL',
+                      readable = T,
+                      ont = "BP",
+                      pvalueCutoff = 0.1, 
+                      qvalueCutoff = 0.5)
+go2 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste("Hif1A:",paste(modcols, collapse=" & ")))
+
+# HIF2A 
+modcols <- names(trait.col.HIF2A_Hx[c(1,2)]) %>% str_remove(pattern="ME")
+module_go <- module_df[module_df$colors %in% modcols,]
+module_go_ens <- module_go$gene_id
+length(module_go_ens)
+```
+
+    ## [1] 247
+
+``` r
+go_enrich_test <- enrichGO(gene = module_go_ens,
+                      universe = expr_universe,
+                      OrgDb = "org.Hs.eg.db", 
+                      keyType = 'ENSEMBL',
+                      readable = T,
+                      ont = "BP",
+                      pvalueCutoff = 0.1, 
+                      qvalueCutoff = 0.5)
+go3 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste("Hif2A:",paste(modcols, collapse=" & ")))
+
+# Hif1B
+modcols <- names(trait.col.HIF1B_Hx[c(3)]) %>% str_remove(pattern="ME")
+module_go <- module_df[module_df$colors %in% modcols,]
+module_go_ens <- module_go$gene_id
+length(module_go_ens)
+```
+
+    ## [1] 117
+
+``` r
+go_enrich_test <- enrichGO(gene = module_go_ens,
+                      universe = expr_universe,
+                      OrgDb = "org.Hs.eg.db", 
+                      keyType = 'ENSEMBL',
+                      readable = T,
+                      ont = "BP",
+                      pvalueCutoff = 0.1, 
+                      qvalueCutoff = 0.5)
+
+go4 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste("Hif1B:",paste(modcols, collapse=" & ")))
+
+(go1 + go2) / (go3 + go4) + plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') 
+```
+
+<img src="Readme_files/figure-gfm/goa-2.png" width="100%" />
 
 ## -module to sample
 
@@ -1401,20 +1457,20 @@ MEs0 %>%
   )
 ```
 
-    ## # A tibble: 1,320 × 3
-    ##    treatment name         value
-    ##    <fct>     <chr>        <dbl>
-    ##  1 Kelly_Nx  brown      0.0704 
-    ##  2 Kelly_Nx  green     -0.00321
-    ##  3 Kelly_Nx  salmon    -0.0397 
-    ##  4 Kelly_Nx  pink       0.0747 
-    ##  5 Kelly_Nx  turquoise  0.131  
-    ##  6 Kelly_Nx  black     -0.108  
-    ##  7 Kelly_Nx  red       -0.124  
-    ##  8 Kelly_Nx  purple    -0.0253 
-    ##  9 Kelly_Nx  blue      -0.113  
-    ## 10 Kelly_Nx  yellow    -0.0507 
-    ## # ℹ 1,310 more rows
+    ## # A tibble: 930 × 3
+    ##    treatment name           value
+    ##    <fct>     <chr>          <dbl>
+    ##  1 HIF1A_Hx  brown       -0.0589 
+    ##  2 HIF1A_Hx  red         -0.00502
+    ##  3 HIF1A_Hx  salmon      -0.179  
+    ##  4 HIF1A_Hx  black       -0.0674 
+    ##  5 HIF1A_Hx  greenyellow  0.207  
+    ##  6 HIF1A_Hx  turquoise    0.202  
+    ##  7 HIF1A_Hx  cyan        -0.143  
+    ##  8 HIF1A_Hx  yellow      -0.232  
+    ##  9 HIF1A_Hx  blue        -0.118  
+    ## 10 HIF1A_Hx  tan         -0.225  
+    ## # ℹ 920 more rows
 
 ``` r
 mydata <- mtcars[, c(1,3,4,5,6,7)]
@@ -1449,7 +1505,7 @@ class(cormat)
     ## [1] "matrix" "array"
 
 ``` r
-melted_cormat <- melt(cormat)
+melted_cormat <- reshape2::melt(cormat)
 head(melted_cormat)
 ```
 
@@ -1482,43 +1538,43 @@ bwnet$MEs %>% data.matrix() %>% head() %>% kable() %>% kable_styling("striped", 
 MEbrown
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-MEgreen
+MEred
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 MEsalmon
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-MEpink
-</th>
-<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-MEturquoise
-</th>
-<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 MEblack
-</th>
-<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-MEred
-</th>
-<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-MEpurple
-</th>
-<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-MEblue
-</th>
-<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-MEyellow
-</th>
-<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-MEtan
-</th>
-<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
-MEcyan
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 MEgreenyellow
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEturquoise
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEcyan
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEyellow
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEblue
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEtan
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEgreen
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEpink
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 MEmagenta
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+MEpurple
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 MEgrey
@@ -1528,302 +1584,302 @@ MEgrey
 <tbody>
 <tr>
 <td style="text-align:left;">
-RNA_P2041_S37
+P2041_HIF1A_Hx_41
 </td>
 <td style="text-align:right;">
-0.0704479
+-0.0588769
 </td>
 <td style="text-align:right;">
--0.0032104
+-0.0050246
 </td>
 <td style="text-align:right;">
--0.0396951
+-0.1793788
 </td>
 <td style="text-align:right;">
-0.0746683
+-0.0673729
 </td>
 <td style="text-align:right;">
-0.1311820
+0.2071257
 </td>
 <td style="text-align:right;">
--0.1078184
+0.2022492
 </td>
 <td style="text-align:right;">
--0.1242764
+-0.1425174
 </td>
 <td style="text-align:right;">
--0.0252541
+-0.2319155
 </td>
 <td style="text-align:right;">
--0.1131964
+-0.1177381
 </td>
 <td style="text-align:right;">
--0.0506865
+-0.2250526
 </td>
 <td style="text-align:right;">
--0.0298488
+0.1890361
 </td>
 <td style="text-align:right;">
-0.0178199
+0.0362147
 </td>
 <td style="text-align:right;">
--0.0559553
+0.0888529
 </td>
 <td style="text-align:right;">
--0.0841484
+0.2203345
 </td>
 <td style="text-align:right;">
-0.0154085
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-RNA_P2041_S38
-</td>
-<td style="text-align:right;">
-0.0935854
-</td>
-<td style="text-align:right;">
-0.0803486
-</td>
-<td style="text-align:right;">
--0.0858448
-</td>
-<td style="text-align:right;">
--0.0583535
-</td>
-<td style="text-align:right;">
-0.0320930
-</td>
-<td style="text-align:right;">
-0.0226513
-</td>
-<td style="text-align:right;">
--0.0158542
-</td>
-<td style="text-align:right;">
--0.0420966
-</td>
-<td style="text-align:right;">
--0.0627371
-</td>
-<td style="text-align:right;">
--0.0923639
-</td>
-<td style="text-align:right;">
-0.0305658
-</td>
-<td style="text-align:right;">
--0.0187309
-</td>
-<td style="text-align:right;">
--0.0041504
-</td>
-<td style="text-align:right;">
--0.0641040
-</td>
-<td style="text-align:right;">
-0.2016300
+0.0211413
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-RNA_P2041_S39
+P2041_HIF1A_Hx_42
 </td>
 <td style="text-align:right;">
-0.1098184
+-0.3755810
 </td>
 <td style="text-align:right;">
--0.0146235
+-0.0001200
 </td>
 <td style="text-align:right;">
--0.0309220
+-0.4345039
 </td>
 <td style="text-align:right;">
-0.0839746
+-0.0137665
 </td>
 <td style="text-align:right;">
-0.1662897
+0.2086495
 </td>
 <td style="text-align:right;">
--0.1046556
+0.1126892
 </td>
 <td style="text-align:right;">
--0.1602565
+-0.0589251
 </td>
 <td style="text-align:right;">
--0.0279465
+-0.3303132
 </td>
 <td style="text-align:right;">
--0.1325435
+0.1328728
 </td>
 <td style="text-align:right;">
--0.0688365
+-0.0996080
 </td>
 <td style="text-align:right;">
-0.0492993
+0.4914245
 </td>
 <td style="text-align:right;">
-0.0078569
+0.2716691
 </td>
 <td style="text-align:right;">
--0.0461766
+0.1787998
 </td>
 <td style="text-align:right;">
--0.1080058
+0.3757486
 </td>
 <td style="text-align:right;">
-0.0394809
+-0.0071314
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-RNA_P2041_S40
+P2041_HIF1A_Nx_40
 </td>
 <td style="text-align:right;">
-0.0986984
+0.0171184
 </td>
 <td style="text-align:right;">
-0.0218010
+-0.1173631
 </td>
 <td style="text-align:right;">
--0.0406139
+-0.0183061
 </td>
 <td style="text-align:right;">
-0.0343487
+-0.0903380
 </td>
 <td style="text-align:right;">
-0.1123585
+0.0223841
 </td>
 <td style="text-align:right;">
--0.0669471
+-0.1168331
 </td>
 <td style="text-align:right;">
--0.1051205
+-0.0147350
 </td>
 <td style="text-align:right;">
--0.0468795
+0.1420606
 </td>
 <td style="text-align:right;">
--0.1065608
+0.0935830
 </td>
 <td style="text-align:right;">
--0.0739194
+-0.0300214
 </td>
 <td style="text-align:right;">
-0.0296701
+-0.0664322
 </td>
 <td style="text-align:right;">
--0.0039843
+-0.0938373
 </td>
 <td style="text-align:right;">
--0.0187718
+0.0194717
 </td>
 <td style="text-align:right;">
--0.0900087
+-0.1244859
 </td>
 <td style="text-align:right;">
-0.0477808
+-0.0064908
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-RNA_P2041_S41
+P2041_HIF1B_Hx_37
 </td>
 <td style="text-align:right;">
-0.0207382
+-0.2316954
 </td>
 <td style="text-align:right;">
--0.1990075
+0.0257686
 </td>
 <td style="text-align:right;">
--0.0392581
+-0.0604992
 </td>
 <td style="text-align:right;">
-0.1469398
+-0.0769422
 </td>
 <td style="text-align:right;">
-0.1368386
+-0.1610370
 </td>
 <td style="text-align:right;">
--0.3083045
+-0.0766611
 </td>
 <td style="text-align:right;">
--0.1075287
+-0.0492745
 </td>
 <td style="text-align:right;">
--0.1255792
+-0.0511419
 </td>
 <td style="text-align:right;">
--0.1268923
+0.1331393
 </td>
 <td style="text-align:right;">
-0.0558872
+0.1686352
 </td>
 <td style="text-align:right;">
-0.1469921
+0.1241018
 </td>
 <td style="text-align:right;">
-0.1629028
+0.1748888
 </td>
 <td style="text-align:right;">
--0.0152721
+0.0946627
 </td>
 <td style="text-align:right;">
-0.0089755
+0.1397560
 </td>
 <td style="text-align:right;">
-0.0057531
+-0.0135798
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-RNA_P2041_S42
+P2041_HIF1B_Hx_43
 </td>
 <td style="text-align:right;">
-0.1054921
+-0.0443394
 </td>
 <td style="text-align:right;">
-0.0779958
+-0.0122201
 </td>
 <td style="text-align:right;">
--0.0708915
+0.0225695
 </td>
 <td style="text-align:right;">
--0.0189553
+-0.0899790
 </td>
 <td style="text-align:right;">
-0.0859868
+-0.1336122
 </td>
 <td style="text-align:right;">
-0.0054402
+-0.0487847
 </td>
 <td style="text-align:right;">
--0.0708119
+0.0416078
 </td>
 <td style="text-align:right;">
--0.0069345
+0.0448130
 </td>
 <td style="text-align:right;">
--0.0897694
+0.0563690
 </td>
 <td style="text-align:right;">
--0.1027825
+0.1010851
 </td>
 <td style="text-align:right;">
-0.0015171
+-0.0113401
 </td>
 <td style="text-align:right;">
--0.0393284
+0.0488853
 </td>
 <td style="text-align:right;">
--0.0298222
+0.0778333
 </td>
 <td style="text-align:right;">
--0.1022959
+-0.0610015
 </td>
 <td style="text-align:right;">
--0.0083317
+0.0640526
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+P2041_HIF1B_Hx_46
+</td>
+<td style="text-align:right;">
+-0.2484717
+</td>
+<td style="text-align:right;">
+0.0441610
+</td>
+<td style="text-align:right;">
+-0.0498844
+</td>
+<td style="text-align:right;">
+0.0040541
+</td>
+<td style="text-align:right;">
+-0.1512806
+</td>
+<td style="text-align:right;">
+-0.0577059
+</td>
+<td style="text-align:right;">
+-0.0359842
+</td>
+<td style="text-align:right;">
+-0.1085308
+</td>
+<td style="text-align:right;">
+0.1659622
+</td>
+<td style="text-align:right;">
+0.1651618
+</td>
+<td style="text-align:right;">
+0.2586351
+</td>
+<td style="text-align:right;">
+0.2851125
+</td>
+<td style="text-align:right;">
+0.1917163
+</td>
+<td style="text-align:right;">
+0.1657407
+</td>
+<td style="text-align:right;">
+-0.0568684
 </td>
 </tr>
 </tbody>
@@ -1832,7 +1888,7 @@ RNA_P2041_S42
 </div>
 
 ``` r
-ME.heatmap <- bwnet$MEs %>% data.matrix() %>% melt()
+ME.heatmap <- bwnet$MEs %>% data.matrix() %>% reshape2::melt()
 
 ME.heatmap %>% ggplot(., aes(x=Var2, y=Var1, fill=value)) +
   geom_tile() +
@@ -1850,7 +1906,7 @@ ME.heatmap %>% ggplot(., aes(x=Var2, y=Var1, fill=value)) +
 ![](Readme_files/figure-gfm/module_sample-1.png)<!-- -->
 
 ``` r
-pheatmap(bwnet$MEs)
+pheatmap(bwnet$MEs %>% data.matrix())
 ```
 
 ![](Readme_files/figure-gfm/module_sample-2.png)<!-- -->
@@ -1858,8 +1914,8 @@ pheatmap(bwnet$MEs)
 # Export into dds
 
 ``` r
-load(file=paste(data,"deseq2.dds", sep="/"))
-load(file=paste(data,"bwnet_TS.RDS", sep="/"))
+# load(file=paste(data,"deseq2.dds", sep="/"))
+# load(file=paste(data,"bwnet_TS.RDS", sep="/"))
 
 # color per gene
 mcols(dds)$colors <- bwnet$colors[match(mcols(dds)$gene_id, names(bwnet$colors))] %>% 
@@ -1877,5 +1933,5 @@ colData(dds)$tmp <- module.cols[,i]
 names(colData(dds))[names(colData(dds)) == 'tmp'] <- i
 }
 
-save(dds, file=paste(data,"deseq2_wgcna.dds", sep="/"))
+# save(dds, file=paste(data,"deseq2_wgcna.dds", sep="/"))
 ```
