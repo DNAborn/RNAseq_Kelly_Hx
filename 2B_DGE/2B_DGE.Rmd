@@ -30,6 +30,7 @@ knitr::opts_chunk$set(echo = T,
 
 ```{r R_update, eval=FALSE, include=FALSE}
 BiocManager::install()
+BiocManager::valid()
 # update.packages(oldPkgs = old.packages())
 BiocManager::install("tsne")
 install.packages("reticulate")
@@ -112,14 +113,14 @@ futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 ## - Load dds
 
 ```{r dds, include=FALSE}
-# load(file=paste(data,"deseq2.dds", sep="/"))
 
 load(file=paste(data,"deseq2_treatment.dds", sep="/"))
 dds_t <- dds
 load(file=paste(data,"deseq2_condition.dds", sep="/"))
 dds_c <- dds
 
-load(file=paste(data,"deseq2_experiment_wgcna.dds", sep="/"))
+# load(file=paste(data,"deseq2_experiment_wgcna.dds", sep="/"))
+load(file=paste(data,"deseq2.dds", sep="/"))
 
 ```
 
@@ -315,6 +316,24 @@ ev_f
 
 ```
 
+```{r volcano_2_test, eval=FALSE}
+
+n <- "Kelly.Hx.vs.Nx"
+list1 <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]]
+list2 <- deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]
+l1.n <- "Hif1a"
+l2.n <- "Hif2a"
+l1.col <- "#1976d2"
+l2.col <- "#239b56"
+lol.col <- "#f8c471"
+xlim <- 10
+ylim <- 400
+lab <- ol_list$a3
+
+```
+
+
+
 ```{r Volcano2, include=FALSE}
 
 ### Volcano2 list ######
@@ -326,7 +345,7 @@ Volcano_SK2 <- function(n,list1,list2,
                         l1.n= "list 1",
                         l2.n= "list 2",
                         xlim=10,
-                        ylim=500,
+                        ylim=300,
                         lab=NULL,
                         ...)
 {
@@ -395,13 +414,15 @@ keyvals[is.na(keyvals)] <- 'grey'
   names(keyvals)[keyvals == lol.col] <- 'overlap'
   names(keyvals)[keyvals == 'grey'] <- 'other'
 
-rownames(res) <- res$symbol
-
 if (is.null(lab)){
   lab <- res[res$isl1 == TRUE | res$isl2 == TRUE,"symbol"]
 } else {
   lab <- res[lab,"symbol"]
 }
+  
+rownames(res) <- res$symbol
+
+
 
 ev_f <- EnhancedVolcano(res,
     x = 'log2FoldChange',
@@ -910,9 +931,8 @@ plotCounts_SK(goi) + ~plotCounts(dds, gene=goi, intgroup = c("experiment"),col=c
 
 ```
 
-# 2. Data Dive
 
-## Colour sheme
+## - Colour sheme
 
 ```{r colors, echo=FALSE}
 
@@ -932,6 +952,40 @@ df <- data.frame(n=c(1:8),
 #   theme_void()
 
 ```
+
+
+
+# 2. Condensed Results
+## 
+```{r}
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 3. Data Dive
+
 
 ## Volcanos
 
@@ -1932,8 +1986,7 @@ list1 <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]]
 list2 <- deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]
 
 ol_list <- calculate.overlap(list(list1,list2))
-labs <- c(setdiff(ol_list[[1]],ol_list[[3]]),
-          setdiff(ol_list[[2]],ol_list[[3]]))
+labs <- ol_list$a3
 
 ev_kelly_ko1 <- Volcano_SK2(n="Kelly.Hx.vs.Nx",
             list1=list1,
@@ -1944,7 +1997,8 @@ ev_kelly_ko1 <- Volcano_SK2(n="Kelly.Hx.vs.Nx",
             l2.col="#239b56",
             lol.col="#f8c471",
             xlim=12,
-            ylim=400)
+            lab=labs
+            )
 
 
 labs <- setdiff(ol_list[[1]],ol_list[[3]])
@@ -1971,8 +2025,10 @@ ev_kelly_ko3 <- Volcano_SK2(n="Hif2aHxNx.vs.KellyHxNx",
             l1.col="#1976d2",
             l2.col="#239b56",
             lol.col="#f8c471",
+            labs=labs,
             xlim=10,
             ylim=300)
+
 
 ev_kelly_ko4 <- Volcano_SK2(n="Hif1bHxNx.vs.KellyHxNx",
             list1=list1,
@@ -1995,9 +2051,14 @@ ev_kelly_ko4 <- Volcano_SK2(n="Hif1bHxNx.vs.KellyHxNx",
 
 #### Volcano KO2 manual
 
-```{r volcano_kos2_maunal, eval=TRUE, include=FALSE}
+```{r volcano_kos2_maunal, eval=FALSE, include=FALSE}
 
 n <- "Kelly.Hx.vs.Nx"
+
+## Hx vs. Nx in Kelly
+r1 <- results(dds, contrast = c(0,0,0,0,0,0,0,1,0,0,0))
+r1$symbol <- mcols(dds)$symbol
+
 list1 <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]]
 list2 <- deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]
 l1.n <- "Hif1a"
@@ -2020,7 +2081,7 @@ ol_list <- calculate.overlap(list(list1,list2))
 # define lists
 res_shrink$isl1 <- rownames(res_shrink) %in% list1
 res_shrink$isl2 <- rownames(res_shrink) %in% list2
-res_shrink$islol <- rownames(res_shrink) %in% list_ol$a3
+res_shrink$islol <- rownames(res_shrink) %in% ol_list$a3
 
 # order res
 res <- res_shrink
@@ -2042,10 +2103,10 @@ names(shape)[shape == 18] <- 'out of scale'
 names(shape)[shape == 16] <- 'in range'
 
 # move outliers to coord. max.
-res$log2FoldChange[res$log2FoldChange > xlim] <- xlim
-res$log2FoldChange[res$log2FoldChange < -xlim] <- -xlim
-res$padj[res$padj < 10^-ylim] <- 10^-ylim
-summary(res$padj < 10^-ylim)
+# res$log2FoldChange[res$log2FoldChange > xlim] <- xlim
+# res$log2FoldChange[res$log2FoldChange < -xlim] <- -xlim
+# res$padj[res$padj < 10^-ylim] <- 10^-ylim
+# summary(res$padj < 10^-ylim)
 
 min(res$padj[res$padj > 0], na.rm = TRUE)
 
@@ -2072,10 +2133,24 @@ if (is.null(lab)){
   lab <- res[res$isl1 == TRUE | res$isl2 == TRUE,"symbol"]
 }
 
-EnhancedVolcano(results_list[[4]],
+design(dds)
+
+cor( colData(dds)[,c("experiment","genotype","treatment")] )
+
+resultsNames(dds)
+r1 <- results(dds,name = resultsNames(dds)[1],alpha = 0.05)
+summary(r1)
+res<-r1
+sub <- (res %>% subset(.,padj>0 & padj < 0.001))
+min(sub$padj)
+
+res <- sub
+
+EnhancedVolcano(res,
     x = 'log2FoldChange',
     y = 'padj',
-    lab=rownames(results_list[[4]]))
+    lab=rownames(res),
+    ylim=c(0, 400))
 
 ev_f <- EnhancedVolcano(res,
     x = 'log2FoldChange',
@@ -2458,8 +2533,105 @@ pheatmap(mat,
 ```
 
 
+## Venns
+### All Genes
+```{r Venn_all}
+
+
+input_list <- c(list("All Hypoxic (Kelly)" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
+                     "Hif1b" = deg_genes_list[["deg_Hif1bHxNx.vs.KellyHxNx"]],
+                     "Hif1a" = deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     "Hif2a" = deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]                                         ))
+
+plt1 <- venn.diagram(
+    x = input_list,
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Compare Hif KOs", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(1,7,3,5)],
+    #cat.col=c(colors[c(4)],"grey40","grey20"),
+    cat.fontface = "bold",
+    #cat.pos = c(-45,0,45),
+    # inverted=length(input_list[[1]]) < length(input_list[[2]])
+    )
+
+input_list <- input_list[c(3,4,1)]
+plt2 <- venn.diagram(
+    x = input_list,
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Compare Hif KOs", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(3,5,1)],
+    #cat.col=c(colors[c(4)],"grey40","grey20"),
+    cat.fontface = "bold",
+    #cat.pos = c(-45,0,45),
+    # inverted=length(input_list[[1]]) < length(input_list[[2]])
+    )
+
+
+patchwork::wrap_elements(plt1) + patchwork::wrap_elements(plt2)
+names(input_list)
+overlaps <- calculate.overlap(input_list)
+diff1 <- setdiff(overlaps[[1]],overlaps[[3]])
+diff2 <- setdiff(overlaps[[2]],overlaps[[3]])
+
+# get each top gene
+getVennElements(plt2)
+goi <- sapply(overlaps,"[[",1) %>% .[order(names(.))]
+
+plotCounts_SK(goi)
+
+
+
+plotCounts_SK(overlaps$a2[1])
+
+
+goi <- c(diff1[1],overlaps$a3[1],diff2[1])
+
+
+
+```
+
+### upregulated in hypoxia
+```{r venn_up}
+
+Kelly <- subset(results_list[["Kelly.Hx.vs.Nx"]],log2FoldChange > 0) %>% topgenes_f() %>% rownames()
+
+input_list <- c(list("All Hypoxic (Kelly)" = Kelly,
+                     "Hif1b" = deg_genes_list[["deg_Hif1bHxNx.vs.KellyHxNx"]],
+                     "Hif1a" = deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     "Hif2a" = deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]                                         ))
+
+plt <- venn.diagram(
+    x = input_list,
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Compare Hif KOs", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(1,7,3,5)],
+    #cat.col=c(colors[c(4)],"grey40","grey20"),
+    cat.fontface = "bold",
+    #cat.pos = c(-45,0,45),
+    # inverted=length(input_list[[1]]) < length(input_list[[2]])
+    )
+
+patchwork::wrap_elements((plt)) 
+
+```
+
+
+
 ## Cluster results
 ```{r cluster_results}
+
 pick_genes <- deg_genes_list[c("deg_Hif1aHxNx.vs.KellyHxNx", "deg_Hif2aHxNx.vs.KellyHxNx", "deg_Hif1bHxNx.vs.KellyHxNx")] %>% unlist() %>% unname() %>% unique()
 
 # "deg_Kelly.Hx.vs.Nx",
@@ -2753,5 +2925,121 @@ dotplot(ek1) + dotplot(ek2) + dotplot(ek3)
 
 ```
 
+
+## Check experiment differences
+```{r experiment_diffs_counts}
+
+load(file=paste(data,"deseq2_experiment_wgcna.dds", sep="/"))
+
+resultsNames(dds)
+
+res_expSvK <- results(dds, contrast = c("experiment","Simon","Katharina")) %>% topgenes_f() %>% rownames()
+res_expSvU <- results(dds, contrast = c("experiment","Simon","Ulrike")) %>% topgenes_f( )%>% rownames()
+res_expUvK <- results(dds, contrast = c("experiment","Katharina","Ulrike")) %>% topgenes_f() %>% rownames()
+res_exp <- c(res_expSvK,res_expSvU,res_expUvK) %>% unique()
+res_exp_10 <- c(res_expSvK[1:5],res_expSvU[1:5],res_expUvK[1:5]) %>% unique()
+
+goi <- res_exp_10
+
+plotCounts_SK(goi)
+
+# color for experiment
+plotCounts_SK_list <- list()
+  l <- length(goi)
+       for (ig in 1:l){
+  s <- mcols(dds)[goi[ig],"symbol"]
+  if (s ==""){s <- goi[ig]}
+    d <- plotCounts(dds, gene=goi[ig], intgroup=c("condition","experiment","genotype","treatment"), main=s,returnData=TRUE)
+
+  gcounts <- ggplot(d, aes(x = condition, y = count, fill=experiment, color=experiment)) +
+    geom_boxplot(color="black") +
+    geom_point(shape=21,color="black",aes(fill=experiment),position=position_dodge(width=0.75), alpha=1) +
+    # scale_fill_manual(values=c("#A6CEE3","#FB9A99")) +
+    # scale_color_manual(values=c("#A6CEE3","#FB9A99")) +
+    scale_y_continuous(trans = "log2") +
+    labs(title = paste(s,"(",goi[ig],")",sep=" "))
+  plotCounts_SK_list[[paste(n,goi[ig],sep="_")]] <- gcounts
+       }
+ 
+patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) + 
+  plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & 
+  plot_annotation(title = n) & 
+  theme(legend.position = 'bottom',
+        plot.title = element_text(size=6),
+        axis.text=element_text(size=6),
+        axis.title=element_text(size=6),
+        legend.text=element_text(size=6),
+        legend.title=element_text(size=6))
+```
+
+#### Venns
+```{r experiment_diffs_venn}
+
+input_list <- c(list("All Hypoxic (Kelly)" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
+                     "Experiment" = res_exp,
+                     "Hif1a" = deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     "Hif2a" = deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]] 
+                     ))
+
+plt1 <- venn.diagram(
+    x = input_list,
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Compare Hif KOs", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(1,7,3,5)],
+    #cat.col=c(colors[c(4)],"grey40","grey20"),
+    cat.fontface = "bold",
+    #cat.pos = c(-45,0,45),
+    # inverted=length(input_list[[1]]) < length(input_list[[2]])
+    )
+
+patchwork::wrap_elements(plt1) 
+
+names(input_list)
+overlaps <- calculate.overlap(input_list)
+
+# get each top gene
+getVennElements(plt1)
+overlaps_exp <- overlaps[c("a8","a7","a6","a11","a15","a12","a13","a14")]
+goi <- sapply(overlaps_exp,"[[",1) %>% .[order(names(.))]
+
+plotCounts_SK(goi)
+
+
+# color for experiment
+plotCounts_SK_list <- list()
+  l <- length(goi)
+       for (ig in 1:l){
+  s <- mcols(dds)[goi[ig],"symbol"]
+  if (s ==""){s <- goi[ig]}
+    d <- plotCounts(dds, gene=goi[ig], intgroup=c("condition","experiment","genotype","treatment"), main=s,returnData=TRUE)
+
+  gcounts <- ggplot(d, aes(x = condition, y = count, fill=experiment, color=experiment)) +
+    geom_boxplot(outliers = FALSE,color="black",aes(fill=condition)) +
+    geom_point(shape=21,color="black",aes(fill=experiment),position=position_dodge(width=0.75), alpha=1) +
+    scale_fill_manual(values=c(rep(c("#A6CEE3","#FB9A99"),4),viridis(4))) +
+    # scale_color_manual(values=c("#A6CEE3","#FB9A99")) +
+    scale_y_continuous(trans = "log2") +
+    labs(title = paste(names(goi[ig]),":",s,"(",goi[ig],")",sep=" "))
+  plotCounts_SK_list[[paste(n,goi[ig],sep="_")]] <- gcounts
+       }
+ 
+patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) + 
+  plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & 
+  plot_annotation(title = n) & 
+  theme(legend.position = 'bottom',
+        plot.title = element_text(size=6),
+        axis.text=element_text(size=6),
+        axis.title=element_text(size=6),
+        legend.text=element_text(size=6),
+        legend.title=element_text(size=6))
+
+
+
+
+```
 
 

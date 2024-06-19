@@ -21,7 +21,7 @@ Kelterborn
 
 ## - \#R_libraries
 
-BiocManager::install()
+BiocManager::install(“gifski”, force=TRUE)
 
 BiocManager::install(“mgcv”)
 
@@ -170,7 +170,7 @@ design(dds)
 ```
 
     ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x560e688ac570>
+    ## <environment: 0x55f2afe6f3c0>
 
 ``` r
 summary(results(dds, name="treatment_Hx_vs_Nx"))
@@ -285,7 +285,11 @@ meanSdPlot(assay(rld))
 
 ###### – \#PCA gif
 
+###### – \#PCA gif2
+
 <a href="pca.gif" height="100%," width="100%">PCA Gif</a>
+
+<a href="pca2.gif" height="100%," width="100%">PCA Gif</a>
 
 ### - Plot example counts
 
@@ -303,7 +307,7 @@ meanSdPlot(assay(rld))
 sessionInfo()
 ```
 
-    ## R version 4.4.0 (2024-04-24)
+    ## R version 4.4.1 (2024-06-14)
     ## Platform: x86_64-pc-linux-gnu
     ## Running under: Ubuntu 22.04.4 LTS
     ## 
@@ -364,7 +368,7 @@ sessionInfo()
     ##   [3] bitops_1.0-7              enrichplot_1.24.0        
     ##   [5] HDO.db_0.99.1             httr_1.4.7               
     ##   [7] ash_1.0-15                profvis_0.3.8            
-    ##   [9] tools_4.4.0               utf8_1.2.4               
+    ##   [9] tools_4.4.1               utf8_1.2.4               
     ##  [11] R6_2.5.1                  lazyeval_0.2.2           
     ##  [13] urlchecker_1.0.1          withr_3.0.0              
     ##  [15] prettyunits_1.2.0         preprocessCore_1.66.0    
@@ -374,7 +378,7 @@ sessionInfo()
     ##  [23] yulab.utils_0.1.4         gson_0.1.0               
     ##  [25] txdbmaker_1.0.0           svglite_2.1.3            
     ##  [27] DOSE_3.30.1               maps_3.4.2               
-    ##  [29] limma_3.60.2              rstudioapi_0.16.0        
+    ##  [29] limma_3.60.3              rstudioapi_0.16.0        
     ##  [31] RSQLite_2.3.7             generics_0.1.3           
     ##  [33] gridGraphics_0.5-1        BiocIO_1.14.0            
     ##  [35] vroom_1.6.5               GO.db_3.19.1             
@@ -401,7 +405,7 @@ sessionInfo()
     ##  [77] affyio_1.74.0             irlba_2.3.5.1            
     ##  [79] KernSmooth_2.23-24        colorspace_2.1-0         
     ##  [81] DBI_1.2.3                 tidyselect_1.2.1         
-    ##  [83] bit_4.0.5                 compiler_4.4.0           
+    ##  [83] bit_4.0.5                 compiler_4.4.1           
     ##  [85] extrafontdb_1.0           httr2_1.0.1              
     ##  [87] xml2_1.3.6                DelayedArray_0.30.1      
     ##  [89] shadowtext_0.1.3          rtracklayer_1.64.0       
@@ -422,8 +426,8 @@ sessionInfo()
     ## [119] Rcpp_1.0.12               ape_5.8                  
     ## [121] ggraph_2.2.1              zlibbioc_1.50.0          
     ## [123] MASS_7.3-61               pkgbuild_1.4.4           
-    ## [125] parallel_4.4.0            Biostrings_2.72.1        
-    ## [127] graphlayouts_1.1.1        splines_4.4.0            
+    ## [125] parallel_4.4.1            Biostrings_2.72.1        
+    ## [127] graphlayouts_1.1.1        splines_4.4.1            
     ## [129] hms_1.1.3                 locfit_1.5-9.9           
     ## [131] igraph_2.0.3              reshape2_1.4.4           
     ## [133] ScaledMatrix_1.12.0       pkgload_1.3.4            

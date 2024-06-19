@@ -29,12 +29,13 @@ allnew <- TRUE
 
 # 0. Load
 ##  - #R_libraries
-BiocManager::install()
+BiocManager::install("gifski", force=TRUE)
 
 BiocManager::install("mgcv")
 ```{r librarys, eval=TRUE, include=FALSE, echo=FALSE}
 
 library(BiocManager)
+
 library(devtools)
 library(BiocFileCache)
 
@@ -1136,24 +1137,33 @@ plotloadings(p,
 ###### -- #PCA gif
 ```{r pca_gif, fig.height=8, fig.show="hold", warning=FALSE, out.width="100%", eval=FALSE, include=FALSE, echo=FALSE}
 
+n <- nrow(vsd)/1000
+
+rowVars(vsd)
+
+vsd <- vsd[order(rowVars(assay(vsd))),]
+i <- 10
 saveGIF({
   ani.options(nmax = 100)
-for (i in 1:100){
-  n <- i*310
-pcaData <- plotPCA(vsd, intgroup=colnames(colData(vsd)), returnData=TRUE,ntop=n)
+for (i in 1:20){
+n <- i*1000
+vsd_v <- vsd[c(n:(n+999)),]
+print(paste(n," - ",n+1000))
+
+pcaData <- plotPCA(vsd_v, intgroup=colnames(colData(vsd)), returnData=TRUE,ntop=1000)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
 g1 <- ggplot(pcaData, aes(PC1, PC2, color=treatment, shape=genotype)) +
   geom_point(size=5, alpha=0.7) +
   labs(title = "treatment") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
-  coord_cartesian(xlim = c(-100, 100),ylim = c(-100,100)) +
+  # coord_cartesian(xlim = c(-100, 100),ylim = c(-100,100)) +
   scale_color_manual(values = c("lightcoral","skyblue1"))
 
 g2 <- ggplot(pcaData, aes(PC1, PC2, color=experiment, shape=genotype)) +
   geom_point(size=5, alpha=0.7) +
   labs(title = "experiment") +
-  coord_cartesian(xlim = c(-100, 100),ylim = c(-100,100)) +
+  # coord_cartesian(xlim = c(-100, 100),ylim = c(-100,100)) +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) +
   scale_color_viridis_d(option ="viridis")
@@ -1161,7 +1171,52 @@ g2 <- ggplot(pcaData, aes(PC1, PC2, color=experiment, shape=genotype)) +
 g3 <- ggplot(pcaData, aes(PC1, PC2, color=condition, shape=genotype)) +
   geom_point(size=5, alpha=0.7) +
   labs(title = "condition") +
-  coord_cartesian(xlim = c(-100, 100),ylim = c(-100,100)) +
+  # coord_cartesian(xlim = c(-100, 100),ylim = c(-100,100)) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  # coord_fixed()
+  scale_color_viridis_d(option ="viridis")
+plot((g1+g2)/g3 +
+       plot_annotation(title = paste("number of variable genes: ",n," - ",n+1000)) +
+       plot_layout(guides = 'collect')
+     )
+ani.pause()
+}
+}, interval = 1, movie.name = file.path(gitdir,"1_data_processing/pca.gif"), ani.width = 600, ani.height = 600)
+
+```
+
+###### -- #PCA gif2
+```{r pca_gif2, fig.height=8, fig.show="hold", warning=FALSE, out.width="100%", eval=FALSE, include=FALSE, echo=FALSE}
+
+
+saveGIF({
+  ani.options(nmax = 100)
+for (i in 1:20){
+n <- i*1000
+
+pcaData <- plotPCA(vsd, intgroup=colnames(colData(vsd)), returnData=TRUE,ntop=n)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+g1 <- ggplot(pcaData, aes(PC1, PC2, color=treatment, shape=genotype)) +
+  geom_point(size=5, alpha=0.7) +
+  labs(title = "treatment") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  # coord_cartesian(xlim = c(-100, 100),ylim = c(-100,100)) +
+  scale_color_manual(values = c("lightcoral","skyblue1"))
+
+g2 <- ggplot(pcaData, aes(PC1, PC2, color=experiment, shape=genotype)) +
+  geom_point(size=5, alpha=0.7) +
+  labs(title = "experiment") +
+  # coord_cartesian(xlim = c(-100, 100),ylim = c(-100,100)) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  scale_color_viridis_d(option ="viridis")
+
+g3 <- ggplot(pcaData, aes(PC1, PC2, color=condition, shape=genotype)) +
+  geom_point(size=5, alpha=0.7) +
+  labs(title = "condition") +
+  # coord_cartesian(xlim = c(-100, 100),ylim = c(-100,100)) +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) +
   # coord_fixed()
@@ -1172,11 +1227,14 @@ plot((g1+g2)/g3 +
      )
 ani.pause()
 }
-}, interval = 0.3, movie.name = file.path(gitdir,"1_data_processing/pca.gif"), ani.width = 600, ani.height = 600)
+}, interval = 0.3, movie.name = file.path(gitdir,"1_data_processing/pca2.gif"), ani.width = 600, ani.height = 600)
 
 ```
 
+
 [PCA Gif](pca.gif){height=100%, width=100%}
+
+[PCA Gif](pca2.gif){height=100%, width=100%}
 
 ```{r pca_gif_include, eval=FALSE, echo=FALSE, out.width="100%", fig.height=8}
 source_file <- dirname(rstudioapi::getSourceEditorContext()$path)

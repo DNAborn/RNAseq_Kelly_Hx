@@ -26,3 +26,70 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 allnew <- TRUE
 
 ```
+
+# 0. Load
+
+## - Load R librarys
+
+```{r R_update, eval=FALSE, include=FALSE}
+BiocManager::install()
+BiocManager::valid()
+# update.packages(oldPkgs = old.packages())
+BiocManager::install("tsne")
+install.packages("reticulate")
+
+
+```
+
+```{r librarys, include=FALSE}
+
+library()
+
+requireNamespace('png', quietly = TRUE)
+
+ifelse(Sys.info()["sysname"]== "Linux",
+       s <- "/mnt/s",
+       s <- "S:")
+dir <- paste(s,"AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all",sep="/")
+gitdir <- paste(dir,"git_RNAseq_Kelly_Hx",sep="/")
+data <- paste(dir,"data",sep="/")
+dgedir <- paste(gitdir,"2B_DGE",sep="/")
+
+par(mfrow = c(1,1))
+
+futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
+
+```
+
+## - Load dds
+
+```{r dds, include=FALSE}
+
+load(file=paste(data,"deseq2_treatment.dds", sep="/"))
+dds_t <- dds
+load(file=paste(data,"deseq2_condition.dds", sep="/"))
+dds_c <- dds
+
+# load(file=paste(data,"deseq2_experiment_wgcna.dds", sep="/"))
+load(file=paste(data,"deseq2.dds", sep="/"))
+
+```
+
+## - functions
+
+```{r topgenes, include=FALSE}
+# topgenes
+topgenes_f <- function(res,p=0.05,bM=10,l2FC=1){
+a <- subset(res, padj < p & baseMean > bM & abs(log2FoldChange) > l2FC)
+a <- a[order(a$baseMean, decreasing = T),]
+  a$rank.bm <- seq(1:length(rownames(a)))
+a <- a[order(a$padj, decreasing = F),]
+  a$rank.padj <- seq(1:length(rownames(a)))
+a <- a[order(abs(a$log2FoldChange), decreasing = T),]
+  a$rank.l2FC <- seq(1:length(rownames(a)))
+a$rank.sum <- a$rank.l2FC+a$rank.bm+a$rank.padj
+  a <- a[order(a$rank.sum),]
+a
+}
+
+```
