@@ -115,8 +115,8 @@ Hif2a: <https://remap.univ-amu.fr/target_page/EPAS1:9606>
 
 Hif1b: <https://remap.univ-amu.fr/target_page/ARNT:9606>
 
-```{r load_chips}
-list.files(pdir)
+```{r load_chips, echo=FALSE, include=TRUE}
+# list.files(pdir)
 hif1a_datasets <- read_xlsx(paste(pdir,"ReMAP_ChIP_Hif1a.xlsx",sep="/"), )
 hif2a_datasets <- read_xlsx(paste(pdir,"ReMAP_ChIP_Hif2a.xlsx",sep="/"), )
 hif1b_datasets <- read_xlsx(paste(pdir,"ReMAP_ChIP_Hif1b.xlsx",sep="/"), )

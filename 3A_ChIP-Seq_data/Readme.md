@@ -76,26 +76,10 @@ Hif2a: <https://remap.univ-amu.fr/target_page/EPAS1:9606>
 
 Hif1b: <https://remap.univ-amu.fr/target_page/ARNT:9606>
 
-``` r
-list.files(pdir)
-```
-
     ## [1] "3A_ChIP-Seq_data_bu.Rmd"      "3A_ChIP-Seq_data.Rmd"        
     ## [3] "Readme.md"                    "ReMAP_ChIP_Hif1a.xlsx"       
     ## [5] "ReMAP_ChIP_Hif1b.xlsx"        "ReMAP_ChIP_Hif2a.xlsx"       
     ## [7] "ReMAP_ChIP-Seq_datasets.xlsx"
-
-``` r
-hif1a_datasets <- read_xlsx(paste(pdir,"ReMAP_ChIP_Hif1a.xlsx",sep="/"), )
-hif2a_datasets <- read_xlsx(paste(pdir,"ReMAP_ChIP_Hif2a.xlsx",sep="/"), )
-hif1b_datasets <- read_xlsx(paste(pdir,"ReMAP_ChIP_Hif1b.xlsx",sep="/"), )
-
-celllines <- data.frame("Hif1A" = (hif1a_datasets$Biotype %>% factor() %>% levels() %>% paste(collapse = " ")),
-                       "Hif2A" = (hif2a_datasets$Biotype %>% factor() %>% levels() %>% paste(collapse = " ")),
-                       "Hif1B" = (hif1b_datasets$Biotype %>% factor() %>% levels() %>% paste(collapse = " "))) %>% t()
-
-celllines %>% kable()
-```
 
 |       |                                                                                                 |
 |:------|:------------------------------------------------------------------------------------------------|
