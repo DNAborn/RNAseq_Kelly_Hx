@@ -11,8 +11,8 @@ always_allow_html: true
 editor_options: 
   chunk_output_type: console
 knit: (function(input_file, encoding) {
-    })
     rmarkdown::render(input_file,output_file= 'Readme.md')
+    })
 ---
 
 ```{r setup, include=FALSE}
@@ -41,9 +41,12 @@ install.packages("reticulate")
 
 ```
 
+
 ```{r librarys, include=FALSE}
 
 library(xlsx)
+library(tidyverse)
+library(kableExtra)
 
 
 requireNamespace('png', quietly = TRUE)
@@ -95,6 +98,8 @@ Literature
 MCF-7 (breast)          Hif1A, Hif2A, Hif1B      Schödel et al., 2011    https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3374576/
 HCT116 (colon), RKO (colon), A549, and H460     HIF1A                Andrysik et al., 2021     https://www.nature.com/articles/s41467-021-21687-2#Sec11  https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE145157
 
+HKC-8, RCC4, HepG2     HIF1A, HIF2A,  HIF1B    https://www.embopress.org/doi/pdf/10.15252/embr.201846401   SE120885, GSE120886 and GSE120887 https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE120887
+
 
 ReMAP:
 Hif1a: https://remap.univ-amu.fr/target_page/HIF1A:9606
@@ -110,7 +115,7 @@ hif1b_datasets <- read_xlsx(paste(pdir,"ReMAP_ChIP_Hif1b.xlsx",sep="/"), )
 celllines <- data.frame("Hif1A" = (hif1a_datasets$Biotype %>% factor() %>% levels() %>% paste(collapse = " ")),
                        "Hif2A" = (hif2a_datasets$Biotype %>% factor() %>% levels() %>% paste(collapse = " ")),
                        "Hif1B" = (hif1b_datasets$Biotype %>% factor() %>% levels() %>% paste(collapse = " "))) %>% t()
-
+celllines %>% kable()
 
 
 ```
