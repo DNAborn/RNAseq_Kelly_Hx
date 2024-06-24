@@ -38,6 +38,9 @@ BiocManager::valid()
 BiocManager::install("tsne")
 install.packages("reticulate")
 
+  BiocManager::install(c(
+    "cli", "crayon"
+  ), update = TRUE, ask = FALSE, force = TRUE)
 
 ```
 
