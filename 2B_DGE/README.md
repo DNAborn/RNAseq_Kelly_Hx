@@ -9,13 +9,17 @@ Kelterborn
   - [- functions](#--functions)
 - [1. Make results](#1-make-results)
   - [-Plot example counts](#-plot-example-counts)
-- [2. Data Dive](#2-data-dive)
-  - [Colour sheme](#colour-sheme)
+  - [- Colour sheme](#--colour-sheme)
+- [2. Condensed Results](#2-condensed-results)
+  - [](#section)
+- [3. Data Dive](#3-data-dive)
   - [Volcanos](#volcanos)
   - [Overlaps (Venn)](#overlaps-venn)
   - [Heatmaps](#heatmaps)
+  - [Venns](#venns)
   - [Cluster results](#cluster-results)
   - [GO terms](#go-terms)
+  - [Check experiment differences](#check-experiment-differences)
 
 # 0. Load
 
@@ -25,7 +29,25 @@ Kelterborn
 
 ## - functions
 
+``` r
+n <- "Kelly.Hx.vs.Nx"
+list1 <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]]
+list2 <- deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]
+l1.n <- "Hif1a"
+l2.n <- "Hif2a"
+l1.col <- "#1976d2"
+l2.col <- "#239b56"
+lol.col <- "#f8c471"
+xlim <- 10
+ylim <- 400
+lab <- ol_list$a3
+```
+
 # 1. Make results
+
+### -without experiment
+
+### -include experiment
 
 #### (Advanced results troubleshooting)
 
@@ -38,7 +60,7 @@ Kelterborn
 
     ## design
 
-    ## ~experiment + genotype + treatment + genotype:treatment
+    ## ~genotype + treatment + genotype:treatment
 
     ## cutoffs
     ## differential expressed: p=0.05,bM=10,l2FC=1
@@ -46,52 +68,57 @@ Kelterborn
 
 |                            | all.DEGs | top.DEGs |
 |:---------------------------|---------:|---------:|
-| deg_Hif1a.Hx.vs.Nx         |     5375 |      778 |
-| deg_Hif2a.Hx.vs.Nx         |     2927 |      424 |
-| deg_Hif1b.Hx.vs.Nx         |     1710 |      259 |
-| deg_Kelly.Hx.vs.Nx         |     4778 |      722 |
-| deg_Nx.Hif1a.vs.Kelly      |      204 |       13 |
-| deg_Nx.Hif2a.vs.Kelly      |      509 |       50 |
-| deg_Nx.Hif1b.vs.Kelly      |      610 |       46 |
-| deg_Hx.Hif1a.vs.Kelly      |      805 |       47 |
-| deg_Hx.Hif2a.vs.Kelly      |     2280 |      264 |
-| deg_Hx.Hif1b.vs.Kelly      |     3690 |      417 |
-| deg_Hx.Hif2a.vs.Hif1a      |     3664 |      475 |
-| deg_Hx.Hif1b.vs.Hif1a      |     4359 |      500 |
-| deg_Hx.Hif1b.vs.Hif2a      |     1737 |      181 |
-| deg_Hif1aHxNx.vs.KellyHxNx |      646 |       42 |
-| deg_Hif2aHxNx.vs.KellyHxNx |     2101 |      225 |
-| deg_Hif1bHxNx.vs.KellyHxNx |     3478 |      337 |
-| deg_Hx.Hif1b.vs.Hif12a     |     2307 |      153 |
-| deg_Hx.Kelly.vs.allHIFs    |     1281 |      108 |
-| deg_Hx.vs.Nx               |     3071 |      389 |
+| deg_Hif1a.Hx.vs.Nx         |     6062 |      977 |
+| deg_Hif2a.Hx.vs.Nx         |     3283 |      568 |
+| deg_Hif1b.Hx.vs.Nx         |     1961 |      310 |
+| deg_Kelly.Hx.vs.Nx         |     5193 |      841 |
+| deg_Nx.Hif1a.vs.Kelly      |      144 |       20 |
+| deg_Nx.Hif2a.vs.Kelly      |      449 |       76 |
+| deg_Nx.Hif1b.vs.Kelly      |      681 |       54 |
+| deg_Hx.Hif1a.vs.Kelly      |     1037 |       82 |
+| deg_Hx.Hif2a.vs.Kelly      |     2359 |      330 |
+| deg_Hx.Hif1b.vs.Kelly      |     5212 |      547 |
+| deg_Hx.Hif2a.vs.Hif1a      |     4085 |      595 |
+| deg_Hx.Hif1b.vs.Hif1a      |     5858 |      735 |
+| deg_Hx.Hif1b.vs.Hif2a      |     3255 |      271 |
+| deg_Hif1aHxNx.vs.KellyHxNx |      627 |       52 |
+| deg_Hif2aHxNx.vs.KellyHxNx |     2252 |      305 |
+| deg_Hif1bHxNx.vs.KellyHxNx |     3797 |      409 |
+| deg_Hif2aHxNx.vs.Hif1aHxNx |     3406 |      527 |
+| deg_Hx.Hif1b.vs.Hif12a     |     4101 |      284 |
+| deg_Hx.Kelly.vs.allHIFs    |     1465 |      151 |
+| deg_Hx.vs.Nx               |     3540 |      501 |
 
 ## -Plot example counts
 
-![](Readme_files/figure-gfm/results_counts-1.png)<!-- -->![](Readme_files/figure-gfm/results_counts-2.png)<!-- -->![](Readme_files/figure-gfm/results_counts-3.png)<!-- -->![](Readme_files/figure-gfm/results_counts-4.png)<!-- -->![](Readme_files/figure-gfm/results_counts-5.png)<!-- -->![](Readme_files/figure-gfm/results_counts-6.png)<!-- -->![](Readme_files/figure-gfm/results_counts-7.png)<!-- -->![](Readme_files/figure-gfm/results_counts-8.png)<!-- -->![](Readme_files/figure-gfm/results_counts-9.png)<!-- -->![](Readme_files/figure-gfm/results_counts-10.png)<!-- -->![](Readme_files/figure-gfm/results_counts-11.png)<!-- -->![](Readme_files/figure-gfm/results_counts-12.png)<!-- -->![](Readme_files/figure-gfm/results_counts-13.png)<!-- -->![](Readme_files/figure-gfm/results_counts-14.png)<!-- -->![](Readme_files/figure-gfm/results_counts-15.png)<!-- -->![](Readme_files/figure-gfm/results_counts-16.png)<!-- -->![](Readme_files/figure-gfm/results_counts-17.png)<!-- -->![](Readme_files/figure-gfm/results_counts-18.png)<!-- -->![](Readme_files/figure-gfm/results_counts-19.png)<!-- -->
+![](Readme_files/figure-gfm/results_counts-1.png)<!-- -->![](Readme_files/figure-gfm/results_counts-2.png)<!-- -->![](Readme_files/figure-gfm/results_counts-3.png)<!-- -->![](Readme_files/figure-gfm/results_counts-4.png)<!-- -->![](Readme_files/figure-gfm/results_counts-5.png)<!-- -->![](Readme_files/figure-gfm/results_counts-6.png)<!-- -->![](Readme_files/figure-gfm/results_counts-7.png)<!-- -->![](Readme_files/figure-gfm/results_counts-8.png)<!-- -->![](Readme_files/figure-gfm/results_counts-9.png)<!-- -->![](Readme_files/figure-gfm/results_counts-10.png)<!-- -->![](Readme_files/figure-gfm/results_counts-11.png)<!-- -->![](Readme_files/figure-gfm/results_counts-12.png)<!-- -->![](Readme_files/figure-gfm/results_counts-13.png)<!-- -->![](Readme_files/figure-gfm/results_counts-14.png)<!-- -->![](Readme_files/figure-gfm/results_counts-15.png)<!-- -->![](Readme_files/figure-gfm/results_counts-16.png)<!-- -->![](Readme_files/figure-gfm/results_counts-17.png)<!-- -->![](Readme_files/figure-gfm/results_counts-18.png)<!-- -->![](Readme_files/figure-gfm/results_counts-19.png)<!-- -->![](Readme_files/figure-gfm/results_counts-20.png)<!-- -->
 
-|                 | symbol  | baseMean | log2FoldChange |    lfcSE |       stat |    pvalue |      padj |
-|:----------------|:--------|---------:|---------------:|---------:|-----------:|----------:|----------:|
-| ENSG00000234964 | FABP5P7 | 37.06925 |     -0.2486854 | 4.846331 | -0.0513142 | 0.9590752 | 0.9855481 |
+|                 | symbol  | baseMean | log2FoldChange |    lfcSE |      stat | pvalue | padj |
+|:----------------|:--------|---------:|---------------:|---------:|----------:|-------:|-----:|
+| ENSG00000234964 | FABP5P7 | 258.2986 |       -29.6126 | 3.342977 | -8.858153 |      0 |    0 |
 
-![](Readme_files/figure-gfm/results_counts-20.png)<!-- -->
+![](Readme_files/figure-gfm/results_counts-21.png)<!-- -->
 
-# 2. Data Dive
+## - Colour sheme
 
-## Colour sheme
+# 2. Condensed Results
+
+## 
+
+# 3. Data Dive
 
 ## Volcanos
 
-### Draw Vulcanos
+### Draw Volcanos
 
-![](Readme_files/figure-gfm/draw%20vulcano-1.png)![](Readme_files/figure-gfm/draw%20vulcano-2.png)
+![](Readme_files/figure-gfm/draw%20volcano-1.png)![](Readme_files/figure-gfm/draw%20volcano-2.png)
 
-### (continuous Vulcanos)
+### (continuous Volcanos)
 
 ``` r
 # gradient is fixed to padj = y-axis
 
-# Vulcano
+# Volcano
 lcol="grey20"
 xlim=10
 ylim=300
@@ -192,48 +219,48 @@ ev_f
 
 ### - Hif1a
 
-    ## [1] "Element=7 (582) --> a3(582)"
+    ## [1] "Element=7 (652) --> a3(652)"
 
 <img src="Readme_files/figure-gfm/venn_hif1a-1.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-2.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-3.png" width="100%" />
 
     ## Kelly.Hx.vs.Nx
 
-|                 |  baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol  |
-|:----------------|----------:|---------------:|----------:|----------:|-------:|-----:|:--------|
-| ENSG00000186469 |  3985.219 |       1.871068 | 0.0463703 |  40.35058 |      0 |    0 | GNG2    |
-| ENSG00000073060 |  5842.737 |       1.816965 | 0.0359811 |  50.49780 |      0 |    0 | SCARB1  |
-| ENSG00000175274 |  5516.339 |       1.550996 | 0.0492065 |  31.52014 |      0 |    0 | TP53I11 |
-| ENSG00000100285 | 19384.742 |      -1.336237 | 0.0463212 | -28.84723 |      0 |    0 | NEFH    |
-| ENSG00000261236 |  3538.555 |      -1.846348 | 0.0515305 | -35.83016 |      0 |    0 | BOP1    |
-| ENSG00000132382 |  3219.086 |      -1.804490 | 0.0527847 | -34.18584 |      0 |    0 | MYBBP1A |
-| ENSG00000179222 | 10596.156 |       1.743256 | 0.0392303 |  44.43642 |      0 |    0 | MAGED1  |
-| ENSG00000189241 |  5563.219 |       1.751909 | 0.0302608 |  57.89376 |      0 |    0 | TSPYL1  |
-| ENSG00000276781 |  7410.494 |      -1.971017 | 0.0467230 | -42.18513 |      0 |    0 | CHGA    |
+|                 |   baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol  |
+|:----------------|-----------:|---------------:|----------:|----------:|-------:|-----:|:--------|
+| ENSG00000073060 | 13138.5292 |       1.919148 | 0.0805471 |  23.82642 |      0 |    0 | SCARB1  |
+| ENSG00000132382 |  7907.2856 |      -1.819953 | 0.1165091 | -15.62070 |      0 |    0 | MYBBP1A |
+| ENSG00000117016 |  7450.2196 |      -1.771902 | 0.1177044 | -15.05383 |      0 |    0 | RIMS3   |
+| ENSG00000186469 |  8919.4998 |       1.868842 | 0.1224782 |  15.25858 |      0 |    0 | GNG2    |
+| ENSG00000135116 |   701.4788 |      -1.986505 | 0.1759162 | -11.29234 |      0 |    0 | HRK     |
+| ENSG00000179222 | 25434.3798 |       1.496304 | 0.1292748 |  11.57460 |      0 |    0 | MAGED1  |
+| ENSG00000189241 | 12349.7187 |       1.713882 | 0.0847956 |  20.21191 |      0 |    0 | TSPYL1  |
+| ENSG00000116830 |  3730.9159 |      -1.933219 | 0.1261942 | -15.31939 |      0 |    0 | TTF2    |
+| ENSG00000184867 |  2482.0171 |       1.739079 | 0.1073437 |  16.20104 |      0 |    0 | ARMCX2  |
 
     ## Hif1a.Hx.vs.Nx
 
-|                 |  baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol  |
-|:----------------|----------:|---------------:|----------:|----------:|-------:|-----:|:--------|
-| ENSG00000186469 |  3985.219 |       2.616306 | 0.0517597 |  50.54713 |      0 |    0 | GNG2    |
-| ENSG00000073060 |  5842.737 |       2.417215 | 0.0399836 |  60.45515 |      0 |    0 | SCARB1  |
-| ENSG00000175274 |  5516.339 |       2.413886 | 0.0546302 |  44.18593 |      0 |    0 | TP53I11 |
-| ENSG00000100285 | 19384.742 |      -2.303962 | 0.0514996 | -44.73749 |      0 |    0 | NEFH    |
-| ENSG00000261236 |  3538.555 |      -2.473314 | 0.0574869 | -43.02397 |      0 |    0 | BOP1    |
-| ENSG00000132382 |  3219.086 |      -2.417144 | 0.0588870 | -41.04713 |      0 |    0 | MYBBP1A |
-| ENSG00000179222 | 10596.156 |       2.243954 | 0.0435825 |  51.48747 |      0 |    0 | MAGED1  |
-| ENSG00000189241 |  5563.219 |       2.270738 | 0.0336066 |  67.56821 |      0 |    0 | TSPYL1  |
-| ENSG00000276781 |  7410.494 |      -2.229218 | 0.0519006 | -42.95165 |      0 |    0 | CHGA    |
+|                 |   baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol  |
+|:----------------|-----------:|---------------:|----------:|----------:|-------:|-----:|:--------|
+| ENSG00000073060 | 13138.5292 |       2.465035 | 0.1007928 |  24.45646 |      0 |    0 | SCARB1  |
+| ENSG00000132382 |  7907.2856 |      -2.544386 | 0.1460951 | -17.41596 |      0 |    0 | MYBBP1A |
+| ENSG00000117016 |  7450.2196 |      -2.544218 | 0.1475685 | -17.24093 |      0 |    0 | RIMS3   |
+| ENSG00000186469 |  8919.4998 |       2.486538 | 0.1534820 |  16.20085 |      0 |    0 | GNG2    |
+| ENSG00000135116 |   701.4788 |      -3.811559 | 0.2240398 | -17.01287 |      0 |    0 | HRK     |
+| ENSG00000179222 | 25434.3798 |       2.391898 | 0.1620092 |  14.76396 |      0 |    0 | MAGED1  |
+| ENSG00000189241 | 12349.7187 |       2.219567 | 0.1061130 |  20.91701 |      0 |    0 | TSPYL1  |
+| ENSG00000116830 |  3730.9159 |      -2.479935 | 0.1580978 | -15.68609 |      0 |    0 | TTF2    |
+| ENSG00000184867 |  2482.0171 |       2.448061 | 0.1343629 |  18.21977 |      0 |    0 | ARMCX2  |
 
 <img src="Readme_files/figure-gfm/venn_hif1a-4.png" width="100%" />
 
-    ## [1] "Element=12 (31) --> a4(31)"
-    ## [1] "Element=14 (582) --> a6(582)"
-    ## [1] "Element=16 (10) --> a8(10)"
-    ## [1] "Element=17 (664) --> a9(664)"
-    ## [1] "Element=19 (186) --> a11(186)"
-    ## [1] "Element=20 (109) --> a12(109)"
-    ## [1] "Element=22 (1282) --> a14(1282)"
-    ## [1] "Element=23 (3206) --> a15(3206)"
+    ## [1] "Element=12 (34) --> a4(34)"
+    ## [1] "Element=14 (652) --> a6(652)"
+    ## [1] "Element=16 (70) --> a8(70)"
+    ## [1] "Element=17 (1025) --> a9(1025)"
+    ## [1] "Element=19 (255) --> a11(255)"
+    ## [1] "Element=20 (155) --> a12(155)"
+    ## [1] "Element=22 (1858) --> a14(1858)"
+    ## [1] "Element=23 (3072) --> a15(3072)"
 
 <img src="Readme_files/figure-gfm/venn_hif1a-5.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-6.png" width="100%" />
 
@@ -241,30 +268,31 @@ ev_f
 
 <img src="Readme_files/figure-gfm/venn_hif1a-7.png" width="100%" />
 
-    ## [1] "Element=7 (27) --> a2(27)"
-    ## [1] "Element=8 (577) --> a3(577)"
-    ## [1] "Element=9 (14) --> a5(14)"
-    ## [1] "Element=10 (28) --> a6(28)"
+    ## [1] "Element=7 (29) --> a1(29)"
+    ## [1] "Element=8 (51) --> a2(51)"
+    ## [1] "Element=9 (524) --> a3(524)"
+    ## [1] "Element=10 (24) --> a5(24)"
+    ## [1] "Element=11 (28) --> a6(28)"
 
 <img src="Readme_files/figure-gfm/venn_hif1a-8.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-9.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-10.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-11.png" width="100%" />
 
 |                 | baseMean | log2FoldChange |     lfcSE |     stat |    pvalue |      padj | symbol |
 |:----------------|---------:|---------------:|----------:|---------:|----------:|----------:|:-------|
-| ENSG00000105880 |  294.122 |      0.2112551 | 0.0844321 | 2.502071 | 0.0123469 | 0.0187694 | DLX5   |
+| ENSG00000105880 | 712.6455 |     -0.5576155 | 0.3252427 | -1.71446 | 0.0864443 | 0.1264143 | DLX5   |
 
-|                 | baseMean | log2FoldChange |     lfcSE |     stat | pvalue | padj | symbol |
-|:----------------|---------:|---------------:|----------:|---------:|-------:|-----:|:-------|
-| ENSG00000105880 |  294.122 |        1.89263 | 0.0937476 | 20.18858 |      0 |    0 | DLX5   |
+|                 | baseMean | log2FoldChange |     lfcSE |     stat | pvalue |    padj | symbol |
+|:----------------|---------:|---------------:|----------:|---------:|-------:|--------:|:-------|
+| ENSG00000105880 | 712.6455 |       2.027877 | 0.4068681 | 4.984114 |  6e-07 | 2.4e-06 | DLX5   |
 
 <img src="Readme_files/figure-gfm/venn_hif1a-12.png" width="100%" />
 
-    ## [1] "Element=7 (1624) --> a1(1624)"
-    ## [1] "Element=8 (75) --> a2(75)"
-    ## [1] "Element=9 (301) --> a3(301)"
-    ## [1] "Element=10 (49) --> a4(49)"
-    ## [1] "Element=11 (239) --> a5(239)"
-    ## [1] "Element=12 (279) --> a6(279)"
-    ## [1] "Element=13 (79) --> a7(79)"
+    ## [1] "Element=7 (2431) --> a1(2431)"
+    ## [1] "Element=8 (189) --> a2(189)"
+    ## [1] "Element=9 (467) --> a3(467)"
+    ## [1] "Element=10 (97) --> a4(97)"
+    ## [1] "Element=11 (270) --> a5(270)"
+    ## [1] "Element=12 (187) --> a6(187)"
+    ## [1] "Element=13 (73) --> a7(73)"
 
 ### (- Hif2a)
 
@@ -272,14 +300,14 @@ ev_f
 
 ![](Readme_files/figure-gfm/venn_hif2a-1.png)<!-- -->
 
-    ## [1] "Element=12 (164) --> a4(164)"
-    ## [1] "Element=14 (328) --> a6(328)"
-    ## [1] "Element=16 (23) --> a8(23)"
-    ## [1] "Element=17 (2373) --> a9(2373)"
-    ## [1] "Element=19 (73) --> a11(73)"
-    ## [1] "Element=20 (230) --> a12(230)"
-    ## [1] "Element=22 (663) --> a14(663)"
-    ## [1] "Element=23 (1610) --> a15(1610)"
+    ## [1] "Element=12 (204) --> a4(204)"
+    ## [1] "Element=14 (391) --> a6(391)"
+    ## [1] "Element=16 (87) --> a8(87)"
+    ## [1] "Element=17 (2706) --> a9(2706)"
+    ## [1] "Element=19 (90) --> a11(90)"
+    ## [1] "Element=20 (246) --> a12(246)"
+    ## [1] "Element=22 (913) --> a14(913)"
+    ## [1] "Element=23 (1556) --> a15(1556)"
 
 ![](Readme_files/figure-gfm/venn_hif2a-2.png)<!-- -->![](Readme_files/figure-gfm/venn_hif2a-3.png)<!-- -->![](Readme_files/figure-gfm/venn_hif2a-4.png)<!-- -->
 
@@ -289,14 +317,14 @@ ev_f
 
 ![](Readme_files/figure-gfm/venn_hif1b-1.png)<!-- -->
 
-    ## [1] "Element=12 (316) --> a4(316)"
-    ## [1] "Element=14 (201) --> a6(201)"
-    ## [1] "Element=16 (20) --> a8(20)"
-    ## [1] "Element=17 (3201) --> a9(3201)"
-    ## [1] "Element=19 (38) --> a11(38)"
-    ## [1] "Element=20 (205) --> a12(205)"
-    ## [1] "Element=22 (429) --> a14(429)"
-    ## [1] "Element=23 (817) --> a15(817)"
+    ## [1] "Element=12 (357) --> a4(357)"
+    ## [1] "Element=14 (238) --> a6(238)"
+    ## [1] "Element=16 (28) --> a8(28)"
+    ## [1] "Element=17 (3450) --> a9(3450)"
+    ## [1] "Element=19 (44) --> a11(44)"
+    ## [1] "Element=20 (246) --> a12(246)"
+    ## [1] "Element=22 (547) --> a14(547)"
+    ## [1] "Element=23 (858) --> a15(858)"
 
 ![](Readme_files/figure-gfm/venn_hif1b-2.png)<!-- -->![](Readme_files/figure-gfm/venn_hif1b-3.png)<!-- -->![](Readme_files/figure-gfm/venn_hif1b-4.png)<!-- -->
 
@@ -306,22 +334,22 @@ ev_f
 
 ![](Readme_files/figure-gfm/venn_overlap_res1-1.png)<!-- -->
 
-    ## [1] "Element=7 (29) --> a1(29)"
-    ## [1] "Element=8 (1) --> a2(1)"
-    ## [1] "Element=9 (55) --> a3(55)"
+    ## [1] "Element=7 (56) --> a1(56)"
+    ## [1] "Element=8 (38) --> a2(38)"
+    ## [1] "Element=9 (88) --> a3(88)"
     ## [1] "Element=10 (9) --> a4(9)"
-    ## [1] "Element=11 (2) --> a5(2)"
-    ## [1] "Element=12 (129) --> a6(129)"
-    ## [1] "Element=13 (196) --> a7(196)"
+    ## [1] "Element=11 (1) --> a5(1)"
+    ## [1] "Element=12 (164) --> a6(164)"
+    ## [1] "Element=13 (211) --> a7(211)"
 
-    ##   overlap     gene
-    ## 1      a1 SERPINI1
-    ## 2      a2    SPRY4
-    ## 3      a3      KDR
-    ## 4      a4   HS3ST1
-    ## 5      a5   H2AC19
-    ## 6      a6  CYP26B1
-    ## 7      a7    PCGF2
+    ##   overlap    gene
+    ## 1      a1   SAMD1
+    ## 2      a2 FABP5P7
+    ## 3      a3   BTBD7
+    ## 4      a4 MT-RNR1
+    ## 5      a5    CDH7
+    ## 6      a6      U2
+    ## 7      a7   PCGF2
 
 ![](Readme_files/figure-gfm/venn_overlap_res1-2.png)<!-- -->
 
@@ -329,13 +357,17 @@ ev_f
 
 ### Compare Results 1 2 3
 
-#### Vulcano lists
+#### Volcano lists
 
 #### WGCNA RES1,2,3
 
 <img src="Readme_files/figure-gfm/wgcna_res123-1.png" width="33%" /><img src="Readme_files/figure-gfm/wgcna_res123-2.png" width="33%" /><img src="Readme_files/figure-gfm/wgcna_res123-3.png" width="33%" />
 
 ### Compare KO
+
+#### Volcano KO
+
+#### Volcano KO2 manual
 
 ``` r
 cat("Results 3 of Hif1a, Hif2a, Hif1b")
@@ -355,8 +387,8 @@ names(deg_genes_list)
     ## [11] "deg_Hx.Hif2a.vs.Hif1a"      "deg_Hx.Hif1b.vs.Hif1a"     
     ## [13] "deg_Hx.Hif1b.vs.Hif2a"      "deg_Hif1aHxNx.vs.KellyHxNx"
     ## [15] "deg_Hif2aHxNx.vs.KellyHxNx" "deg_Hif1bHxNx.vs.KellyHxNx"
-    ## [17] "deg_Hx.Hif1b.vs.Hif12a"     "deg_Hx.Kelly.vs.allHIFs"   
-    ## [19] "deg_Hx.vs.Nx"
+    ## [17] "deg_Hif2aHxNx.vs.Hif1aHxNx" "deg_Hx.Hif1b.vs.Hif12a"    
+    ## [19] "deg_Hx.Kelly.vs.allHIFs"    "deg_Hx.vs.Nx"
 
 ``` r
 input_list <- deg_genes_list[c("deg_Hif1aHxNx.vs.KellyHxNx","deg_Hif2aHxNx.vs.KellyHxNx","deg_Hif1bHxNx.vs.KellyHxNx")]
@@ -376,7 +408,7 @@ grid.newpage()
 grid.draw(plt)
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](Readme_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 ``` r
 # plot example counts
@@ -391,13 +423,13 @@ names(overlaps)
 getVennElements(plt)
 ```
 
-    ## [1] "Element=7 (207) --> a1(207)"
-    ## [1] "Element=8 (92) --> a2(92)"
-    ## [1] "Element=9 (524) --> a3(524)"
-    ## [1] "Element=10 (162) --> a4(162)"
-    ## [1] "Element=11 (185) --> a5(185)"
-    ## [1] "Element=12 (1300) --> a6(1300)"
-    ## [1] "Element=13 (1831) --> a7(1831)"
+    ## [1] "Element=7 (299) --> a1(299)"
+    ## [1] "Element=8 (100) --> a2(100)"
+    ## [1] "Element=9 (663) --> a3(663)"
+    ## [1] "Element=10 (149) --> a4(149)"
+    ## [1] "Element=11 (79) --> a5(79)"
+    ## [1] "Element=12 (1410) --> a6(1410)"
+    ## [1] "Element=13 (2159) --> a7(2159)"
 
 ``` r
 # plot each 1 gene
@@ -410,17 +442,17 @@ data.frame(overlap = names(goi),
     ##   overlap    gene
     ## 1      a1   BNIP3
     ## 2      a2 FAM162A
-    ## 3      a3  CLSTN2
+    ## 3      a3    SOBP
     ## 4      a4  PFKFB3
-    ## 5      a5    PDK1
+    ## 5      a5    ENO1
     ## 6      a6 ARHGEF6
-    ## 7      a7    TNXB
+    ## 7      a7    TNXA
 
 ``` r
 plotCounts_SK(goi)
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->
+![](Readme_files/figure-gfm/unnamed-chunk-2-2.png)<!-- -->
 
 #### WGCNA KOs
 
@@ -638,6 +670,124 @@ pheatmap(mat,
          fontsize_row = 5)
 ```
 
+## Venns
+
+### All Genes
+
+``` r
+input_list <- c(list("All Hypoxic (Kelly)" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
+                     "Hif1b" = deg_genes_list[["deg_Hif1bHxNx.vs.KellyHxNx"]],
+                     "Hif1a" = deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     "Hif2a" = deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]                                         ))
+
+plt1 <- venn.diagram(
+    x = input_list,
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Compare Hif KOs", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(1,7,3,5)],
+    #cat.col=c(colors[c(4)],"grey40","grey20"),
+    cat.fontface = "bold",
+    #cat.pos = c(-45,0,45),
+    # inverted=length(input_list[[1]]) < length(input_list[[2]])
+    )
+
+input_list <- input_list[c(3,4,1)]
+plt2 <- venn.diagram(
+    x = input_list,
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Compare Hif KOs", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(3,5,1)],
+    #cat.col=c(colors[c(4)],"grey40","grey20"),
+    cat.fontface = "bold",
+    #cat.pos = c(-45,0,45),
+    # inverted=length(input_list[[1]]) < length(input_list[[2]])
+    )
+
+
+patchwork::wrap_elements(plt1) + patchwork::wrap_elements(plt2)
+```
+
+![](Readme_files/figure-gfm/Venn_all-1.png)<!-- -->
+
+``` r
+names(input_list)
+```
+
+    ## [1] "Hif1a"               "Hif2a"               "All Hypoxic (Kelly)"
+
+``` r
+overlaps <- calculate.overlap(input_list)
+diff1 <- setdiff(overlaps[[1]],overlaps[[3]])
+diff2 <- setdiff(overlaps[[2]],overlaps[[3]])
+
+# get each top gene
+getVennElements(plt2)
+```
+
+    ## [1] "Element=7 (199) --> a1(199)"
+    ## [1] "Element=8 (80) --> a2(80)"
+    ## [1] "Element=9 (645) --> a3(645)"
+    ## [1] "Element=10 (249) --> a4(249)"
+    ## [1] "Element=11 (99) --> a5(99)"
+    ## [1] "Element=12 (1428) --> a6(1428)"
+    ## [1] "Element=13 (3417) --> a7(3417)"
+
+``` r
+goi <- sapply(overlaps,"[[",1) %>% .[order(names(.))]
+
+plotCounts_SK(goi)
+```
+
+![](Readme_files/figure-gfm/Venn_all-2.png)<!-- -->
+
+``` r
+plotCounts_SK(overlaps$a2[1])
+```
+
+![](Readme_files/figure-gfm/Venn_all-3.png)<!-- -->
+
+``` r
+goi <- c(diff1[1],overlaps$a3[1],diff2[1])
+```
+
+### upregulated in hypoxia
+
+``` r
+Kelly <- subset(results_list[["Kelly.Hx.vs.Nx"]],log2FoldChange > 0) %>% topgenes_f() %>% rownames()
+
+input_list <- c(list("All Hypoxic (Kelly)" = Kelly,
+                     "Hif1b" = deg_genes_list[["deg_Hif1bHxNx.vs.KellyHxNx"]],
+                     "Hif1a" = deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     "Hif2a" = deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]                                         ))
+
+plt <- venn.diagram(
+    x = input_list,
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Compare Hif KOs", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(1,7,3,5)],
+    #cat.col=c(colors[c(4)],"grey40","grey20"),
+    cat.fontface = "bold",
+    #cat.pos = c(-45,0,45),
+    # inverted=length(input_list[[1]]) < length(input_list[[2]])
+    )
+
+patchwork::wrap_elements((plt)) 
+```
+
+![](Readme_files/figure-gfm/venn_up-1.png)<!-- -->
+
 ## Cluster results
 
 ``` r
@@ -649,7 +799,7 @@ pick_genes <- deg_genes_list[c("deg_Hif1aHxNx.vs.KellyHxNx", "deg_Hif2aHxNx.vs.K
 ```
 
     ##    Mode   FALSE 
-    ## logical    4301
+    ## logical    4859
 
 ``` r
 pick_results <- c("Kelly.Hx.vs.Nx","Hif1aHxNx.vs.KellyHxNx","Hif2aHxNx.vs.KellyHxNx","Hif1bHxNx.vs.KellyHxNx")
@@ -660,7 +810,7 @@ res_comb <- cbind(res_comb,lapply(results_list[pick_results],function(i) i[pick_
 dim(res_comb)
 ```
 
-    ## [1] 4301    7
+    ## [1] 4859    7
 
 ``` r
 rownames(res_comb) <- mcols(dds)[res_comb$gene_id,"ens.symbol"]
@@ -706,7 +856,7 @@ res_comb <- cbind(res_comb,lapply(results_list[pick_results],function(i) i[pick_
 dim(res_comb)
 ```
 
-    ## [1] 2470    7
+    ## [1] 2700    7
 
 ``` r
 rownames(res_comb) <- mcols(dds)[res_comb$gene_id,"ens.symbol"]
@@ -837,7 +987,7 @@ ggplot(p$rotated,aes(x=PC1,y=PC2, color=names(keyvals)))+
 #     captionLabSize = 1)
 ```
 
-#### UMAP
+### UMAP
 
 ``` r
 umap <- umap(res_comb_matrix_12)
@@ -850,7 +1000,7 @@ ggplot(df, aes(x, y, color=names(keyvals))) +
   scale_color_manual(values = keyvals)
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](Readme_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ## GO terms
 
@@ -944,26 +1094,19 @@ head(ck)[1:7]
 ```
 
     ##                      Cluster ONTOLOGY         ID
-    ## 1 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0007409
-    ## 2 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0007411
-    ## 3 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0097485
-    ## 4 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0072006
-    ## 5 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0061326
-    ## 6 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0061005
-    ##                                           Description GeneRatio   BgRatio
-    ## 1                                        axonogenesis    30/459 483/21288
-    ## 2                                       axon guidance    20/459 247/21288
-    ## 3                          neuron projection guidance    20/459 247/21288
-    ## 4                                 nephron development    16/459 167/21288
-    ## 5                            renal tubule development    13/459 112/21288
-    ## 6 cell differentiation involved in kidney development    10/459  63/21288
-    ##         pvalue
-    ## 1 2.489859e-07
-    ## 2 4.614284e-07
-    ## 3 4.614284e-07
-    ## 4 7.116268e-07
-    ## 5 8.988554e-07
-    ## 6 9.057978e-07
+    ## 1 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0010038
+    ## 2 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0005996
+    ## 3 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0044331
+    ## 4 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0019318
+    ## 5 deg_Hif1aHxNx.vs.KellyHxNx       CC GO:0045211
+    ## 6 deg_Hif1aHxNx.vs.KellyHxNx       CC GO:0097060
+    ##                               Description GeneRatio   BgRatio       pvalue
+    ## 1                   response to metal ion    23/423 387/21288 3.433811e-06
+    ## 2        monosaccharide metabolic process    18/423 271/21288 8.950030e-06
+    ## 3 cell-cell adhesion mediated by cadherin     8/423  64/21288 3.804367e-05
+    ## 4                hexose metabolic process    16/423 251/21288 4.605719e-05
+    ## 5                   postsynaptic membrane    22/449 305/22585 2.311632e-07
+    ## 6                       synaptic membrane    24/449 432/22585 6.830524e-06
 
 ``` r
 dotplot(ck)
@@ -1005,3 +1148,164 @@ dotplot(ek1) + dotplot(ek2) + dotplot(ek3)
 ``` r
 # ckk <- compareCluster(geneCluster = interaction_deg_entrez, fun = "enrichKEGG", organism="hsa", pvalueCutoff=0.5)
 ```
+
+## Check experiment differences
+
+``` r
+load(file=paste(data,"deseq2_experiment_wgcna.dds", sep="/"))
+
+resultsNames(dds)
+```
+
+    ##  [1] "Intercept"                       "experiment_Katharina_vs_Control"
+    ##  [3] "experiment_Simon_vs_Control"     "experiment_Ulrike_vs_Control"   
+    ##  [5] "genotype_HIF1A_vs_Kelly"         "genotype_HIF2A_vs_Kelly"        
+    ##  [7] "genotype_HIF1B_vs_Kelly"         "treatment_Hx_vs_Nx"             
+    ##  [9] "genotypeHIF1A.treatmentHx"       "genotypeHIF2A.treatmentHx"      
+    ## [11] "genotypeHIF1B.treatmentHx"
+
+``` r
+res_expSvK <- results(dds, contrast = c("experiment","Simon","Katharina")) %>% topgenes_f() %>% rownames()
+res_expSvU <- results(dds, contrast = c("experiment","Simon","Ulrike")) %>% topgenes_f( )%>% rownames()
+res_expUvK <- results(dds, contrast = c("experiment","Katharina","Ulrike")) %>% topgenes_f() %>% rownames()
+res_exp <- c(res_expSvK,res_expSvU,res_expUvK) %>% unique()
+res_exp_10 <- c(res_expSvK[1:5],res_expSvU[1:5],res_expUvK[1:5]) %>% unique()
+
+goi <- res_exp_10
+
+plotCounts_SK(goi)
+```
+
+![](Readme_files/figure-gfm/experiment_diffs_counts-1.png)<!-- -->
+
+``` r
+# color for experiment
+plotCounts_SK_list <- list()
+  l <- length(goi)
+       for (ig in 1:l){
+  s <- mcols(dds)[goi[ig],"symbol"]
+  if (s ==""){s <- goi[ig]}
+    d <- plotCounts(dds, gene=goi[ig], intgroup=c("condition","experiment","genotype","treatment"), main=s,returnData=TRUE)
+
+  gcounts <- ggplot(d, aes(x = condition, y = count, fill=experiment, color=experiment)) +
+    geom_boxplot(color="black") +
+    geom_point(shape=21,color="black",aes(fill=experiment),position=position_dodge(width=0.75), alpha=1) +
+    # scale_fill_manual(values=c("#A6CEE3","#FB9A99")) +
+    # scale_color_manual(values=c("#A6CEE3","#FB9A99")) +
+    scale_y_continuous(trans = "log2") +
+    labs(title = paste(s,"(",goi[ig],")",sep=" "))
+  plotCounts_SK_list[[paste(n,goi[ig],sep="_")]] <- gcounts
+       }
+ 
+patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) + 
+  plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & 
+  plot_annotation(title = n) & 
+  theme(legend.position = 'bottom',
+        plot.title = element_text(size=6),
+        axis.text=element_text(size=6),
+        axis.title=element_text(size=6),
+        legend.text=element_text(size=6),
+        legend.title=element_text(size=6))
+```
+
+![](Readme_files/figure-gfm/experiment_diffs_counts-2.png)<!-- -->
+
+#### Venns
+
+``` r
+input_list <- c(list("All Hypoxic (Kelly)" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
+                     "Experiment" = res_exp,
+                     "Hif1a" = deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     "Hif2a" = deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]] 
+                     ))
+
+plt1 <- venn.diagram(
+    x = input_list,
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Compare Hif KOs", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(1,7,3,5)],
+    #cat.col=c(colors[c(4)],"grey40","grey20"),
+    cat.fontface = "bold",
+    #cat.pos = c(-45,0,45),
+    # inverted=length(input_list[[1]]) < length(input_list[[2]])
+    )
+
+patchwork::wrap_elements(plt1) 
+```
+
+![](Readme_files/figure-gfm/experiment_diffs_venn-1.png)<!-- -->
+
+``` r
+names(input_list)
+```
+
+    ## [1] "All Hypoxic (Kelly)" "Experiment"          "Hif1a"              
+    ## [4] "Hif2a"
+
+``` r
+overlaps <- calculate.overlap(input_list)
+
+# get each top gene
+getVennElements(plt1)
+```
+
+    ## [1] "Element=9 (174) --> a1(174)"
+    ## [1] "Element=10 (55) --> a2(55)"
+    ## [1] "Element=11 (541) --> a3(541)"
+    ## [1] "Element=12 (187) --> a4(187)"
+    ## [1] "Element=13 (79) --> a5(79)"
+    ## [1] "Element=14 (20) --> a6(20)"
+    ## [1] "Element=15 (25) --> a7(25)"  "Element=15 (25) --> a13(25)"
+    ## [1] "Element=16 (104) --> a8(104)"
+    ## [1] "Element=17 (2926) --> a9(2926)"
+    ## [1] "Element=18 (1217) --> a10(1217)"
+    ## [1] "Element=19 (211) --> a11(211)"
+    ## [1] "Element=20 (62) --> a12(62)"
+    ## [1] "Element=21 (25) --> a7(25)"  "Element=21 (25) --> a13(25)"
+    ## [1] "Element=22 (964) --> a14(964)"
+    ## [1] "Element=23 (491) --> a15(491)"
+
+``` r
+overlaps_exp <- overlaps[c("a8","a7","a6","a11","a15","a12","a13","a14")]
+goi <- sapply(overlaps_exp,"[[",1) %>% .[order(names(.))]
+
+plotCounts_SK(goi)
+```
+
+![](Readme_files/figure-gfm/experiment_diffs_venn-2.png)<!-- -->
+
+``` r
+# color for experiment
+plotCounts_SK_list <- list()
+  l <- length(goi)
+       for (ig in 1:l){
+  s <- mcols(dds)[goi[ig],"symbol"]
+  if (s ==""){s <- goi[ig]}
+    d <- plotCounts(dds, gene=goi[ig], intgroup=c("condition","experiment","genotype","treatment"), main=s,returnData=TRUE)
+
+  gcounts <- ggplot(d, aes(x = condition, y = count, fill=experiment, color=experiment)) +
+    geom_boxplot(outliers = FALSE,color="black",aes(fill=condition)) +
+    geom_point(shape=21,color="black",aes(fill=experiment),position=position_dodge(width=0.75), alpha=1) +
+    scale_fill_manual(values=c(rep(c("#A6CEE3","#FB9A99"),4),viridis(4))) +
+    # scale_color_manual(values=c("#A6CEE3","#FB9A99")) +
+    scale_y_continuous(trans = "log2") +
+    labs(title = paste(names(goi[ig]),":",s,"(",goi[ig],")",sep=" "))
+  plotCounts_SK_list[[paste(n,goi[ig],sep="_")]] <- gcounts
+       }
+ 
+patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) + 
+  plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & 
+  plot_annotation(title = n) & 
+  theme(legend.position = 'bottom',
+        plot.title = element_text(size=6),
+        axis.text=element_text(size=6),
+        axis.title=element_text(size=6),
+        legend.text=element_text(size=6),
+        legend.title=element_text(size=6))
+```
+
+![](Readme_files/figure-gfm/experiment_diffs_venn-3.png)<!-- -->

@@ -14,25 +14,15 @@ RNA-Seq of Hif1a, Hif2a & Hif1b gene knock-outs
 
 ### DESeq2 Design
 
-design = \~experiment+genotype+treatment+genotype:treatment
+design = \~genotype+treatment+genotype:treatment
 
-MA plot & Dispersion
+**Dispersion Plot**
 
-<img src="1_data_processing/Readme_files/figure-gfm/dds_design-1.png" width="50%"/>
+<img src="1_data_processing/Readme_files/figure-gfm/dds_design-2_hist3.png" width="50%"/><img src="1_data_processing/Readme_files/figure-gfm/dds_design-2.png" width="50%"/>
 
-<img src="1_data_processing/Readme_files/figure-gfm/dds_design-2_hist1.png" width="50%"/><img src="1_data_processing/Readme_files/figure-gfm/dds_design-2.png" width="50%"/>
+-\> With and without "**experiment**" in design
 
-Before and after adding "experiment" to design
-
-Transformations
-
-<img src="1_data_processing/Readme_files/figure-gfm/pre_trans_fig, figures-side-1.png" width="33%"/><img src="1_data_processing/Readme_files/figure-gfm/pre_trans_fig, figures-side-2.png" width="33%"/><img src="1_data_processing/Readme_files/figure-gfm/pre_trans_fig, figures-side-3.png" width="33%"/>
-
-Sample distance
-
-<img src="1_data_processing/Readme_files/figure-gfm/pre_sample_dist-1.png" width="60%"/>
-
-Principal component analysis
+**Principal component analysis**
 
 <img src="1_data_processing/Readme_files/figure-gfm/pca-1.png" width="60%"/>
 
@@ -42,11 +32,12 @@ Plot example counts
 
 # 2. A) [network analysis](2A_WGCNA)
 
-<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-1.png" width="60%"/>
+<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-1.png" width="30%"/>
 
-<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-2.png" width="60%"/>
+<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-2.png" width="30%"/>
 
-<img src="2A_WGCNA/Readme_files/figure-gfm/goa-1.png" width="60%"/>
+<img src="2A_WGCNA/Readme_files/figure-gfm/goa-1.png" width="30%"/>
+
 
 # B) [Differential gene expression](2B_DGE)
 
@@ -61,29 +52,28 @@ top genes: p=0.01,bM=100,l2FC=2
 |                            | all.DEGs | top.DEGs |
 |:---------------------------|---------:|---------:|
 | 1                          |          |          |
-| deg_Hif1a.Hx.vs.Nx         |     6166 |      983 |
-| deg_Hif2a.Hx.vs.Nx         |     3394 |      542 |
-| deg_Hif1b.Hx.vs.Nx         |     2051 |      310 |
-| deg_Kelly.Hx.vs.Nx         |     5301 |      866 |
-| 2A Nx                      |          |          |
-| deg_Nx.Hif1a.vs.Kelly      |      223 |       21 |
-| deg_Nx.Hif2a.vs.Kelly      |      596 |       75 |
-| deg_Nx.Hif1b.vs.Kelly      |      721 |       58 |
-| 2B Hx                      |          |          |
-| deg_Hx.Hif1a.vs.Kelly      |     1013 |       77 |
-| deg_Hx.Hif2a.vs.Kelly      |     2532 |      348 |
-| deg_Hx.Hif1b.vs.Kelly      |     4208 |      531 |
-| deg_Hx.Hif2a.vs.Hif1a      |     4174 |      607 |
-| deg_Hx.Hif1b.vs.Hif1a      |     4972 |      643 |
-| deg_Hx.Hif1b.vs.Hif2a      |     2043 |      249 |
-| 3 interaction              |          |          |
-| deg_Hif1aHxNx.vs.KellyHxNx |      686 |       54 |
-| deg_Hif2aHxNx.vs.KellyHxNx |     2238 |      281 |
-| deg_Hif1bHxNx.vs.KellyHxNx |     3887 |      431 |
-| group contrasts            |          |          |
-| deg_Hx.Hif1b.vs.Hif12a     |     2741 |      224 |
-| deg_Hx.Kelly.vs.allHIFs    |     1502 |      148 |
-| deg_Hx.vs.Nx               |     3599 |      495 |
+| deg_Hif1a.Hx.vs.Nx         |     5375 |      778 |
+| deg_Hif2a.Hx.vs.Nx         |     2927 |      424 |
+| deg_Hif1b.Hx.vs.Nx         |     1710 |      259 |
+| deg_Kelly.Hx.vs.Nx         |     4778 |      722 |
+| 2                          |          |          |
+| deg_Nx.Hif1a.vs.Kelly      |      204 |       13 |
+| deg_Nx.Hif2a.vs.Kelly      |      509 |       50 |
+| deg_Nx.Hif1b.vs.Kelly      |      610 |       46 |
+| deg_Hx.Hif1a.vs.Kelly      |      805 |       47 |
+| deg_Hx.Hif2a.vs.Kelly      |     2280 |      264 |
+| deg_Hx.Hif1b.vs.Kelly      |     3690 |      417 |
+| deg_Hx.Hif2a.vs.Hif1a      |     3664 |      475 |
+| deg_Hx.Hif1b.vs.Hif1a      |     4359 |      500 |
+| deg_Hx.Hif1b.vs.Hif2a      |     1737 |      181 |
+| 3                          |          |          |
+| deg_Hif1aHxNx.vs.KellyHxNx |      646 |       42 |
+| deg_Hif2aHxNx.vs.KellyHxNx |     2101 |      225 |
+| deg_Hif1bHxNx.vs.KellyHxNx |     3478 |      337 |
+| deg_Hx.Hif1b.vs.Hif12a     |     2307 |      153 |
+| deg_Hx.Kelly.vs.allHIFs    |     1281 |      108 |
+| deg_Hx.vs.Nx               |     3071 |      389 |
+
 
 Which results to use?
 
@@ -131,11 +121,7 @@ Contrasts_overview
 
 <img src="2B_DGE/Readme_files/figure-gfm/venn_hif1a-13.png" width="100%"/>
 
-<img src="2B_DGE/Readme_files/figure-gfm/vulcano_lists-1.png" width="80%"/>
-<img src="2B_DGE/Readme_files/figure-gfm/vulcano_lists-2.png" width="80%"/>
-
-
-
+<img src="2B_DGE/Readme_files/figure-gfm/vulcano_lists-1.png" width="80%"/> <img src="2B_DGE/Readme_files/figure-gfm/vulcano_lists-2.png" width="80%"/>
 
 Kelly.Hx.vs.Nx (1)
 
@@ -192,7 +178,6 @@ Hif1aHxNx.vs.KellyHxNx (3)
 | ENSG00000167721 | 6351.7523 |     -0.8039486 | 0.0709857 | -11.3255047 | 0.0000000 | 0.0000000 | TSR1   |
 | ENSG00000203727 |  564.2991 |      0.4763208 | 0.4272718 |   1.1147958 | 0.2649379 | 0.5193756 | SAMD5  |
 
-
 <img src="2B_DGE/Readme_files/figure-gfm/vulcano_lists-3.png" width="70%"/>
 
 <!-- -->
@@ -207,15 +192,15 @@ Hif1aHxNx.vs.KellyHxNx (3)
 
 <!-- -->
 
-|     | overlap | gene  |
-|:----|--------:|:------|
-| 1   |      a1 | BNIP3 |
-| 2 | a2 | AM162A |
-| 3 | a3 | CLSTN2 |
-| 4 | a4 | PFKFB3 |
-| 5 | a5 | BHLHE41 |
-| 6 | a6 | ARHGEF6 |
-| 7 | a7 | TNXB |
+|     | overlap | gene    |
+|:----|--------:|:--------|
+| 1   |      a1 | BNIP3   |
+| 2   |      a2 | AM162A  |
+| 3   |      a3 | CLSTN2  |
+| 4   |      a4 | PFKFB3  |
+| 5   |      a5 | BHLHE41 |
+| 6   |      a6 | ARHGEF6 |
+| 7   |      a7 | TNXB    |
 
 ![](2B_DGE/Readme_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->
 

@@ -170,7 +170,7 @@ design(dds)
 ```
 
     ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x55f2afe6f3c0>
+    ## <environment: 0x55709eadd390>
 
 ``` r
 summary(results(dds, name="treatment_Hx_vs_Nx"))
@@ -297,9 +297,9 @@ meanSdPlot(assay(rld))
 
     ## [1] 23451
 
-    ## [1] 19281
+    ## [1] 18234
 
-    ## [1] 19281
+    ## [1] 18233
 
 <img src="Readme_files/figure-gfm/example_counts-1.png" width="50%" /><img src="Readme_files/figure-gfm/example_counts-2.png" width="50%" />
 
@@ -372,7 +372,7 @@ sessionInfo()
     ##  [11] R6_2.5.1                  lazyeval_0.2.2           
     ##  [13] urlchecker_1.0.1          withr_3.0.0              
     ##  [15] prettyunits_1.2.0         preprocessCore_1.66.0    
-    ##  [17] cli_3.6.2                 formatR_1.14             
+    ##  [17] cli_3.6.3                 formatR_1.14             
     ##  [19] scatterpie_0.2.3          labeling_0.4.3           
     ##  [21] systemfonts_1.1.0         Rsamtools_2.20.0         
     ##  [23] yulab.utils_0.1.4         gson_0.1.0               
@@ -387,9 +387,9 @@ sessionInfo()
     ##  [41] yaml_2.3.8                qvalue_2.36.0            
     ##  [43] SparseArray_1.4.8         blob_1.2.4               
     ##  [45] promises_1.3.0            dqrng_0.4.1              
-    ##  [47] crayon_1.5.2              miniUI_0.1.1.1           
+    ##  [47] crayon_1.5.3              miniUI_0.1.1.1           
     ##  [49] lattice_0.22-6            beachmat_2.20.0          
-    ##  [51] KEGGREST_1.44.0           pillar_1.9.0             
+    ##  [51] KEGGREST_1.44.1           pillar_1.9.0             
     ##  [53] fgsea_1.30.0              rjson_0.2.21             
     ##  [55] codetools_0.2-20          fastmatch_1.1-4          
     ##  [57] glue_1.7.0                ggfun_0.1.5              
