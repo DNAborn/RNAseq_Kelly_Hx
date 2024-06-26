@@ -596,6 +596,12 @@ hif1a_2a_genes <- c(deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
                      deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]) %>%
                   unique()
 
+hif1a_2a_genes %>% length()
+```
+
+    ## [1] 2700
+
+``` r
 names(res_final)
 ```
 
@@ -606,8 +612,8 @@ names(res_final)
 # create table with all results
 res_table_final <- lapply(res_final,data.frame)
 res_table_final <- do.call('cbind',res_table_final)
-res_Hx_up_hif1a <- res_table_final[hif1a_2a_genes,]
-colnames(res_table_final)
+res_hif1a_2a <- res_table_final[hif1a_2a_genes,]
+colnames(res_hif1a_2a)
 ```
 
     ##  [1] "Kelly.Hx.vs.Nx.baseMean"              
@@ -647,28 +653,123 @@ colnames(res_table_final)
     ## [35] "Hif2aHxNx.vs.Hif1aHxNx.symbol"
 
 ``` r
-Hx_up_hif1a_genes <- subset(res_Hx_up_hif1a, Kelly.Hx.vs.Nx.log2FoldChange > 1 &
-                              Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1 & 
-                              Hif2aHxNx.vs.KellyHxNx.log2FoldChange > -1)
-Hx_up_hif2a_genes  <- subset(res_Hx_up_hif1a, Kelly.Hx.vs.Nx.log2FoldChange > 1 &
-                              Hif1aHxNx.vs.KellyHxNx.log2FoldChange > -1 & 
-                              Hif2aHxNx.vs.KellyHxNx.log2FoldChange < -1)
-
-Hx_down_hif1a_genes <- subset(res_Hx_up_hif1a, Kelly.Hx.vs.Nx.log2FoldChange < -1 &
-                              Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1 & 
-                              Hif2aHxNx.vs.KellyHxNx.log2FoldChange < 1)
-Hx_down_hif2a_genes  <- subset(res_Hx_up_hif1a, Kelly.Hx.vs.Nx.log2FoldChange < -1 &
-                              Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1 & 
-                              Hif2aHxNx.vs.KellyHxNx.log2FoldChange < 1)
-
-plotCounts_SK(c(sample(Hx_up_hif1a_genes %>% rownames, size=3),
-                sample(Hx_up_hif2a_genes %>% rownames, size=3),
-                sample(Hx_down_hif1a_genes %>% rownames, size=3),
-                sample(Hx_down_hif2a_genes %>% rownames, size=3)
-                ))
+plot(-res_hif1a_2a$Hif1aHxNx.vs.KellyHxNx.log2FoldChange~
+       res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,
+     main="Hif1a ~ Hx",
+     xlim=c(-10,10),ylim=c(-10,10))
+ abline(v=c(-1,1), h=c(-1,1), col="red", lty=2)
+ segments(x0=1, y0=1, x1 = 1, y1 = 10,  col="red", lty=2)
+ segments(x0=1, y0=1, x1 = 1, y1 = 10,  col="red", lty=2)
+ segments(x0=1, y0=1, x1 = 1, y1 = 10,  col="red", lty=2)
 ```
 
 ![](Readme_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+
+``` r
+plot(-res_hif1a_2a$Hif2aHxNx.vs.KellyHxNx.log2FoldChange~
+       res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,
+     main="Hif2a ~ Hx",
+     xlim=c(-10,10),ylim=c(-10,10))
+```
+
+![](Readme_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->
+
+``` r
+plot(res_hif1a_2a$Hif2aHxNx.vs.KellyHxNx.log2FoldChange~
+       res_hif1a_2a$Hif1aHxNx.vs.KellyHxNx.log2FoldChange,
+     main="Hif2a ~ Hif1a",
+     xlim=c(-10,10),ylim=c(-10,10))
+```
+
+![](Readme_files/figure-gfm/unnamed-chunk-1-3.png)<!-- -->
+
+``` r
+plot(res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange~
+       res_hif1a_2a$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,
+     main="Hif2a vs. Hif1a ~ Hx",
+     xlim=c(-10,10),ylim=c(-10,10))
+```
+
+![](Readme_files/figure-gfm/unnamed-chunk-1-4.png)<!-- -->
+
+``` r
+Hx_up_hif1a_genes <- subset(res_hif1a_2a, Kelly.Hx.vs.Nx.log2FoldChange > 1 &
+                              Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1 & 
+                              Hif2aHxNx.vs.KellyHxNx.log2FoldChange > -1)
+Hx_up_hif2a_genes  <- subset(res_hif1a_2a, Kelly.Hx.vs.Nx.log2FoldChange > 1 &
+                              Hif1aHxNx.vs.KellyHxNx.log2FoldChange > -1 & 
+                              Hif2aHxNx.vs.KellyHxNx.log2FoldChange < -1)
+Hx_up_hif1a_2a_genes  <- subset(res_hif1a_2a, Kelly.Hx.vs.Nx.log2FoldChange > 1 &
+                              Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1 & 
+                              Hif2aHxNx.vs.KellyHxNx.log2FoldChange < -1)
+
+Hx_down_hif1a_genes <- subset(res_hif1a_2a, Kelly.Hx.vs.Nx.log2FoldChange < -1 &
+                              Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1 & 
+                              Hif2aHxNx.vs.KellyHxNx.log2FoldChange < 1)
+Hx_down_hif2a_genes  <- subset(res_hif1a_2a, Kelly.Hx.vs.Nx.log2FoldChange < -1 &
+                              Hif1aHxNx.vs.KellyHxNx.log2FoldChange < 1 & 
+                              Hif2aHxNx.vs.KellyHxNx.log2FoldChange > 1)
+Hx_down_hif1a_2a_genes  <- subset(res_hif1a_2a, Kelly.Hx.vs.Nx.log2FoldChange < -1 &
+                              Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1 & 
+                              Hif2aHxNx.vs.KellyHxNx.log2FoldChange > 1)
+
+plotCounts_SK(c(sample(Hx_up_hif1a_genes %>% rownames, size=3),
+                sample(Hx_up_hif2a_genes %>% rownames, size=3),
+                sample(Hx_up_hif1a_2a_genes %>% rownames, size=3),                
+                sample(Hx_down_hif1a_genes %>% rownames, size=3),
+                sample(Hx_down_hif2a_genes %>% rownames, size=3),
+                sample(Hx_down_hif1a_2a_genes %>% rownames, size=3)
+                               ))
+```
+
+![](Readme_files/figure-gfm/unnamed-chunk-1-5.png)<!-- -->
+
+``` r
+groups <- list(Hx_up_hif1a_genes,
+              Hx_up_hif2a_genes,
+              Hx_down_hif1a_genes,
+              Hx_down_hif2a_genes)
+lapply(groups,rownames) %>% lapply(length)
+```
+
+    ## [[1]]
+    ## [1] 191
+    ## 
+    ## [[2]]
+    ## [1] 847
+    ## 
+    ## [[3]]
+    ## [1] 46
+    ## 
+    ## [[4]]
+    ## [1] 516
+
+``` r
+lapply(groups,rownames) %>% lapply(length) %>% unlist() %>% sum()
+```
+
+    ## [1] 1600
+
+``` r
+input_list <- lapply(groups,rownames)
+plt1 <- venn.diagram(
+    x = input_list,
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Compare Hif KOs", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(1,7,3,5)],
+    #cat.col=c(colors[c(4)],"grey40","grey20"),
+    cat.fontface = "bold",
+    #cat.pos = c(-45,0,45),
+    # inverted=length(input_list[[1]]) < length(input_list[[2]])
+    )
+patchwork::wrap_elements(plt1)
+```
+
+![](Readme_files/figure-gfm/unnamed-chunk-1-6.png)<!-- -->
 
 # 3. Data Dive
 
