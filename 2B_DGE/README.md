@@ -194,17 +194,19 @@ plotCounts_SK2(data=dds_e,goi)
 goi <- subset(mcols(dds),symbol == "RMRP") %>% rownames()
 c1 <- plotCounts_SK2(data=dds_e,goi=goi) 
 c2 <- plotCounts_SK2(data=dds,goi=goi)
+```
 
+``` r
 c1
 ```
 
-![](Readme_files/figure-gfm/cond_batch_effect-2.png)<!-- -->
+![](Readme_files/figure-gfm/plot_batch-1.png)<!-- -->
 
 ``` r
 c2
 ```
 
-![](Readme_files/figure-gfm/cond_batch_effect-3.png)<!-- -->
+![](Readme_files/figure-gfm/plot_batch-2.png)<!-- -->
 
 ## Compare results
 
@@ -516,11 +518,28 @@ goi <- "ENSG00000170525" # PFKFB3
 goi <- subset(mcols(dds),SYMBOL == "FAM162A") %>% rownames()
 goi <- subset(mcols(dds),SYMBOL == "CRABP1") %>% rownames()
 
-for (i in 1:10) {
-goi <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]] %>% sample(size = 1)
+# for (i in 1:10) {
+# goi <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]] %>% sample(size = 1)
 
 getL2FC(results=results_list, goi=goi)
+```
 
+    ##         Hif1a.Hx.vs.Nx         Hif2a.Hx.vs.Nx         Hif1b.Hx.vs.Nx 
+    ##                   0.57                  -1.35                   0.23 
+    ##         Kelly.Hx.vs.Nx      Nx.Hif1a.vs.Kelly      Nx.Hif2a.vs.Kelly 
+    ##                  -1.49                  -2.43                   0.37 
+    ##      Nx.Hif1b.vs.Kelly      Hx.Hif1a.vs.Kelly      Hx.Hif2a.vs.Kelly 
+    ##                  -0.04                  -0.37                   0.52 
+    ##      Hx.Hif1b.vs.Kelly      Hx.Hif2a.vs.Hif1a      Hx.Hif1b.vs.Hif1a 
+    ##                   1.68                   0.89                   2.06 
+    ##      Hx.Hif1b.vs.Hif2a Hif1aHxNx.vs.KellyHxNx Hif2aHxNx.vs.KellyHxNx 
+    ##                   1.17                   2.06                   0.14 
+    ## Hif1bHxNx.vs.KellyHxNx Hif2aHxNx.vs.Hif1aHxNx     Hx.Hif1b.vs.Hif12a 
+    ##                   1.72                  -1.92                   1.61 
+    ##    Hx.Kelly.vs.allHIFs               Hx.vs.Nx 
+    ##                   0.61                  -0.51
+
+``` r
 d <- plotCounts(dds, gene=goi, intgroup=c("condition","experiment","genotype","treatment"), returnData=TRUE)
 box <- ggplot(d, aes(x = condition, y = count, fill=treatment, color=treatment)) +
     geom_boxplot(color="black", outliers = FALSE)
@@ -570,17 +589,17 @@ gcounts <- ggplot(d, aes(x = condition, y = count, fill=treatment, color=treatme
             label=getL2FC(goi=goi)[3], color="purple2") + 
     labs(title = paste(mcols(dds)[goi,"ens.symbol"],"(",goi,")",sep=" "))
 gcounts %>% print()
-}
 ```
 
-![](Readme_files/figure-gfm/cond_res_groups-1.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-2.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-3.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-4.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-5.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-6.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-7.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-8.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-9.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-10.png)<!-- -->
+![](Readme_files/figure-gfm/cond_res_groups-1.png)<!-- -->
 
 ``` r
+# }
 # plotCounts_SK(goi=goi) + geom_label(label=colData(dds)$names, color="black", size=2)
 plotCounts_SK2(data=dds_e, goi=goi)
 ```
 
-![](Readme_files/figure-gfm/cond_res_groups-11.png)<!-- -->
+![](Readme_files/figure-gfm/cond_res_groups-2.png)<!-- -->
 
 ``` r
 # hif1a_check <- results(dds, contrast = c(0,0,0,0,1,1,0,0))
@@ -663,7 +682,7 @@ plot(-res_hif1a_2a$Hif1aHxNx.vs.KellyHxNx.log2FoldChange~
  segments(x0=1, y0=1, x1 = 1, y1 = 10,  col="red", lty=2)
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](Readme_files/figure-gfm/subgroups-1.png)<!-- -->
 
 ``` r
 plot(-res_hif1a_2a$Hif2aHxNx.vs.KellyHxNx.log2FoldChange~
@@ -672,7 +691,7 @@ plot(-res_hif1a_2a$Hif2aHxNx.vs.KellyHxNx.log2FoldChange~
      xlim=c(-10,10),ylim=c(-10,10))
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->
+![](Readme_files/figure-gfm/subgroups-2.png)<!-- -->
 
 ``` r
 plot(res_hif1a_2a$Hif2aHxNx.vs.KellyHxNx.log2FoldChange~
@@ -681,7 +700,7 @@ plot(res_hif1a_2a$Hif2aHxNx.vs.KellyHxNx.log2FoldChange~
      xlim=c(-10,10),ylim=c(-10,10))
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-1-3.png)<!-- -->
+![](Readme_files/figure-gfm/subgroups-3.png)<!-- -->
 
 ``` r
 plot(res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange~
@@ -690,7 +709,7 @@ plot(res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange~
      xlim=c(-10,10),ylim=c(-10,10))
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-1-4.png)<!-- -->
+![](Readme_files/figure-gfm/subgroups-4.png)<!-- -->
 
 ``` r
 Hx_up_hif1a_genes <- subset(res_hif1a_2a, Kelly.Hx.vs.Nx.log2FoldChange > 1 &
@@ -722,7 +741,7 @@ plotCounts_SK(c(sample(Hx_up_hif1a_genes %>% rownames, size=3),
                                ))
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-1-5.png)<!-- -->
+![](Readme_files/figure-gfm/subgroups-5.png)<!-- -->
 
 ``` r
 groups <- list(Hx_up_hif1a_genes,
@@ -769,7 +788,7 @@ plt1 <- venn.diagram(
 patchwork::wrap_elements(plt1)
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-1-6.png)<!-- -->
+![](Readme_files/figure-gfm/subgroups-6.png)<!-- -->
 
 # 3. Data Dive
 
@@ -1064,7 +1083,7 @@ grid.newpage()
 grid.draw(plt)
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](Readme_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
 ``` r
 # plot example counts
@@ -1108,7 +1127,7 @@ data.frame(overlap = names(goi),
 plotCounts_SK(goi)
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-2-2.png)<!-- -->
+![](Readme_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->
 
 #### WGCNA KOs
 
@@ -1576,7 +1595,7 @@ ggplot(df, aes(x, y, color=names(keyvals))) +
   scale_color_manual(values = keyvals)
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](Readme_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
 ## GO terms
 

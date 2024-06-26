@@ -24,7 +24,7 @@ design = \~genotype+treatment+genotype:treatment
 
 **Principal component analysis**
 
-<img src="1_data_processing/Readme_files/figure-gfm/pca-1.png" width="60%"/>
+<img src="1_data_processing/Readme_files/figure-gfm/pca-1.png" width="100%"/>
 
 Plot example counts
 
@@ -32,11 +32,7 @@ Plot example counts
 
 # 2. A) [network analysis](2A_WGCNA)
 
-<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-1.png" width="30%"/>
-
-<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-2.png" width="30%"/>
-
-<img src="2A_WGCNA/Readme_files/figure-gfm/goa-1.png" width="30%"/>
+<img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-1.png" width="30%"/><img src="2A_WGCNA/Readme_files/figure-gfm/eigengenes-2.png" width="30%"/><img src="2A_WGCNA/Readme_files/figure-gfm/goa-1.png" width="30%"/>
 
 
 # B) [Differential gene expression](2B_DGE)
@@ -77,7 +73,10 @@ top genes: p=0.01,bM=100,l2FC=2
 
 Which results to use?
 
-![](2B_DGE/Readme_files/figure-gfm/draw%20vulcano-1.png)![](2B_DGE/Readme_files/figure-gfm/draw%20vulcano-2.png)
+
+![](2B_DGE/Readme_files/figure-gfm/draw%20vulcano-1.png)![](2B_DGE/Readme_files/figure-gfm/cond_compare_results_volcanos-1.png)
+
+![](2B_DGE/Readme_files/figure-gfm/draw%20vulcano-1.png)![](2B_DGE/Readme_files/figure-gfm/cond_compare_results_volcanos-2.png)
 
 Example for Hif1a
 

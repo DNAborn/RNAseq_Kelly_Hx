@@ -1239,7 +1239,7 @@ df <- data.frame(n=c(1:8),
 
 # 2. Condensed Results
 ## Batch effect for genes from different experiments
-```{r cond_batch_effect}
+```{r cond_batch_effect, fig.height=8}
 
 resultsNames(dds_e)
 
@@ -1263,9 +1263,11 @@ goi <- subset(mcols(dds),symbol == "RMRP") %>% rownames()
 c1 <- plotCounts_SK2(data=dds_e,goi=goi) 
 c2 <- plotCounts_SK2(data=dds,goi=goi)
 
+```
+
+```{r plot_batch}
 c1
 c2
-
 ```
 
 
@@ -1543,8 +1545,8 @@ goi <- "ENSG00000170525" # PFKFB3
 goi <- subset(mcols(dds),SYMBOL == "FAM162A") %>% rownames()
 goi <- subset(mcols(dds),SYMBOL == "CRABP1") %>% rownames()
 
-for (i in 1:10) {
-goi <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]] %>% sample(size = 1)
+# for (i in 1:10) {
+# goi <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]] %>% sample(size = 1)
 
 getL2FC(results=results_list, goi=goi)
 
@@ -1597,7 +1599,7 @@ gcounts <- ggplot(d, aes(x = condition, y = count, fill=treatment, color=treatme
             label=getL2FC(goi=goi)[3], color="purple2") + 
     labs(title = paste(mcols(dds)[goi,"ens.symbol"],"(",goi,")",sep=" "))
 gcounts %>% print()
-}
+# }
 # plotCounts_SK(goi=goi) + geom_label(label=colData(dds)$names, color="black", size=2)
 plotCounts_SK2(data=dds_e, goi=goi)
 # hif1a_check <- results(dds, contrast = c(0,0,0,0,1,1,0,0))
@@ -1608,7 +1610,7 @@ plotCounts_SK2(data=dds_e, goi=goi)
 ```
 
 ### Subgroups
-```{r}
+```{r subgroups}
 
 hif1a_2a_genes <- c(deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
                      deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]) %>%
