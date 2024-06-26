@@ -11,12 +11,16 @@ Kelterborn
   - [-Plot example counts](#-plot-example-counts)
   - [- Colour sheme](#--colour-sheme)
 - [2. Condensed Results](#2-condensed-results)
-  - [](#section)
+  - [Batch effect for genes from different
+    experiments](#batch-effect-for-genes-from-different-experiments)
+  - [Compare results](#compare-results)
+  - [Final results lists](#final-results-lists)
+  - [Group results](#group-results)
 - [3. Data Dive](#3-data-dive)
-  - [Volcanos](#volcanos)
+  - [Volcanos](#volcanos-2)
   - [Overlaps (Venn)](#overlaps-venn)
   - [Heatmaps](#heatmaps)
-  - [Venns](#venns)
+  - [Venns](#venns-1)
   - [Cluster results](#cluster-results)
   - [GO terms](#go-terms)
   - [Check experiment differences](#check-experiment-differences)
@@ -28,6 +32,55 @@ Kelterborn
 ## - Load dds
 
 ## - functions
+
+``` r
+# get log2foldchange
+
+getL2FC <- function(goi,
+    results=res_final){
+results <- lapply(results,data.frame)
+  sapply(results,"[[",goi,2) %>% round(digits=2)
+}
+```
+
+``` r
+# log mean
+mean_log <- function(x) {
+  2 ^ mean(log2(x)) 
+}
+```
+
+``` r
+# plot Counts per experiment
+plotCounts_SK2 <- function(data=dds,goi,n="plotCounts"){
+ plotCounts_SK_list <- list()
+ l <- length(goi)
+       for (ig in 1:l){
+  s <- mcols(data)[goi[ig],"symbol"]
+  if (s ==""){s <- goi[ig]}
+    d <- plotCounts(data, gene=goi[ig], intgroup=c("condition","experiment","genotype","treatment"), main=s,returnData=TRUE)
+
+  gcounts <- ggplot(d, aes(x = condition, y = count, fill=treatment, color=treatment)) +
+    geom_boxplot(color="black", outliers = FALSE) +
+    geom_point(shape=21,color="black",aes(fill=experiment),position=position_dodge(width=0.75), alpha=1) +
+    scale_fill_manual(values=c(cols[c(1,5)],viridis(4))) +
+    scale_color_manual(values=cols[c(1,5)]) +
+    scale_y_continuous(trans = "log2") +
+    labs(title = paste(s,"(",goi[ig],")",sep=" "))
+  plotCounts_SK_list[[paste(n,goi[ig],sep="_")]] <- gcounts
+       }
+ 
+patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) + 
+  plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & 
+  plot_annotation(title = n) & 
+  theme(legend.position = 'bottom',
+        plot.title = element_text(size=6),
+        axis.text=element_text(size=6),
+        axis.title=element_text(size=6),
+        legend.text=element_text(size=6),
+        legend.title=element_text(size=6))
+}
+```
 
 ``` r
 n <- "Kelly.Hx.vs.Nx"
@@ -103,7 +156,519 @@ lab <- ol_list$a3
 
 # 2. Condensed Results
 
-## 
+## Batch effect for genes from different experiments
+
+``` r
+resultsNames(dds_e)
+```
+
+    ##  [1] "Intercept"                       "experiment_Katharina_vs_Control"
+    ##  [3] "experiment_Simon_vs_Control"     "experiment_Ulrike_vs_Control"   
+    ##  [5] "genotype_HIF1A_vs_Kelly"         "genotype_HIF2A_vs_Kelly"        
+    ##  [7] "genotype_HIF1B_vs_Kelly"         "treatment_Hx_vs_Nx"             
+    ##  [9] "genotypeHIF1A.treatmentHx"       "genotypeHIF2A.treatmentHx"      
+    ## [11] "genotypeHIF1B.treatmentHx"
+
+``` r
+res_expSvK <- results(dds_e, contrast = c("experiment","Simon","Katharina")) %>% topgenes_f() %>% rownames()
+res_expSvU <- results(dds_e, contrast = c("experiment","Simon","Ulrike")) %>% topgenes_f( )%>% rownames()
+res_expUvK <- results(dds_e, contrast = c("experiment","Katharina","Ulrike")) %>% topgenes_f() %>% rownames()
+res_exp <- c(res_expSvK,res_expSvU,res_expUvK) %>% unique()
+res_exp_10 <- c(res_expSvK[1:5],res_expSvU[1:5],res_expUvK[1:5]) %>% unique()
+
+goi <- res_exp_10
+
+# plotCounts_SK(goi)
+
+# color for experiment
+plotCounts_SK2(data=dds_e,goi)
+```
+
+![](Readme_files/figure-gfm/cond_batch_effect-1.png)<!-- -->
+
+``` r
+# plotCounts_SK2(data=dds,goi)
+
+
+# examples with batch effect
+goi <- subset(mcols(dds),symbol == "RMRP") %>% rownames()
+c1 <- plotCounts_SK2(data=dds_e,goi=goi) 
+c2 <- plotCounts_SK2(data=dds,goi=goi)
+
+c1
+```
+
+![](Readme_files/figure-gfm/cond_batch_effect-2.png)<!-- -->
+
+``` r
+c2
+```
+
+![](Readme_files/figure-gfm/cond_batch_effect-3.png)<!-- -->
+
+## Compare results
+
+### Venn
+
+``` r
+res_1_ab <- calculate.overlap(list(
+  deg_genes_list[["deg_Hif1a.Hx.vs.Nx"]],
+  deg_genes_list[["deg_Kelly.Hx.vs.Nx"]]))
+res_1_ab <- list(setdiff(res_1_ab[[1]],res_1_ab[[3]]),
+        setdiff(res_1_ab[[2]],res_1_ab[[3]]))   
+res_1 <- res_1_ab %>% unlist() %>% unique()
+
+res_3 <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]]
+
+res_2_ab <- calculate.overlap(list(deg_genes_list[["deg_Nx.Hif1a.vs.Kelly"]],
+                deg_genes_list[["deg_Hx.Hif1a.vs.Kelly"]]))
+
+res_2 <- c(deg_genes_list[["deg_Nx.Hif1a.vs.Kelly"]],
+                deg_genes_list[["deg_Hx.Hif1a.vs.Kelly"]]) %>% unique()
+
+input_list <- list(res_1, res_2, res_3)
+names(input_list) <- c("res_1", "res_2", "res_3")
+plt <- venn.diagram(
+    x = input_list,
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Compare results", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = c("salmon3","seagreen3","orchid3"),
+    cat.col=c("salmon4","seagreen4","orchid4"),
+    cat.fontface = "bold",
+    cat.pos = c(-45,45,120),
+    # inverted=length(input_list[[1]]) < length(input_list[[2]])
+    )
+
+patchwork::wrap_elements((plt)) + c_graphic
+```
+
+![](Readme_files/figure-gfm/cond_compare_results_venn-1.png)<!-- -->
+
+``` r
+res_hif1a <- calculate.overlap(input_list)
+getVennElements(plt, olf=res_hif1a)
+```
+
+    ## [1] "Element=7 (2431) --> a1(2431)"
+    ## [1] "Element=8 (189) --> a2(189)"
+    ## [1] "Element=9 (467) --> a3(467)"
+    ## [1] "Element=10 (97) --> a4(97)"
+    ## [1] "Element=11 (270) --> a5(270)"
+    ## [1] "Element=12 (187) --> a6(187)"
+    ## [1] "Element=13 (73) --> a7(73)"
+
+### Volcanos
+
+``` r
+# Volcanos
+# Compare Hx.vs.Nx with interaction
+n <- "Kelly.Hx.vs.Nx"
+
+hif1a_deg_ol <- calculate.overlap(list(
+  deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
+  deg_genes_list[["deg_Hif1a.Hx.vs.Nx"]]))
+hif1a_deg <- c(setdiff(hif1a_deg_ol[[1]],hif1a_deg_ol[[3]]),
+               setdiff(hif1a_deg_ol[[2]],hif1a_deg_ol[[3]]))
+
+list1 <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]]
+list2 <- hif1a_deg
+
+ol_list <- calculate.overlap(list(list1,list2))
+labs <- c(setdiff(ol_list[[1]],ol_list[[3]]),
+          setdiff(ol_list[[2]],ol_list[[3]]))
+
+ev_kelly_lists <- Volcano_SK2(n="Kelly.Hx.vs.Nx",
+            list1=list1,
+            list2=list2,
+            l1.n= "interaction (3)",
+            l2.n= "Hx.vs.Nx (1)",
+            l1.col="orchid3",
+            l2.col="salmon3",
+            lol.col="royalblue1",
+            xlim=10,
+            ylim=200)
+
+ev_hif1a_lists <- Volcano_SK2(n="Hif1a.Hx.vs.Nx",
+            list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+            list2=hif1a_deg,
+            l1.n= "interaction (3)",
+            l2.n= "Hx.vs.Nx (1)",
+            l1.col="orchid3",
+            l2.col="salmon3",
+            lol.col="royalblue1",
+            xlim=10,
+            ylim=200)
+
+ ( ev_kelly_lists + ev_hif1a_lists )  +
+  plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
+  theme(legend.position = 'bottom', axis.title=element_text(size=8))
+```
+
+![](Readme_files/figure-gfm/cond_compare_results_volcanos-1.png)<!-- -->
+
+``` r
+# Compare Hx.vs.Hx with interaction
+
+hif1a_Hx.vs.Hx.deg <- c(deg_genes_list[["deg_Nx.Hif1a.vs.Kelly"]],
+                deg_genes_list[["deg_Hx.Hif1a.vs.Kelly"]]) %>% unique()
+
+ev_kelly_lists <- Volcano_SK2(n="Kelly.Hx.vs.Nx",
+            list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+            list2=hif1a_Hx.vs.Hx.deg,
+            l1.n= "interaction (3)",
+            l2.n= "Hx.vs.Hx (2)",
+            l1.col="orchid3",
+            l2.col="seagreen3",
+            lol.col="royalblue1",
+            xlim=10,
+            ylim=200)
+
+ev_hif1a_lists <- Volcano_SK2(n="Hif1a.Hx.vs.Nx",
+            list1=deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+            list2=hif1a_Hx.vs.Hx.deg,
+            l1.n= "interaction (3)",
+            l2.n= "Hx.vs.Hx (2)",
+            l1.col="orchid3",
+            l2.col="seagreen3",
+            lol.col="royalblue1",
+            xlim=10,
+            ylim=200)
+
+ ( ev_kelly_lists + ev_hif1a_lists )  +
+  plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
+  theme(legend.position = 'bottom', axis.title=element_text(size=8))
+```
+
+![](Readme_files/figure-gfm/cond_compare_results_volcanos-2.png)<!-- -->
+
+## Final results lists
+
+### Venns
+
+``` r
+input_list <- c(list("All Hypoxic (Kelly)" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
+                     "Hif1b" = deg_genes_list[["deg_Hif1bHxNx.vs.KellyHxNx"]],
+                     "Hif1a" = deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     "Hif2a" = deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]                                         ))
+
+plt1 <- venn.diagram(
+    x = input_list,
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Compare Hif KOs", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(1,7,3,5)],
+    #cat.col=c(colors[c(4)],"grey40","grey20"),
+    cat.fontface = "bold",
+    #cat.pos = c(-45,0,45),
+    # inverted=length(input_list[[1]]) < length(input_list[[2]])
+    )
+
+input_list <- input_list[c(3,4,1)]
+plt2 <- venn.diagram(
+    x = input_list,
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    main = "Compare Hif KOs", main.fontface = "bold",
+    lwd = 2,
+    lty = 'blank',
+    fill = colors[c(3,5,1)],
+    #cat.col=c(colors[c(4)],"grey40","grey20"),
+    cat.fontface = "bold",
+    #cat.pos = c(-45,0,45),
+    # inverted=length(input_list[[1]]) < length(input_list[[2]])
+    )
+
+
+patchwork::wrap_elements(plt1) + patchwork::wrap_elements(plt2)
+```
+
+![](Readme_files/figure-gfm/cond_res_res_venn-1.png)<!-- -->
+
+``` r
+names(input_list)
+```
+
+    ## [1] "Hif1a"               "Hif2a"               "All Hypoxic (Kelly)"
+
+``` r
+overlaps <- calculate.overlap(input_list)
+diff1 <- setdiff(overlaps[[1]],overlaps[[3]])
+diff2 <- setdiff(overlaps[[2]],overlaps[[3]])
+
+# get each top gene
+getVennElements(plt2)
+```
+
+    ## [1] "Element=7 (199) --> a1(199)"
+    ## [1] "Element=8 (80) --> a2(80)"
+    ## [1] "Element=9 (645) --> a3(645)"
+    ## [1] "Element=10 (249) --> a4(249)"
+    ## [1] "Element=11 (99) --> a5(99)"
+    ## [1] "Element=12 (1428) --> a6(1428)"
+    ## [1] "Element=13 (3417) --> a7(3417)"
+
+``` r
+goi <- sapply(overlaps,"[[",1) %>% .[order(names(.))]
+
+plotCounts_SK(goi) + patchwork::wrap_elements(plt2)
+```
+
+![](Readme_files/figure-gfm/cond_res_res_venn-2.png)<!-- -->
+
+``` r
+cat("--> FAM162A is part of Hif2A deg list, but in fact is probably compensation mechanism")
+```
+
+    ## --> FAM162A is part of Hif2A deg list, but in fact is probably compensation mechanism
+
+``` r
+# plotCounts_SK(overlaps$a2[1])
+```
+
+### Volcanos
+
+``` r
+# Compare Hx.vs.Nx with interaction
+n <- "Kelly.Hx.vs.Nx"
+res <- results_list[[n]]
+colors <- c("lavenderblush3","lavenderblush4","#90caf9","#1976d2", "#82e0aa", "#239b56", "#f8c471", "#b9770e") 
+
+
+list1 <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]]
+list2 <- deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]
+
+ol_list <- calculate.overlap(list(list1,list2))
+labs <- ol_list$a3
+
+ev_kelly_ko1 <- Volcano_SK2(n="Kelly.Hx.vs.Nx",
+            list1=list1,
+            list2=list2,
+            l1.n= "Hif1a",
+            l2.n= "Hif2a",
+            l1.col="#1976d2",
+            l2.col="#239b56",
+            lol.col="#f8c471",
+            xlim=10,
+            ylim=200,
+            lab=labs)
+
+labs <- setdiff(ol_list[[1]],ol_list[[3]])
+          
+ev_kelly_ko2 <- Volcano_SK2(n="Hif1aHxNx.vs.KellyHxNx",
+            list1=list1,
+            list2=list2,
+            l1.n= "Hif1a",
+            l2.n= "Hif2a",
+            l1.col="#1976d2",
+            l2.col="#239b56",
+            lol.col="#f8c471",
+            labs=labs,
+            xlim=10,
+            ylim=50)
+
+labs <- setdiff(ol_list[[2]],ol_list[[3]])
+
+ev_kelly_ko3 <- Volcano_SK2(n="Hif2aHxNx.vs.KellyHxNx",
+            list1=list1,
+            list2=list2,
+            l1.n= "Hif1a",
+            l2.n= "Hif2a",
+            l1.col="#1976d2",
+            l2.col="#239b56",
+            lol.col="#f8c471",
+            labs=labs,
+            xlim=10,
+            ylim=50)
+
+
+ev_kelly_ko4 <- Volcano_SK2(n="Hif1bHxNx.vs.KellyHxNx",
+            list1=list1,
+            list2=list2,
+            l1.n= "Hif1a",
+            l2.n= "Hif2a",
+            l1.col="#1976d2",
+            l2.col="#239b56",
+            lol.col="#f8c471",
+            xlim=10,
+            ylim=50)
+
+ ( ev_kelly_ko1 / (ev_kelly_ko2 + ev_kelly_ko3 + ev_kelly_ko4 ))  +
+  plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
+  theme(legend.position = 'bottom', axis.title=element_text(size=8))
+```
+
+![](Readme_files/figure-gfm/cond_res_res_volcano-1.png)<!-- -->
+
+## Group results
+
+``` r
+# Example:
+goi <- "ENSG00000170525" # PFKFB3
+
+goi <- subset(mcols(dds),SYMBOL == "FAM162A") %>% rownames()
+goi <- subset(mcols(dds),SYMBOL == "CRABP1") %>% rownames()
+
+for (i in 1:10) {
+goi <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]] %>% sample(size = 1)
+
+getL2FC(results=results_list, goi=goi)
+
+d <- plotCounts(dds, gene=goi, intgroup=c("condition","experiment","genotype","treatment"), returnData=TRUE)
+box <- ggplot(d, aes(x = condition, y = count, fill=treatment, color=treatment)) +
+    geom_boxplot(color="black", outliers = FALSE)
+box <- ggplot_build(box)$data[[1]]
+gcounts <- ggplot(d, aes(x = condition, y = count, fill=treatment, color=treatment)) +
+    geom_boxplot(color="black", outliers = FALSE) +
+    geom_point(shape=21,color="black",aes(fill=experiment),position=position_dodge(width=0.75), alpha=1) +
+    scale_fill_manual(values=c(cols[c(1,5)],viridis(4))) +
+    scale_color_manual(values=cols[c(1,5)]) +
+    scale_y_continuous(trans = "log2") +
+    geom_hline(yintercept=c(box[2,3],
+                            box[2,5]),
+               color="grey20", linetype = 'dashed') +
+    geom_hline(yintercept=c(box[4,3],
+                            box[4,5]),
+               color="#1976d2", linetype = 'dashed') +
+  # Kelly
+  geom_segment(
+        aes(x = 1.5,y = box[1,"middle"], xend = 1.5,yend = box[2,"middle"]),
+        arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="red2") +
+  geom_text(aes(x = 1,y = (box[1,"ymin"]*0.5)),
+            label=getL2FC(goi=goi)[1], color="red2") +
+  # Hif1a
+  geom_segment(
+        aes(x = 3.5,y = box[3,"middle"], xend = 3.5,yend = box[4,"middle"]),
+        arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="red2") +
+  geom_text(aes(x = 3,y = (box[3,"ymin"]*0.5)),
+            label=getL2FC(results_list,goi=goi)[1], color="red2") +
+  geom_segment(
+        aes(x = 2,y = mean_log(c(box[1,"middle"],box[2,"middle"])), 
+            xend = 3,yend = mean_log(c(box[3,"middle"],box[4,"middle"]))),
+        arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="purple2") +
+  geom_text(aes(x = 3,y = mean_log(c(0.5*box[2,"middle"],box[3,"middle"]))),
+            label=getL2FC(goi=goi)[2], color="purple2") +
+  
+  # Hif2a
+  geom_segment(
+        aes(x = 5.5,y = box[5,"middle"], xend = 5.5,yend = box[6,"middle"]),
+        arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="red2") +
+  geom_text(aes(x = 5,y = (box[5,"ymin"]*0.5)),
+            label=getL2FC(goi=goi)[1], color="red2") +
+  geom_segment(
+        aes(x = 2,y = mean_log(c(box[1,"middle"],box[2,"middle"])), 
+            xend = 5,yend = mean_log(c(box[5,"middle"],box[6,"middle"]))),
+        arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="purple2") +
+  geom_text(aes(x = 5,y = mean_log(c(box[2,"middle"],box[5,"middle"]))),
+            label=getL2FC(goi=goi)[3], color="purple2") + 
+    labs(title = paste(mcols(dds)[goi,"ens.symbol"],"(",goi,")",sep=" "))
+gcounts %>% print()
+}
+```
+
+![](Readme_files/figure-gfm/cond_res_groups-1.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-2.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-3.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-4.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-5.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-6.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-7.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-8.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-9.png)<!-- -->![](Readme_files/figure-gfm/cond_res_groups-10.png)<!-- -->
+
+``` r
+# plotCounts_SK(goi=goi) + geom_label(label=colData(dds)$names, color="black", size=2)
+plotCounts_SK2(data=dds_e, goi=goi)
+```
+
+![](Readme_files/figure-gfm/cond_res_groups-11.png)<!-- -->
+
+``` r
+# hif1a_check <- results(dds, contrast = c(0,0,0,0,1,1,0,0))
+# hif1a_check[goi,]
+# plotCounts(dds, gene=goi)
+# levels(colData(dds)$condition)
+```
+
+### Subgroups
+
+``` r
+hif1a_2a_genes <- c(deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]) %>%
+                  unique()
+
+names(res_final)
+```
+
+    ## [1] "Kelly.Hx.vs.Nx"         "Hif1aHxNx.vs.KellyHxNx" "Hif2aHxNx.vs.KellyHxNx"
+    ## [4] "Hif1bHxNx.vs.KellyHxNx" "Hif2aHxNx.vs.Hif1aHxNx"
+
+``` r
+# create table with all results
+res_table_final <- lapply(res_final,data.frame)
+res_table_final <- do.call('cbind',res_table_final)
+res_Hx_up_hif1a <- res_table_final[hif1a_2a_genes,]
+colnames(res_table_final)
+```
+
+    ##  [1] "Kelly.Hx.vs.Nx.baseMean"              
+    ##  [2] "Kelly.Hx.vs.Nx.log2FoldChange"        
+    ##  [3] "Kelly.Hx.vs.Nx.lfcSE"                 
+    ##  [4] "Kelly.Hx.vs.Nx.stat"                  
+    ##  [5] "Kelly.Hx.vs.Nx.pvalue"                
+    ##  [6] "Kelly.Hx.vs.Nx.padj"                  
+    ##  [7] "Kelly.Hx.vs.Nx.symbol"                
+    ##  [8] "Hif1aHxNx.vs.KellyHxNx.baseMean"      
+    ##  [9] "Hif1aHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [10] "Hif1aHxNx.vs.KellyHxNx.lfcSE"         
+    ## [11] "Hif1aHxNx.vs.KellyHxNx.stat"          
+    ## [12] "Hif1aHxNx.vs.KellyHxNx.pvalue"        
+    ## [13] "Hif1aHxNx.vs.KellyHxNx.padj"          
+    ## [14] "Hif1aHxNx.vs.KellyHxNx.symbol"        
+    ## [15] "Hif2aHxNx.vs.KellyHxNx.baseMean"      
+    ## [16] "Hif2aHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [17] "Hif2aHxNx.vs.KellyHxNx.lfcSE"         
+    ## [18] "Hif2aHxNx.vs.KellyHxNx.stat"          
+    ## [19] "Hif2aHxNx.vs.KellyHxNx.pvalue"        
+    ## [20] "Hif2aHxNx.vs.KellyHxNx.padj"          
+    ## [21] "Hif2aHxNx.vs.KellyHxNx.symbol"        
+    ## [22] "Hif1bHxNx.vs.KellyHxNx.baseMean"      
+    ## [23] "Hif1bHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [24] "Hif1bHxNx.vs.KellyHxNx.lfcSE"         
+    ## [25] "Hif1bHxNx.vs.KellyHxNx.stat"          
+    ## [26] "Hif1bHxNx.vs.KellyHxNx.pvalue"        
+    ## [27] "Hif1bHxNx.vs.KellyHxNx.padj"          
+    ## [28] "Hif1bHxNx.vs.KellyHxNx.symbol"        
+    ## [29] "Hif2aHxNx.vs.Hif1aHxNx.baseMean"      
+    ## [30] "Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange"
+    ## [31] "Hif2aHxNx.vs.Hif1aHxNx.lfcSE"         
+    ## [32] "Hif2aHxNx.vs.Hif1aHxNx.stat"          
+    ## [33] "Hif2aHxNx.vs.Hif1aHxNx.pvalue"        
+    ## [34] "Hif2aHxNx.vs.Hif1aHxNx.padj"          
+    ## [35] "Hif2aHxNx.vs.Hif1aHxNx.symbol"
+
+``` r
+Hx_up_hif1a_genes <- subset(res_Hx_up_hif1a, Kelly.Hx.vs.Nx.log2FoldChange > 1 &
+                              Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1 & 
+                              Hif2aHxNx.vs.KellyHxNx.log2FoldChange > -1)
+Hx_up_hif2a_genes  <- subset(res_Hx_up_hif1a, Kelly.Hx.vs.Nx.log2FoldChange > 1 &
+                              Hif1aHxNx.vs.KellyHxNx.log2FoldChange > -1 & 
+                              Hif2aHxNx.vs.KellyHxNx.log2FoldChange < -1)
+
+Hx_down_hif1a_genes <- subset(res_Hx_up_hif1a, Kelly.Hx.vs.Nx.log2FoldChange < -1 &
+                              Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1 & 
+                              Hif2aHxNx.vs.KellyHxNx.log2FoldChange < 1)
+Hx_down_hif2a_genes  <- subset(res_Hx_up_hif1a, Kelly.Hx.vs.Nx.log2FoldChange < -1 &
+                              Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1 & 
+                              Hif2aHxNx.vs.KellyHxNx.log2FoldChange < 1)
+
+plotCounts_SK(c(sample(Hx_up_hif1a_genes %>% rownames, size=3),
+                sample(Hx_up_hif2a_genes %>% rownames, size=3),
+                sample(Hx_down_hif1a_genes %>% rownames, size=3),
+                sample(Hx_down_hif2a_genes %>% rownames, size=3)
+                ))
+```
+
+![](Readme_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
 # 3. Data Dive
 
@@ -283,16 +848,6 @@ ev_f
 |                 | baseMean | log2FoldChange |     lfcSE |     stat | pvalue |    padj | symbol |
 |:----------------|---------:|---------------:|----------:|---------:|-------:|--------:|:-------|
 | ENSG00000105880 | 712.6455 |       2.027877 | 0.4068681 | 4.984114 |  6e-07 | 2.4e-06 | DLX5   |
-
-<img src="Readme_files/figure-gfm/venn_hif1a-12.png" width="100%" />
-
-    ## [1] "Element=7 (2431) --> a1(2431)"
-    ## [1] "Element=8 (189) --> a2(189)"
-    ## [1] "Element=9 (467) --> a3(467)"
-    ## [1] "Element=10 (97) --> a4(97)"
-    ## [1] "Element=11 (270) --> a5(270)"
-    ## [1] "Element=12 (187) --> a6(187)"
-    ## [1] "Element=13 (73) --> a7(73)"
 
 ### (- Hif2a)
 
@@ -675,87 +1230,7 @@ pheatmap(mat,
 ### All Genes
 
 ``` r
-input_list <- c(list("All Hypoxic (Kelly)" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
-                     "Hif1b" = deg_genes_list[["deg_Hif1bHxNx.vs.KellyHxNx"]],
-                     "Hif1a" = deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
-                     "Hif2a" = deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]                                         ))
-
-plt1 <- venn.diagram(
-    x = input_list,
-    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
-    force.unique = TRUE, na = "remove",
-    filename = NULL,
-    main = "Compare Hif KOs", main.fontface = "bold",
-    lwd = 2,
-    lty = 'blank',
-    fill = colors[c(1,7,3,5)],
-    #cat.col=c(colors[c(4)],"grey40","grey20"),
-    cat.fontface = "bold",
-    #cat.pos = c(-45,0,45),
-    # inverted=length(input_list[[1]]) < length(input_list[[2]])
-    )
-
-input_list <- input_list[c(3,4,1)]
-plt2 <- venn.diagram(
-    x = input_list,
-    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
-    force.unique = TRUE, na = "remove",
-    filename = NULL,
-    main = "Compare Hif KOs", main.fontface = "bold",
-    lwd = 2,
-    lty = 'blank',
-    fill = colors[c(3,5,1)],
-    #cat.col=c(colors[c(4)],"grey40","grey20"),
-    cat.fontface = "bold",
-    #cat.pos = c(-45,0,45),
-    # inverted=length(input_list[[1]]) < length(input_list[[2]])
-    )
-
-
-patchwork::wrap_elements(plt1) + patchwork::wrap_elements(plt2)
-```
-
-![](Readme_files/figure-gfm/Venn_all-1.png)<!-- -->
-
-``` r
-names(input_list)
-```
-
-    ## [1] "Hif1a"               "Hif2a"               "All Hypoxic (Kelly)"
-
-``` r
-overlaps <- calculate.overlap(input_list)
-diff1 <- setdiff(overlaps[[1]],overlaps[[3]])
-diff2 <- setdiff(overlaps[[2]],overlaps[[3]])
-
-# get each top gene
-getVennElements(plt2)
-```
-
-    ## [1] "Element=7 (199) --> a1(199)"
-    ## [1] "Element=8 (80) --> a2(80)"
-    ## [1] "Element=9 (645) --> a3(645)"
-    ## [1] "Element=10 (249) --> a4(249)"
-    ## [1] "Element=11 (99) --> a5(99)"
-    ## [1] "Element=12 (1428) --> a6(1428)"
-    ## [1] "Element=13 (3417) --> a7(3417)"
-
-``` r
-goi <- sapply(overlaps,"[[",1) %>% .[order(names(.))]
-
-plotCounts_SK(goi)
-```
-
-![](Readme_files/figure-gfm/Venn_all-2.png)<!-- -->
-
-``` r
-plotCounts_SK(overlaps$a2[1])
-```
-
-![](Readme_files/figure-gfm/Venn_all-3.png)<!-- -->
-
-``` r
-goi <- c(diff1[1],overlaps$a3[1],diff2[1])
+# see above condensed
 ```
 
 ### upregulated in hypoxia
@@ -1152,63 +1627,8 @@ dotplot(ek1) + dotplot(ek2) + dotplot(ek3)
 ## Check experiment differences
 
 ``` r
-load(file=paste(data,"deseq2_experiment_wgcna.dds", sep="/"))
-
-resultsNames(dds)
+# see condensed results
 ```
-
-    ##  [1] "Intercept"                       "experiment_Katharina_vs_Control"
-    ##  [3] "experiment_Simon_vs_Control"     "experiment_Ulrike_vs_Control"   
-    ##  [5] "genotype_HIF1A_vs_Kelly"         "genotype_HIF2A_vs_Kelly"        
-    ##  [7] "genotype_HIF1B_vs_Kelly"         "treatment_Hx_vs_Nx"             
-    ##  [9] "genotypeHIF1A.treatmentHx"       "genotypeHIF2A.treatmentHx"      
-    ## [11] "genotypeHIF1B.treatmentHx"
-
-``` r
-res_expSvK <- results(dds, contrast = c("experiment","Simon","Katharina")) %>% topgenes_f() %>% rownames()
-res_expSvU <- results(dds, contrast = c("experiment","Simon","Ulrike")) %>% topgenes_f( )%>% rownames()
-res_expUvK <- results(dds, contrast = c("experiment","Katharina","Ulrike")) %>% topgenes_f() %>% rownames()
-res_exp <- c(res_expSvK,res_expSvU,res_expUvK) %>% unique()
-res_exp_10 <- c(res_expSvK[1:5],res_expSvU[1:5],res_expUvK[1:5]) %>% unique()
-
-goi <- res_exp_10
-
-plotCounts_SK(goi)
-```
-
-![](Readme_files/figure-gfm/experiment_diffs_counts-1.png)<!-- -->
-
-``` r
-# color for experiment
-plotCounts_SK_list <- list()
-  l <- length(goi)
-       for (ig in 1:l){
-  s <- mcols(dds)[goi[ig],"symbol"]
-  if (s ==""){s <- goi[ig]}
-    d <- plotCounts(dds, gene=goi[ig], intgroup=c("condition","experiment","genotype","treatment"), main=s,returnData=TRUE)
-
-  gcounts <- ggplot(d, aes(x = condition, y = count, fill=experiment, color=experiment)) +
-    geom_boxplot(color="black") +
-    geom_point(shape=21,color="black",aes(fill=experiment),position=position_dodge(width=0.75), alpha=1) +
-    # scale_fill_manual(values=c("#A6CEE3","#FB9A99")) +
-    # scale_color_manual(values=c("#A6CEE3","#FB9A99")) +
-    scale_y_continuous(trans = "log2") +
-    labs(title = paste(s,"(",goi[ig],")",sep=" "))
-  plotCounts_SK_list[[paste(n,goi[ig],sep="_")]] <- gcounts
-       }
- 
-patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) + 
-  plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & 
-  plot_annotation(title = n) & 
-  theme(legend.position = 'bottom',
-        plot.title = element_text(size=6),
-        axis.text=element_text(size=6),
-        axis.title=element_text(size=6),
-        legend.text=element_text(size=6),
-        legend.title=element_text(size=6))
-```
-
-![](Readme_files/figure-gfm/experiment_diffs_counts-2.png)<!-- -->
 
 #### Venns
 
@@ -1271,14 +1691,12 @@ getVennElements(plt1)
 
 ``` r
 overlaps_exp <- overlaps[c("a8","a7","a6","a11","a15","a12","a13","a14")]
-goi <- sapply(overlaps_exp,"[[",1) %>% .[order(names(.))]
+goi <- sapply(overlaps_exp,"[[",1) 
+# %>% .[order(names(.))]
 
-plotCounts_SK(goi)
-```
+# plotCounts_SK(goi)
 
-![](Readme_files/figure-gfm/experiment_diffs_venn-2.png)<!-- -->
 
-``` r
 # color for experiment
 plotCounts_SK_list <- list()
   l <- length(goi)
@@ -1297,7 +1715,7 @@ plotCounts_SK_list <- list()
   plotCounts_SK_list[[paste(n,goi[ig],sep="_")]] <- gcounts
        }
  
-patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) + 
+patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) + patchwork::wrap_elements(plt1) +
   plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & 
   plot_annotation(title = n) & 
   theme(legend.position = 'bottom',
@@ -1308,4 +1726,4 @@ patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) +
         legend.title=element_text(size=6))
 ```
 
-![](Readme_files/figure-gfm/experiment_diffs_venn-3.png)<!-- -->
+![](Readme_files/figure-gfm/experiment_diffs_venn-2.png)<!-- -->
