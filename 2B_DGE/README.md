@@ -121,34 +121,34 @@ lab <- ol_list$a3
 
 |                            | all.DEGs | top.DEGs |
 |:---------------------------|---------:|---------:|
-| deg_Hif1a.Hx.vs.Nx         |     6062 |      977 |
-| deg_Hif2a.Hx.vs.Nx         |     3283 |      568 |
-| deg_Hif1b.Hx.vs.Nx         |     1961 |      310 |
-| deg_Kelly.Hx.vs.Nx         |     5193 |      841 |
-| deg_Nx.Hif1a.vs.Kelly      |      144 |       20 |
-| deg_Nx.Hif2a.vs.Kelly      |      449 |       76 |
-| deg_Nx.Hif1b.vs.Kelly      |      681 |       54 |
-| deg_Hx.Hif1a.vs.Kelly      |     1037 |       82 |
-| deg_Hx.Hif2a.vs.Kelly      |     2359 |      330 |
-| deg_Hx.Hif1b.vs.Kelly      |     5212 |      547 |
-| deg_Hx.Hif2a.vs.Hif1a      |     4085 |      595 |
-| deg_Hx.Hif1b.vs.Hif1a      |     5858 |      735 |
-| deg_Hx.Hif1b.vs.Hif2a      |     3255 |      271 |
-| deg_Hif1aHxNx.vs.KellyHxNx |      627 |       52 |
-| deg_Hif2aHxNx.vs.KellyHxNx |     2252 |      305 |
-| deg_Hif1bHxNx.vs.KellyHxNx |     3797 |      409 |
-| deg_Hif2aHxNx.vs.Hif1aHxNx |     3406 |      527 |
-| deg_Hx.Hif1b.vs.Hif12a     |     4101 |      284 |
-| deg_Hx.Kelly.vs.allHIFs    |     1465 |      151 |
-| deg_Hx.vs.Nx               |     3540 |      501 |
+| deg_Hif1a.Hx.vs.Nx         |     6218 |     1005 |
+| deg_Hif2a.Hx.vs.Nx         |     3384 |      573 |
+| deg_Hif1b.Hx.vs.Nx         |     2079 |      320 |
+| deg_Kelly.Hx.vs.Nx         |     5409 |      889 |
+| deg_Nx.Hif1a.vs.Kelly      |      344 |       33 |
+| deg_Nx.Hif2a.vs.Kelly      |      703 |       83 |
+| deg_Nx.Hif1b.vs.Kelly      |     1040 |       59 |
+| deg_Hx.Hif1a.vs.Kelly      |     1216 |       96 |
+| deg_Hx.Hif2a.vs.Kelly      |     2680 |      372 |
+| deg_Hx.Hif1b.vs.Kelly      |     5754 |      640 |
+| deg_Hx.Hif2a.vs.Hif1a      |     4483 |      675 |
+| deg_Hx.Hif1b.vs.Hif1a      |     7449 |     1096 |
+| deg_Hx.Hif1b.vs.Hif2a      |     4754 |      365 |
+| deg_Hif1aHxNx.vs.KellyHxNx |      715 |       63 |
+| deg_Hif2aHxNx.vs.KellyHxNx |     2351 |      297 |
+| deg_Hif1bHxNx.vs.KellyHxNx |     4090 |      443 |
+| deg_Hif2aHxNx.vs.Hif1aHxNx |     4138 |      603 |
+| deg_Hx.Hif1b.vs.Hif12a     |     5693 |      416 |
+| deg_Hx.Kelly.vs.allHIFs    |     1554 |      146 |
+| deg_Hx.vs.Nx               |     3598 |      508 |
 
 ## -Plot example counts
 
 ![](Readme_files/figure-gfm/results_counts-1.png)<!-- -->![](Readme_files/figure-gfm/results_counts-2.png)<!-- -->![](Readme_files/figure-gfm/results_counts-3.png)<!-- -->![](Readme_files/figure-gfm/results_counts-4.png)<!-- -->![](Readme_files/figure-gfm/results_counts-5.png)<!-- -->![](Readme_files/figure-gfm/results_counts-6.png)<!-- -->![](Readme_files/figure-gfm/results_counts-7.png)<!-- -->![](Readme_files/figure-gfm/results_counts-8.png)<!-- -->![](Readme_files/figure-gfm/results_counts-9.png)<!-- -->![](Readme_files/figure-gfm/results_counts-10.png)<!-- -->![](Readme_files/figure-gfm/results_counts-11.png)<!-- -->![](Readme_files/figure-gfm/results_counts-12.png)<!-- -->![](Readme_files/figure-gfm/results_counts-13.png)<!-- -->![](Readme_files/figure-gfm/results_counts-14.png)<!-- -->![](Readme_files/figure-gfm/results_counts-15.png)<!-- -->![](Readme_files/figure-gfm/results_counts-16.png)<!-- -->![](Readme_files/figure-gfm/results_counts-17.png)<!-- -->![](Readme_files/figure-gfm/results_counts-18.png)<!-- -->![](Readme_files/figure-gfm/results_counts-19.png)<!-- -->![](Readme_files/figure-gfm/results_counts-20.png)<!-- -->
 
-|                 | symbol  | baseMean | log2FoldChange |    lfcSE |      stat | pvalue | padj |
-|:----------------|:--------|---------:|---------------:|---------:|----------:|-------:|-----:|
-| ENSG00000234964 | FABP5P7 | 258.2986 |       -29.6126 | 3.342977 | -8.858153 |      0 |    0 |
+|                 | symbol  | baseMean | log2FoldChange |    lfcSE |    stat |  pvalue |     padj |
+|:----------------|:--------|---------:|---------------:|---------:|--------:|--------:|---------:|
+| ENSG00000234964 | FABP5P7 | 122.4918 |      -26.53404 | 5.528615 | -4.7994 | 1.6e-06 | 3.45e-05 |
 
 ![](Readme_files/figure-gfm/results_counts-21.png)<!-- -->
 
@@ -255,13 +255,13 @@ res_hif1a <- calculate.overlap(input_list)
 getVennElements(plt, olf=res_hif1a)
 ```
 
-    ## [1] "Element=7 (2431) --> a1(2431)"
-    ## [1] "Element=8 (189) --> a2(189)"
-    ## [1] "Element=9 (467) --> a3(467)"
-    ## [1] "Element=10 (97) --> a4(97)"
-    ## [1] "Element=11 (270) --> a5(270)"
-    ## [1] "Element=12 (187) --> a6(187)"
-    ## [1] "Element=13 (73) --> a7(73)"
+    ## [1] "Element=7 (1956) --> a1(1956)"
+    ## [1] "Element=8 (158) --> a2(158)"
+    ## [1] "Element=9 (628) --> a3(628)"
+    ## [1] "Element=10 (58) --> a4(58)"
+    ## [1] "Element=11 (283) --> a5(283)"
+    ## [1] "Element=12 (272) --> a6(272)"
+    ## [1] "Element=13 (102) --> a7(102)"
 
 ### Volcanos
 
@@ -409,13 +409,13 @@ diff2 <- setdiff(overlaps[[2]],overlaps[[3]])
 getVennElements(plt2)
 ```
 
-    ## [1] "Element=7 (199) --> a1(199)"
-    ## [1] "Element=8 (80) --> a2(80)"
-    ## [1] "Element=9 (645) --> a3(645)"
-    ## [1] "Element=10 (249) --> a4(249)"
-    ## [1] "Element=11 (99) --> a5(99)"
-    ## [1] "Element=12 (1428) --> a6(1428)"
-    ## [1] "Element=13 (3417) --> a7(3417)"
+    ## [1] "Element=7 (143) --> a1(143)"
+    ## [1] "Element=8 (93) --> a2(93)"
+    ## [1] "Element=9 (546) --> a3(546)"
+    ## [1] "Element=10 (287) --> a4(287)"
+    ## [1] "Element=11 (192) --> a5(192)"
+    ## [1] "Element=12 (1520) --> a6(1520)"
+    ## [1] "Element=13 (3410) --> a7(3410)"
 
 ``` r
 goi <- sapply(overlaps,"[[",1) %>% .[order(names(.))]
@@ -516,7 +516,7 @@ ev_kelly_ko4 <- Volcano_SK2(n="Hif1bHxNx.vs.KellyHxNx",
 goi <- "ENSG00000170525" # PFKFB3
 
 goi <- subset(mcols(dds),SYMBOL == "FAM162A") %>% rownames()
-goi <- subset(mcols(dds),SYMBOL == "CRABP1") %>% rownames()
+# goi <- subset(mcols(dds),SYMBOL == "CRABP1") %>% rownames()
 
 # for (i in 1:10) {
 # goi <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]] %>% sample(size = 1)
@@ -525,19 +525,19 @@ getL2FC(results=results_list, goi=goi)
 ```
 
     ##         Hif1a.Hx.vs.Nx         Hif2a.Hx.vs.Nx         Hif1b.Hx.vs.Nx 
-    ##                   0.57                  -1.35                   0.23 
+    ##                  -1.09                   4.15                   3.12 
     ##         Kelly.Hx.vs.Nx      Nx.Hif1a.vs.Kelly      Nx.Hif2a.vs.Kelly 
-    ##                  -1.49                  -2.43                   0.37 
+    ##                   2.67                  -0.48                  -0.44 
     ##      Nx.Hif1b.vs.Kelly      Hx.Hif1a.vs.Kelly      Hx.Hif2a.vs.Kelly 
-    ##                  -0.04                  -0.37                   0.52 
+    ##                  -0.14                  -4.24                   1.03 
     ##      Hx.Hif1b.vs.Kelly      Hx.Hif2a.vs.Hif1a      Hx.Hif1b.vs.Hif1a 
-    ##                   1.68                   0.89                   2.06 
+    ##                   0.31                   5.28                   4.55 
     ##      Hx.Hif1b.vs.Hif2a Hif1aHxNx.vs.KellyHxNx Hif2aHxNx.vs.KellyHxNx 
-    ##                   1.17                   2.06                   0.14 
+    ##                  -0.73                  -3.76                   1.48 
     ## Hif1bHxNx.vs.KellyHxNx Hif2aHxNx.vs.Hif1aHxNx     Hx.Hif1b.vs.Hif12a 
-    ##                   1.72                  -1.92                   1.61 
+    ##                   0.44                   5.24                   1.91 
     ##    Hx.Kelly.vs.allHIFs               Hx.vs.Nx 
-    ##                   0.61                  -0.51
+    ##                  -0.97                   2.21
 
 ``` r
 d <- plotCounts(dds, gene=goi, intgroup=c("condition","experiment","genotype","treatment"), returnData=TRUE)
@@ -618,7 +618,7 @@ hif1a_2a_genes <- c(deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
 hif1a_2a_genes %>% length()
 ```
 
-    ## [1] 2700
+    ## [1] 2781
 
 ``` r
 names(res_final)
@@ -752,22 +752,22 @@ lapply(groups,rownames) %>% lapply(length)
 ```
 
     ## [[1]]
-    ## [1] 191
+    ## [1] 280
     ## 
     ## [[2]]
-    ## [1] 847
+    ## [1] 995
     ## 
     ## [[3]]
-    ## [1] 46
+    ## [1] 45
     ## 
     ## [[4]]
-    ## [1] 516
+    ## [1] 503
 
 ``` r
 lapply(groups,rownames) %>% lapply(length) %>% unlist() %>% sum()
 ```
 
-    ## [1] 1600
+    ## [1] 1823
 
 ``` r
 input_list <- lapply(groups,rownames)
@@ -904,48 +904,48 @@ ev_f
 
 ### - Hif1a
 
-    ## [1] "Element=7 (652) --> a3(652)"
+    ## [1] "Element=7 (723) --> a3(723)"
 
 <img src="Readme_files/figure-gfm/venn_hif1a-1.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-2.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-3.png" width="100%" />
 
     ## Kelly.Hx.vs.Nx
 
-|                 |   baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol  |
-|:----------------|-----------:|---------------:|----------:|----------:|-------:|-----:|:--------|
-| ENSG00000073060 | 13138.5292 |       1.919148 | 0.0805471 |  23.82642 |      0 |    0 | SCARB1  |
-| ENSG00000132382 |  7907.2856 |      -1.819953 | 0.1165091 | -15.62070 |      0 |    0 | MYBBP1A |
-| ENSG00000117016 |  7450.2196 |      -1.771902 | 0.1177044 | -15.05383 |      0 |    0 | RIMS3   |
-| ENSG00000186469 |  8919.4998 |       1.868842 | 0.1224782 |  15.25858 |      0 |    0 | GNG2    |
-| ENSG00000135116 |   701.4788 |      -1.986505 | 0.1759162 | -11.29234 |      0 |    0 | HRK     |
-| ENSG00000179222 | 25434.3798 |       1.496304 | 0.1292748 |  11.57460 |      0 |    0 | MAGED1  |
-| ENSG00000189241 | 12349.7187 |       1.713882 | 0.0847956 |  20.21191 |      0 |    0 | TSPYL1  |
-| ENSG00000116830 |  3730.9159 |      -1.933219 | 0.1261942 | -15.31939 |      0 |    0 | TTF2    |
-| ENSG00000184867 |  2482.0171 |       1.739079 | 0.1073437 |  16.20104 |      0 |    0 | ARMCX2  |
+|                 |  baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol  |
+|:----------------|----------:|---------------:|----------:|----------:|-------:|-----:|:--------|
+| ENSG00000073060 | 12619.528 |       1.929654 | 0.0557922 |  34.58646 |      0 |    0 | SCARB1  |
+| ENSG00000186469 |  8742.006 |       1.866494 | 0.0859514 |  21.71568 |      0 |    0 | GNG2    |
+| ENSG00000132382 |  8179.916 |      -1.879139 | 0.0883160 | -21.27745 |      0 |    0 | MYBBP1A |
+| ENSG00000117016 |  7982.692 |      -1.777858 | 0.0957358 | -18.57045 |      0 |    0 | RIMS3   |
+| ENSG00000164076 |  6754.938 |      -1.450047 | 0.0814858 | -17.79508 |      0 |    0 | CAMKV   |
+| ENSG00000100285 | 47284.527 |      -1.311764 | 0.0833886 | -15.73074 |      0 |    0 | NEFH    |
+| ENSG00000189241 | 11860.568 |       1.721315 | 0.0504172 |  34.14144 |      0 |    0 | TSPYL1  |
+| ENSG00000154545 |  6035.260 |       1.980595 | 0.1104416 |  17.93341 |      0 |    0 | MAGED4  |
+| ENSG00000164687 |  7093.248 |      -1.727323 | 0.0780322 | -22.13602 |      0 |    0 | FABP5   |
 
     ## Hif1a.Hx.vs.Nx
 
-|                 |   baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol  |
-|:----------------|-----------:|---------------:|----------:|----------:|-------:|-----:|:--------|
-| ENSG00000073060 | 13138.5292 |       2.465035 | 0.1007928 |  24.45646 |      0 |    0 | SCARB1  |
-| ENSG00000132382 |  7907.2856 |      -2.544386 | 0.1460951 | -17.41596 |      0 |    0 | MYBBP1A |
-| ENSG00000117016 |  7450.2196 |      -2.544218 | 0.1475685 | -17.24093 |      0 |    0 | RIMS3   |
-| ENSG00000186469 |  8919.4998 |       2.486538 | 0.1534820 |  16.20085 |      0 |    0 | GNG2    |
-| ENSG00000135116 |   701.4788 |      -3.811559 | 0.2240398 | -17.01287 |      0 |    0 | HRK     |
-| ENSG00000179222 | 25434.3798 |       2.391898 | 0.1620092 |  14.76396 |      0 |    0 | MAGED1  |
-| ENSG00000189241 | 12349.7187 |       2.219567 | 0.1061130 |  20.91701 |      0 |    0 | TSPYL1  |
-| ENSG00000116830 |  3730.9159 |      -2.479935 | 0.1580978 | -15.68609 |      0 |    0 | TTF2    |
-| ENSG00000184867 |  2482.0171 |       2.448061 | 0.1343629 |  18.21977 |      0 |    0 | ARMCX2  |
+|                 |  baseMean | log2FoldChange |     lfcSE |      stat | pvalue | padj | symbol  |
+|:----------------|----------:|---------------:|----------:|----------:|-------:|-----:|:--------|
+| ENSG00000073060 | 12619.528 |       2.561827 | 0.0774215 |  33.08934 |      0 |    0 | SCARB1  |
+| ENSG00000186469 |  8742.006 |       2.632898 | 0.1195315 |  22.02682 |      0 |    0 | GNG2    |
+| ENSG00000132382 |  8179.916 |      -2.576325 | 0.1227610 | -20.98651 |      0 |    0 | MYBBP1A |
+| ENSG00000117016 |  7982.692 |      -2.642891 | 0.1331081 | -19.85522 |      0 |    0 | RIMS3   |
+| ENSG00000164076 |  6754.938 |      -2.482607 | 0.1134336 | -21.88599 |      0 |    0 | CAMKV   |
+| ENSG00000100285 | 47284.527 |      -2.374604 | 0.1160018 | -20.47040 |      0 |    0 | NEFH    |
+| ENSG00000189241 | 11860.568 |       2.227162 | 0.0699095 |  31.85776 |      0 |    0 | TSPYL1  |
+| ENSG00000154545 |  6035.260 |       2.734057 | 0.1534723 |  17.81466 |      0 |    0 | MAGED4  |
+| ENSG00000164687 |  7093.248 |      -2.335907 | 0.1083633 | -21.55626 |      0 |    0 | FABP5   |
 
 <img src="Readme_files/figure-gfm/venn_hif1a-4.png" width="100%" />
 
-    ## [1] "Element=12 (34) --> a4(34)"
-    ## [1] "Element=14 (652) --> a6(652)"
-    ## [1] "Element=16 (70) --> a8(70)"
-    ## [1] "Element=17 (1025) --> a9(1025)"
-    ## [1] "Element=19 (255) --> a11(255)"
-    ## [1] "Element=20 (155) --> a12(155)"
-    ## [1] "Element=22 (1858) --> a14(1858)"
-    ## [1] "Element=23 (3072) --> a15(3072)"
+    ## [1] "Element=12 (32) --> a4(32)"
+    ## [1] "Element=14 (723) --> a6(723)"
+    ## [1] "Element=16 (17) --> a8(17)"
+    ## [1] "Element=17 (791) --> a9(791)"
+    ## [1] "Element=19 (265) --> a11(265)"
+    ## [1] "Element=20 (134) --> a12(134)"
+    ## [1] "Element=22 (1615) --> a14(1615)"
+    ## [1] "Element=23 (3464) --> a15(3464)"
 
 <img src="Readme_files/figure-gfm/venn_hif1a-5.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-6.png" width="100%" />
 
@@ -953,21 +953,21 @@ ev_f
 
 <img src="Readme_files/figure-gfm/venn_hif1a-7.png" width="100%" />
 
-    ## [1] "Element=7 (29) --> a1(29)"
-    ## [1] "Element=8 (51) --> a2(51)"
-    ## [1] "Element=9 (524) --> a3(524)"
-    ## [1] "Element=10 (24) --> a5(24)"
-    ## [1] "Element=11 (28) --> a6(28)"
+    ## [1] "Element=7 (3) --> a1(3)"
+    ## [1] "Element=8 (25) --> a2(25)"
+    ## [1] "Element=9 (627) --> a3(627)"
+    ## [1] "Element=10 (21) --> a5(21)"
+    ## [1] "Element=11 (42) --> a6(42)"
 
 <img src="Readme_files/figure-gfm/venn_hif1a-8.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-9.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-10.png" width="100%" /><img src="Readme_files/figure-gfm/venn_hif1a-11.png" width="100%" />
 
-|                 | baseMean | log2FoldChange |     lfcSE |     stat |    pvalue |      padj | symbol |
-|:----------------|---------:|---------------:|----------:|---------:|----------:|----------:|:-------|
-| ENSG00000105880 | 712.6455 |     -0.5576155 | 0.3252427 | -1.71446 | 0.0864443 | 0.1264143 | DLX5   |
+|                 | baseMean | log2FoldChange |     lfcSE |      stat |    pvalue |      padj | symbol |
+|:----------------|---------:|---------------:|----------:|----------:|----------:|----------:|:-------|
+| ENSG00000105880 | 689.4284 |     -0.3634308 | 0.2237084 | -1.624574 | 0.1042534 | 0.1286241 | DLX5   |
 
-|                 | baseMean | log2FoldChange |     lfcSE |     stat | pvalue |    padj | symbol |
-|:----------------|---------:|---------------:|----------:|---------:|-------:|--------:|:-------|
-| ENSG00000105880 | 712.6455 |       2.027877 | 0.4068681 | 4.984114 |  6e-07 | 2.4e-06 | DLX5   |
+|                 | baseMean | log2FoldChange |     lfcSE |     stat | pvalue |  padj | symbol |
+|:----------------|---------:|---------------:|----------:|---------:|-------:|------:|:-------|
+| ENSG00000105880 | 689.4284 |       1.740954 | 0.3103146 | 5.610286 |      0 | 1e-07 | DLX5   |
 
 ### (- Hif2a)
 
@@ -975,14 +975,14 @@ ev_f
 
 ![](Readme_files/figure-gfm/venn_hif2a-1.png)<!-- -->
 
-    ## [1] "Element=12 (204) --> a4(204)"
-    ## [1] "Element=14 (391) --> a6(391)"
-    ## [1] "Element=16 (87) --> a8(87)"
-    ## [1] "Element=17 (2706) --> a9(2706)"
-    ## [1] "Element=19 (90) --> a11(90)"
-    ## [1] "Element=20 (246) --> a12(246)"
-    ## [1] "Element=22 (913) --> a14(913)"
-    ## [1] "Element=23 (1556) --> a15(1556)"
+    ## [1] "Element=12 (195) --> a4(195)"
+    ## [1] "Element=14 (431) --> a6(431)"
+    ## [1] "Element=16 (48) --> a8(48)"
+    ## [1] "Element=17 (2633) --> a9(2633)"
+    ## [1] "Element=19 (94) --> a11(94)"
+    ## [1] "Element=20 (263) --> a12(263)"
+    ## [1] "Element=22 (755) --> a14(755)"
+    ## [1] "Element=23 (1793) --> a15(1793)"
 
 ![](Readme_files/figure-gfm/venn_hif2a-2.png)<!-- -->![](Readme_files/figure-gfm/venn_hif2a-3.png)<!-- -->![](Readme_files/figure-gfm/venn_hif2a-4.png)<!-- -->
 
@@ -992,14 +992,14 @@ ev_f
 
 ![](Readme_files/figure-gfm/venn_hif1b-1.png)<!-- -->
 
-    ## [1] "Element=12 (357) --> a4(357)"
-    ## [1] "Element=14 (238) --> a6(238)"
+    ## [1] "Element=12 (384) --> a4(384)"
+    ## [1] "Element=14 (246) --> a6(246)"
     ## [1] "Element=16 (28) --> a8(28)"
-    ## [1] "Element=17 (3450) --> a9(3450)"
-    ## [1] "Element=19 (44) --> a11(44)"
-    ## [1] "Element=20 (246) --> a12(246)"
-    ## [1] "Element=22 (547) --> a14(547)"
-    ## [1] "Element=23 (858) --> a15(858)"
+    ## [1] "Element=17 (3543) --> a9(3543)"
+    ## [1] "Element=19 (46) --> a11(46)"
+    ## [1] "Element=20 (259) --> a12(259)"
+    ## [1] "Element=22 (569) --> a14(569)"
+    ## [1] "Element=23 (931) --> a15(931)"
 
 ![](Readme_files/figure-gfm/venn_hif1b-2.png)<!-- -->![](Readme_files/figure-gfm/venn_hif1b-3.png)<!-- -->![](Readme_files/figure-gfm/venn_hif1b-4.png)<!-- -->
 
@@ -1009,21 +1009,21 @@ ev_f
 
 ![](Readme_files/figure-gfm/venn_overlap_res1-1.png)<!-- -->
 
-    ## [1] "Element=7 (56) --> a1(56)"
-    ## [1] "Element=8 (38) --> a2(38)"
-    ## [1] "Element=9 (88) --> a3(88)"
-    ## [1] "Element=10 (9) --> a4(9)"
+    ## [1] "Element=7 (36) --> a1(36)"
+    ## [1] "Element=8 (2) --> a2(2)"
+    ## [1] "Element=9 (84) --> a3(84)"
+    ## [1] "Element=10 (10) --> a4(10)"
     ## [1] "Element=11 (1) --> a5(1)"
-    ## [1] "Element=12 (164) --> a6(164)"
-    ## [1] "Element=13 (211) --> a7(211)"
+    ## [1] "Element=12 (156) --> a6(156)"
+    ## [1] "Element=13 (245) --> a7(245)"
 
     ##   overlap    gene
-    ## 1      a1   SAMD1
-    ## 2      a2 FABP5P7
+    ## 1      a1   TIGD5
+    ## 2      a2 GATAD2B
     ## 3      a3   BTBD7
     ## 4      a4 MT-RNR1
-    ## 5      a5    CDH7
-    ## 6      a6      U2
+    ## 5      a5 SLITRK6
+    ## 6      a6 CYP26B1
     ## 7      a7   PCGF2
 
 ![](Readme_files/figure-gfm/venn_overlap_res1-2.png)<!-- -->
@@ -1098,13 +1098,13 @@ names(overlaps)
 getVennElements(plt)
 ```
 
-    ## [1] "Element=7 (299) --> a1(299)"
-    ## [1] "Element=8 (100) --> a2(100)"
-    ## [1] "Element=9 (663) --> a3(663)"
-    ## [1] "Element=10 (149) --> a4(149)"
-    ## [1] "Element=11 (79) --> a5(79)"
-    ## [1] "Element=12 (1410) --> a6(1410)"
-    ## [1] "Element=13 (2159) --> a7(2159)"
+    ## [1] "Element=7 (264) --> a1(264)"
+    ## [1] "Element=8 (112) --> a2(112)"
+    ## [1] "Element=9 (602) --> a3(602)"
+    ## [1] "Element=10 (166) --> a4(166)"
+    ## [1] "Element=11 (173) --> a5(173)"
+    ## [1] "Element=12 (1464) --> a6(1464)"
+    ## [1] "Element=13 (2287) --> a7(2287)"
 
 ``` r
 # plot each 1 gene
@@ -1117,7 +1117,7 @@ data.frame(overlap = names(goi),
     ##   overlap    gene
     ## 1      a1   BNIP3
     ## 2      a2 FAM162A
-    ## 3      a3    SOBP
+    ## 3      a3  CLSTN2
     ## 4      a4  PFKFB3
     ## 5      a5    ENO1
     ## 6      a6 ARHGEF6
@@ -1394,7 +1394,7 @@ pick_genes <- deg_genes_list[c("deg_Hif1aHxNx.vs.KellyHxNx", "deg_Hif2aHxNx.vs.K
 ```
 
     ##    Mode   FALSE 
-    ## logical    4859
+    ## logical    5068
 
 ``` r
 pick_results <- c("Kelly.Hx.vs.Nx","Hif1aHxNx.vs.KellyHxNx","Hif2aHxNx.vs.KellyHxNx","Hif1bHxNx.vs.KellyHxNx")
@@ -1405,7 +1405,7 @@ res_comb <- cbind(res_comb,lapply(results_list[pick_results],function(i) i[pick_
 dim(res_comb)
 ```
 
-    ## [1] 4859    7
+    ## [1] 5068    7
 
 ``` r
 rownames(res_comb) <- mcols(dds)[res_comb$gene_id,"ens.symbol"]
@@ -1451,7 +1451,7 @@ res_comb <- cbind(res_comb,lapply(results_list[pick_results],function(i) i[pick_
 dim(res_comb)
 ```
 
-    ## [1] 2700    7
+    ## [1] 2781    7
 
 ``` r
 rownames(res_comb) <- mcols(dds)[res_comb$gene_id,"ens.symbol"]
@@ -1689,19 +1689,19 @@ head(ck)[1:7]
 ```
 
     ##                      Cluster ONTOLOGY         ID
-    ## 1 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0010038
-    ## 2 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0005996
-    ## 3 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0044331
-    ## 4 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0019318
-    ## 5 deg_Hif1aHxNx.vs.KellyHxNx       CC GO:0045211
-    ## 6 deg_Hif1aHxNx.vs.KellyHxNx       CC GO:0097060
-    ##                               Description GeneRatio   BgRatio       pvalue
-    ## 1                   response to metal ion    23/423 387/21288 3.433811e-06
-    ## 2        monosaccharide metabolic process    18/423 271/21288 8.950030e-06
-    ## 3 cell-cell adhesion mediated by cadherin     8/423  64/21288 3.804367e-05
-    ## 4                hexose metabolic process    16/423 251/21288 4.605719e-05
-    ## 5                   postsynaptic membrane    22/449 305/22585 2.311632e-07
-    ## 6                       synaptic membrane    24/449 432/22585 6.830524e-06
+    ## 1 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0007409
+    ## 2 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0007411
+    ## 3 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0097485
+    ## 4 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0010038
+    ## 5 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0042391
+    ## 6 deg_Hif1aHxNx.vs.KellyHxNx       BP GO:0002315
+    ##                            Description GeneRatio   BgRatio       pvalue
+    ## 1                         axonogenesis    34/483 483/21288 6.221880e-09
+    ## 2                        axon guidance    22/483 247/21288 5.554055e-08
+    ## 3           neuron projection guidance    22/483 247/21288 5.554055e-08
+    ## 4                response to metal ion    27/483 387/21288 2.790769e-07
+    ## 5     regulation of membrane potential    31/483 487/21288 2.794834e-07
+    ## 6 marginal zone B cell differentiation     5/483  10/21288 1.351020e-06
 
 ``` r
 dotplot(ck)
@@ -1793,21 +1793,21 @@ overlaps <- calculate.overlap(input_list)
 getVennElements(plt1)
 ```
 
-    ## [1] "Element=9 (174) --> a1(174)"
-    ## [1] "Element=10 (55) --> a2(55)"
-    ## [1] "Element=11 (541) --> a3(541)"
-    ## [1] "Element=12 (187) --> a4(187)"
-    ## [1] "Element=13 (79) --> a5(79)"
-    ## [1] "Element=14 (20) --> a6(20)"
-    ## [1] "Element=15 (25) --> a7(25)"  "Element=15 (25) --> a13(25)"
-    ## [1] "Element=16 (104) --> a8(104)"
-    ## [1] "Element=17 (2926) --> a9(2926)"
-    ## [1] "Element=18 (1217) --> a10(1217)"
-    ## [1] "Element=19 (211) --> a11(211)"
-    ## [1] "Element=20 (62) --> a12(62)"
-    ## [1] "Element=21 (25) --> a7(25)"  "Element=21 (25) --> a13(25)"
-    ## [1] "Element=22 (964) --> a14(964)"
-    ## [1] "Element=23 (491) --> a15(491)"
+    ## [1] "Element=9 (123) --> a1(123)"
+    ## [1] "Element=10 (79) --> a2(79)"
+    ## [1] "Element=11 (497) --> a3(497)"
+    ## [1] "Element=12 (217) --> a4(217)"
+    ## [1] "Element=13 (140) --> a5(140)"
+    ## [1] "Element=14 (52) --> a6(52)"
+    ## [1] "Element=15 (14) --> a7(14)"
+    ## [1] "Element=16 (49) --> a8(49)"
+    ## [1] "Element=17 (2955) --> a9(2955)"
+    ## [1] "Element=18 (1291) --> a10(1291)"
+    ## [1] "Element=19 (229) --> a11(229)"
+    ## [1] "Element=20 (70) --> a12(70)"
+    ## [1] "Element=21 (20) --> a13(20)"
+    ## [1] "Element=22 (1013) --> a14(1013)"
+    ## [1] "Element=23 (455) --> a15(455)"
 
 ``` r
 overlaps_exp <- overlaps[c("a8","a7","a6","a11","a15","a12","a13","a14")]

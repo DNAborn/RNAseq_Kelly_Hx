@@ -523,8 +523,8 @@ sample_table_all[c(1,2,25,35,187,188),] %>% kable() %>% kable_styling("striped",
 
 sample_table_all <- sample_table_all[order(sample_table_all$condition,sample_table_all$clone,sample_table_all$exp_rep),]
 
-write_xlsx(sample_table_all,
-           paste("2024_02 Kelly all samples.xlsx",sep="/"))
+# write_xlsx(sample_table_all,
+#           paste("2024_02 Kelly all samples.xlsx",sep="/"))
 
 sample_table_all %>% head() %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 levels(sample_table_all$genotype)
@@ -823,21 +823,63 @@ design = ~genotype+treatment+genotype:treatment
 
 dds <- DESeqDataSet(gse, design = design)
 
+```
+
+### - remove & collapse samples
+```{r remove_collapse_samples}
+
+colData(dds)$condition %>% table()
+
+
 # collapse technical replicates
 dds <- collapseReplicates(dds, dds$samplename, dds$names)
 
-# collapse repetitions Ulrike
-colData(dds)$Ulrike_rep <- colData(dds)$names
-colData(dds)$Ulrike_rep[str_detect(colData(dds)$Ulrike_rep,pattern="P3302")] <- colData(dds)$exp_rep[str_detect(colData(dds)$exp_rep, pattern="Ulrike")]
-colData(dds)$collapse_rep <- paste(colData(dds)$Ulrike_rep,colData(dds)$condition, sep="_")
+colData(dds)$condition %>% table()
 
-colData(dds)$collapse_rep %>% factor()
+# # collapse repetitions Ulrike
+# colData(dds)$Ulrike_rep <- colData(dds)$names
+# colData(dds)$Ulrike_rep[str_detect(colData(dds)$Ulrike_rep,pattern="P3302")] <- colData(dds)$exp_rep[str_detect(colData(dds)$exp_rep, pattern="Ulrike")]
+# colData(dds)$collapse_rep <- paste(colData(dds)$Ulrike_rep,colData(dds)$condition, sep="_")
+# 
+# colData(dds)$collapse_rep %>% factor()
+# colData(dds)[colData(dds)$experiment=="Simon","condition"] %>% table()
+# colData(dds)[colData(dds)$experiment=="Katharina","condition"] %>% table()
+# colData(dds)[colData(dds)$experiment=="Ulrike","condition"] %>% table()
+# 
+# dds <- collapseReplicates(dds, dds$collapse_rep, dds$names)
+# colnames(dds) <- dds$names
+
+# Remove uncomplete samples
+
+# Simon HIF1A
 colData(dds)[colData(dds)$experiment=="Simon","condition"] %>% table()
-colData(dds)[colData(dds)$experiment=="Katharina","condition"] %>% table()
-colData(dds)[colData(dds)$experiment=="Ulrike","condition"] %>% table()
+simon_hif1a <- subset(colData(dds), experiment=="Simon" & genotype=="HIF1A")[,c("condition","samplename")]
+simon_hif1a
+samplestoexclude <- simon_hif1a %>% rownames()
 
-dds <- collapseReplicates(dds, dds$collapse_rep, dds$names)
-colnames(dds) <- dds$names
+# Katharina HIF1A & HIF2A
+colData(dds)[colData(dds)$experiment=="Katharina","condition"] %>% table()
+katharina_hif1a_2a <- subset(colData(dds), experiment=="Katharina" & (genotype=="HIF1A" | genotype=="HIF2A"))[,c("condition","samplename")]
+katharina_hif1a_2a
+samplestoexclude <- c(samplestoexclude,katharina_hif1a_2a %>% rownames())
+samplestoexclude
+samplestoexclude <- colData(dds)$samplename %in% samplestoexclude
+dds <- dds[,!samplestoexclude]
+
+colData(dds)$condition %>% table()
+
+```
+
+
+### (- remove outlier)
+DEseq2 with all samples, design = ~experiment + genotype + treatment + genotype:treatment
+-> outlier: 2480, dispOutlier: 681
+DEseq2 with all samples, design = ~genotype + treatment + genotype:treatment
+-> outlier: 27, dispOutlier: 288
+
+
+# Run Deseq2
+```{r run_deseq2}
 
 sample.number <- colData(dds)$condition %>% table() %>% min()
 keep.sn <- rowSums(counts(dds) > 10) >= sample.number # keep genes with at least x samples with a count of 10 or higher
@@ -846,7 +888,7 @@ dds <- dds[keep.sn,]
 
 dds <- DESeq(dds)
 
-mcols(dds)[mcols(dds)$betaConv,]
+mcols(dds)[!mcols(dds)$betaConv,]
 betaconv <- mcols(dds)$betaConv
 betaconv %>% is.na() %>% table()
 
@@ -876,19 +918,14 @@ plotMA(dds)
 plotDispEsts(dds)
 resultsNames(dds)
 mcols(dds)$dispOutlier %>% table()
+outlier <- mcols(dds)$dispOutlier %>% mcols(dds)[.,"gene_id"]
+
 
 plot(x=log(mcols(dds)$baseMean),y=log(mcols(dds)$dispGeneEst))
 
 mcols(dds)$dispGeneEst[log(mcols(dds)$dispGeneEst) < -5] %>% length()
 
 ```
-
-### -remove outlier
-DEseq2 with all samples, design = ~experiment + genotype + treatment + genotype:treatment
--> outlier: 2480, dispOutlier: 681
-DEseq2 with all samples, design = ~genotype + treatment + genotype:treatment
--> outlier: 27, dispOutlier: 288
-
 
 
 ```{r deseq2 without outlier, eval=FALSE}
@@ -1139,7 +1176,7 @@ plotloadings(p,
 
 n <- nrow(vsd)/1000
 
-rowVars(vsd)
+rowVars(assay(vsd)) %>% head()
 
 vsd <- vsd[order(rowVars(assay(vsd))),]
 i <- 10

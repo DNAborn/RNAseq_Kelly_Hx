@@ -244,7 +244,7 @@ cor <- temp_cor
 module_eigengenes <- bwnet$MEs
 
 # Print out a preview
-# head(module_eigengenes) %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
+head(module_eigengenes) %>% kable() %>% kable_styling("striped", full_width = T) %>% scroll_box(height = "400px")
 
 # get number of genes for each module
 table(bwnet$colors)
@@ -420,16 +420,16 @@ plotEigengeneNetworks(MEs0[-ncols], "", marDendro = c(0, 4, 0, 4.5), marHeatmap 
     4, 1, 2), cex.lab = 0.8, xLabelsAngle = 90)
 table(bwnet$colors)
 
-trait.col.Hx
-trait.col.HIF1A_Hx
-trait.col.HIF2A_Hx
-trait.col.HIF1B_Hx
+trait.col.Hx # MEturquoise & MEyellow
+trait.col.HIF1A_Hx #  MEgreen      MEpurple
+trait.col.HIF2A_Hx # MEblack      MEpurple
+trait.col.HIF1B_Hx # MEmagenta         MEred
 
 expr_universe <- rownames(dds)
 
 # Get GO terms of top colors
 # Hypoxia
-modcols <- names(trait.col.Hx[c(1,3)]) %>% str_remove(pattern="ME")
+modcols <- names(trait.col.Hx[c(1)]) %>% str_remove(pattern="ME")
 module_go <- module_df[module_df$colors %in% modcols,]
 module_go_ens <- module_go$gene_id
 length(module_go_ens)
@@ -445,7 +445,7 @@ go1 <- dotplot(clusterProfiler::simplify(go_enrich_test))+labs(title = paste("Hx
 
 
 # Hif1A
-modcols <- names(trait.col.HIF1A_Hx[c(1,3)]) %>% str_remove(pattern="ME")
+modcols <- names(trait.col.HIF1A_Hx[c(3)]) %>% str_remove(pattern="ME")
 module_go <- module_df[module_df$colors %in% modcols,]
 module_go_ens <- module_go$gene_id
 length(module_go_ens)
@@ -537,7 +537,7 @@ pheatmap(bwnet$MEs %>% data.matrix())
 
 
 # Export into dds
-```{r export_in_dds, eval=FALSE, include=TRUE, echo=TRUE}
+```{r export_in_dds, eval=TRUE, include=TRUE, echo=TRUE}
 
 # load(file=paste(data,"deseq2.dds", sep="/"))
 # load(file=paste(data,"bwnet_TS.RDS", sep="/"))

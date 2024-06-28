@@ -15,6 +15,7 @@ Kelterborn
   - [- Mapping Rates](#--mapping-rates)
   - [- Tximeta](#--tximeta)
   - [- DESeq2](#--deseq2)
+- [Run Deseq2](#run-deseq2)
 - [3. Pre-Analysis](#3-pre-analysis)
 
 # 0. Load
@@ -165,25 +166,215 @@ P3302
 
 ## - DESeq2
 
+### - remove & collapse samples
+
 ``` r
-design(dds)
+colData(dds)$condition %>% table()
 ```
 
-    ## ~genotype + treatment + genotype:treatment
-    ## <environment: 0x55709eadd390>
+    ## .
+    ## Kelly_Nx Kelly_Hx HIF1A_Nx HIF1A_Hx HIF2A_Nx HIF2A_Hx HIF1B_Nx HIF1B_Hx 
+    ##       34       33       25       30       24       28        8        6
+
+``` r
+# collapse technical replicates
+dds <- collapseReplicates(dds, dds$samplename, dds$names)
+
+colData(dds)$condition %>% table()
+```
+
+    ## .
+    ## Kelly_Nx Kelly_Hx HIF1A_Nx HIF1A_Hx HIF2A_Nx HIF2A_Hx HIF1B_Nx HIF1B_Hx 
+    ##       16       15        9       14        8       12        8        6
+
+``` r
+# # collapse repetitions Ulrike
+# colData(dds)$Ulrike_rep <- colData(dds)$names
+# colData(dds)$Ulrike_rep[str_detect(colData(dds)$Ulrike_rep,pattern="P3302")] <- colData(dds)$exp_rep[str_detect(colData(dds)$exp_rep, pattern="Ulrike")]
+# colData(dds)$collapse_rep <- paste(colData(dds)$Ulrike_rep,colData(dds)$condition, sep="_")
+# 
+# colData(dds)$collapse_rep %>% factor()
+# colData(dds)[colData(dds)$experiment=="Simon","condition"] %>% table()
+# colData(dds)[colData(dds)$experiment=="Katharina","condition"] %>% table()
+# colData(dds)[colData(dds)$experiment=="Ulrike","condition"] %>% table()
+# 
+# dds <- collapseReplicates(dds, dds$collapse_rep, dds$names)
+# colnames(dds) <- dds$names
+
+# Remove uncomplete samples
+
+# Simon HIF1A
+colData(dds)[colData(dds)$experiment=="Simon","condition"] %>% table()
+```
+
+    ## .
+    ## Kelly_Nx Kelly_Hx HIF1A_Nx HIF1A_Hx HIF2A_Nx HIF2A_Hx HIF1B_Nx HIF1B_Hx 
+    ##        2        2        1        2        0        0        8        6
+
+``` r
+simon_hif1a <- subset(colData(dds), experiment=="Simon" & genotype=="HIF1A")[,c("condition","samplename")]
+simon_hif1a
+```
+
+    ## DataFrame with 3 rows and 2 columns
+    ##               condition    samplename
+    ##                <factor>   <character>
+    ## RNA_P2041_S44  HIF1A_Nx RNA_P2041_S44
+    ## RNA_P2041_S45  HIF1A_Hx RNA_P2041_S45
+    ## RNA_P2041_S46  HIF1A_Hx RNA_P2041_S46
+
+``` r
+samplestoexclude <- simon_hif1a %>% rownames()
+
+# Katharina HIF1A & HIF2A
+colData(dds)[colData(dds)$experiment=="Katharina","condition"] %>% table()
+```
+
+    ## .
+    ## Kelly_Nx Kelly_Hx HIF1A_Nx HIF1A_Hx HIF2A_Nx HIF2A_Hx HIF1B_Nx HIF1B_Hx 
+    ##        4        4        0        4        0        4        0        0
+
+``` r
+katharina_hif1a_2a <- subset(colData(dds), experiment=="Katharina" & (genotype=="HIF1A" | genotype=="HIF2A"))[,c("condition","samplename")]
+katharina_hif1a_2a
+```
+
+    ## DataFrame with 8 rows and 2 columns
+    ##              condition   samplename
+    ##               <factor>  <character>
+    ## RNA_P557_S35  HIF1A_Hx RNA_P557_S35
+    ## RNA_P557_S36  HIF2A_Hx RNA_P557_S36
+    ## RNA_P557_S39  HIF1A_Hx RNA_P557_S39
+    ## RNA_P557_S40  HIF2A_Hx RNA_P557_S40
+    ## RNA_P557_S43  HIF1A_Hx RNA_P557_S43
+    ## RNA_P557_S44  HIF2A_Hx RNA_P557_S44
+    ## RNA_P557_S47  HIF1A_Hx RNA_P557_S47
+    ## RNA_P557_S48  HIF2A_Hx RNA_P557_S48
+
+``` r
+samplestoexclude <- c(samplestoexclude,katharina_hif1a_2a %>% rownames())
+samplestoexclude
+```
+
+    ##  [1] "RNA_P2041_S44" "RNA_P2041_S45" "RNA_P2041_S46" "RNA_P557_S35" 
+    ##  [5] "RNA_P557_S36"  "RNA_P557_S39"  "RNA_P557_S40"  "RNA_P557_S43" 
+    ##  [9] "RNA_P557_S44"  "RNA_P557_S47"  "RNA_P557_S48"
+
+``` r
+samplestoexclude <- colData(dds)$samplename %in% samplestoexclude
+dds <- dds[,!samplestoexclude]
+
+colData(dds)$condition %>% table()
+```
+
+    ## .
+    ## Kelly_Nx Kelly_Hx HIF1A_Nx HIF1A_Hx HIF2A_Nx HIF2A_Hx HIF1B_Nx HIF1B_Hx 
+    ##       16       15        8        8        8        8        8        6
+
+### (- remove outlier)
+
+DEseq2 with all samples, design = ~experiment + genotype + treatment +
+genotype:treatment -\> outlier: 2480, dispOutlier: 681 DEseq2 with all
+samples, design = ~genotype + treatment + genotype:treatment -\>
+outlier: 27, dispOutlier: 288
+
+# Run Deseq2
+
+``` r
+sample.number <- colData(dds)$condition %>% table() %>% min()
+keep.sn <- rowSums(counts(dds) > 10) >= sample.number # keep genes with at least x samples with a count of 10 or higher
+keep.sn %>% summary()
+```
+
+    ##    Mode   FALSE    TRUE 
+    ## logical   43597   21583
+
+``` r
+dds <- dds[keep.sn,]
+
+dds <- DESeq(dds)
+
+mcols(dds)[!mcols(dds)$betaConv,]
+```
+
+    ## DataFrame with 0 rows and 64 columns
+
+``` r
+betaconv <- mcols(dds)$betaConv
+betaconv %>% is.na() %>% table()
+```
+
+    ## .
+    ## FALSE 
+    ## 21583
+
+``` r
+# pheatmap(assays(dds)[["cooks"]])
+max(assays(dds)[["cooks"]])
+```
+
+    ## [1] 26.35415
+
+``` r
+stats <- data.frame("mean" = colMeans(assays(dds)[["cooks"]]),
+                    "g.mean" = colMedians(assays(dds)[["cooks"]]),
+                    "min" = colMins(assays(dds)[["cooks"]]),
+                    "max" = colMaxs(assays(dds)[["cooks"]]))
+pheatmap(log(stats))
+```
+
+![](Readme_files/figure-gfm/run_deseq2-1.png)<!-- -->
+
+``` r
+par(mar=c(10,3,2,2)+.1)
+boxplot(log10(assays(dds)[["cooks"]]), range=0, las=2, color=colData(dds)$experiment)
+```
+
+![](Readme_files/figure-gfm/run_deseq2-2.png)<!-- -->
+
+``` r
+resultsNames(dds)
+```
+
+    ## [1] "Intercept"                 "genotype_HIF1A_vs_Kelly"  
+    ## [3] "genotype_HIF2A_vs_Kelly"   "genotype_HIF1B_vs_Kelly"  
+    ## [5] "treatment_Hx_vs_Nx"        "genotypeHIF1A.treatmentHx"
+    ## [7] "genotypeHIF2A.treatmentHx" "genotypeHIF1B.treatmentHx"
 
 ``` r
 summary(results(dds, name="treatment_Hx_vs_Nx"))
 ```
 
     ## 
-    ## out of 23451 with nonzero total read count
+    ## out of 21583 with nonzero total read count
     ## adjusted p-value < 0.1
-    ## LFC > 0 (up)       : 9006, 38%
-    ## LFC < 0 (down)     : 6574, 28%
-    ## outliers [1]       : 12, 0.051%
+    ## LFC > 0 (up)       : 9740, 45%
+    ## LFC < 0 (down)     : 7433, 34%
+    ## outliers [1]       : 2, 0.0093%
     ## low counts [2]     : 0, 0%
-    ## (mean count < 0)
+    ## (mean count < 1)
+    ## [1] see 'cooksCutoff' argument of ?results
+    ## [2] see 'independentFiltering' argument of ?results
+
+``` r
+design(dds)
+```
+
+    ## ~genotype + treatment + genotype:treatment
+    ## <environment: 0x55cefc5fd3c0>
+
+``` r
+summary(results(dds, name="treatment_Hx_vs_Nx"))
+```
+
+    ## 
+    ## out of 21583 with nonzero total read count
+    ## adjusted p-value < 0.1
+    ## LFC > 0 (up)       : 9740, 45%
+    ## LFC < 0 (down)     : 7433, 34%
+    ## outliers [1]       : 2, 0.0093%
+    ## low counts [2]     : 0, 0%
+    ## (mean count < 1)
     ## [1] see 'cooksCutoff' argument of ?results
     ## [2] see 'independentFiltering' argument of ?results
 
@@ -204,24 +395,20 @@ mcols(dds)$dispOutlier %>% table()
 
     ## .
     ## FALSE  TRUE 
-    ## 22856   595
+    ## 21025   558
 
 ``` r
+outlier <- mcols(dds)$dispOutlier %>% mcols(dds)[.,"gene_id"]
+
+
 plot(x=log(mcols(dds)$baseMean),y=log(mcols(dds)$dispGeneEst))
 
 mcols(dds)$dispGeneEst[log(mcols(dds)$dispGeneEst) < -5] %>% length()
 ```
 
-    ## [1] 288
+    ## [1] 681
 
 <img src="Readme_files/figure-gfm/dds_design-1.png" width="50%" /><img src="Readme_files/figure-gfm/dds_design-2.png" width="50%" /><img src="Readme_files/figure-gfm/dds_design-3.png" width="50%" />
-
-### -remove outlier
-
-DEseq2 with all samples, design = ~experiment + genotype + treatment +
-genotype:treatment -\> outlier: 2480, dispOutlier: 681 DEseq2 with all
-samples, design = ~genotype + treatment + genotype:treatment -\>
-outlier: 27, dispOutlier: 288
 
 ``` r
 # Remove Outlier samples: "Control", "P2041_HIF1A_Hx_42"
@@ -293,13 +480,13 @@ meanSdPlot(assay(rld))
 
 ### - Plot example counts
 
-    ## [1] 23451
+    ## [1] 21583
 
-    ## [1] 23451
+    ## [1] 21583
 
-    ## [1] 18234
+    ## [1] 17277
 
-    ## [1] 18233
+    ## [1] 17276
 
 <img src="Readme_files/figure-gfm/example_counts-1.png" width="50%" /><img src="Readme_files/figure-gfm/example_counts-2.png" width="50%" />
 
@@ -376,7 +563,7 @@ sessionInfo()
     ##  [19] scatterpie_0.2.3          labeling_0.4.3           
     ##  [21] systemfonts_1.1.0         Rsamtools_2.20.0         
     ##  [23] yulab.utils_0.1.4         gson_0.1.0               
-    ##  [25] txdbmaker_1.0.0           svglite_2.1.3            
+    ##  [25] txdbmaker_1.0.1           svglite_2.1.3            
     ##  [27] DOSE_3.30.1               maps_3.4.2               
     ##  [29] limma_3.60.3              rstudioapi_0.16.0        
     ##  [31] RSQLite_2.3.7             generics_0.1.3           
@@ -411,7 +598,7 @@ sessionInfo()
     ##  [89] shadowtext_0.1.3          rtracklayer_1.64.0       
     ##  [91] scales_1.3.0              hexbin_1.28.3            
     ##  [93] proj4_1.0-14              affy_1.82.0              
-    ##  [95] rappdirs_0.3.3            digest_0.6.35            
+    ##  [95] rappdirs_0.3.3            digest_0.6.36            
     ##  [97] rmarkdown_2.27            XVector_0.44.0           
     ##  [99] htmltools_0.5.8.1         pkgconfig_2.0.3          
     ## [101] extrafont_0.19            sparseMatrixStats_1.16.0 
@@ -428,11 +615,11 @@ sessionInfo()
     ## [123] MASS_7.3-61               pkgbuild_1.4.4           
     ## [125] parallel_4.4.1            Biostrings_2.72.1        
     ## [127] graphlayouts_1.1.1        splines_4.4.1            
-    ## [129] hms_1.1.3                 locfit_1.5-9.9           
+    ## [129] hms_1.1.3                 locfit_1.5-9.10          
     ## [131] igraph_2.0.3              reshape2_1.4.4           
     ## [133] ScaledMatrix_1.12.0       pkgload_1.3.4            
     ## [135] futile.options_1.0.1      BiocVersion_3.19.1       
-    ## [137] XML_3.99-0.16.1           evaluate_0.24.0          
+    ## [137] XML_3.99-0.17             evaluate_0.24.0          
     ## [139] lambda.r_1.2.4            tzdb_0.4.0               
     ## [141] tweenr_2.0.3              httpuv_1.6.15            
     ## [143] Rttf2pt1_1.3.12           polyclip_1.10-6          

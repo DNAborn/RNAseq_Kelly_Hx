@@ -1543,7 +1543,7 @@ ev_kelly_ko4 <- Volcano_SK2(n="Hif1bHxNx.vs.KellyHxNx",
 goi <- "ENSG00000170525" # PFKFB3
 
 goi <- subset(mcols(dds),SYMBOL == "FAM162A") %>% rownames()
-goi <- subset(mcols(dds),SYMBOL == "CRABP1") %>% rownames()
+# goi <- subset(mcols(dds),SYMBOL == "CRABP1") %>% rownames()
 
 # for (i in 1:10) {
 # goi <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]] %>% sample(size = 1)
