@@ -31,7 +31,9 @@ allnew <- TRUE
 ##  - #R_libraries
 BiocManager::install("gifski", force=TRUE)
 
-BiocManager::install("mgcv")
+BiocManager::install("dendsort")
+
+
 ```{r librarys, eval=TRUE, include=FALSE, echo=FALSE}
 
 library(BiocManager)
@@ -60,6 +62,7 @@ library(GOSemSim)
 
 library(ggplot2)
 library(pheatmap)
+library(ComplexHeatmap)
 library(PCAtools)
 library(ggalt)
 library(cowplot)
@@ -79,6 +82,9 @@ library(writexl)
 library(viridis)
 library(animation)
 library(ensembldb)
+
+library(circlize)
+library(dendsort)
 
 ifelse(Sys.info()["sysname"]== "Linux",
        s <- "/mnt/s",
@@ -898,7 +904,8 @@ stats <- data.frame("mean" = colMeans(assays(dds)[["cooks"]]),
                     "g.mean" = colMedians(assays(dds)[["cooks"]]),
                     "min" = colMins(assays(dds)[["cooks"]]),
                     "max" = colMaxs(assays(dds)[["cooks"]]))
-pheatmap(log(stats))
+# pheatmap(log(stats))
+Heatmap(log(stats))
 
 par(mar=c(10,3,2,2)+.1)
 boxplot(log10(assays(dds)[["cooks"]]), range=0, las=2, color=colData(dds)$experiment)
@@ -941,7 +948,7 @@ stats <- data.frame("mean" = colMeans(assays(dds)[["cooks"]]),
                     "g.mean" = colMedians(assays(dds)[["cooks"]]),
                     "min" = colMins(assays(dds)[["cooks"]]),
                     "max" = colMaxs(assays(dds)[["cooks"]]))
-pheatmap(log(stats))
+Heatmap(log(stats))
 
 par(mar=c(10,3,2,2)+.1)
 boxplot(log10(assays(dds)[["cooks"]]), range=0, las=2, color=colData(dds)$experiment)
@@ -1006,9 +1013,11 @@ names(anno_colors$treatment) <- levels(anno_col$treatment)
 names(anno_colors$genotype) <- levels(anno_col$genotype)
 names(anno_colors$experiment) <- levels(anno_col$experiment)
 
+column_dend <- as.dendrogram(hclust(sampleDists))
+
 pheatmap(sampleDistMatrix,
          clustering_distance_rows=sampleDists,
-         clustering_distance_cols=sampleDists,
+         clustering_distance_cols=,
          annotation_col=anno_col,
          annotation_colors = anno_colors,
          show_colnames     = FALSE,
@@ -1017,6 +1026,61 @@ pheatmap(sampleDistMatrix,
          cutree_cols = 8,
          fontsize_row = 5)
 
+
+
+
+
+
+# With complex Heatmap
+colnames(vsd) <- vsd$names
+sampleDistMatrix <- dist(t(assay(vsd))) %>% as.matrix()
+mat <- sampleDistMatrix
+
+## Color
+col_fun = colorRamp2(c(-2, 0, 2), c("blue", "white", "red"))
+col_fun <- colorRamp2(seq(quantile(mat,0.05),quantile(mat,0.95), length = 100), rev(viridis(100,option = 'viridis')))
+
+## TOP annotation
+n.col <- ncol(sampleDistMatrix)
+column_ha = HeatmapAnnotation(df = as.data.frame(colData(vsd)[,c("experiment","treatment","genotype")]),
+                              col = list(treatment = c("Nx" = "lightcoral", "Hx"="skyblue1"),
+                    genotype = c("Kelly" = "grey","HIF1A"="seagreen3","HIF2A"="turquoise3","HIF1B"="tan2"),
+                    experiment = c("Katharina"=viridis(4, option="plasma")[1],
+                    "Control"=viridis(4, option="plasma")[2], 
+                    "Simon"=viridis(4, option="plasma")[3],
+                    "Ulrike"=viridis(4, option="plasma")[4]) ))
+
+## Dendogramm
+# method = 'pearson'
+col_dend <- hclust(dist(t(mat)), method = 'single')
+col_dend <- dendsort(col_dend)
+
+# Generate Heatmap
+Heatmap(mat,
+        # color
+        col = col_fun,
+        name="distance",
+        
+        # TOP
+        top_annotation = column_ha,
+        
+        # Right
+        row_names_gp = gpar(fontsize = 8),
+        
+        # Clustering
+        # clustering_distance_columns = "pearson",
+        # clustering_distance_rows = "pearson",
+        # column_dend_reorder =TRUE,
+        cluster_columns = col_dend,
+        cluster_rows = col_dend,
+        row_split = 4, column_split = 4,
+        
+        # left
+        show_row_dend = FALSE,
+
+        # bottom
+        show_column_names = FALSE
+        )
 
 ```
 

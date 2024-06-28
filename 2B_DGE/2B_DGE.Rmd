@@ -81,7 +81,6 @@ library(reshape2)
 
 library(ComplexHeatmap)
 # library(pheatmap)
-library(ComplexHeatmap)
 library(plyr)
 
 library(kableExtra)
@@ -1463,7 +1462,7 @@ cat("--> FAM162A is part of Hif2A deg list, but in fact is probably compensation
 ```
 
 ### Volcanos
-```{r cond_res_res_volcano}
+```{r cond_res_res_volcano, fig.height=12}
 
 # Compare Hx.vs.Nx with interaction
 n <- "Kelly.Hx.vs.Nx"
@@ -1537,7 +1536,7 @@ ev_kelly_ko4 <- Volcano_SK2(n="Hif1bHxNx.vs.KellyHxNx",
 ```
 
 ## Group results
-```{r cond_res_groups}
+```{r cond_res_groups, fig.height=5}
 
 # Example:
 goi <- "ENSG00000170525" # PFKFB3
@@ -1590,7 +1589,7 @@ gcounts <- ggplot(d, aes(x = condition, y = count, fill=treatment, color=treatme
         aes(x = 5.5,y = box[5,"middle"], xend = 5.5,yend = box[6,"middle"]),
         arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="red2") +
   geom_text(aes(x = 5,y = (box[5,"ymin"]*0.5)),
-            label=getL2FC(goi=goi)[1], color="red2") +
+            label=getL2FC(goi=goi)[5], color="red2") +
   geom_segment(
         aes(x = 2,y = mean_log(c(box[1,"middle"],box[2,"middle"])), 
             xend = 5,yend = mean_log(c(box[5,"middle"],box[6,"middle"]))),
@@ -1601,7 +1600,7 @@ gcounts <- ggplot(d, aes(x = condition, y = count, fill=treatment, color=treatme
 gcounts %>% print()
 # }
 # plotCounts_SK(goi=goi) + geom_label(label=colData(dds)$names, color="black", size=2)
-plotCounts_SK2(data=dds_e, goi=goi)
+# plotCounts_SK2(data=dds_e, goi=goi)
 # hif1a_check <- results(dds, contrast = c(0,0,0,0,1,1,0,0))
 # hif1a_check[goi,]
 # plotCounts(dds, gene=goi)
@@ -1609,47 +1608,16 @@ plotCounts_SK2(data=dds_e, goi=goi)
 
 ```
 
+
+```{r}
+
+```
+
+
 ### Subgroups
 ```{r subgroups}
 
-hif1a_2a_genes <- c(deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
-                     deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]) %>%
-                  unique()
 
-hif1a_2a_genes %>% length()
-
-names(res_final)
-
-
-# create table with all results
-res_table_final <- lapply(res_final,data.frame)
-res_table_final <- do.call('cbind',res_table_final)
-res_hif1a_2a <- res_table_final[hif1a_2a_genes,]
-colnames(res_hif1a_2a)
-
-plot(-res_hif1a_2a$Hif1aHxNx.vs.KellyHxNx.log2FoldChange~
-       res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,
-     main="Hif1a ~ Hx",
-     xlim=c(-10,10),ylim=c(-10,10))
- abline(v=c(-1,1), h=c(-1,1), col="red", lty=2)
- segments(x0=1, y0=1, x1 = 1, y1 = 10,  col="red", lty=2)
- segments(x0=1, y0=1, x1 = 1, y1 = 10,  col="red", lty=2)
- segments(x0=1, y0=1, x1 = 1, y1 = 10,  col="red", lty=2)
-
-plot(-res_hif1a_2a$Hif2aHxNx.vs.KellyHxNx.log2FoldChange~
-       res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,
-     main="Hif2a ~ Hx",
-     xlim=c(-10,10),ylim=c(-10,10))
-
-plot(res_hif1a_2a$Hif2aHxNx.vs.KellyHxNx.log2FoldChange~
-       res_hif1a_2a$Hif1aHxNx.vs.KellyHxNx.log2FoldChange,
-     main="Hif2a ~ Hif1a",
-     xlim=c(-10,10),ylim=c(-10,10))
-
-plot(res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange~
-       res_hif1a_2a$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,
-     main="Hif2a vs. Hif1a ~ Hx",
-     xlim=c(-10,10),ylim=c(-10,10))
 
 
 Hx_up_hif1a_genes <- subset(res_hif1a_2a, Kelly.Hx.vs.Nx.log2FoldChange > 1 &
@@ -1672,13 +1640,15 @@ Hx_down_hif1a_2a_genes  <- subset(res_hif1a_2a, Kelly.Hx.vs.Nx.log2FoldChange < 
                               Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1 & 
                               Hif2aHxNx.vs.KellyHxNx.log2FoldChange > 1)
 
-plotCounts_SK(c(sample(Hx_up_hif1a_genes %>% rownames, size=3),
+plotCounts_SK(n = "upregulated in Hx",
+              c(sample(Hx_up_hif1a_genes %>% rownames, size=3),
                 sample(Hx_up_hif2a_genes %>% rownames, size=3),
-                sample(Hx_up_hif1a_2a_genes %>% rownames, size=3),                
-                sample(Hx_down_hif1a_genes %>% rownames, size=3),
+                sample(Hx_up_hif1a_2a_genes %>% rownames, size=3) ))            
+
+plotCounts_SK(n = "downregulated in Hx",
+              c(sample(Hx_down_hif1a_genes %>% rownames, size=3),
                 sample(Hx_down_hif2a_genes %>% rownames, size=3),
-                sample(Hx_down_hif1a_2a_genes %>% rownames, size=3)
-                               ))
+                sample(Hx_down_hif1a_2a_genes %>% rownames, size=3) ))
 
 groups <- list(Hx_up_hif1a_genes,
               Hx_up_hif2a_genes,
@@ -3026,7 +2996,7 @@ hm_cols <- colorRamp2(mat_breaks,vir_cols)
 
 hm <- Heatmap(mat,
   ## heatmap colors
-      #   col = hm_cols,
+      col = hm_cols,
       na_col = "black",
       
   ## columns
@@ -3255,6 +3225,107 @@ g1 + g2 + plot_layout(guides = "collect", axis_titles="collect", axes = 'collect
 
 ```
 
+### simple clusters
+```{r simple_clusters}
+hif1a_2a_genes <- c(deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]) %>%
+                  unique()
+
+hif1a_2a_genes %>% length()
+
+names(res_final)
+
+
+# create table with all results
+res_table_final <- lapply(res_final,data.frame)
+res_table_final <- do.call('cbind',res_table_final)
+res_hif1a_2a <- res_table_final[hif1a_2a_genes,]
+colnames(res_hif1a_2a)
+
+plot(-res_hif1a_2a$Hif1aHxNx.vs.KellyHxNx.log2FoldChange~
+       res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,
+     main="Hif1a ~ Hx",
+     cex=0.2,
+     xlim=c(-5,5),ylim=c(-5,5))
+#  abline(v=c(-1,1), h=c(-1,1), col="red", lty=2)
+ segments(x0=c(1,1,-1,-1), y0=c(1,1,-1,-1), x1 = c(1,10,-1,-10), y1 = c(10,1,-10,-1),  col="red", lty=2)
+ 
+plot(-res_hif1a_2a$Hif2aHxNx.vs.KellyHxNx.log2FoldChange~
+       res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,
+     main="Hif2a ~ Hx",
+     cex=0.2,
+     xlim=c(-10,10),ylim=c(-10,10))
+ segments(x0=c(1,1,-1,-1), y0=c(1,1,-1,-1), x1 = c(1,10,-1,-10), y1 = c(10,1,-10,-1),  col="red", lty=2)
+
+
+plot(res_hif1a_2a$Hif2aHxNx.vs.KellyHxNx.log2FoldChange~
+       res_hif1a_2a$Hif1aHxNx.vs.KellyHxNx.log2FoldChange,
+     main="Hif2a ~ Hif1a",
+     cex=0.2,
+    xlim=c(-10,10),ylim=c(-10,10))
+ segments(x0=c(1,1,-1,-1), y0=c(1,1,-1,-1), x1 = c(1,10,-1,-10), y1 = c(10,1,-10,-1),  col="red", lty=2)
+
+par(mar=c(5,5,2,2))
+plot(res_hif1a_2a$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange~
+       res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,
+     main="Hif2a vs. Hif1a ~ Hx",
+     cex=0.2,
+     xlim=c(-15,15),ylim=c(-10,10),
+    xlab="Hypoxia effect",
+    ylab="Hif2a vs. Hif1a"          )
+abline(v=c(0), h=c(0), col="red", lty=2)
+text(x=-13, y=8, labels = "q1", col="red", cex = 3)
+text(x=13, y=8, labels = "q2", col="red", cex = 3)
+text(x=13, y=-8, labels = "q3", col="red", cex = 3)
+text(x=-13, y=-8, labels = "q4", col="red", cex = 3)
+
+q1 <- subset(res_hif1a_2a,Kelly.Hx.vs.Nx.log2FoldChange < 0 & Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange > 1) %>% rownames()
+q1_s <- q1 %>% sample(size=3)
+plotCounts_SK(q1_s, n="q1: Hif2a genes, Hx down")
+
+q2 <- subset(res_hif1a_2a,Kelly.Hx.vs.Nx.log2FoldChange > 0 & Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange > 1) %>% rownames()
+q2_s <- q2  %>% sample(size=3)
+plotCounts_SK(q2_s, n="Hif1a genes, Hx up")
+# PYGM, MYBPC2, KCTD16
+
+q3 <- subset(res_hif1a_2a,Kelly.Hx.vs.Nx.log2FoldChange > 0 & Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange < -1) %>% rownames()
+q3_s <- q3  %>% sample(size=3)
+plotCounts_SK(q3_s, n="Hif2a genes, Hx up")
+
+q4 <- subset(res_hif1a_2a,Kelly.Hx.vs.Nx.log2FoldChange < 0 & Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange < -1) %>% rownames()
+q4_s <- q4  %>% sample(size=3)
+plotCounts_SK(q4_s, n="Hif1a genes, Hx down")
+
+ggplot(res_hif1a_2a,aes(x=Kelly.Hx.vs.Nx.log2FoldChange, y=Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange, color=Hif2aHxNx.vs.KellyHxNx.log2FoldChange)) +
+  geom_point(alpha=0.3) +
+  geom_hline(yintercept=c(-0.5,0.5)) +
+  geom_vline(xintercept=c(0)) +
+  scale_color_viridis_c(option = 'turbo',limits = c(-5, 5)) +
+ coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+
+q0 <- subset(res_hif1a_2a, Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange > -1 & Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange < 1) %>% rownames()
+q0 <- q0[order(abs(res_hif1a_2a[q0,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"]), decreasing = TRUE)]
+q0_s <- q0  %>% sample(size=9)
+plotCounts_SK(q0[1:9], n="Hif1a & Hif2a")
+
+
+ggplot(res_hif1a_2a,aes(x=Kelly.Hx.vs.Nx.log2FoldChange, y=Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange, color=Hif2aHxNx.vs.KellyHxNx.log2FoldChange)) +
+  geom_point(alpha=0.3) +
+  geom_hline(yintercept=c(-0.5,0.5)) +
+  geom_vline(xintercept=c(0)) +
+  scale_color_viridis_c(option = 'turbo',limits = c(-5, 5)) +
+ coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+
+ggplot(res_hif1a_2a,aes(x=Kelly.Hx.vs.Nx.log2FoldChange, y=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, color=Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange)) +
+  geom_point(alpha=0.3) +
+  geom_hline(yintercept=c(-0.5,0.5)) +
+  geom_vline(xintercept=c(0)) +
+  scale_color_viridis_c(option = 'turbo',limits = c(-5, 5)) +
+ coord_cartesian(xlim = c(-5, 15),ylim = c(-10,10))
+
+
+# plotCounts_SK
+```
 
 
 
