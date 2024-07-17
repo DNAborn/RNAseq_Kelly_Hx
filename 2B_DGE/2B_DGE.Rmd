@@ -34,7 +34,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 BiocManager::install()
 BiocManager::valid()
 # update.packages(oldPkgs = old.packages())
-BiocManager::install("tsne")
+BiocManager::install("ggExtra")
 install.packages("reticulate")
 
 
@@ -276,7 +276,7 @@ top <- topgenes_list[str_detect(names(topgenes_list),pattern=n)] %>% .[[1]]
 deg <- deg_genes_list[str_detect(names(deg_genes_list),pattern=n)] %>% .[[1]]
 l <- length(top)
 
-res_shrink <- lfcShrink(dds, res=res, type="ashr")
+res_shrink <- res_shrink_list[[n]]
 res_shrink$symbol <- res$symbol
 
 # define limits for significance
@@ -425,7 +425,7 @@ list_ol <- calculate.overlap(list(list1,list2))
 
 l <- length(res %>% rownames())
 
-res_shrink <- lfcShrink(dds, res=res, type="ashr")
+res_shrink <- res_shrink_list[[n]]
 res_shrink$symbol <- res$symbol
 
 # define limits for significance
@@ -749,11 +749,82 @@ results_list[[n]] <- r1
 results_list[["Nx.Hif2a.vs.Kelly"]] %>% summary(alpha=0.05)
 results_list[["Hx.Hif2a.vs.Kelly"]] %>% summary()
 
-res_names <- names(results_list)
-res_final <- results_list[c("Kelly.Hx.vs.Nx","Hif1aHxNx.vs.KellyHxNx","Hif2aHxNx.vs.KellyHxNx","Hif1bHxNx.vs.KellyHxNx","Hif2aHxNx.vs.Hif1aHxNx")] 
+
+# Shrinkage
+lfcShrink_sk <- function(x){
+  lfcShrink(dds, res=x,type="ashr")
+}
+
+res_shrink_list <- lapply(results_list,lfcShrink_sk)
+
+```
+
+
+### -Generate toplist
+
+```{r toplist, echo=FALSE}
+cat("design")
+design(dds)
+
+deg_genes_list <- lapply(results_list,topgenes_f) %>%  lapply(.,rownames) 
+names(deg_genes_list) <- paste("deg",names(deg_genes_list),sep="_")
+
+topgenes_list <- lapply(results_list,topgenes_f, p=0.01,bM=100,l2FC=2) %>%  lapply(.,rownames)
+names(topgenes_list) <- paste("top",names(topgenes_list),sep="_")
+
+cat("cutoffs",
+      "differential expressed: p=0.05,bM=10,l2FC=1",
+      "top genes:              p=0.01,bM=100,l2FC=2",
+      sep="\n")
+
+data.frame(all.DEGs= (deg_genes_list %>% lapply(., length) %>% unlist()),
+              top.DEGs = (topgenes_list %>% lapply(., length) %>% unlist())
+              ) %>% kable()
 
 
 ```
+
+
+#### -subsets
+```{r}
+
+# Select genes
+hif1a_2a_genes <- c(deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]],
+                    deg_genes_list[["deg_Hif2aHxNx.vs.Hif1aHxNx"]]) %>%
+                  unique()
+
+hif1a_2a_genes %>% length()
+
+# Filter results
+res_names <- names(results_list)
+res_final <- results_list[c("Kelly.Hx.vs.Nx","Hif1a.Hx.vs.Nx","Hif2a.Hx.vs.Nx", "Hif1aHxNx.vs.KellyHxNx","Hif2aHxNx.vs.KellyHxNx","Hif1bHxNx.vs.KellyHxNx","Hif2aHxNx.vs.Hif1aHxNx")] 
+
+# create table with all results
+res_table <- lapply(res_final,data.frame) %>% lapply(.,"[", , c("log2FoldChange","padj"))
+res_table <- do.call('cbind',res_table)
+res_table_final <- res_final[[1]][,c("symbol","baseMean")] %>% data.frame()
+res_table_final <- cbind(res_table_final,res_table)
+res_hif1a_2a <- res_table_final[hif1a_2a_genes,]
+colnames(res_hif1a_2a)
+
+
+
+# create table with all shrinked results
+# Filter results
+res_shrink <- res_shrink_list[c("Kelly.Hx.vs.Nx","Hif1a.Hx.vs.Nx","Hif2a.Hx.vs.Nx", "Hif1aHxNx.vs.KellyHxNx","Hif2aHxNx.vs.KellyHxNx","Hif1bHxNx.vs.KellyHxNx","Hif2aHxNx.vs.Hif1aHxNx")] 
+
+# create table with all results
+res_shrink <- lapply(res_shrink,data.frame) %>% lapply(.,"[", , c("log2FoldChange","padj"))
+res_shrink <- do.call('cbind',res_shrink)
+res_shrink_final <- res_final[[1]][,c("symbol","baseMean")] %>% data.frame()
+res_shrink_final <- cbind(res_shrink_final,res_shrink)
+res_shrink_hif1a_2a <- res_shrink_final[hif1a_2a_genes,]
+
+
+```
+
+
 
 
 ### -include experiment
@@ -1154,30 +1225,6 @@ res.Hif1b.vs.Kelly <- results(dds, name="genotype_HIF1B_vs_Kelly")
 
 ![Contrasts_overview](Contrasts.png)
 
-### -Generate toplist
-
-```{r toplist, echo=FALSE}
-cat("design")
-design(dds)
-
-deg_genes_list <- lapply(results_list,topgenes_f) %>%  lapply(.,rownames) 
-names(deg_genes_list) <- paste("deg",names(deg_genes_list),sep="_")
-
-topgenes_list <- lapply(results_list,topgenes_f, p=0.01,bM=100,l2FC=2) %>%  lapply(.,rownames)
-names(topgenes_list) <- paste("top",names(topgenes_list),sep="_")
-
-cat("cutoffs",
-      "differential expressed: p=0.05,bM=10,l2FC=1",
-      "top genes:              p=0.01,bM=100,l2FC=2",
-      sep="\n")
-
-data.frame(all.DEGs= (deg_genes_list %>% lapply(., length) %>% unlist()),
-              top.DEGs = (topgenes_list %>% lapply(., length) %>% unlist())
-              ) %>% kable()
-
-
-```
-
 ## -Plot example counts
 
 ```{r results_counts, echo=FALSE, fig.height=3}
@@ -1536,6 +1583,8 @@ ev_kelly_ko4 <- Volcano_SK2(n="Hif1bHxNx.vs.KellyHxNx",
 ```
 
 ## Group results
+
+### Show l2FC
 ```{r cond_res_groups, fig.height=5}
 
 # Example:
@@ -1571,6 +1620,7 @@ gcounts <- ggplot(d, aes(x = condition, y = count, fill=treatment, color=treatme
         arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="red2") +
   geom_text(aes(x = 1,y = (box[1,"ymin"]*0.5)),
             label=getL2FC(goi=goi)[1], color="red2") +
+  
   # Hif1a
   geom_segment(
         aes(x = 3.5,y = box[3,"middle"], xend = 3.5,yend = box[4,"middle"]),
@@ -1594,10 +1644,20 @@ gcounts <- ggplot(d, aes(x = condition, y = count, fill=treatment, color=treatme
         aes(x = 2,y = mean_log(c(box[1,"middle"],box[2,"middle"])), 
             xend = 5,yend = mean_log(c(box[5,"middle"],box[6,"middle"]))),
         arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="purple2") +
-  geom_text(aes(x = 5,y = mean_log(c(box[2,"middle"],box[5,"middle"]))),
+  geom_text(aes(x = 5,y = 2*mean_log(c(box[2,"middle"],box[5,"middle"]))),
             label=getL2FC(goi=goi)[3], color="purple2") + 
+    labs(title = paste(mcols(dds)[goi,"ens.symbol"],"(",goi,")",sep=" ")) +
+
+# Hif1a vs. Hif2a
+  geom_segment(
+        aes(x = 3.5,y = mean_log(c(box[3,"middle"],box[4,"middle"])), 
+            xend = 5.5,yend = mean_log(c(box[5,"middle"],box[6,"middle"]))),
+        arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="blue1") +
+  geom_text(aes(x = 6,y = mean_log(c(box[5,"middle"],box[6,"middle"]))),
+            label=getL2FC(goi=goi)[7], color="blue1") + 
     labs(title = paste(mcols(dds)[goi,"ens.symbol"],"(",goi,")",sep=" "))
 gcounts %>% print()
+
 # }
 # plotCounts_SK(goi=goi) + geom_label(label=colData(dds)$names, color="black", size=2)
 # plotCounts_SK2(data=dds_e, goi=goi)
@@ -1608,10 +1668,50 @@ gcounts %>% print()
 
 ```
 
-
+### Cluster log2FC
 ```{r}
 
+# Hif1a ~ Hif2a, color: Kelly_Hx
+color <- cut(res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
+ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color)) +
+  geom_point(alpha=0.5) +
+  # geom_hline(yintercept=c(-0.5,0.5)) +
+  # geom_vline(xintercept=c(0)) +
+  scale_color_viridis_d(option = 'H') +
+  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
+
+# Hif1a ~ Hif2a, color: Hif2a vs. Hif1a
+color <- cut(res_hif1a_2a$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
+ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color)) +
+  geom_point(alpha=0.5) +
+  geom_hline(yintercept=c(0)) +
+  geom_vline(xintercept=c(0)) +
+  geom_abline(intercept=c(1,-1)) +
+  scale_color_viridis_d(option = 'H') +
+  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
+
+# Shrinked
+# Hif1a ~ Hif2a, color: Kelly_Hx
+color <- cut(res_shrink_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
+ggplot(res_shrink_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color)) +
+  geom_point(alpha=0.5) +
+  # geom_hline(yintercept=c(-0.5,0.5)) +
+  # geom_vline(xintercept=c(0)) +
+  scale_color_viridis_d(option = 'H') +
+  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
+
+# Hif1a ~ Hif2a, color: Hif2a vs. Hif1a
+color <- cut(res_shrink_hif1a_2a$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
+ggplot(res_shrink_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color)) +
+  geom_point(alpha=0.5) +
+  geom_hline(yintercept=c(0)) +
+  geom_vline(xintercept=c(0)) +
+  geom_abline(intercept=c(1,-1)) +
+  scale_color_viridis_d(option = 'H') +
+  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
+
 ```
+
 
 
 ### Subgroups
@@ -1776,7 +1876,7 @@ n <- "Kelly.Hx.vs.Nx"
 res <- results_list[[n]]
 l <- length(res)
 
-res_shrink <- lfcShrink(dds, res=res, type="ashr")
+res_shrink <- res_shrink_list[[n]]
 res_shrink$symbol <- res$symbol
 
 # remove nas
@@ -1890,7 +1990,7 @@ res <- results_list[[n]]
 top <- topgenes_f(res)
 l <- nrow(top)
 
-res_shrink <- lfcShrink(dds, res=res, type="ashr")
+res_shrink <- res_shrink_list[[n]]
 res_shrink$symbol <- res$symbol 
 res_shrink$ishs <- ifelse((-20/3*(res_shrink$log2FoldChange^2) + 60) < -log(res_shrink$padj, base=10),TRUE,FALSE)
 res_shrink$istop <- ifelse(rownames(res_shrink) %in% rownames(top)[1:ntop],TRUE,FALSE)
@@ -2601,7 +2701,7 @@ ylim <- 400
 # get results and add symbol
 res <- results_list[[n]]
 l <- length(res %>% rownames())
-res_shrink <- lfcShrink(dds, res=res, type="ashr")
+res_shrink <- res_shrink_list[[n]]
 res_shrink$symbol <- mcols(dds)$ens.symbol
 
 # list overlaps
@@ -3227,20 +3327,7 @@ g1 + g2 + plot_layout(guides = "collect", axis_titles="collect", axes = 'collect
 
 ### simple clusters
 ```{r simple_clusters}
-hif1a_2a_genes <- c(deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
-                     deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]) %>%
-                  unique()
 
-hif1a_2a_genes %>% length()
-
-names(res_final)
-
-
-# create table with all results
-res_table_final <- lapply(res_final,data.frame)
-res_table_final <- do.call('cbind',res_table_final)
-res_hif1a_2a <- res_table_final[hif1a_2a_genes,]
-colnames(res_hif1a_2a)
 
 plot(-res_hif1a_2a$Hif1aHxNx.vs.KellyHxNx.log2FoldChange~
        res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,
@@ -3309,12 +3396,7 @@ q0_s <- q0  %>% sample(size=9)
 plotCounts_SK(q0[1:9], n="Hif1a & Hif2a")
 
 
-ggplot(res_hif1a_2a,aes(x=Kelly.Hx.vs.Nx.log2FoldChange, y=Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange, color=Hif2aHxNx.vs.KellyHxNx.log2FoldChange)) +
-  geom_point(alpha=0.3) +
-  geom_hline(yintercept=c(-0.5,0.5)) +
-  geom_vline(xintercept=c(0)) +
-  scale_color_viridis_c(option = 'turbo',limits = c(-5, 5)) +
- coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+
 
 ggplot(res_hif1a_2a,aes(x=Kelly.Hx.vs.Nx.log2FoldChange, y=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, color=Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange)) +
   geom_point(alpha=0.3) +
