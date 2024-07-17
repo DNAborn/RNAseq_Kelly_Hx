@@ -9,10 +9,10 @@ output:
     toc_depth: 2
 always_allow_html: true
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 knit: (function(input_file, encoding) {
     rmarkdown::render(input_file,output_file= 'Readme.md')
-    })
+        })
 ---
 
 ```{r setup, include=FALSE}
@@ -1509,7 +1509,7 @@ cat("--> FAM162A is part of Hif2A deg list, but in fact is probably compensation
 ```
 
 ### Volcanos
-```{r cond_res_res_volcano, fig.height=12}
+```{r cond_res_res_volcano, fig.height=8, out.width="100%", dpi=300}
 
 # Compare Hx.vs.Nx with interaction
 n <- "Kelly.Hx.vs.Nx"
@@ -1575,8 +1575,8 @@ ev_kelly_ko4 <- Volcano_SK2(n="Hif1bHxNx.vs.KellyHxNx",
             xlim=10,
             ylim=50)
 
- ( ev_kelly_ko1 / (ev_kelly_ko2 + ev_kelly_ko3 + ev_kelly_ko4 ))  +
-  plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
+ ev_kelly_ko1 / (ev_kelly_ko2 + ev_kelly_ko3 + ev_kelly_ko4 + plot_layout(guides = "collect", axes="collect", axis_titles="collect")) +
+  plot_layout(guides = "collect", axes="collect", axis_titles="collect", heights = c(2,1)) & 
   theme(legend.position = 'bottom', axis.title=element_text(size=8))
 
 
