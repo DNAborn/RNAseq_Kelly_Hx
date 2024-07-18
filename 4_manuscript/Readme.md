@@ -7,12 +7,15 @@ Kelterborn
   - [- libraries, folders, R_utils](#--libraries-folders-r_utils)
   - [- Load dds](#--load-dds)
   - [- Colour sheme](#--colour-sheme)
+  - [-Prepare Results](#-prepare-results)
 - [Figure 1](#figure-1)
   - [PCA](#pca)
 - [Figure 2](#figure-2)
   - [-Volcano_function](#-volcano_function)
   - [-Plot Vulcanos](#-plot-vulcanos)
   - [-Venn](#-venn)
+- [Figure 3](#figure-3)
+  - [Cluster genes](#cluster-genes)
 - [Old code](#old-code)
   - [Enhanced volcano](#enhanced-volcano)
   - [Volcanos](#volcanos)
@@ -24,6 +27,73 @@ Kelterborn
 ## - Load dds
 
 ## - Colour sheme
+
+## -Prepare Results
+
+``` r
+deg_genes_list <- lapply(results_list,topgenes_f) %>%  lapply(.,rownames) 
+names(deg_genes_list) <- paste("deg",names(deg_genes_list),sep="_")
+
+main_degs <- c(list("Kelly: Hx.vs.Nx" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
+                     "Hif1b" = deg_genes_list[["deg_Hif1bHxNx.vs.KellyHxNx"]],
+                     "Hif1a" = deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     "Hif2a" = deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]] ))
+
+
+# Select genes
+hif1a_2a_genes <- c(deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]],
+                    deg_genes_list[["deg_Hif2aHxNx.vs.Hif1aHxNx"]]) %>%
+                  unique()
+
+hif1a_2a_genes %>% length()
+```
+
+    ## [1] 5374
+
+``` r
+# Filter results
+res_names <- names(results_list)
+res_final <- results_list[c("Kelly.Hx.vs.Nx","Hif1a.Hx.vs.Nx","Hif2a.Hx.vs.Nx", "Hif1aHxNx.vs.KellyHxNx","Hif2aHxNx.vs.KellyHxNx","Hif1bHxNx.vs.KellyHxNx","Hif2aHxNx.vs.Hif1aHxNx")] 
+
+# create table with all results
+res_table <- lapply(res_final,data.frame) %>% lapply(.,"[", , c("log2FoldChange","padj"))
+res_table <- do.call('cbind',res_table)
+res_table_final <- res_final[[1]][,c("symbol","baseMean")] %>% data.frame()
+res_table_final <- cbind(res_table_final,res_table)
+res_hif1a_2a <- res_table_final[hif1a_2a_genes,]
+colnames(res_hif1a_2a)
+```
+
+    ##  [1] "symbol"                               
+    ##  [2] "baseMean"                             
+    ##  [3] "Kelly.Hx.vs.Nx.log2FoldChange"        
+    ##  [4] "Kelly.Hx.vs.Nx.padj"                  
+    ##  [5] "Hif1a.Hx.vs.Nx.log2FoldChange"        
+    ##  [6] "Hif1a.Hx.vs.Nx.padj"                  
+    ##  [7] "Hif2a.Hx.vs.Nx.log2FoldChange"        
+    ##  [8] "Hif2a.Hx.vs.Nx.padj"                  
+    ##  [9] "Hif1aHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [10] "Hif1aHxNx.vs.KellyHxNx.padj"          
+    ## [11] "Hif2aHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [12] "Hif2aHxNx.vs.KellyHxNx.padj"          
+    ## [13] "Hif1bHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [14] "Hif1bHxNx.vs.KellyHxNx.padj"          
+    ## [15] "Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange"
+    ## [16] "Hif2aHxNx.vs.Hif1aHxNx.padj"
+
+``` r
+# create table with all shrinked results
+# Filter results
+res_shrink <- res_shrink_list[c("Kelly.Hx.vs.Nx","Hif1a.Hx.vs.Nx","Hif2a.Hx.vs.Nx", "Hif1aHxNx.vs.KellyHxNx","Hif2aHxNx.vs.KellyHxNx","Hif1bHxNx.vs.KellyHxNx","Hif2aHxNx.vs.Hif1aHxNx")] 
+
+# create table with all results
+res_shrink <- lapply(res_shrink,data.frame) %>% lapply(.,"[", , c("log2FoldChange","padj"))
+res_shrink <- do.call('cbind',res_shrink)
+res_shrink_final <- res_final[[1]][,c("symbol","baseMean")] %>% data.frame()
+res_shrink_final <- cbind(res_shrink_final,res_shrink)
+res_shrink_hif1a_2a <- res_shrink_final[hif1a_2a_genes,]
+```
 
 # Figure 1
 
@@ -165,14 +235,6 @@ volcano_hif1b <- volcano_sk3(n="Hif1b.Hx.vs.Nx",n2="Hif1bHxNx.vs.KellyHxNx",col=
 ## -Venn
 
 ``` r
-deg_genes_list <- lapply(results_list,topgenes_f) %>%  lapply(.,rownames) 
-names(deg_genes_list) <- paste("deg",names(deg_genes_list),sep="_")
-
-main_degs <- c(list("Kelly: Hx.vs.Nx" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
-                     "Hif1b" = deg_genes_list[["deg_Hif1bHxNx.vs.KellyHxNx"]],
-                     "Hif1a" = deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
-                     "Hif2a" = deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]                                         ))
-
 plt1 <- venn.diagram(
     x = main_degs,
     fill = colors[c(1,7,3,5)],
@@ -207,6 +269,45 @@ patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
 ```
 
 <img src="Readme_files/figure-gfm/2_venn-1.png" width="50%" />
+
+# Figure 3
+
+## Cluster genes
+
+``` r
+# Hif1a ~ Hif2a, color: Kelly_Hx
+color <- cut(res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
+cc <- scales::seq_gradient_pal("blue", "red", "Lab")(seq(0,1,length.out=8))
+cc <- viridis(8)
+cc[4:5] <- "red"
+ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color)) +
+  geom_hline(yintercept=c(0)) +
+  geom_vline(xintercept=c(0)) +
+  geom_abline(intercept=c(1,-1)) +
+  geom_point(alpha=0.5) +
+  # scale_color_viridis_d(option = 'C') +
+  scale_colour_manual(values=cc) +
+  ggtitle(label="Kelly hypoxia") + 
+  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
+```
+
+<img src="Readme_files/figure-gfm/unnamed-chunk-2-1.png" width="75%" />
+
+``` r
+# Hif1a ~ Hif2a, color: Hif2a vs. Hif1a
+color <- cut(res_hif1a_2a$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
+ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color)) +
+  geom_hline(yintercept=c(0)) +
+  geom_vline(xintercept=c(0)) +
+  geom_abline(intercept=c(1,-1)) +
+  geom_point(alpha=0.5) +
+  scale_colour_manual(values=cc) +
+  # scale_color_viridis_d(option = 'C') +
+  ggtitle(label="Hif1a vs. Hif2a") + 
+  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
+```
+
+<img src="Readme_files/figure-gfm/unnamed-chunk-2-2.png" width="75%" />
 
 # Old code
 
