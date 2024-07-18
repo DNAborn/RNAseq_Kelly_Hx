@@ -155,8 +155,9 @@ volcano_hif1a <- volcano_sk3(n="Hif1a.Hx.vs.Nx",n2="Hif1aHxNx.vs.KellyHxNx",col=
 volcano_hif2a <- volcano_sk3(n="Hif2a.Hx.vs.Nx",n2="Hif2aHxNx.vs.KellyHxNx",col=darken("forestgreen",0.2), celline="HIF2A")
 volcano_hif1b <- volcano_sk3(n="Hif1b.Hx.vs.Nx",n2="Hif1bHxNx.vs.KellyHxNx",col=colors[8], celline="HIF1B")
 
-(volcano_Kelly+volcano_hif1b) / (volcano_hif1a+volcano_hif2a) + plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
-  theme(legend.position = 'bottom')
+(volcano_Kelly+volcano_hif1b + plot_layout(guides = "collect", axes="collect", axis_titles="collect") ) / 
+  (volcano_hif1a+volcano_hif2a + plot_layout(guides = "collect", axes="collect", axis_titles="collect") ) & 
+  theme(legend.position = 'right')
 ```
 
 ![](Readme_files/figure-gfm/2_volcanos_plot-1.png)<!-- -->
@@ -167,19 +168,18 @@ volcano_hif1b <- volcano_sk3(n="Hif1b.Hx.vs.Nx",n2="Hif1bHxNx.vs.KellyHxNx",col=
 deg_genes_list <- lapply(results_list,topgenes_f) %>%  lapply(.,rownames) 
 names(deg_genes_list) <- paste("deg",names(deg_genes_list),sep="_")
 
-main_degs <- c(list("All Hx (Kelly)" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
+main_degs <- c(list("Kelly: Hx.vs.Nx" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
                      "Hif1b" = deg_genes_list[["deg_Hif1bHxNx.vs.KellyHxNx"]],
                      "Hif1a" = deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
                      "Hif2a" = deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]                                         ))
 
 plt1 <- venn.diagram(
     x = main_degs,
-    main = "Compare Hif KOs", main.fontface = "bold",
     fill = colors[c(1,7,3,5)],
-
+    main.fontface = "bold",
     fontfamily ="Arial",
     category.names = paste(names(main_degs),"\n(",main_degs %>% summary() %>% .[c(1:length(main_degs))],")",sep=""),
-    force.unique = TRUE, na = "remove",
+    force.unique = TRUE, na = "remove", total.population = TRUE,
     filename = NULL,
     lwd = 2,
     lty = 'blank',
@@ -189,20 +189,20 @@ plt1 <- venn.diagram(
 main_degs <- main_degs[c(3,4,1)]
 plt2 <- venn.diagram(
     x = main_degs,
-    main = "Compare Hif KOs", main.fontface = "bold",
     fill = colors[c(3,5,1)],
-    
-    category.names = paste(names(main_degs),"\n(",main_degs %>% summary() %>% .[c(1:length(main_degs))],")",sep=""),
+    main.fontface = "bold",
     fontfamily ="Arial",
+    category.names = paste(names(main_degs),"\n(",main_degs %>% summary() %>% .[c(1:length(main_degs))],")",sep=""),
     force.unique = TRUE, na = "remove", total.population = TRUE,
-
     filename = NULL,
     lwd = 2,
     lty = 'blank',
-    cat.fontface = "bold"
-    )
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
     
-  
+#     main = "Compare Hif KOs",
+
+
 patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
 ```
 
