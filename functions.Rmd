@@ -1,0 +1,418 @@
+---
+title: "R functions"
+output: html_notebook
+---
+
+
+## - functions
+
+```{r topgenes, include=FALSE}
+# topgenes
+topgenes_f <- function(res,p=0.05,bM=0,l2FC=1){
+a <- subset(res, padj < p & baseMean > bM & abs(log2FoldChange) > l2FC)
+a <- a[order(a$baseMean, decreasing = T),]
+  a$rank.bm <- seq(1:length(rownames(a)))
+a <- a[order(a$padj, decreasing = F),]
+  a$rank.padj <- seq(1:length(rownames(a)))
+a <- a[order(abs(a$log2FoldChange), decreasing = T),]
+  a$rank.l2FC <- seq(1:length(rownames(a)))
+a$rank.sum <- a$rank.l2FC+a$rank.bm+a$rank.padj
+  a <- a[order(a$rank.sum),]
+a
+}
+# 
+
+```
+
+```{r get_l2FC}
+# get log2foldchange
+
+getL2FC <- function(goi,
+    results=res_final){
+results <- lapply(results,data.frame)
+  sapply(results,"[[",goi,2) %>% round(digits=2)
+}
+
+
+```
+
+```{r log_mean}
+# log mean
+mean_log <- function(x) {
+  2 ^ mean(log2(x)) 
+}
+
+
+```
+
+
+
+```{r plotCounts_SK, include=FALSE}
+
+plotCounts_SK <- function(goi,n="plotCounts"){
+ plotCounts_SK_list <- list()
+  l <- length(goi)
+       for (ig in 1:l){
+  s <- mcols(dds)[goi[ig],"symbol"]
+  if (s ==""){s <- goi[ig]}
+    d <- plotCounts(dds, gene=goi[ig], intgroup=c("condition","experiment","genotype","treatment"), main=s,returnData=TRUE)
+
+  gcounts <- ggplot(d, aes(x = genotype, y = count, fill=treatment, color=treatment)) +
+    geom_boxplot(color="black") +
+    geom_point(shape=21,color="black",aes(fill=treatment),position=position_dodge(width=0.75), alpha=1) +
+    scale_fill_manual(values=c("#A6CEE3","#FB9A99")) +
+    scale_color_manual(values=c("#A6CEE3","#FB9A99")) +
+    scale_y_continuous(trans = "log2") +
+    labs(title = paste(s,"(",goi[ig],")",sep=" "))
+  plotCounts_SK_list[[paste(n,goi[ig],sep="_")]] <- gcounts
+       }
+ 
+patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) + 
+  plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & 
+  plot_annotation(title = n) & 
+  theme(legend.position = 'bottom',
+        plot.title = element_text(size=6),
+        axis.text=element_text(size=6),
+        axis.title=element_text(size=6),
+        legend.text=element_text(size=6),
+        legend.title=element_text(size=6))
+        }          
+
+```
+
+
+```{r plotCounts2}
+
+# plot Counts per experiment
+plotCounts_SK2 <- function(data=dds,goi,n="plotCounts"){
+ plotCounts_SK_list <- list()
+ l <- length(goi)
+       for (ig in 1:l){
+  s <- mcols(data)[goi[ig],"symbol"]
+  if (s ==""){s <- goi[ig]}
+    d <- plotCounts(data, gene=goi[ig], intgroup=c("condition","experiment","genotype","treatment"), main=s,returnData=TRUE)
+
+  gcounts <- ggplot(d, aes(x = condition, y = count, fill=treatment, color=treatment)) +
+    geom_boxplot(color="black", outliers = FALSE) +
+    geom_point(shape=21,color="black",aes(fill=experiment),position=position_dodge(width=0.75), alpha=1) +
+    scale_fill_manual(values=c(cols[c(1,5)],viridis(4))) +
+    scale_color_manual(values=cols[c(1,5)]) +
+    scale_y_continuous(trans = "log2") +
+    labs(title = paste(s,"(",goi[ig],")",sep=" "))
+  plotCounts_SK_list[[paste(n,goi[ig],sep="_")]] <- gcounts
+       }
+ 
+patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) + 
+  plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & 
+  plot_annotation(title = n) & 
+  theme(legend.position = 'bottom',
+        plot.title = element_text(size=6),
+        axis.text=element_text(size=6),
+        axis.title=element_text(size=6),
+        legend.text=element_text(size=6),
+        legend.title=element_text(size=6))
+}
+
+```
+
+
+```{r getVennElements, include=FALSE}
+# get overlap elements
+getVennElements <- function(plt,olf=overlaps){
+l <- plt %>% length()
+for (i in 1:l){
+if( identical (
+  names(olf)[plt[[i]]$label == lapply(olf,length)],character(0) 
+)) {} else  {
+  if(plt[[i]]$label > 0){
+ paste("Element=",i," (",plt[[i]]$label,")", " --> ",
+      names(olf)[plt[[i]]$label == lapply(olf,length)],
+      "(",olf[plt[[i]]$label == lapply(olf,length)] %>% summary() %>% .[1],")",sep="") %>%
+  print()
+} } } }
+
+```
+
+```{r Volcano1, include=FALSE}
+# Volcano
+Volcano_SK <- function(n,
+                        ntop=100,
+                        topcol="royalblue4",
+                        degcol="royalblue1",
+                        hscol="lightblue1",
+                        lcol="grey20",
+                        xlim=10,
+                        ylim=300)
+{
+res <- results_list[[n]]
+top <- topgenes_list[str_detect(names(topgenes_list),pattern=n)] %>% .[[1]]
+deg <- deg_genes_list[str_detect(names(deg_genes_list),pattern=n)] %>% .[[1]]
+l <- length(top)
+
+res_shrink <- res_shrink_list[[n]]
+res_shrink$symbol <- res$symbol
+
+# define limits for significance
+# padj (-log10)
+# padj = 0.05 -> -log(base=10, 0.05) = 1.3
+#
+c_plimit <- 50
+L2Flimit <- 1
+a_L2Flimit <- -c_plimit/(L2Flimit^2)
+
+res_shrink$ishs <- ifelse(is.na(res_shrink$padj),FALSE,(a_L2Flimit*(res_shrink$log2FoldChange^2) + c_plimit) < -log(res_shrink$padj, base=10))
+
+res_shrink$istop <- rownames(res_shrink) %in% top
+res_shrink$isdeg <- rownames(res_shrink) %in% deg
+
+res <- res_shrink
+res <- res[order(abs(res$log2FoldChange), decreasing = T),]
+res <- res[order(res$ishs, decreasing = F),]
+res <- res[order(res$isdeg, decreasing = F),]
+res <- res[order(res$istop, decreasing = F),]
+
+# remove nas
+res <- res[!is.na(res$padj),]
+res <- res[!is.na(res$log2FoldChange),]
+
+# change shape of outliers
+shape <- ifelse(abs(res$log2FoldChange) > xlim, 18,
+                ifelse(res$padj < 10^-ylim,18,16))
+summary(is.na(shape))
+# shape[is.na(shape)] <- 2
+names(shape)[shape == 18] <- 'out of scale'
+names(shape)[shape == 16] <- 'in range'
+
+# move outliers to coord. max.
+res$log2FoldChange[res$log2FoldChange > xlim] <- xlim
+res$log2FoldChange[res$log2FoldChange < -xlim] <- -xlim
+res$padj[res$padj < 10^-ylim] <- 10^-ylim
+summary(res$padj < 10^-ylim)
+
+
+## combine top, deg & hs
+keyvals <- ifelse(
+    res$istop == TRUE, topcol,
+    ifelse(
+    res$isdeg == TRUE, degcol,
+    ifelse(
+    res$ishs == TRUE, hscol,
+    'grey') ) )
+    
+keyvals[is.na(keyvals)] <- 'grey'
+  names(keyvals)[keyvals == topcol] <- 'top'
+  names(keyvals)[keyvals == degcol] <- 'degs'
+  names(keyvals)[keyvals == hscol] <- 'highly significant'
+  names(keyvals)[keyvals == 'grey'] <- 'other'
+
+rownames(res) <- res$symbol
+
+ev_f <- EnhancedVolcano(res,
+    x = 'log2FoldChange',
+    y = 'padj',
+    lab = res$symbol,
+    selectLab  = res[res$istop == TRUE,"symbol"],
+    labSize = 1.5,
+    drawConnectors = TRUE,
+    boxedLabels = TRUE,
+    widthConnectors = 0.5,
+    colConnectors = lcol,
+    pointSize = c(ifelse(res$istop==TRUE, 2, ifelse(res$ishs==TRUE, 1.5, 1))),
+    colAlpha = c(ifelse(res$istop==TRUE, 0.9, ifelse(res$ishs==TRUE, 0.5, 0.2))),
+    max.overlaps = 17,
+    colCustom = keyvals,
+    col=c('grey', topcol, topcol, topcol),
+    xlim = c(-xlim, xlim),
+    ylim = c(0, ylim),
+    ylab = "Padj (-log10)",
+    title = n,
+    subtitle = paste("DE genes:",l),
+    # sub = "SVF",
+    pCutoff = 10^(-c_plimit),
+    FCcutoff = L2Flimit,
+    hline = c(0.05,
+              0.01),
+    hlineCol = c(degcol, topcol),
+    hlineWidth = c(0.4, 0.4),
+    vline = c(-2,2),
+    vlineCol = c(topcol, topcol),
+    vlineWidth = c(0.4, 0.4),
+    shapeCustom =shape,
+    # pointSize = c(ifelse(rownames(res_WT_D_vs.WT_BL) %in% rownames(top_WT_BL_vs.pcry_BL), 8, 1)),
+    legendLabels=c('Not sig.','|L2F| > 2.5','p-adj < 0.05',
+                   'p-adj & L2F'),
+    legendPosition = 'bottom',
+    legendLabSize = 8,
+    legendIconSize = 2.0,
+    axisLabSize = 8,
+    titleLabSize = 8,
+    subtitleLabSize = 8,
+    captionLabSize = 8,
+    caption = {}
+   )
+
+ev_f
+}
+
+```
+
+```{r volcano_2_test, eval=FALSE}
+
+n <- "Kelly.Hx.vs.Nx"
+list1 <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]]
+list2 <- deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]
+l1.n <- "Hif1a"
+l2.n <- "Hif2a"
+l1.col <- "#1976d2"
+l2.col <- "#239b56"
+lol.col <- "#f8c471"
+xlim <- 10
+ylim <- 400
+lab <- ol_list$a3
+
+```
+
+
+
+```{r Volcano2, include=FALSE}
+
+### Volcano2 list ######
+Volcano_SK2 <- function(n,list1,list2,
+                        l1.col="chartreuse2",
+                        l2.col="orangered",
+                        lol.col="yellow2",
+                        lcol="grey20",
+                        l1.n= "list 1",
+                        l2.n= "list 2",
+                        xlim=10,
+                        ylim=300,
+                        lab=NULL,
+                        ...)
+{
+
+res <- results_list[[n]]
+
+# if list1 & list2 ><""
+
+list_ol <- calculate.overlap(list(list1,list2))
+
+l <- length(res %>% rownames())
+
+res_shrink <- res_shrink_list[[n]]
+res_shrink$symbol <- res$symbol
+
+# define limits for significance
+c_plimit <- 50
+L2Flimit <- 1
+a_L2Flimit <- -c_plimit/(L2Flimit^2)
+
+res_shrink$ishs <- ifelse(is.na(res_shrink$padj),FALSE,(a_L2Flimit*(res_shrink$log2FoldChange^2) + c_plimit) < -log(res_shrink$padj, base=10))
+
+res_shrink$isl1 <- rownames(res_shrink) %in% list1
+res_shrink$isl2 <- rownames(res_shrink) %in% list2
+res_shrink$islol <- rownames(res_shrink) %in% list_ol$a3
+
+res <- res_shrink
+
+res <- res[order(abs(res$log2FoldChange), decreasing = T),]
+res <- res[order(res$isl1, decreasing = F),]
+res <- res[order(res$isl2, decreasing = F),]
+res <- res[order(res$islol, decreasing = F),]
+
+# remove nas
+res <- res[!is.na(res$padj),]
+res <- res[!is.na(res$log2FoldChange),]
+
+# change shape of outliers
+shape <- ifelse(abs(res$log2FoldChange) > xlim, 18,
+                ifelse(res$padj < 10^-ylim,18,16))
+summary(is.na(shape))
+# shape[is.na(shape)] <- 2
+names(shape)[shape == 18] <- 'out of scale'
+names(shape)[shape == 16] <- 'in range'
+
+# move outliers to coord. max.
+res$log2FoldChange[res$log2FoldChange > xlim] <- xlim
+res$log2FoldChange[res$log2FoldChange < -xlim] <- -xlim
+res$padj[res$padj < 10^-ylim] <- 10^-ylim
+summary(res$padj < 10^-ylim)
+
+min(res$padj[res$padj > 0], na.rm = TRUE)
+
+## combine top, deg & hs
+keyvals <- ifelse(
+    res$islol == TRUE, lol.col,
+     ifelse(
+    res$isl1 == TRUE, l1.col,
+    ifelse(
+    res$isl2 == TRUE, l2.col,
+    'grey') ) )
+    
+keyvals[is.na(keyvals)] <- 'grey'
+  names(keyvals)[keyvals == l1.col] <- l1.n
+  names(keyvals)[keyvals == l2.col] <- l2.n
+  names(keyvals)[keyvals == lol.col] <- 'overlap'
+  names(keyvals)[keyvals == 'grey'] <- 'other'
+
+if (is.null(lab)){
+  lab <- res[res$isl1 == TRUE | res$isl2 == TRUE,"symbol"]
+} else {
+  lab <- res[lab,"symbol"]
+}
+  
+rownames(res) <- res$symbol
+
+
+
+ev_f <- EnhancedVolcano(res,
+    x = 'log2FoldChange',
+    y = 'padj',
+    lab = res$symbol,
+    selectLab  = lab,
+    labSize = 2,
+    drawConnectors = TRUE,
+    boxedLabels = TRUE,
+    widthConnectors = 0.5,
+    colConnectors = lcol,
+    pointSize = c(ifelse(res$islol==TRUE, 2, ifelse(res$isl1==TRUE | res$isl2==TRUE, 1.5, 1))),
+    colAlpha = c(ifelse(res$islol==TRUE, 0.9, ifelse(res$isl1==TRUE | res$isl2==TRUE, 0.5, 0.2))),
+    max.overlaps = 30,
+    colCustom = keyvals,
+    col=c('grey', l1.col, l2.col, lol.col),
+    xlim = c(-xlim, xlim),
+    ylim = c(0, ylim),
+    ylab = "Padj (-log10)",
+    title = n,
+    subtitle = paste("DE genes:",l),
+    # sub = "SVF",
+    pCutoff = 10^(-c_plimit),
+    FCcutoff = L2Flimit,
+    shapeCustom =shape,
+    # pointSize = c(ifelse(rownames(res_WT_D_vs.WT_BL) %in% rownames(top_WT_BL_vs.pcry_BL), 8, 1)),
+    legendLabels=c('Not sig.','|L2F| > 2.5','p-adj < 0.05',
+                   'p-adj & L2F'),
+    legendPosition = 'bottom',
+    legendLabSize = 8,
+    legendIconSize = 2.0,
+    axisLabSize = 8,
+    titleLabSize = 8,
+    subtitleLabSize = 8,
+    captionLabSize = 8,
+    caption = {}
+   )
+
+ev_f
+}
+
+
+```
+
+```{r color_breaks, include=FALSE}
+
+# color breaks
+quantile_breaks <- function(xs, n = 10) {
+  breaks <- quantile(xs, probs = seq(0, 1, length.out = n))
+  breaks[!duplicated(breaks)]
+}
+
+```

@@ -4,7 +4,7 @@ Kelterborn
 2024-07-18
 
 - [0. Load](#0-load)
-  - [- Load R librarys](#--load-r-librarys)
+  - [- libraries, folders, R_utils](#--libraries-folders-r_utils)
   - [- Load dds](#--load-dds)
   - [- Colour sheme](#--colour-sheme)
 - [Figure 1](#figure-1)
@@ -12,13 +12,14 @@ Kelterborn
 - [Figure 2](#figure-2)
   - [-Volcano_function](#-volcano_function)
   - [-Plot Vulcanos](#-plot-vulcanos)
+  - [-Venn](#-venn)
 - [Old code](#old-code)
   - [Enhanced volcano](#enhanced-volcano)
   - [Volcanos](#volcanos)
 
 # 0. Load
 
-## - Load R librarys
+## - libraries, folders, R_utils
 
 ## - Load dds
 
@@ -158,7 +159,54 @@ volcano_hif1b <- volcano_sk3(n="Hif1b.Hx.vs.Nx",n2="Hif1bHxNx.vs.KellyHxNx",col=
   theme(legend.position = 'bottom')
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](Readme_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
+## -Venn
+
+``` r
+deg_genes_list <- lapply(results_list,topgenes_f) %>%  lapply(.,rownames) 
+names(deg_genes_list) <- paste("deg",names(deg_genes_list),sep="_")
+
+main_degs <- c(list("All Hx (Kelly)" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
+                     "Hif1b" = deg_genes_list[["deg_Hif1bHxNx.vs.KellyHxNx"]],
+                     "Hif1a" = deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     "Hif2a" = deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]                                         ))
+
+plt1 <- venn.diagram(
+    x = main_degs,
+    main = "Compare Hif KOs", main.fontface = "bold",
+    fill = colors[c(1,7,3,5)],
+
+    fontfamily ="Arial",
+    category.names = paste(names(main_degs),"\n(",main_degs %>% summary() %>% .[c(1:length(main_degs))],")",sep=""),
+    force.unique = TRUE, na = "remove",
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+main_degs <- main_degs[c(3,4,1)]
+plt2 <- venn.diagram(
+    x = main_degs,
+    main = "Compare Hif KOs", main.fontface = "bold",
+    fill = colors[c(3,5,1)],
+    
+    category.names = paste(names(main_degs),"\n(",main_degs %>% summary() %>% .[c(1:length(main_degs))],")",sep=""),
+    fontfamily ="Arial",
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold"
+    )
+    
+  
+patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
+```
+
+<img src="Readme_files/figure-gfm/2_venn-1.png" width="50%" />
 
 # Old code
 
