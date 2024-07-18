@@ -276,38 +276,37 @@ patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
 
 ``` r
 # Hif1a ~ Hif2a, color: Kelly_Hx
-color <- cut(res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
+color1 <- cut(res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
 cc <- scales::seq_gradient_pal("blue", "red", "Lab")(seq(0,1,length.out=8))
 cc <- viridis(8)
 cc[4:5] <- "red"
-ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color)) +
+cluster_hx <- ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color1)) +
   geom_hline(yintercept=c(0)) +
   geom_vline(xintercept=c(0)) +
   geom_abline(intercept=c(1,-1)) +
   geom_point(alpha=0.5) +
   # scale_color_viridis_d(option = 'C') +
-  scale_colour_manual(values=cc) +
-  ggtitle(label="Kelly hypoxia") + 
+  scale_colour_manual(name="log2-FC",values=cc) +
+  ggtitle(label="Kelly: Hx vs. Nx") + 
   coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
-```
 
-<img src="Readme_files/figure-gfm/unnamed-chunk-2-1.png" width="75%" />
-
-``` r
 # Hif1a ~ Hif2a, color: Hif2a vs. Hif1a
-color <- cut(res_hif1a_2a$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
-ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color)) +
+color2 <- cut(res_hif1a_2a$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
+clusterh1v2 <- ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color2)) +
   geom_hline(yintercept=c(0)) +
   geom_vline(xintercept=c(0)) +
   geom_abline(intercept=c(1,-1)) +
   geom_point(alpha=0.5) +
-  scale_colour_manual(values=cc) +
+  scale_colour_manual(name="log2-FC",values=cc) +
   # scale_color_viridis_d(option = 'C') +
   ggtitle(label="Hif1a vs. Hif2a") + 
   coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
+
+cluster_hx + clusterh1v2 + plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
+  theme(legend.position = 'bottom')
 ```
 
-<img src="Readme_files/figure-gfm/unnamed-chunk-2-2.png" width="75%" />
+<img src="Readme_files/figure-gfm/unnamed-chunk-2-1.png" width="75%" />
 
 # Old code
 
