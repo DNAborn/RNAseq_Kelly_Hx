@@ -222,7 +222,7 @@ pca10 <- ggplot(pca_table, aes(PC2, PC1, color=genotype, shape=treatment)) +
 
 ```
 
-```{r, 1_pca_plot_variants, fig.width=10, fig.height=4}
+```{r 1_pca_plot_variants, fig.width=10, fig.height=4}
 pca1+pca5+pca10+ plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
   theme(legend.position = 'bottom')
 ```
@@ -285,7 +285,7 @@ volcano_func
 ```
 
 ## -Plot Vulcanos
-```{r, fig.width=8, fig.height=6}
+```{r 2_volcanos_plot, fig.width=6, fig.height=6}
 
 volcano_Kelly <- volcano_sk3(n="Kelly.Hx.vs.Nx",n2="Kelly.Hx.vs.Nx",col=colors_vul[5], celline="Kelly")
 volcano_hif1a <- volcano_sk3(n="Hif1a.Hx.vs.Nx",n2="Hif1aHxNx.vs.KellyHxNx",col="navyblue", celline="HIF1A")

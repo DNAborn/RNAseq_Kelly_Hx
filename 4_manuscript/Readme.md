@@ -159,7 +159,7 @@ volcano_hif1b <- volcano_sk3(n="Hif1b.Hx.vs.Nx",n2="Hif1bHxNx.vs.KellyHxNx",col=
   theme(legend.position = 'bottom')
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](Readme_files/figure-gfm/2_volcanos_plot-1.png)<!-- -->
 
 ## -Venn
 
