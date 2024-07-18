@@ -1669,46 +1669,32 @@ gcounts %>% print()
 ```
 
 ### Cluster log2FC
-```{r}
+```{r, out.width="33%", fig.show='hold'}
 
 # Hif1a ~ Hif2a, color: Kelly_Hx
 color <- cut(res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
 ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color)) +
+  geom_hline(yintercept=c(0)) +
+  geom_vline(xintercept=c(0)) +
+  geom_abline(intercept=c(1,-1)) +
   geom_point(alpha=0.5) +
-  # geom_hline(yintercept=c(-0.5,0.5)) +
-  # geom_vline(xintercept=c(0)) +
-  scale_color_viridis_d(option = 'H') +
+  # scale_color_viridis_d(option = 'C') +
+  scale_color_gradient(low = "red",high = "blue") +
+  ggtitle(label="Kelly hypoxia") + 
   coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
 
 # Hif1a ~ Hif2a, color: Hif2a vs. Hif1a
 color <- cut(res_hif1a_2a$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
 ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color)) +
-  geom_point(alpha=0.5) +
   geom_hline(yintercept=c(0)) +
   geom_vline(xintercept=c(0)) +
   geom_abline(intercept=c(1,-1)) +
-  scale_color_viridis_d(option = 'H') +
+  geom_point(alpha=0.5) +
+  scale_color_viridis_d(option = 'C') +
+  ggtitle(label="Hif1a vs. Hif2a") + 
   coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
 
-# Shrinked
-# Hif1a ~ Hif2a, color: Kelly_Hx
-color <- cut(res_shrink_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
-ggplot(res_shrink_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color)) +
-  geom_point(alpha=0.5) +
-  # geom_hline(yintercept=c(-0.5,0.5)) +
-  # geom_vline(xintercept=c(0)) +
-  scale_color_viridis_d(option = 'H') +
-  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
 
-# Hif1a ~ Hif2a, color: Hif2a vs. Hif1a
-color <- cut(res_shrink_hif1a_2a$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
-ggplot(res_shrink_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color)) +
-  geom_point(alpha=0.5) +
-  geom_hline(yintercept=c(0)) +
-  geom_vline(xintercept=c(0)) +
-  geom_abline(intercept=c(1,-1)) +
-  scale_color_viridis_d(option = 'H') +
-  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
 
 ```
 
