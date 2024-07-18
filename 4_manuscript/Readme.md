@@ -279,7 +279,7 @@ patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
 color1 <- cut(res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
 cc <- scales::seq_gradient_pal("blue", "red", "Lab")(seq(0,1,length.out=8))
 cc <- viridis(8)
-cc[4:5] <- "red"
+cc[4:5] <- "grey40"
 cluster_hx <- ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color1)) +
   geom_hline(yintercept=c(0)) +
   geom_vline(xintercept=c(0)) +
@@ -303,7 +303,7 @@ clusterh1v2 <- ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.
   coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
 
 cluster_hx + clusterh1v2 + plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'right')
 ```
 
 <img src="Readme_files/figure-gfm/unnamed-chunk-2-1.png" width="75%" />
