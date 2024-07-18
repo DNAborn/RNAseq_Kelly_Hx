@@ -10,7 +10,11 @@ Kelterborn
 - [Figure 1](#figure-1)
   - [PCA](#pca)
 - [Figure 2](#figure-2)
-  - [Volanos](#volanos)
+  - [-Volcano_function](#-volcano_function)
+  - [-Plot Vulcanos](#-plot-vulcanos)
+- [Old code](#old-code)
+  - [Enhanced volcano](#enhanced-volcano)
+  - [Volcanos](#volcanos)
 
 # 0. Load
 
@@ -91,4 +95,155 @@ pca1
 
 # Figure 2
 
-## Volanos
+## -Volcano_function
+
+``` r
+volcano_sk3 <- function(n,
+                        n2=n,
+                        col="red",
+                        celline="cells"){
+xlim <- 12
+ylim <- -250
+res <- results_list[[n]]
+res <- res_shrink_list[[n]] %>% data.frame()
+
+# of deg genes
+up <- subset(results_list[[n2]], padj< 0.05 & log2FoldChange > 1) %>% nrow()
+down <- subset(results_list[[n2]], padj< 0.05 & log2FoldChange < -1) %>% nrow()
+total <- up+down
+deg <- subset(results_list[[n2]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()
+
+# points outside the grid
+outx <- subset(res, log2FoldChange > xlim | log2FoldChange < -xlim) %>% rownames()
+outy <- subset(res, padj < 10^ylim) %>% rownames()
+
+res$outlier <- ifelse(rownames(res) %in% c(outx,outy),"yes","no")
+res$deg <- ifelse(rownames(res) %in% rownames(deg),"yes","no") %>% factor()
+
+res <- res %>% arrange(res$deg)
+
+res[outx,"log2FoldChange"] <- ifelse(res[outx,"log2FoldChange"] > xlim,xlim,-xlim)
+res[outy,"padj"] <- 10^ylim
+
+volcano_func <- ggplot(res,aes(x=log2FoldChange,y=-log10(padj),color=deg, shape=outlier, fill=deg)) +
+  geom_hline(yintercept = 0, linewidth = 0.2) + 
+  geom_vline(xintercept = 0, linewidth = 0.2) +
+  geom_point(size=1.5, stroke=0.5) +
+  scale_shape_manual(values = c(21,3)) + 
+  scale_alpha_manual(values = c(0.3,0.6)) + 
+  labs(title=paste0("Hypoxic response in ",celline),
+       subtitle = paste0("upregulated: ",up,", downregulated: ",down," (total: ",total,")") )+
+  theme(plot.title = element_text(size = 1), 
+        plot.subtitle = element_text(size = 0.5) )+
+  ylab("padj (-log10)") +
+  xlab("log2-foldchange") +
+  scale_fill_manual(values = alpha(c("grey70",lighten(col,0.3)),0.5)) + 
+  scale_color_manual(values = c("grey40",col)) + 
+  theme_bw() +
+  # geom_text_repel(label=res$symbol, color="black") + 
+  removeGrid(x=T, y=T)
+volcano_func
+}
+```
+
+## -Plot Vulcanos
+
+``` r
+volcano_Kelly <- volcano_sk3(n="Kelly.Hx.vs.Nx",n2="Kelly.Hx.vs.Nx",col=colors_vul[5], celline="Kelly")
+volcano_hif1a <- volcano_sk3(n="Hif1a.Hx.vs.Nx",n2="Hif1aHxNx.vs.KellyHxNx",col="navyblue", celline="HIF1A")
+volcano_hif2a <- volcano_sk3(n="Hif2a.Hx.vs.Nx",n2="Hif2aHxNx.vs.KellyHxNx",col=darken("forestgreen",0.2), celline="HIF2A")
+volcano_hif1b <- volcano_sk3(n="Hif1b.Hx.vs.Nx",n2="Hif1bHxNx.vs.KellyHxNx",col=colors[8], celline="HIF1B")
+
+(volcano_Kelly+volcano_hif1b) / (volcano_hif1a+volcano_hif2a) + plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
+  theme(legend.position = 'bottom')
+```
+
+![](Readme_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+
+# Old code
+
+## Enhanced volcano
+
+## Volcanos
+
+``` r
+n <- "Kelly.Hx.vs.Nx"
+xlim <- 12
+ylim <- -250
+res <- results_list[[n]]
+res <- res_shrink_list[[n]] %>% data.frame()
+
+# of deg genes
+up <- subset(results_list[[n]], padj< 0.05 & log2FoldChange > 1) %>% nrow()
+down <- subset(results_list[[n]], padj< 0.05 & log2FoldChange < -1) %>% nrow()
+total <- up+down
+deg <- subset(results_list[[n]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()
+
+# points outside the grid
+outx <- subset(res, log2FoldChange > xlim | log2FoldChange < -xlim) %>% rownames()
+outy <- subset(res, padj < 10^ylim) %>% rownames()
+
+res$outlier <- ifelse(rownames(res) %in% c(outx,outy),"yes","no")
+res$deg <- ifelse(rownames(res) %in% rownames(deg),"yes","no")
+
+res[outx,"log2FoldChange"] <- ifelse(res[outx,"log2FoldChange"] > xlim,xlim,-xlim)
+res[outy,"padj"] <- 10^ylim
+
+volcano_kelly <- ggplot(res,aes(x=log2FoldChange,y=-log10(padj),color=deg, shape=outlier)) +
+  geom_hline(yintercept = 0, linewidth = 0.2) + 
+  geom_vline(xintercept = 0, linewidth = 0.2) +
+  geom_point(size=2, stroke=1) +
+  labs(title = "Hypoxic response in Kelly (l2FC > 1, p<0.05") +
+  ylab("padj (-log10)") +
+  xlab("log2-foldchange") +
+  scale_shape_manual(values = c(16,21)) + 
+  scale_color_manual(values = c("grey80","orchid4")) + 
+  scale_fill_manual(values=c(colors[1],"white",colors[2],"white")) +
+  theme_bw() +
+  # geom_text_repel(label=res$symbol, color="black") + 
+  removeGrid(x=T, y=T)
+
+volcano_kelly
+```
+
+![](Readme_files/figure-gfm/2_volcanos-1.png)<!-- -->
+
+``` r
+# Hif1a
+n <- "Hif1a.Hx.vs.Nx"
+n2 <- "Hif1aHxNx.vs.KellyHxNx"
+col <- colors[4]
+```
+
+``` r
+vol_kelly <- EnhancedVolcano(res,
+    colAlpha=0.2,
+    lab = res[["symbol"]],
+    x = 'log2FoldChange',
+    y = 'padj',
+    col=c("grey","grey","grey","orchid4"),
+    title = "Hypoxic response in kelly cells",
+    titleLabSize = 12,
+    subtitle = paste0("upregulated: ",up,", downregulated: ",down,"\n(total: ",total,")"),
+    subtitleLabSize = 10,
+    caption = NULL,
+    # xlim = c(-11,10),
+    # ylim = c(0,50),
+    pCutoff = 0.05,
+    FCcutoff = 0.5,
+    maxoverlapsConnectors = 30,
+    drawConnectors = TRUE,
+    widthConnectors = 0.5,
+    colConnectors = "grey70",
+    legendLabels=c('ns','ns','ns',
+      'padj < 0.05 & Log2FC > 0.5'),
+    labSize = 4,
+    axisLabSize = 12,
+    legendLabSize = 12,
+    legendIconSize = 4,
+    gridlines.major = FALSE,
+    gridlines.minor = FALSE,
+    pointSize = 2
+)
+vol_kelly
+```

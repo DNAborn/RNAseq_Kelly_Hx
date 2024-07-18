@@ -105,6 +105,7 @@ dir <- paste(s,"AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all",sep="/")
 gitdir <- paste(dir,"git_RNAseq_Kelly_Hx",sep="/")
 data <- paste(dir,"data",sep="/")
 dgedir <- paste(gitdir,"2B_DGE",sep="/")
+figdir <- paste(gitdir,"4_manuscript",sep="/")
 
 par(mfrow = c(1,1))
 
@@ -755,7 +756,14 @@ lfcShrink_sk <- function(x){
   lfcShrink(dds, res=x,type="ashr")
 }
 
-res_shrink_list <- lapply(results_list,lfcShrink_sk)
+res_shrink_list <- lapply(results_list,lfcShrink_sk) %>%
+  lapply(function(x) { x$symbol <- mcols(dds)$symbol;return(x)})
+
+
+# Export to figures folder
+# save(results_list,file=paste0(figdir,"/results_list.res"))
+# save(res_shrink_list,file=paste0(figdir,"/res_shrink_list.res"))
+
 
 ```
 
@@ -1514,7 +1522,6 @@ cat("--> FAM162A is part of Hif2A deg list, but in fact is probably compensation
 # Compare Hx.vs.Nx with interaction
 n <- "Kelly.Hx.vs.Nx"
 res <- results_list[[n]]
-colors <- c("lavenderblush3","lavenderblush4","#90caf9","#1976d2", "#82e0aa", "#239b56", "#f8c471", "#b9770e") 
 
 
 list1 <- deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]]
