@@ -150,7 +150,7 @@ df <- data.frame(n=c(1:8),
 
 # Figure 1
 ## PCA
-```{r 1_pca, fig.width=10, fig.height=4}
+```{r 1_pca_pre}
 
 vst_dat <- assay(vst(dds))
 
@@ -202,7 +202,23 @@ pca10 <- ggplot(pca_table, aes(PC2, PC1, color=genotype, shape=treatment)) +
   scale_x_reverse() +
   removeGrid(x=T, y=T)
 
-pca1+pca5+pca10+ plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
-  theme(legend.position = 'bottom')
 
 ```
+```{r, 1_pca_plot_variants, fig.width=10, fig.height=4}
+pca1+pca5+pca10+ plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
+  theme(legend.position = 'bottom')
+```
+
+```{r 1_pca_plot_final, fig.height=4, fig.width=5, dpi=300, out.width="50%"}
+pca1
+
+```
+
+
+# Figure 2
+## Volanos
+```{r 2_volcanos}
+
+
+```
+
