@@ -396,7 +396,7 @@ patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
 
 # Figure 3
 ## Gene Cluster
-```{r cluster, fig.width=10, fig.height=4}
+```{r cluster, fig.width=10, fig.height=4, dpi=300}
 
 # cluster_venn
 
@@ -437,7 +437,7 @@ cluster_venn <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange,
   removeGrid(x=T, y=T) +
   coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
 
-
+res_hif1a_2a$group %>% table()
 
 
 # Manual Cluster

@@ -60,7 +60,7 @@ dir <- paste(s,"AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all",sep="/")
 gitdir <- paste(dir,"git_RNAseq_Kelly_Hx",sep="/")
 data <- paste(dir,"data",sep="/")
 pdir <- paste(gitdir,basename(dirname(rstudioapi::getActiveDocumentContext()$path)),sep="/") 
-
+chipdir <- paste0(pdir,"/chip_seq_data",sep="/")
 par(mfrow = c(1,1))
 
 futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
@@ -110,6 +110,11 @@ Literature
 |                           |                                             |                     | <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE120887>                                                            |
 +---------------------------+---------------------------------------------+---------------------+---------------------------------------------------------------------------------------------------------------------------+
 
+# ChIP Seq in BE(2)
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE167477
+
+# ReMAP
+
 **ReMAP:**
 
 Hif1a: <https://remap.univ-amu.fr/target_page/HIF1A:9606>
@@ -119,7 +124,7 @@ Hif2a: <https://remap.univ-amu.fr/target_page/EPAS1:9606>
 Hif1b: <https://remap.univ-amu.fr/target_page/ARNT:9606>
 
 ```{r load_chips, echo=FALSE, include=TRUE}
-# list.files(pdir)
+list.files(pdir)
 hif1a_datasets <- read_xlsx(paste(pdir,"ReMAP_ChIP_Hif1a.xlsx",sep="/"), )
 hif2a_datasets <- read_xlsx(paste(pdir,"ReMAP_ChIP_Hif2a.xlsx",sep="/"), )
 hif1b_datasets <- read_xlsx(paste(pdir,"ReMAP_ChIP_Hif1b.xlsx",sep="/"), )
@@ -131,3 +136,11 @@ celllines <- data.frame("Hif1A" = (hif1a_datasets$Biotype %>% factor() %>% level
 celllines %>% kable()
 
 ```
+
+## Load dataset
+```{r}
+
+
+
+```
+
