@@ -15,10 +15,11 @@ Kelterborn
   - [-Plot Vulcanos](#-plot-vulcanos)
   - [-Venn](#-venn)
 - [Figure 3](#figure-3)
-  - [Cluster genes](#cluster-genes)
+  - [Gene Cluster](#gene-cluster)
 - [Old code](#old-code)
   - [Enhanced volcano](#enhanced-volcano)
   - [Volcanos](#volcanos)
+  - [Cluster genes](#cluster-genes)
 
 # 0. Load
 
@@ -169,20 +170,21 @@ pca1
 ## -Volcano_function
 
 ``` r
+getdeg <- function(x){subset(results_list[[x]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()}
+
 volcano_sk3 <- function(n,
-                        n2=n,
                         col="red",
-                        celline="cells"){
+                        celline="cells",
+                        deg=deg) {
 xlim <- 12
 ylim <- -250
 res <- results_list[[n]]
 res <- res_shrink_list[[n]] %>% data.frame()
 
 # of deg genes
-up <- subset(results_list[[n2]], padj< 0.05 & log2FoldChange > 1) %>% nrow()
-down <- subset(results_list[[n2]], padj< 0.05 & log2FoldChange < -1) %>% nrow()
+up <- subset(deg, log2FoldChange > 1) %>% nrow()
+down <- subset(deg, log2FoldChange < -1) %>% nrow()
 total <- up+down
-deg <- subset(results_list[[n2]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()
 
 # points outside the grid
 outx <- subset(res, log2FoldChange > xlim | log2FoldChange < -xlim) %>% rownames()
@@ -220,10 +222,14 @@ volcano_func
 ## -Plot Vulcanos
 
 ``` r
-volcano_Kelly <- volcano_sk3(n="Kelly.Hx.vs.Nx",n2="Kelly.Hx.vs.Nx",col=colors_vul[5], celline="Kelly")
-volcano_hif1a <- volcano_sk3(n="Hif1a.Hx.vs.Nx",n2="Hif1aHxNx.vs.KellyHxNx",col="navyblue", celline="HIF1A")
-volcano_hif2a <- volcano_sk3(n="Hif2a.Hx.vs.Nx",n2="Hif2aHxNx.vs.KellyHxNx",col=darken("forestgreen",0.2), celline="HIF2A")
-volcano_hif1b <- volcano_sk3(n="Hif1b.Hx.vs.Nx",n2="Hif1bHxNx.vs.KellyHxNx",col=colors[8], celline="HIF1B")
+n2 <- {}
+
+deg <- subset(results_list[["Kelly.Hx.vs.Nx"]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()
+
+volcano_Kelly <- volcano_sk3(n="Kelly.Hx.vs.Nx", deg=getdeg("Kelly.Hx.vs.Nx"),col=colors[2], celline="Kelly")
+volcano_hif1a <- volcano_sk3(n="Hif1a.Hx.vs.Nx", deg=getdeg("Hif1aHxNx.vs.KellyHxNx"),col=colors[4], celline="HIF1A")
+volcano_hif2a <- volcano_sk3(n="Hif2a.Hx.vs.Nx", deg=getdeg("Hif2aHxNx.vs.KellyHxNx"),col=colors[6], celline="HIF2A")
+volcano_hif1b <- volcano_sk3(n="Hif1b.Hx.vs.Nx", deg=getdeg("Hif1bHxNx.vs.KellyHxNx"),col=colors[8], celline="HIF1B")
 
 (volcano_Kelly+volcano_hif1b + plot_layout(guides = "collect", axes="collect", axis_titles="collect") ) / 
   (volcano_hif1a+volcano_hif2a + plot_layout(guides = "collect", axes="collect", axis_titles="collect") ) & 
@@ -235,12 +241,13 @@ volcano_hif1b <- volcano_sk3(n="Hif1b.Hx.vs.Nx",n2="Hif1bHxNx.vs.KellyHxNx",col=
 ## -Venn
 
 ``` r
+input_list <- main_degs
 plt1 <- venn.diagram(
-    x = main_degs,
+    x = input_list,
     fill = colors[c(1,7,3,5)],
     main.fontface = "bold",
     fontfamily ="Arial",
-    category.names = paste(names(main_degs),"\n(",main_degs %>% summary() %>% .[c(1:length(main_degs))],")",sep=""),
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
     force.unique = TRUE, na = "remove", total.population = TRUE,
     filename = NULL,
     lwd = 2,
@@ -248,13 +255,13 @@ plt1 <- venn.diagram(
     cat.fontface = "bold",
     cat.fontfamily = "arial")
 
-main_degs <- main_degs[c(3,4,1)]
+input_list <- main_degs[c(3,4,1)]
 plt2 <- venn.diagram(
-    x = main_degs,
+    x = input_list,
     fill = colors[c(3,5,1)],
     main.fontface = "bold",
     fontfamily ="Arial",
-    category.names = paste(names(main_degs),"\n(",main_degs %>% summary() %>% .[c(1:length(main_degs))],")",sep=""),
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
     force.unique = TRUE, na = "remove", total.population = TRUE,
     filename = NULL,
     lwd = 2,
@@ -272,41 +279,151 @@ patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
 
 # Figure 3
 
-## Cluster genes
+## Gene Cluster
 
 ``` r
-# Hif1a ~ Hif2a, color: Kelly_Hx
-color1 <- cut(res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
-cc <- scales::seq_gradient_pal("blue", "red", "Lab")(seq(0,1,length.out=8))
-cc <- viridis(8)
-cc[4:5] <- "grey40"
-cluster_hx <- ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color1)) +
-  geom_hline(yintercept=c(0)) +
-  geom_vline(xintercept=c(0)) +
-  geom_abline(intercept=c(1,-1)) +
-  geom_point(alpha=0.5) +
-  # scale_color_viridis_d(option = 'C') +
-  scale_colour_manual(name="log2-FC",values=cc) +
-  ggtitle(label="Kelly: Hx vs. Nx") + 
-  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
+# cluster_venn
 
-# Hif1a ~ Hif2a, color: Hif2a vs. Hif1a
-color2 <- cut(res_hif1a_2a$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
-clusterh1v2 <- ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color2)) +
-  geom_hline(yintercept=c(0)) +
-  geom_vline(xintercept=c(0)) +
-  geom_abline(intercept=c(1,-1)) +
-  geom_point(alpha=0.5) +
-  scale_colour_manual(name="log2-FC",values=cc) +
-  # scale_color_viridis_d(option = 'C') +
-  ggtitle(label="Hif1a vs. Hif2a") + 
-  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
-
-cluster_hx + clusterh1v2 + plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
-  theme(legend.position = 'right')
+main_degs %>% names()
 ```
 
-<img src="Readme_files/figure-gfm/unnamed-chunk-2-1.png" width="75%" />
+    ## [1] "Kelly: Hx.vs.Nx" "Hif1b"           "Hif1a"           "Hif2a"
+
+``` r
+length(main_degs[[3]])
+```
+
+    ## [1] 863
+
+``` r
+length(main_degs[[4]])
+```
+
+    ## [1] 2856
+
+``` r
+venns <- calculate.overlap(main_degs[c(3,4)])
+lapply(venns,length)
+```
+
+    ## $a1
+    ## [1] 863
+    ## 
+    ## $a2
+    ## [1] 2856
+    ## 
+    ## $a3
+    ## [1] 324
+
+``` r
+venns %>% unlist() %>% length()
+```
+
+    ## [1] 4043
+
+``` r
+venns %>% unlist() %>% unique() %>% length()
+```
+
+    ## [1] 3395
+
+``` r
+venns$a1 <- setdiff(venns$a1,venns$a3)
+venns$a2 <- setdiff(venns$a2,venns$a3)
+lapply(venns,length)
+```
+
+    ## $a1
+    ## [1] 539
+    ## 
+    ## $a2
+    ## [1] 2532
+    ## 
+    ## $a3
+    ## [1] 324
+
+``` r
+venns %>% unlist() %>% length()
+```
+
+    ## [1] 3395
+
+``` r
+venns %>% unlist() %>% unique() %>% length()
+```
+
+    ## [1] 3395
+
+``` r
+res_hif1a_2a$venn <- ifelse(rownames(res_hif1a_2a) %in% venns$a1,"HIF1A",
+                      ifelse(rownames(res_hif1a_2a) %in% venns$a2,"HIF2A",
+                      ifelse(rownames(res_hif1a_2a) %in% venns$a3,"overlap","")))
+res_hif1a_2a$venn %>% table()
+```
+
+    ## .
+    ##           HIF1A   HIF2A overlap 
+    ##    1979     539    2532     324
+
+``` r
+# Cluster Venn
+cluster_venn <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=venn, fill=venn)) +
+  geom_hline(yintercept = 0, linewidth = 0.1) + 
+  geom_vline(xintercept = 0, linewidth = 0.1) +
+  geom_point(size=1, stroke=0.5, shape=21) +
+  labs(title = "Gene cluster") +
+  xlab("Hif1a vs. Kelly") +
+  ylab("Hif2a vs. Kelly") +
+  scale_color_manual(values=c("orange",colors[c(4,6,2)])) +
+  # scale_shape_manual(values = c(21,16)) + 
+  scale_fill_manual(values=alpha(c("orange",colors[c(4,6,2)]),0.2)) +
+  theme_bw() +
+  removeGrid(x=T, y=T) +
+  coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+
+
+
+
+# Manual Cluster
+
+hif_parallel  <- res_hif1a_2a %>% filter(abs(Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange) < 1)
+
+hif2a_up <- res_hif1a_2a %>% filter(Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange > 1 & (Hif2aHxNx.vs.KellyHxNx.log2FoldChange-1 > 2*-Hif1aHxNx.vs.KellyHxNx.log2FoldChange))
+hif2a_do <- res_hif1a_2a %>% filter(Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange < -1 & (Hif2aHxNx.vs.KellyHxNx.log2FoldChange < -Hif1aHxNx.vs.KellyHxNx.log2FoldChange+1))
+
+hif1a_up <- res_hif1a_2a %>% filter(Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange > 1 & (-Hif1aHxNx.vs.KellyHxNx.log2FoldChange > (abs(Hif2aHxNx.vs.KellyHxNx.log2FoldChange-1))))
+
+hif1a_do <- res_hif1a_2a %>% filter(Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange < -1 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange-1 > 2*-Hif2aHxNx.vs.KellyHxNx.log2FoldChange))
+
+
+res_hif1a_2a$group <- ifelse(rownames(res_hif1a_2a) %in% rownames(hif_parallel),"HIF1A_HIF2A",
+                      ifelse(rownames(res_hif1a_2a) %in% rownames(hif2a_up),"HIF2A",
+                      ifelse(rownames(res_hif1a_2a) %in% rownames(hif2a_do),"HIF2A",
+                      ifelse(rownames(res_hif1a_2a) %in% rownames(hif1a_up),"HIF1A",
+                      ifelse(rownames(res_hif1a_2a) %in% rownames(hif1a_do),"HIF1A","")
+                      ))))
+
+cluster <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=group, fill=group)) +
+  geom_hline(yintercept = 0, linewidth = 0.1) + 
+  geom_vline(xintercept = 0, linewidth = 0.1) +
+  geom_abline(intercept=c(1,-1)) +
+  geom_abline(slope=c(-1), intercept = 1) +
+  annotate("segment", x = c(0,1), y = c(1,0), xend = c(-10,11), yend = c(21,-5),color="black") +
+  geom_point(size=1, stroke=0.5, shape=21) +
+  labs(title = "Gene cluster") +
+  xlab("Hif1a vs. Kelly") +
+  ylab("Hif2a vs. Kelly") +
+  scale_color_manual(values=c("orange",colors[c(4,2,6)])) +
+  # scale_shape_manual(values = c(21,16)) + 
+  scale_fill_manual(values=alpha(c("orange",colors[c(4,2,6)]),0.2)) +
+  theme_bw() +
+  removeGrid(x=T, y=T) +
+  coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+
+cluster_venn + cluster
+```
+
+![](Readme_files/figure-gfm/cluster-1.png)<!-- -->
 
 # Old code
 
@@ -394,4 +511,217 @@ vol_kelly <- EnhancedVolcano(res,
     pointSize = 2
 )
 vol_kelly
+```
+
+## Cluster genes
+
+``` r
+# Hypoxia up:
+## Volcano
+
+deg <- res_hif1a_2a %>% filter(Kelly.Hx.vs.Nx.log2FoldChange > 1) %>% mutate(log2FoldChange = Kelly.Hx.vs.Nx.log2FoldChange)
+volcano_kelly_up <- volcano_sk3(n="Kelly.Hx.vs.Nx",n2="Kelly.Hx.vs.Nx", deg=deg,col=colors_vul[5], celline="Kelly") + labs(title=paste0("DEG genes Hx upregulated"), subtitle = paste0("upregulated: ",nrow(deg)))
+
+
+# Hif1a ~ Kelly, color: 
+color3 <- cut(deg$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
+cc <- scales::seq_gradient_pal("blue", "red", "Lab")(seq(0,1,length.out=8))
+cc <- viridis(8)
+cc[4:5] <- "grey40"
+cluster_h1vK <- ggplot(deg,aes(x=Kelly.Hx.vs.Nx.log2FoldChange, y=Hif1a.Hx.vs.Nx.log2FoldChange, color=color3)) +
+  geom_hline(yintercept=c(0)) +
+  geom_vline(xintercept=c(0)) +
+  geom_abline(intercept=c(1,-1)) +
+  geom_point(alpha=0.5) +
+  # scale_color_viridis_d(option = 'C') +
+  scale_colour_manual(name="log2-FC",values=cc) +
+  ggtitle(label="Kelly: Hx vs. Nx") + 
+  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
+cluster_h1vK
+
+# Hif1a ~ Hif2a, color: 
+color3 <- cut(deg$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
+cc <- scales::seq_gradient_pal("blue", "red", "Lab")(seq(0,1,length.out=8))
+cc <- viridis(8)
+cc[4:5] <- "grey40"
+cluster_h2v1 <- ggplot(deg,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=color3)) +
+  geom_hline(yintercept=c(0)) +
+  geom_vline(xintercept=c(0)) +
+  geom_abline(intercept=c(1,-1)) +
+  geom_point(alpha=0.5) +
+  # scale_color_viridis_d(option = 'C') +
+  scale_colour_manual(name="log2-FC",values=cc) +
+  ggtitle(label="Kelly: Hx vs. Nx") + 
+  coord_cartesian(xlim = c(-10, 10),ylim = c(-10,10))
+cluster_h2v1
+
+
+# hif1a = 0, Hiff2A > 1
+subset(deg, Hif2aHxNx.vs.KellyHxNx.log2FoldChange >1 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange > -1 & Hif1aHxNx.vs.KellyHxNx.log2FoldChange < 1))
+goi <- "ENSG00000135636"
+plotCounts_anno(goi) + labs(title="Hif2A target")
+point_xy <- data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF2A",gene=goi)
+
+# Hif1a > 1, Hif2A > 1 Hif2:Hif1 > 1
+subset(deg, Hif2aHxNx.vs.KellyHxNx.log2FoldChange >1 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1 & Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1) & Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange > 1)
+goi <- "ENSG00000240801"
+plotCounts_anno(goi) + labs(title="Hif2A target")
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF2A",gene=goi))
+
+# Hif1a > 1, Hif2A > 1 Hif2:Hif1 < 1
+subset(deg, Hif2aHxNx.vs.KellyHxNx.log2FoldChange >1 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1 & Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1) & Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange < 1)
+goi <- "ENSG00000124205"
+plotCounts_anno(goi) + labs(title="Hif1A & Hif2A target")
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF1A & HIF2A",gene=goi))
+
+# Hif1a > 1, Hif2A > 1, Hif2:Hif1 < -1
+subset(deg, Hif2aHxNx.vs.KellyHxNx.log2FoldChange >1 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1 & Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1) & Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange < -1)
+goi <- "ENSG00000249815"
+plotCounts_anno(goi) + labs(title="Hif1A")
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF1A",gene=goi))
+
+# Hif1a > 1, Hif2A < 1, Hif1a > Hif2A
+subset(deg, abs(Hif2aHxNx.vs.KellyHxNx.log2FoldChange) < 1 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1 & Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1) & Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange < -1)
+goi <- "ENSG00000186352"
+plotCounts_anno(goi) + labs(title="Hif1A")
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF1A",gene=goi))
+goi <- "ENSG00000099994"
+plotCounts_anno(goi) + labs(title="Hif1A")
+
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF1A",gene=goi))
+
+# Hif1a > 1, Hif2A < 1, Hif1a = Hif2A
+subset(deg, Hif2aHxNx.vs.KellyHxNx.log2FoldChange < 0 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1 & Hif1aHxNx.vs.KellyHxNx.log2FoldChange > 1) & ((-Hif2aHxNx.vs.KellyHxNx.log2FoldChange - Hif1aHxNx.vs.KellyHxNx.log2FoldChange) < 1))
+goi <- "ENSG00000125384"
+plotCounts_anno(goi) + labs(title="Hif2A")
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF2A",gene=goi))
+goi <- "ENSG00000099994"
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF1A",gene=goi))
+
+# Hif1a < 1, Hif2A < 0
+subset(deg, Hif2aHxNx.vs.KellyHxNx.log2FoldChange < 0 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange < 1 & Hif1aHxNx.vs.KellyHxNx.log2FoldChange > -1))
+goi <- "ENSG00000129675"
+plotCounts_anno(goi) + labs(title="Hif2A")
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF2A",gene=goi))
+
+# Hif1a < -1, Hif2A < 0
+subset(deg, Hif2aHxNx.vs.KellyHxNx.log2FoldChange < 0 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1 & Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1) & Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange < -1)
+goi <- "ENSG00000023445"
+plotCounts_anno(goi) + labs(title="Hif2A")
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF2A",gene=goi))
+
+# Hif1a < -1, Hif2A < -1, Hif2a:Hif1a < 1
+subset(deg, Hif2aHxNx.vs.KellyHxNx.log2FoldChange < -1 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1 & Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1) & abs(Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange) < 1)
+goi <- "ENSG00000136235"
+plotCounts_anno(goi) + labs(title="Hif1A & Hif2A target")
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF1A & HIF2A",gene=goi))
+
+
+# Hif1a < -1, Hif2A < -1, Hif2a:Hif1a < 1
+subset(deg, Hif2aHxNx.vs.KellyHxNx.log2FoldChange < -1 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1 & Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1) & Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange> 1)
+goi <- "ENSG00000278718"
+plotCounts_anno(goi) + labs(title="Hif1A")
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF1A",gene=goi))
+
+# Hif1a < -1, Hif2A < -1, Hif2a:Hif1a > 1
+subset(deg, abs(Hif2aHxNx.vs.KellyHxNx.log2FoldChange) < 1 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1 & Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1) & Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange> 1)
+goi <- "ENSG00000170525"
+plotCounts_anno(goi) + labs(title="Hif1A")
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF1A",gene=goi))
+
+# Hif1a < -1, Hif2A > 1
+subset(deg, Hif2aHxNx.vs.KellyHxNx.log2FoldChange > 1 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1 & Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1) & (-Hif2aHxNx.vs.KellyHxNx.log2FoldChange - Hif1aHxNx.vs.KellyHxNx.log2FoldChange) < 1)
+goi <- "ENSG00000137819"
+plotCounts_anno(goi) + labs(title="Hif1A")
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF1A",gene=goi))
+
+# Hif1a < -1, Hif2A > 1
+subset(deg, Hif2aHxNx.vs.KellyHxNx.log2FoldChange > 1 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1 & Hif1aHxNx.vs.KellyHxNx.log2FoldChange < -1) & (-Hif2aHxNx.vs.KellyHxNx.log2FoldChange - Hif1aHxNx.vs.KellyHxNx.log2FoldChange) < 1) %>% arrange(Hif1aHxNx.vs.KellyHxNx.log2FoldChange)
+goi <- "ENSG00000285321"
+plotCounts_anno(goi) + labs(title="Hif1A")
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="HIF1A",gene=goi))
+
+# Hif1a -> Hif2A
+goi <- subset(deg, Hif2aHxNx.vs.KellyHxNx.log2FoldChange > 5 & (Hif1aHxNx.vs.KellyHxNx.log2FoldChange < 0 & Hif1aHxNx.vs.KellyHxNx.log2FoldChange < 0) & (-Hif2aHxNx.vs.KellyHxNx.log2FoldChange - Hif1aHxNx.vs.KellyHxNx.log2FoldChange) < 1) %>% arrange(Hif1aHxNx.vs.KellyHxNx.log2FoldChange) 
+plotCounts_SK(goi %>% rownames()) + labs(title="Hif1A")
+
+# Hif1a -> Hif2A
+goi <- subset(deg, Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange > 1 & (Hif2aHxNx.vs.KellyHxNx.log2FoldChange + Hif1aHxNx.vs.KellyHxNx.log2FoldChange) > 1 & (Hif2aHxNx.vs.KellyHxNx.log2FoldChange + Hif1aHxNx.vs.KellyHxNx.log2FoldChange) < 2) %>% arrange(Hif1aHxNx.vs.KellyHxNx.log2FoldChange) 
+
+plotCounts_SK(goi[1:9,] %>% rownames()) + labs(title="Hif1A")
+
+goi <- "ENSG00000127824"
+plotCounts_anno(goi=goi)
+point_xy <- rbind(point_xy,data.frame(x=deg[goi,"Hif1aHxNx.vs.KellyHxNx.log2FoldChange"],y=deg[goi,"Hif2aHxNx.vs.KellyHxNx.log2FoldChange"], target="opposing",gene=goi))
+
+cc <- c(viridis(8,option = 'A'),colors[c(4,2,6)])
+cc <- c(rep("grey40",8),colors[c(4,2,6)], "orange")
+
+point_xy$symbol <- mcols(dds)[point_xy$gene,"symbol"]
+
+cluster_h2v1 + geom_point(data = point_xy, aes(x=x, y=y, color=target), size=5) + scale_colour_manual(name="log2-FC",values=cc) + geom_text_repel(data = point_xy, aes(x=x, y=y), label=point_xy$symbol, colour="black")
+```
+
+### Other cluster
+
+``` r
+# Hif1a ~ Hif2a, color: Kelly_Hx
+color1 <- cut(res_hif1a_2a$Kelly.Hx.vs.Nx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
+cc <- scales::seq_gradient_pal("blue", "red", "Lab")(seq(0,1,length.out=8))
+cc <- viridis(8)
+cc[4:5] <- "grey40"
+cluster_hx <- ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color1)) +
+  geom_hline(yintercept=c(0)) +
+  geom_vline(xintercept=c(0)) +
+  geom_abline(intercept=c(1,-1)) +
+  geom_point(alpha=0.5) +
+  # scale_color_viridis_d(option = 'C') +
+  scale_colour_manual(name="log2-FC",values=cc) +
+  ggtitle(label="Kelly: Hx vs. Nx") + 
+  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
+
+# Hif1a ~ Hif2a, color: Hif2a vs. Hif1a
+color2 <- cut(res_hif1a_2a$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
+clusterh1v2 <- ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color2)) +
+  geom_hline(yintercept=c(0)) +
+  geom_vline(xintercept=c(0)) +
+  geom_abline(intercept=c(1,-1)) +
+  geom_point(alpha=0.5) +
+  scale_colour_manual(name="log2-FC",values=cc) +
+  # scale_color_viridis_d(option = 'C') +
+  ggtitle(label="Hif1a vs. Hif2a") + 
+  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
+
+cluster_hx + clusterh1v2 + plot_layout(guides = "collect", axes="collect", axis_titles="collect") & 
+  theme(legend.position = 'right')
+
+
+# Hif1a ~ Kelly, color: 
+color3 <- cut(res_hif1a_2a$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
+cc <- scales::seq_gradient_pal("blue", "red", "Lab")(seq(0,1,length.out=8))
+cc <- viridis(8)
+cc[4:5] <- "grey40"
+cluster_h1vK <- ggplot(res_hif1a_2a,aes(x=Kelly.Hx.vs.Nx.log2FoldChange, y=Hif1a.Hx.vs.Nx.log2FoldChange, color=color3)) +
+  geom_hline(yintercept=c(0)) +
+  geom_vline(xintercept=c(0)) +
+  geom_abline(intercept=c(1,-1)) +
+  geom_point(alpha=0.5) +
+  # scale_color_viridis_d(option = 'C') +
+  scale_colour_manual(name="log2-FC",values=cc) +
+  ggtitle(label="Kelly: Hx vs. Nx") + 
+  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
+cluster_h1vK
+
+
+color3 <- cut(res_hif1a_2a$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange,c(-Inf,seq(-3,3,by=1),+Inf))
+clusterh1vK <- ggplot(res_hif1a_2a,aes(x=Hif1a.Hx.vs.Nx.log2FoldChange, y=Hif2a.Hx.vs.Nx.log2FoldChange, color=color3)) +
+  geom_hline(yintercept=c(0)) +
+  geom_vline(xintercept=c(0)) +
+  geom_abline(intercept=c(1,-1)) +
+  geom_point(alpha=0.5) +
+  scale_colour_manual(name="log2-FC",values=cc) +
+  # scale_color_viridis_d(option = 'C') +
+  ggtitle(label="Hif1a vs. Hif2a") + 
+  coord_cartesian(xlim = c(-5, 12),ylim = c(-5,12))
+clusterh1vK
 ```

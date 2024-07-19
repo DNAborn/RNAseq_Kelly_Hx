@@ -115,6 +115,71 @@ patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) +
 
 ```
 
+```{r counts_anno}
+
+plotCounts_anno <- function(goi){
+d <- plotCounts(dds, gene=goi, intgroup=c("condition","experiment","genotype","treatment"), returnData=TRUE)
+box <- ggplot(d, aes(x = condition, y = count, fill=treatment, color=treatment)) +
+    geom_boxplot(color="black", outliers = FALSE)
+box <- ggplot_build(box)$data[[1]]
+gcounts <- ggplot(d, aes(x = condition, y = count, fill=treatment, color=treatment)) +
+    geom_boxplot(color="black", outliers = FALSE) +
+    geom_point(shape=21,color="black",aes(fill=experiment),position=position_dodge(width=0.75), alpha=1) +
+    scale_fill_manual(values=c(cols[c(1,5)],viridis(4))) +
+    scale_color_manual(values=cols[c(1,5)]) +
+    scale_y_continuous(trans = "log2") +
+    geom_hline(yintercept=c(box[2,3],
+                            box[2,5]),
+               color="grey20", linetype = 'dashed') +
+    geom_hline(yintercept=c(box[4,3],
+                            box[4,5]),
+               color="#1976d2", linetype = 'dashed') +
+  # Kelly
+  geom_segment(
+        aes(x = 1.5,y = box[1,"middle"], xend = 1.5,yend = box[2,"middle"]),
+        arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="red2") +
+  geom_text(aes(x = 1,y = (box[1,"ymin"]*0.5)),
+            label=getL2FC(goi=goi)[1], color="red2") +
+  
+  # Hif1a
+  geom_segment(
+        aes(x = 3.5,y = box[3,"middle"], xend = 3.5,yend = box[4,"middle"]),
+        arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="red2") +
+  geom_text(aes(x = 3,y = (box[3,"ymin"]*0.5)),
+            label=getL2FC(goi=goi)[2], color="red2") +
+  geom_segment(
+        aes(x = 2,y = mean_log(c(box[1,"middle"],box[2,"middle"])), 
+            xend = 3,yend = mean_log(c(box[3,"middle"],box[4,"middle"]))),
+        arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="purple2") +
+  geom_text(aes(x = 3,y = mean_log(c(0.5*box[2,"middle"],box[3,"middle"]))),
+            label=getL2FC(goi=goi)[4], color="purple2") +
+  
+  # Hif2a
+  geom_segment(
+        aes(x = 5.5,y = box[5,"middle"], xend = 5.5,yend = box[6,"middle"]),
+        arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="red2") +
+  geom_text(aes(x = 5,y = (box[5,"ymin"]*0.5)),
+            label=getL2FC(goi=goi)[3], color="red2") +
+  geom_segment(
+        aes(x = 2,y = mean_log(c(box[1,"middle"],box[2,"middle"])), 
+            xend = 5,yend = mean_log(c(box[5,"middle"],box[6,"middle"]))),
+        arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="purple2") +
+  geom_text(aes(x = 5,y = 2*mean_log(c(box[2,"middle"],box[5,"middle"]))),
+            label=getL2FC(goi=goi)[5], color="purple2") + 
+    labs(title = paste(mcols(dds)[goi,"ens.symbol"],"(",goi,")",sep=" ")) +
+
+# Hif1a vs. Hif2a
+  geom_segment(
+        aes(x = 3.5,y = mean_log(c(box[3,"middle"],box[4,"middle"])), 
+            xend = 5.5,yend = mean_log(c(box[5,"middle"],box[6,"middle"]))),
+        arrow = arrow(length = unit(0.03,units = "npc")),size = 1,color ="blue1") +
+  geom_text(aes(x = 6,y = mean_log(c(box[5,"middle"],box[6,"middle"]))),
+            label=getL2FC(goi=goi)[7], color="blue1") + 
+    labs(title = paste(mcols(dds)[goi,"ens.symbol"],"(",goi,")",sep=" "))
+gcounts %>% print()
+}
+```
+
 
 ```{r getVennElements, include=FALSE}
 # get overlap elements
