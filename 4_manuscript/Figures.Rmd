@@ -99,7 +99,7 @@ library(data.table)
 library(colorspace)
 library(DOSE)
 library(simplifyEnrichment)
-
+library("pathview")
 
 requireNamespace('png', quietly = TRUE)
 
@@ -168,7 +168,7 @@ df <- data.frame(n=c(1:8),
 ```
 
 ## -Prepare Results
-```{r pre_results}
+```{r pre_results, fig.width=4, fig.show='hold',out.width="50%"}
 
 deg_genes_list <- lapply(results_list,topgenes_f) %>%  lapply(.,rownames) 
 names(deg_genes_list) <- paste("deg",names(deg_genes_list),sep="_")
@@ -375,7 +375,7 @@ volcano_hif1b <- volcano_sk3(n="Hif1b.Hx.vs.Nx", deg=getdeg("Hif1bHxNx.vs.KellyH
 
 ## -Venn
 
-```{r 2_venn, fig.height=10, fig.width=8, dpi=300, out.width="50%"}
+```{r 2_venn, fig.height=10, fig.width=8, dpi=300, out.width="50%", fig.show='hold'}
 
 
 input_list <- main_degs
@@ -438,7 +438,7 @@ venns %>% unlist() %>% unique() %>% length()
 
 res_hif1a_2a$venn <- ifelse(rownames(res_hif1a_2a) %in% venns$a1,"HIF1A",
                       ifelse(rownames(res_hif1a_2a) %in% venns$a2,"HIF2A",
-                      ifelse(rownames(res_hif1a_2a) %in% venns$a3,"overlap","")))
+                      ifelse(rownames(res_hif1a_2a) %in% venns$a3,"overlap","interaction")))
 res_hif1a_2a$venn %>% table()
 
 
@@ -450,9 +450,9 @@ cluster_venn <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange,
   labs(title = "Simple/Venn Cluster") +
   xlab("Hif1a vs. Kelly") +
   ylab("Hif2a vs. Kelly") +
-  scale_color_manual(values=c("orange",colors[c(4,6,2)])) +
+  scale_color_manual(values=c(colors[c(4,6)],"orange",colors[2])) +
   # scale_shape_manual(values = c(21,16)) + 
-  scale_fill_manual(values=alpha(c("orange",colors[c(4,6,2)]),0.2)) +
+  scale_fill_manual(values=alpha(c(colors[c(4,6)],"orange",colors[2]),0.2)) +
   theme_bw() +
   removeGrid(x=T, y=T) +
   coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
@@ -489,9 +489,9 @@ cluster <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hi
   labs(title = "Geometric Cluster") +
   xlab("Hif1a vs. Kelly") +
   ylab("Hif2a vs. Kelly") +
-  scale_color_manual(values=c("orange",colors[c(4,2,6)])) +
+  scale_color_manual(values=c(colors[c(4,2,6)],"orange")) +
   # scale_shape_manual(values = c(21,16)) + 
-  scale_fill_manual(values=alpha(c("orange",colors[c(4,2,6)]),0.2)) +
+  scale_fill_manual(values=alpha(c(colors[c(4,2,6)],"orange"),0.2)) +
   theme_bw() +
   removeGrid(x=T, y=T) +
   coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
@@ -512,6 +512,10 @@ res_hif1a_2a_list_ens <- list("HIF1A" = res_hif1a_2a %>% filter(group == "HIF1A"
                               "HIF2A" = res_hif1a_2a %>% filter(group == "HIF2A") %>% .[,"ENSEMBL"],
                               "both" = res_hif1a_2a %>% filter(group == "HIF1A_HIF2A") %>% .[,"ENSEMBL"])
 
+res_hif1a_2a_list_ez <- list("HIF1A" = res_hif1a_2a %>% filter(group == "HIF1A") %>% .[,"ENTREZ"],
+                              "HIF2A" = res_hif1a_2a %>% filter(group == "HIF2A") %>% .[,"ENTREZ"],
+                              "both" = res_hif1a_2a %>% filter(group == "HIF1A_HIF2A") %>% .[,"ENTREZ"])
+
 load(file="GO_analysis/GO_cc_groups.go")
 
 GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
@@ -524,9 +528,27 @@ dotplot(GO_cc_groups_BP, showCategory=12)
 
 # Search for clusters
 GO_IDs_list <- split(GO_cc_groups_BP@compareClusterResult,f=GO_cc_groups_BP@compareClusterResult$Cluster) %>% lapply('[',,"ID")
+names(GO_IDs_list)
 
-simplifyGOFromMultipleLists(GO_IDs_list)
+simplifyGOFromMultipleLists(GO_IDs_list[1:2])
 
+
+```
+
+## KEGG
+```{r, fig.height=8, fig.width=6, out.width="50%"}
+cc_kegg <- compareCluster(geneCluster = res_hif1a_2a_list_ez[1:2],
+                          fun = "enrichKEGG",
+                          organism     = 'hsa',
+                          pvalueCutoff = 0.05)
+
+dotplot(cc_kegg, showCategory=12)
+cc_kegg %>% data.frame()
+
+pathview(gene.data  = res_hif1a_2a_list_ez[[1]],
+                     pathway.id = "hsa04115",
+                     species    = "hsa")
+# ,limit      = list(gene=max(abs(cc_kegg)), cpd=1)
 
 ```
 
