@@ -97,6 +97,9 @@ library(umap)
 library(Rtsne)
 library(data.table)
 library(colorspace)
+library(DOSE)
+library(simplifyEnrichment)
+
 
 requireNamespace('png', quietly = TRUE)
 
@@ -191,7 +194,7 @@ res_final <- results_list[c("Kelly.Hx.vs.Nx","Hif1a.Hx.vs.Nx","Hif2a.Hx.vs.Nx", 
 # create table with all results
 res_table <- lapply(res_final,data.frame) %>% lapply(.,"[", , c("log2FoldChange","padj"))
 res_table <- do.call('cbind',res_table)
-res_table_final <- res_final[[1]][,c("symbol","baseMean")] %>% data.frame()
+res_table_final <- res_final[[1]][,c("ENSEMBL","ENTREZ","symbol","baseMean")] %>% data.frame()
 res_table_final <- cbind(res_table_final,res_table)
 res_hif1a_2a <- res_table_final[hif1a_2a_genes,]
 colnames(res_hif1a_2a)
@@ -208,6 +211,23 @@ res_shrink <- do.call('cbind',res_shrink)
 res_shrink_final <- res_final[[1]][,c("symbol","baseMean")] %>% data.frame()
 res_shrink_final <- cbind(res_shrink_final,res_shrink)
 res_shrink_hif1a_2a <- res_shrink_final[hif1a_2a_genes,]
+
+
+# Gene universe
+# Expression min
+results_list[[1]]$baseMean %>% hist(breaks=100000, xlim = c(0,100)) 
+
+# in results
+res_hif1a_2a$baseMean %>% min()
+res_hif1a_2a$baseMean %>% hist(breaks=100000, xlim = c(0,100))
+
+# use all genes in dataset
+genes_univ_ens <- results_list[[1]]$ENSEMBL
+genes_univ_ens %>% length()
+
+genes_univ <- results_list[[1]]$ENTREZ
+genes_univ %>% length()
+genes_univ %>% is.na() %>% summary()
 
 
 ```
@@ -427,7 +447,7 @@ cluster_venn <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange,
   geom_hline(yintercept = 0, linewidth = 0.1) + 
   geom_vline(xintercept = 0, linewidth = 0.1) +
   geom_point(size=1, stroke=0.5, shape=21) +
-  labs(title = "Gene cluster") +
+  labs(title = "Simple/Venn Cluster") +
   xlab("Hif1a vs. Kelly") +
   ylab("Hif2a vs. Kelly") +
   scale_color_manual(values=c("orange",colors[c(4,6,2)])) +
@@ -456,7 +476,7 @@ res_hif1a_2a$group <- ifelse(rownames(res_hif1a_2a) %in% rownames(hif_parallel),
                       ifelse(rownames(res_hif1a_2a) %in% rownames(hif2a_up),"HIF2A",
                       ifelse(rownames(res_hif1a_2a) %in% rownames(hif2a_do),"HIF2A",
                       ifelse(rownames(res_hif1a_2a) %in% rownames(hif1a_up),"HIF1A",
-                      ifelse(rownames(res_hif1a_2a) %in% rownames(hif1a_do),"HIF1A","")
+                      ifelse(rownames(res_hif1a_2a) %in% rownames(hif1a_do),"HIF1A","orange")
                       ))))
 
 cluster <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=group, fill=group)) +
@@ -466,7 +486,7 @@ cluster <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hi
   geom_abline(slope=c(-1), intercept = 1) +
   annotate("segment", x = c(0,1), y = c(1,0), xend = c(-10,11), yend = c(21,-5),color="black") +
   geom_point(size=1, stroke=0.5, shape=21) +
-  labs(title = "Gene cluster") +
+  labs(title = "Geometric Cluster") +
   xlab("Hif1a vs. Kelly") +
   ylab("Hif2a vs. Kelly") +
   scale_color_manual(values=c("orange",colors[c(4,2,6)])) +
@@ -479,15 +499,41 @@ cluster <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hi
 cluster_venn + cluster
 
 
+write.xlsx(res_hif1a_2a,"DEG_genes.xlsx")
+
+
+```
+
+# Figure 4 Hif1a
+## GO Analysis
+```{r, fig.height=8, fig.width=6, out.width="50%"}
+res_hif1a_2a %>% filter(group== "HIF1A") %>% head(n=20) %>% kable()
+res_hif1a_2a_list_ens <- list("HIF1A" = res_hif1a_2a %>% filter(group == "HIF1A") %>% .[,"ENSEMBL"],
+                              "HIF2A" = res_hif1a_2a %>% filter(group == "HIF2A") %>% .[,"ENSEMBL"],
+                              "both" = res_hif1a_2a %>% filter(group == "HIF1A_HIF2A") %>% .[,"ENSEMBL"])
+
+load(file="GO_analysis/GO_cc_groups.go")
+
+GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
+dotplot(GO_cc_groups_BP, showCategory=12)
+
+```
+
+## Cluster GO terms
+```{r}
+
+# Search for clusters
+GO_IDs_list <- split(GO_cc_groups_BP@compareClusterResult,f=GO_cc_groups_BP@compareClusterResult$Cluster) %>% lapply('[',,"ID")
+
+simplifyGOFromMultipleLists(GO_IDs_list)
 
 
 ```
 
 
 
-
-
-# Old code
+# ###
+# ###Old code
 ## Enhanced volcano
 
 ## Volcanos
