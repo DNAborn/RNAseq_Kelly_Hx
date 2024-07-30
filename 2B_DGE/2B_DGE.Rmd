@@ -346,14 +346,21 @@ results_list[[n]] <- r1
 results_list[["Nx.Hif2a.vs.Kelly"]] %>% summary(alpha=0.05)
 results_list[["Hx.Hif2a.vs.Kelly"]] %>% summary()
 
-
+ results_list <- results_list %>% lapply(function(x) {
+   x$ENSEMBL <- mcols(dds)$gene_id;
+   x$ENTREZ <- mcols(dds)$ENTREZID;
+   return(x)})
+ 
 # Shrinkage
 lfcShrink_sk <- function(x){
   lfcShrink(dds, res=x,type="ashr")
 }
 
 res_shrink_list <- lapply(results_list,lfcShrink_sk) %>%
-  lapply(function(x) { x$symbol <- mcols(dds)$symbol;return(x)})
+  lapply(function(x) { x$symbol <- mcols(dds)$symbol;
+  x$ENSEMBL <- mcols(dds)$gene_id;
+  x$ENTREZ <- mcols(dds)$ENTREZID;
+  return(x)})
 
 
 # Export to figures folder
@@ -409,6 +416,7 @@ res_table <- lapply(res_final,data.frame) %>% lapply(.,"[", , c("log2FoldChange"
 res_table <- do.call('cbind',res_table)
 res_table_final <- res_final[[1]][,c("symbol","baseMean")] %>% data.frame()
 res_table_final <- cbind(res_table_final,res_table)
+res_table_final$gene_id <- 
 res_hif1a_2a <- res_table_final[hif1a_2a_genes,]
 colnames(res_hif1a_2a)
 
