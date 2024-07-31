@@ -38,15 +38,20 @@ BiocManager::valid()
 BiocManager::install("tsne")
 install.packages("reticulate")
 
+  BiocManager::install(c(
+    "cli", "crayon"
+  ), update = TRUE, ask = FALSE, force = TRUE)
 
 ```
 
-
 ```{r librarys, include=FALSE}
 
-library(xlsx)
+library(readxl)
 library(tidyverse)
 library(kableExtra)
+library(ChIPseeker)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 
 
 requireNamespace('png', quietly = TRUE)
@@ -58,7 +63,7 @@ dir <- paste(s,"AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all",sep="/")
 gitdir <- paste(dir,"git_RNAseq_Kelly_Hx",sep="/")
 data <- paste(dir,"data",sep="/")
 pdir <- paste(gitdir,basename(dirname(rstudioapi::getActiveDocumentContext()$path)),sep="/") 
-
+chipdir <- paste0(pdir,"/chip_seq_data",sep="/")
 par(mfrow = c(1,1))
 
 futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
@@ -92,21 +97,37 @@ a
 
 ```
 
-# ChIP-Seq datasets
+# Overview ChIP-Seq datasets
 
 Literature
-MCF-7 (breast)          Hif1A, Hif2A, Hif1B      Schödel et al., 2011    https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3374576/
-HCT116 (colon), RKO (colon), A549, and H460     HIF1A                Andrysik et al., 2021     https://www.nature.com/articles/s41467-021-21687-2#Sec11  https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE145157
 
-HKC-8, RCC4, HepG2     HIF1A, HIF2A,  HIF1B    https://www.embopress.org/doi/pdf/10.15252/embr.201846401   SE120885, GSE120886 and GSE120887 https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE120887
++---------------------------+---------------------------------------------+---------------------+---------------------------------------------------------------------------------------------------------------------------+
+| Author                    | cells                                       | Ab                  | link                                                                                                                      |
++===========================+=============================================+=====================+===========================================================================================================================+
+| **Schödel et al., 2011**  | MCF-7 (breast)                              | Hif1A, Hif2A, Hif1B | <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3374576/>                                                                   |
++---------------------------+---------------------------------------------+---------------------+---------------------------------------------------------------------------------------------------------------------------+
+| **Andrysik et al., 2021** | HCT116 (colon), RKO (colon), A549, and H460 | HIF1A               | <https://www.nature.com/articles/s41467-021-21687-2#Sec11> <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE145157> |
++---------------------------+---------------------------------------------+---------------------+---------------------------------------------------------------------------------------------------------------------------+
+| **James A Smythies**      | HKC-8, RCC4, HepG2                          | HIF1A, HIF2A, HIF1B | <https://www.embopress.org/doi/pdf/10.15252/embr.201846401> GSE120885, GSE120886 and GSE120887                            |
+|                           |                                             |                     |                                                                                                                           |
+|                           |                                             |                     | <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE120887>                                                            |
++---------------------------+---------------------------------------------+---------------------+---------------------------------------------------------------------------------------------------------------------------+
 
+ChIP Seq in BE(2)
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE167477
 
-ReMAP:
-Hif1a: https://remap.univ-amu.fr/target_page/HIF1A:9606
-Hif2a: https://remap.univ-amu.fr/target_page/EPAS1:9606
-Hif1b: https://remap.univ-amu.fr/target_page/ARNT:9606
+# ReMAP
 
-```{r load_chips}
+**ReMAP:**
+
+Hif1a: <https://remap.univ-amu.fr/target_page/HIF1A:9606>
+
+Hif2a: <https://remap.univ-amu.fr/target_page/EPAS1:9606>
+
+Hif1b: <https://remap.univ-amu.fr/target_page/ARNT:9606>
+
+## Load dataset
+```{r load_chips, echo=FALSE, include=TRUE}
 list.files(pdir)
 hif1a_datasets <- read_xlsx(paste(pdir,"ReMAP_ChIP_Hif1a.xlsx",sep="/"), )
 hif2a_datasets <- read_xlsx(paste(pdir,"ReMAP_ChIP_Hif2a.xlsx",sep="/"), )
@@ -115,7 +136,258 @@ hif1b_datasets <- read_xlsx(paste(pdir,"ReMAP_ChIP_Hif1b.xlsx",sep="/"), )
 celllines <- data.frame("Hif1A" = (hif1a_datasets$Biotype %>% factor() %>% levels() %>% paste(collapse = " ")),
                        "Hif2A" = (hif2a_datasets$Biotype %>% factor() %>% levels() %>% paste(collapse = " ")),
                        "Hif1B" = (hif1b_datasets$Biotype %>% factor() %>% levels() %>% paste(collapse = " "))) %>% t()
+
 celllines %>% kable()
+
+```
+
+## HIF1A
+```{r remap_hif1a}
+remap_hif1a <- paste0(chipdir,"/hif1a")
+n <- "remap_hif1a"
+list.files(remap_hif1a)
+
+run <- "ReMap_hif1a"
+name <- paste(run,"_",sep="")
+
+beddir <- paste(remap_hif1a)
+
+beds <- list.files(beddir, pattern=".bed.gz")
+beds <- file.path(beddir,beds)
+
+peak <- readPeakFile(beds[2])
+length(peak)
+
+peak_table <- {}
+i <- beds[1]
+for (i in beds) {
+peak <- readPeakFile(i)
+n <- basename(i) %>% str_remove(pattern=".bed.gz")
+print(length(peak))
+peak_table <- rbind(peak_table,data.frame(sample = n, peaks = length(peak)))
+}
+peak_table
+
+
+promoter <- getPromoters(TxDb=txdb, upstream=3000, downstream=3000)
+genebody <- getBioRegion(TxDb = txdb,
+                         by = "gene",
+                         type = "body",
+                         upstream = rel(1),
+                         downstream = rel(1))
+
+file.exists(beds) %>% summary()
+
+peak_list <- lapply(beds,readPeakFile)
+peak_list <- lapply(peak_list,keepStandardChromosomes,pruning.mode="coarse")
+
+tagMatrixList_proms <- lapply(peak_list, getTagMatrix, windows=promoter)
+
+tagMatrixList_genes <- lapply(beds, getTagMatrix, windows = genebody, nbin = 100,
+                              upstream = rel(1),downstream = rel(1))
+
+
+names <- paste(name,str_split(basename(beds),pattern="_", simplify = T)[,2], sep="")
+
+names(tagMatrixList_proms) <- c(names)
+names(tagMatrixList_genes) <- c(names)
+
+plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000))
+plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), facet="row")
+plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), conf=0.95, resample=500)
+
+#ggsave(file=paste(csrundir,"/",name,"AvgProf_TSS.pdf",sep=""), width = 8, height = 8, device = "pdf")
+
+plotPeakProf(tagMatrixList_genes)
+plotPeakProf(tagMatrixList_genes, conf=0.95, resample=500) #, facet="row"
+
+#ggsave(file=paste(csrundir,"/",name,"PeakProf_gene.pdf",sep=""), width = 8, height = 8, device = "pdf")
+
+tagHeatmap(tagMatrixList_proms)
+
+#ggsave(file=paste(csrundir,"/",name,"Heatmap.pdf",sep=""), width = 12, height = 8, device = "pdf")
+
+peakAnnoList <- lapply(beds, annotatePeak, TxDb=txdb,
+                          tssRegion=c(-3000, 3000), verbose=TRUE)
+
+names(peakAnnoList) <- c(names)
+
+plotAnnoBar(peakAnnoList)
+#ggsave(file=paste(csrundir,"/",name,"AnnoBar.pdf",sep=""), width = 12, height = 8, device = "pdf")
+
+plotDistToTSS(peakAnnoList)
+#ggsave(file=paste(csrundir,"/",name,"DistToTSS.pdf",sep=""), width = 12, height = 8, device = "pdf")
+
+
+
+
+
+```
+
+
+# SK-N-BE(2)
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE167477
+
+```{r sknbe2}
+SK_N_BE2 <- paste0(chipdir,"/SKNBE2")
+list.files(SK_N_BE2)
+
+run <- "SK_N_BE2"
+name <- paste(run,"_",sep="")
+
+beddir <- paste(remap_hif1a)
+
+beds <- list.files(beddir, pattern=".bed.gz")
+beds <- file.path(beddir,beds)
+
+peak <- readPeakFile(beds[2])
+length(peak)
+
+peak_table <- {}
+i <- beds[1]
+for (i in beds) {
+peak <- readPeakFile(i)
+n <- basename(i) %>% str_remove(pattern=".bed.gz")
+print(length(peak))
+peak_table <- rbind(peak_table,data.frame(sample = n, peaks = length(peak)))
+}
+peak_table
+
+
+promoter <- getPromoters(TxDb=txdb, upstream=3000, downstream=3000)
+genebody <- getBioRegion(TxDb = txdb,
+                         by = "gene",
+                         type = "body",
+                         upstream = rel(1),
+                         downstream = rel(1))
+
+file.exists(beds) %>% summary()
+
+peak_list <- lapply(beds,readPeakFile)
+peak_list <- lapply(peak_list,keepStandardChromosomes,pruning.mode="coarse")
+
+tagMatrixList_proms <- lapply(peak_list, getTagMatrix, windows=promoter)
+
+tagMatrixList_genes <- lapply(beds, getTagMatrix, windows = genebody, nbin = 100,
+                              upstream = rel(1),downstream = rel(1))
+
+
+names <- paste(name,str_split(basename(beds),pattern="_", simplify = T)[,2], sep="")
+
+names(tagMatrixList_proms) <- c(names)
+names(tagMatrixList_genes) <- c(names)
+
+plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000))
+plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), facet="row")
+plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), conf=0.95, resample=500)
+
+#ggsave(file=paste(csrundir,"/",name,"AvgProf_TSS.pdf",sep=""), width = 8, height = 8, device = "pdf")
+
+plotPeakProf(tagMatrixList_genes)
+plotPeakProf(tagMatrixList_genes, conf=0.95, resample=500) #, facet="row"
+
+#ggsave(file=paste(csrundir,"/",name,"PeakProf_gene.pdf",sep=""), width = 8, height = 8, device = "pdf")
+
+tagHeatmap(tagMatrixList_proms)
+
+#ggsave(file=paste(csrundir,"/",name,"Heatmap.pdf",sep=""), width = 12, height = 8, device = "pdf")
+
+peakAnnoList <- lapply(beds, annotatePeak, TxDb=txdb,
+                          tssRegion=c(-3000, 3000), verbose=TRUE)
+
+names(peakAnnoList) <- c(names)
+
+plotAnnoBar(peakAnnoList)
+#ggsave(file=paste(csrundir,"/",name,"AnnoBar.pdf",sep=""), width = 12, height = 8, device = "pdf")
+
+plotDistToTSS(peakAnnoList)
+#ggsave(file=paste(csrundir,"/",name,"DistToTSS.pdf",sep=""), width = 12, height = 8, device = "pdf")
+
+
+
+
+```
+
+
+# Schödel
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE167477
+
+```{r schoedel}
+SK_N_BE2 <- paste0(chipdir,"/Schödel")
+list.files(SK_N_BE2)
+
+run <- "Schödel"
+name <- paste(run,"_",sep="")
+
+beddir <- paste(remap_hif1a)
+
+beds <- list.files(beddir, pattern=".bed.gz")
+beds <- file.path(beddir,beds)
+
+peak <- readPeakFile(beds[2])
+length(peak)
+
+peak_table <- {}
+i <- beds[1]
+for (i in beds) {
+peak <- readPeakFile(i)
+n <- basename(i) %>% str_remove(pattern=".bed.gz")
+print(length(peak))
+peak_table <- rbind(peak_table,data.frame(sample = n, peaks = length(peak)))
+}
+peak_table
+
+
+promoter <- getPromoters(TxDb=txdb, upstream=3000, downstream=3000)
+genebody <- getBioRegion(TxDb = txdb,
+                         by = "gene",
+                         type = "body",
+                         upstream = rel(1),
+                         downstream = rel(1))
+
+file.exists(beds) %>% summary()
+
+peak_list <- lapply(beds,readPeakFile)
+peak_list <- lapply(peak_list,keepStandardChromosomes,pruning.mode="coarse")
+
+tagMatrixList_proms <- lapply(peak_list, getTagMatrix, windows=promoter)
+
+tagMatrixList_genes <- lapply(beds, getTagMatrix, windows = genebody, nbin = 100,
+                              upstream = rel(1),downstream = rel(1))
+
+
+names <- paste(name,str_split(basename(beds),pattern="_", simplify = T)[,2], sep="")
+
+names(tagMatrixList_proms) <- c(names)
+names(tagMatrixList_genes) <- c(names)
+
+plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000))
+plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), facet="row")
+plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), conf=0.95, resample=500)
+
+#ggsave(file=paste(csrundir,"/",name,"AvgProf_TSS.pdf",sep=""), width = 8, height = 8, device = "pdf")
+
+plotPeakProf(tagMatrixList_genes)
+plotPeakProf(tagMatrixList_genes, conf=0.95, resample=500) #, facet="row"
+
+#ggsave(file=paste(csrundir,"/",name,"PeakProf_gene.pdf",sep=""), width = 8, height = 8, device = "pdf")
+
+tagHeatmap(tagMatrixList_proms)
+
+#ggsave(file=paste(csrundir,"/",name,"Heatmap.pdf",sep=""), width = 12, height = 8, device = "pdf")
+
+peakAnnoList <- lapply(beds, annotatePeak, TxDb=txdb,
+                          tssRegion=c(-3000, 3000), verbose=TRUE)
+
+names(peakAnnoList) <- c(names)
+
+plotAnnoBar(peakAnnoList)
+#ggsave(file=paste(csrundir,"/",name,"AnnoBar.pdf",sep=""), width = 12, height = 8, device = "pdf")
+
+plotDistToTSS(peakAnnoList)
+#ggsave(file=paste(csrundir,"/",name,"DistToTSS.pdf",sep=""), width = 12, height = 8, device = "pdf")
+
+
 
 
 ```
