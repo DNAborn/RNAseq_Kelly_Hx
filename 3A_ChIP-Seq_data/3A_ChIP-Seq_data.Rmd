@@ -56,7 +56,8 @@ library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
 library(AnnotationHub)
-
+library(VennDiagram)
+library(venn)
 library(viridis)
 
 requireNamespace('png', quietly = TRUE)
@@ -204,12 +205,43 @@ tagMatrixList_proms <- lapply(peak_list, getTagMatrix, windows=promoter)
 prom1 <- plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000))+ggtitle(run)
 prom2 <- plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), facet="row")+ggtitle(run)
 prom1+prom2
-tagHeatmap(tagMatrixList_proms[3:4])+ggtitle(run)
+tagHeatmap(tagMatrixList_proms[3:4])
 
 peakAnnoList <- lapply(peak_list, annotatePeak, TxDb=txdb,
                           tssRegion=c(-3000, 3000), verbose=TRUE)
 
 plotAnnoBar(peakAnnoList)+ggtitle(run)
+
+
+```
+
+## Annotate peaks
+```{r remap_hif1a_annotate}
+
+remap_hif1a_peaks_anno_table <- list()
+remap_hif1a_genes_list <- list()
+for (i in 1:length(peakAnnoList)){
+  print(paste(i,": ",names(peakAnnoList)[i],sep=""))
+  n <- names(peakAnnoList[i])
+  table <- as.data.frame(peakAnnoList[[i]]@anno)
+  table$transcriptId2  <- sub("\\.\\d+$", "", table$transcriptId)
+  table$entrez <- table$geneId
+  table$geneId <- mapIds(edb, keys = table$transcriptId2, column = "GENEID", keytype = "TXID")
+  table$symbol <- mapIds(edb, keys = table$transcriptId2, column = "SYMBOL", keytype = "TXID")
+  assign(paste("narrow_table",n,sep="_"),table)
+  table_filter <- subset(table, annotation != "Distal Intergenic")
+  table_filter$annotation_short <-  str_split(table_filter$annotation,pattern = " ", simplify = TRUE)[,1]
+
+  print(paste("Before: ",length(rownames(table)),", After: ",length(rownames(table_filter))," (",round(length(rownames(table_filter))/length(rownames(table))*100),"%)"))
+  remap_hif1a_peaks_anno_table[[n]] <- table_filter
+  remap_hif1a_genes_list[[n]] <- table_filter$geneId %>% unique()
+}
+
+
+save(remap_hif1a_peaks_anno_table,file="remap_hif1a_peaks_anno_table.peaks")
+
+# write_xlsx(npeakAnnoList_table[["9929"]], path="9929_HIF1A_peaks.xlsx")
+
 
 ```
 
@@ -236,6 +268,7 @@ extraCols_narrowPeak <- c(signalValue = "numeric", pValue = "numeric",
 
 beds <- list.files(SKNBE2.dir, pattern=".narrowPeak")
 beds <- file.path(SKNBE2.dir,beds)
+file.exists(beds) %>% summary()
 
 peak <- readPeakFile(beds[4])
 length(peak)
@@ -261,7 +294,9 @@ npeak_list[[n]] <- npeak3
 }
 peak_table %>% kable()
 
+npeak_list
 
+# Get genomic regions
 promoter <- getPromoters(TxDb=txdb, upstream=3000, downstream=3000)
 genebody <- getBioRegion(TxDb = txdb,
                          by = "gene",
@@ -269,22 +304,20 @@ genebody <- getBioRegion(TxDb = txdb,
                          upstream = rel(1),
                          downstream = rel(1))
 
-file.exists(beds) %>% summary()
 
-peak_list <- lapply(beds,readPeakFile)
-peak_list <- lapply(peak_list,keepStandardChromosomes,pruning.mode="coarse")
 
-names <- paste0("SKNBE2_",str_split(basename(beds),pattern="_", simplify = T)[,3])
-names(peak_list) <- names
+# peak_list <- lapply(beds,readPeakFile)
+# peak_list <- lapply(peak_list,keepStandardChromosomes,pruning.mode="coarse")
 
-tagMatrixList_proms <- lapply(peak_list, getTagMatrix, windows=promoter)
+
+tagMatrixList_proms <- lapply(npeak_list, getTagMatrix, windows=promoter)
 
 prom1 <- plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000))+ggtitle(run)
 prom2 <- plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), facet="row")+ggtitle(run)
 prom1+prom2
-tagHeatmap(tagMatrixList_proms[3:4])+ggtitle(run)
+tagHeatmap(tagMatrixList_proms[3:4])
 
-peakAnnoList <- lapply(peak_list, annotatePeak, TxDb=txdb,
+peakAnnoList <- lapply(npeak_list, annotatePeak, TxDb=txdb,
                           tssRegion=c(-3000, 3000), verbose=TRUE)
 
 plotAnnoBar(peakAnnoList)+ggtitle(run)
@@ -294,7 +327,7 @@ plotAnnoBar(peakAnnoList)+ggtitle(run)
 ```{r sknbe2_hx_nx}
 
 # Substract Hx vs. Nx
-names(peak_list)
+names(npeak_list)
 Hx_samples <- c("SKNBE2_H1", "SKNBE2_H2", "SKNBE2_H3")
 Nx_samples <- c("SKNBE2_N1", "SKNBE2_N2", "SKNBE2_N3")
 
@@ -303,8 +336,8 @@ hx_peak_table <- {}
 for (i in 1:length(Hx_samples)){
   hx <- Hx_samples[i]
   nx <- Nx_samples[i]
-  all_peaks <- peak_list[[hx]]
-  nx_peaks <- peak_list[[nx]]
+  all_peaks <- npeak_list[[hx]]
+  nx_peaks <- npeak_list[[nx]]
   filtered <- findOverlaps(all_peaks, nx_peaks)
   keep <- from(filtered) %>% unique() %>% -.
   hx_peaks <- all_peaks[keep]
@@ -324,8 +357,8 @@ names(hx_peak_list) <- Hx_samples
 
 ```
 
-## Venn
-```{r sknbe2_venn}
+## Venn Peaks
+```{r sknbe2_venn_peaks}
 input_list <- hx_peak_list
 n <- "SKNBE2"
 l <- length(input_list)
@@ -372,6 +405,34 @@ for (i in 1:length(SKNBE2_peaks_anno)){
   SKNBE2_genes_list[[n]] <- table_filter$geneId %>% unique()
 }
 
+save(SKNBE2_peaks_anno_table,file="SKNBE2_peaks_anno_table.peaks")
+
+# write_xlsx(npeakAnnoList_table[["9929"]], path="9929_HIF1A_peaks.xlsx")
+
+```
+
+## Venn Genes
+```{r sknbe2_venn_genes}
+
+input_list <- SKNBE2_peaks_anno_table %>% lapply(.,'[',,"geneId") %>% lapply(.,unique)
+n <- "SKNBE2"
+l <- length(input_list)
+
+plt1 <- venn.diagram(
+    x = input_list,
+    fill = viridis(10)[4:6],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+patchwork::wrap_elements(plt1)
+
 
 ```
 
@@ -393,8 +454,6 @@ beddir <- paste(SKNBE2.dir)
 
 extraCols_narrowPeak <- c(signalValue = "numeric", pValue = "numeric",
                           qValue = "numeric", peak = "integer")
-
-
 
 beds <- list.files(SKNBE2.dir, pattern=".narrowPeak")
 beds <- file.path(SKNBE2.dir,beds)

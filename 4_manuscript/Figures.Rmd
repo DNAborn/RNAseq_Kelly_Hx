@@ -235,7 +235,7 @@ genes_univ %>% is.na() %>% summary()
 ```
 
 
-# Figure 1
+# Figure 1: Samples QC
 ## PCA
 ```{r 1_pca_pre}
 
@@ -303,7 +303,7 @@ pca1
 ```
 
 
-# Figure 2
+# Figure 2: Differential expressed genes
 ## -Volcano_function
 ```{r volcano_func}
 
@@ -416,7 +416,7 @@ patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
 ```
 
 
-# Figure 3
+# Figure 3: Gene Cluster
 ## Gene Cluster
 ```{r cluster, fig.width=10, fig.height=4, dpi=300}
 
@@ -506,7 +506,7 @@ write.xlsx(res_hif1a_2a,"DEG_genes.xlsx")
 
 ```
 
-# Figure 4 Hif1a
+# Figure 4: Gene Set enrichment
 ## GO Analysis
 ```{r, fig.height=8, fig.width=6, out.width="50%"}
 res_hif1a_2a %>% filter(group== "HIF1A") %>% head(n=20) %>% kable()
@@ -551,6 +551,201 @@ pathview(gene.data  = res_hif1a_2a_list_ez[[1]],
                      pathway.id = "hsa04115",
                      species    = "hsa")
 # ,limit      = list(gene=max(abs(cc_kegg)), cpd=1)
+
+```
+
+
+
+
+# Figure 5: Compare with ChIP-Seq
+## Load datasets
+```{r load_chip}
+
+# Own Kelly ChIP-Seq
+load("~/S/AG/AG-Scholz-NGS/Daten/Simon/ChIP_Workflow/git_ChIPSeq_Workflow/Kelly_Hx_Annotated.peaks")
+# ReMAP
+load("~/S/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/git_RNAseq_Kelly_Hx/3A_ChIP-Seq_data/remap_hif1a_peaks_anno_table.peaks")
+# SKNBE2
+load("~/S/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/git_RNAseq_Kelly_Hx/3A_ChIP-Seq_data/SKNBE2_peaks_anno_table.peaks")
+# Schödel
+# load()
+
+
+```
+
+## ChIP Venns
+### Own data
+```{r chip_venn}
+
+rna_hif1a <- res_hif1a_2a_list_ens[c("HIF1A","both")] %>% unlist() %>% unique()
+
+chip_hif1a_all <- str_detect(names(Kelly_Hx_Annotated),pattern="HIF-1A") %>% Kelly_Hx_Annotated[.] %>% lapply('[',,"geneId") %>% unlist() %>% unique()
+
+# Own data
+input_list <- list(RNA = rna_hif1a,
+                   ChIP_9929 = Kelly_Hx_Annotated[["9929_HIF-1A"]]$geneId,
+                   ChIP_all = chip_hif1a_all)
+                   
+plt1 <- venn.diagram(
+    x = input_list,
+   fill = viridis(3),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "HIF1A")
+
+patchwork::wrap_elements(plt1) 
+
+# get gene names
+overlap <- calculate.overlap(input_list)
+lapply(overlap,length)
+c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
+
+
+# HIF2A
+lapply(res_hif1a_2a_list_ens,length)
+rna_hif2a <- res_hif1a_2a_list_ens[c("HIF2A","both")] %>% unlist() %>% unique()
+lapply(res_hif1a_2a_list_ens,length)
+
+chip_hif2a_all <- str_detect(names(Kelly_Hx_Annotated),pattern="HIF-2A") %>% Kelly_Hx_Annotated[.] %>% lapply('[',,"geneId") %>% unlist() %>% unique()
+
+# Own data
+input_list <- list(RNA = rna_hif2a,
+                   ChIP_9930 = Kelly_Hx_Annotated[["9930_HIF-2A"]]$geneId,
+                   ChIP_all = chip_hif2a_all)
+                   
+plt1 <- venn.diagram(
+    x = input_list,
+   fill = viridis(3),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "HIF2A")
+
+patchwork::wrap_elements(plt1) 
+
+# get gene names
+overlap <- calculate.overlap(input_list)
+lapply(overlap,length)
+c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
+
+
+# Compare HIF1A, HIF2A
+
+rna_hif2a <- res_hif1a_2a_list_ens[c("HIF2A","both")] %>% unlist() %>% unique()
+
+chip_hif2a_all <- str_detect(names(Kelly_Hx_Annotated),pattern="HIF-2A") %>% Kelly_Hx_Annotated[.] %>% lapply('[',,"geneId") %>% unlist() %>% unique()
+
+input_list <- c(res_hif1a_2a_list_ens,list(chip_hif1a_all = chip_hif1a_all,
+                   chip_hif2a_all = chip_hif2a_all))
+
+plt1 <- venn.diagram(
+    x = input_list,
+   fill = viridis(5),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "ChIP all"
+   )
+
+input_list <- c(res_hif1a_2a_list_ens,
+                list(ChIP_9929_HIF1A = Kelly_Hx_Annotated[["9929_HIF-1A"]]$geneId,
+                   ChIP_9930_HIF2A = Kelly_Hx_Annotated[["9930_HIF-2A"]]$geneId))
+
+plt2 <- venn.diagram(
+    x = input_list,
+   fill = viridis(5),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "ChIP good samples"
+   )
+
+patchwork::wrap_elements(plt1) + patchwork::wrap_elements(plt2) 
+
+# get gene names
+overlap <- calculate.overlap(input_list)
+lapply(overlap,length)
+c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
+
+```
+
+### SKNBE2
+```{r chip_venn}
+# Generate SKNBE2 min list
+input_list <- SKNBE2_genes_list <- SKNBE2_peaks_anno_table %>% lapply('[',,"geneId")
+
+plt1 <- venn.diagram(
+    x = input_list,
+   fill = viridis(3),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "SKNBE2")
+patchwork::wrap_elements(plt1) 
+
+overlap <- calculate.overlap(input_list)
+lapply(overlap,length)
+SKNBE2_genes <- c(overlap$a1,overlap$a2,overlap$a3,overlap$a4) %>% unlist() %>% unique()
+
+
+
+# Compare with RNA-Seq
+input_list <- c(res_hif1a_2a_list_ens[1],list(SKNBE2_chip = SKNBE2_genes),res_hif1a_2a_list_ens[2:3])
+
+plt1 <- venn.diagram(
+    x = input_list,
+   fill = viridis(10)[c(3,10,4,5)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "RNA vs- ChIP (SKNBE2)")
+patchwork::wrap_elements(plt1) 
+
+
+
+
+
+# get gene names
+overlap <- calculate.overlap(input_list)
+lapply(overlap,length)
+c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
 
 ```
 
