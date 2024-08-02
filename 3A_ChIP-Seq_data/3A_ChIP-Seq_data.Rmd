@@ -9,10 +9,10 @@ output:
     toc_depth: 2
 always_allow_html: true
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 knit: (function(input_file, encoding) {
     rmarkdown::render(input_file,output_file= 'Readme.md')
-    })
+        })
 ---
 
 ```{r setup, include=FALSE}
@@ -50,9 +50,14 @@ library(readxl)
 library(tidyverse)
 library(kableExtra)
 library(ChIPseeker)
-library(TxDb.Hsapiens.UCSC.hg19.knownGene)
-txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+library(ChIPpeakAnno)
+library(rtracklayer)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
+library(AnnotationHub)
+
+library(viridis)
 
 requireNamespace('png', quietly = TRUE)
 
@@ -67,6 +72,15 @@ chipdir <- paste0(pdir,"/chip_seq_data",sep="/")
 par(mfrow = c(1,1))
 
 futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
+
+# load blacklist
+blacklhs<-"/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/Genomic_data/Human/hg38-blacklist.v2.bed.gz"
+bl <- readPeakFile(blacklhs)
+
+# Load AnnotationHub
+ah = AnnotationHub()
+query(ah, c("EnsDb", "sapiens"))
+edb <- ah[["AH116860"]]
 
 ```
 
@@ -163,7 +177,7 @@ i <- beds[1]
 for (i in beds) {
 peak <- readPeakFile(i)
 n <- basename(i) %>% str_remove(pattern=".bed.gz")
-print(length(peak))
+# print(length(peak))
 peak_table <- rbind(peak_table,data.frame(sample = n, peaks = length(peak)))
 }
 peak_table
@@ -177,81 +191,75 @@ genebody <- getBioRegion(TxDb = txdb,
                          downstream = rel(1))
 
 file.exists(beds) %>% summary()
-
 peak_list <- lapply(beds,readPeakFile)
 peak_list <- lapply(peak_list,keepStandardChromosomes,pruning.mode="coarse")
+names <- paste(name,str_split(basename(beds),pattern="\\.", simplify = T)[,3], sep="") %>% str_remove(pattern="_hypoxia|_HYPOX|_HYPO")
+names(peak_list) <- names
 
 tagMatrixList_proms <- lapply(peak_list, getTagMatrix, windows=promoter)
 
-tagMatrixList_genes <- lapply(beds, getTagMatrix, windows = genebody, nbin = 100,
-                              upstream = rel(1),downstream = rel(1))
+# tagMatrixList_genes <- lapply(peak_list, getTagMatrix, windows = genebody, nbin = 100,
+#                              upstream = rel(1),downstream = rel(1))
 
+prom1 <- plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000))+ggtitle(run)
+prom2 <- plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), facet="row")+ggtitle(run)
+prom1+prom2
+tagHeatmap(tagMatrixList_proms[3:4])+ggtitle(run)
 
-names <- paste(name,str_split(basename(beds),pattern="_", simplify = T)[,2], sep="")
-
-names(tagMatrixList_proms) <- c(names)
-names(tagMatrixList_genes) <- c(names)
-
-plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000))
-plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), facet="row")
-plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), conf=0.95, resample=500)
-
-#ggsave(file=paste(csrundir,"/",name,"AvgProf_TSS.pdf",sep=""), width = 8, height = 8, device = "pdf")
-
-plotPeakProf(tagMatrixList_genes)
-plotPeakProf(tagMatrixList_genes, conf=0.95, resample=500) #, facet="row"
-
-#ggsave(file=paste(csrundir,"/",name,"PeakProf_gene.pdf",sep=""), width = 8, height = 8, device = "pdf")
-
-tagHeatmap(tagMatrixList_proms)
-
-#ggsave(file=paste(csrundir,"/",name,"Heatmap.pdf",sep=""), width = 12, height = 8, device = "pdf")
-
-peakAnnoList <- lapply(beds, annotatePeak, TxDb=txdb,
+peakAnnoList <- lapply(peak_list, annotatePeak, TxDb=txdb,
                           tssRegion=c(-3000, 3000), verbose=TRUE)
 
-names(peakAnnoList) <- c(names)
-
-plotAnnoBar(peakAnnoList)
-#ggsave(file=paste(csrundir,"/",name,"AnnoBar.pdf",sep=""), width = 12, height = 8, device = "pdf")
-
-plotDistToTSS(peakAnnoList)
-#ggsave(file=paste(csrundir,"/",name,"DistToTSS.pdf",sep=""), width = 12, height = 8, device = "pdf")
-
-
-
-
+plotAnnoBar(peakAnnoList)+ggtitle(run)
 
 ```
 
 
 # SK-N-BE(2)
 https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE167477
-
+## Load Peaks
 ```{r sknbe2}
-SK_N_BE2 <- paste0(chipdir,"/SKNBE2")
-list.files(SK_N_BE2)
+run <- "SKNBE2_HIF1A"
+list.dirs(chipdir)
+SKNBE2.dir <- paste0(chipdir,"SKNBE2")
+list.files(SKNBE2.dir)
+SKNBE2.file <- paste0(SKNBE2.dir,"/GSE167477_RAW.tar")
+file.exists(SKNBE2.file)
+untar(SKNBE2.file,exdir=SKNBE2.dir)
+list.files(SKNBE2.dir)
 
-run <- "SK_N_BE2"
-name <- paste(run,"_",sep="")
+beddir <- paste(SKNBE2.dir)
 
-beddir <- paste(remap_hif1a)
+extraCols_narrowPeak <- c(signalValue = "numeric", pValue = "numeric",
+                          qValue = "numeric", peak = "integer")
 
-beds <- list.files(beddir, pattern=".bed.gz")
-beds <- file.path(beddir,beds)
 
-peak <- readPeakFile(beds[2])
+
+beds <- list.files(SKNBE2.dir, pattern=".narrowPeak")
+beds <- file.path(SKNBE2.dir,beds)
+
+peak <- readPeakFile(beds[4])
 length(peak)
 
 peak_table <- {}
+npeak_list <- {}
+diff_peaks_list <- {}
 i <- beds[1]
 for (i in beds) {
-peak <- readPeakFile(i)
-n <- basename(i) %>% str_remove(pattern=".bed.gz")
-print(length(peak))
-peak_table <- rbind(peak_table,data.frame(sample = n, peaks = length(peak)))
+  print(i)
+npeak <- import(i, format = "BED",extraCols = extraCols_narrowPeak)
+n <- paste0("SKNBE2_",str_split(basename(i),pattern="_", simplify = T)[,3])
+npeak1 <- keepStandardChromosomes(npeak, pruning.mode="coarse")
+filtered2 <- findOverlaps(npeak1, bl)
+npeak2 <- npeak1[-from(filtered2)] 
+npeak3 <- npeak2 %>% unique()
+peak_table <- rbind(peak_table,data.frame(sample = n,
+                                          peaks = length(npeak),
+                                          peaks_Chr = length(npeak1),
+                                          peaks_bl = length(npeak2),
+                                          peaks_unique = length(npeak3)))
+npeak_list[[n]] <- npeak3
 }
-peak_table
+peak_table %>% kable()
 
 
 promoter <- getPromoters(TxDb=txdb, upstream=3000, downstream=3000)
@@ -266,44 +274,103 @@ file.exists(beds) %>% summary()
 peak_list <- lapply(beds,readPeakFile)
 peak_list <- lapply(peak_list,keepStandardChromosomes,pruning.mode="coarse")
 
+names <- paste0("SKNBE2_",str_split(basename(beds),pattern="_", simplify = T)[,3])
+names(peak_list) <- names
+
 tagMatrixList_proms <- lapply(peak_list, getTagMatrix, windows=promoter)
 
-tagMatrixList_genes <- lapply(beds, getTagMatrix, windows = genebody, nbin = 100,
-                              upstream = rel(1),downstream = rel(1))
+prom1 <- plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000))+ggtitle(run)
+prom2 <- plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), facet="row")+ggtitle(run)
+prom1+prom2
+tagHeatmap(tagMatrixList_proms[3:4])+ggtitle(run)
 
-
-names <- paste(name,str_split(basename(beds),pattern="_", simplify = T)[,2], sep="")
-
-names(tagMatrixList_proms) <- c(names)
-names(tagMatrixList_genes) <- c(names)
-
-plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000))
-plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), facet="row")
-plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), conf=0.95, resample=500)
-
-#ggsave(file=paste(csrundir,"/",name,"AvgProf_TSS.pdf",sep=""), width = 8, height = 8, device = "pdf")
-
-plotPeakProf(tagMatrixList_genes)
-plotPeakProf(tagMatrixList_genes, conf=0.95, resample=500) #, facet="row"
-
-#ggsave(file=paste(csrundir,"/",name,"PeakProf_gene.pdf",sep=""), width = 8, height = 8, device = "pdf")
-
-tagHeatmap(tagMatrixList_proms)
-
-#ggsave(file=paste(csrundir,"/",name,"Heatmap.pdf",sep=""), width = 12, height = 8, device = "pdf")
-
-peakAnnoList <- lapply(beds, annotatePeak, TxDb=txdb,
+peakAnnoList <- lapply(peak_list, annotatePeak, TxDb=txdb,
                           tssRegion=c(-3000, 3000), verbose=TRUE)
 
-names(peakAnnoList) <- c(names)
+plotAnnoBar(peakAnnoList)+ggtitle(run)
 
-plotAnnoBar(peakAnnoList)
-#ggsave(file=paste(csrundir,"/",name,"AnnoBar.pdf",sep=""), width = 12, height = 8, device = "pdf")
+```
+## Substract Nx Peaks
+```{r sknbe2_hx_nx}
 
-plotDistToTSS(peakAnnoList)
-#ggsave(file=paste(csrundir,"/",name,"DistToTSS.pdf",sep=""), width = 12, height = 8, device = "pdf")
+# Substract Hx vs. Nx
+names(peak_list)
+Hx_samples <- c("SKNBE2_H1", "SKNBE2_H2", "SKNBE2_H3")
+Nx_samples <- c("SKNBE2_N1", "SKNBE2_N2", "SKNBE2_N3")
 
+hx_peak_list <- list()
+hx_peak_table <- {}
+for (i in 1:length(Hx_samples)){
+  hx <- Hx_samples[i]
+  nx <- Nx_samples[i]
+  all_peaks <- peak_list[[hx]]
+  nx_peaks <- peak_list[[nx]]
+  filtered <- findOverlaps(all_peaks, nx_peaks)
+  keep <- from(filtered) %>% unique() %>% -.
+  hx_peaks <- all_peaks[keep]
+  
+  peak_numbers <- data.frame(sample = Hx_samples[i],
+                                                  Hx_peaks = length(all_peaks),
+                                                  Nx_peaks = length(nx_peaks),
+                                                  Hx_Nx_peaks = length(hx_peaks))
+  # print(peak_numbers)
+  hx_peak_table <- rbind(hx_peak_table,peak_numbers)
+  hx_peak_list[[i]] <- hx_peaks %>% unique()
+}
 
+hx_peak_table %>% kable()
+
+names(hx_peak_list) <- Hx_samples
+
+```
+
+## Venn
+```{r sknbe2_venn}
+input_list <- hx_peak_list
+n <- "SKNBE2"
+l <- length(input_list)
+
+olvenn <- findOverlapsOfPeaks(input_list)
+
+venn <- makeVennDiagram(olvenn,
+                # NameOfPeaks= names(input_list),
+                fill=viridis(10)[4:6],
+                cat.col=viridis(10)[4:6],
+                # cat.pos = c(0,0, -70,+70,0),
+                # cat.dist = c(0.2,0.2,0.23,0.22,0.2),
+                disable.logging = TRUE,
+                filename=NULL,
+                title=n
+                )
+
+```
+
+## Annotate peaks
+```{r sknbe2_annotate}
+
+SKNBE2_peaks_anno <- lapply(hx_peak_list, annotatePeak, TxDb=txdb,
+                          tssRegion=c(-3000, 3000), verbose=TRUE)
+
+keytypes(edb)
+
+SKNBE2_peaks_anno_table <- list()
+SKNBE2_genes_list <- list()
+for (i in 1:length(SKNBE2_peaks_anno)){
+  print(paste(i,": ",names(SKNBE2_peaks_anno)[i],sep=""))
+  n <- names(SKNBE2_peaks_anno[i])
+  table <- as.data.frame(SKNBE2_peaks_anno[[i]]@anno)
+  table$transcriptId2  <- sub("\\.\\d+$", "", table$transcriptId)
+  table$entrez <- table$geneId
+  table$geneId <- mapIds(edb, keys = table$transcriptId2, column = "GENEID", keytype = "TXID")
+  table$symbol <- mapIds(edb, keys = table$transcriptId2, column = "SYMBOL", keytype = "TXID")
+  assign(paste("narrow_table",n,sep="_"),table)
+  table_filter <- subset(table, annotation != "Distal Intergenic")
+  table_filter$annotation_short <-  str_split(table_filter$annotation,pattern = " ", simplify = TRUE)[,1]
+
+  print(paste("Before: ",length(rownames(table)),", After: ",length(rownames(table_filter))," (",round(length(rownames(table_filter))/length(rownames(table))*100),"%)"))
+  SKNBE2_peaks_anno_table[[n]] <- table_filter
+  SKNBE2_genes_list[[n]] <- table_filter$geneId %>% unique()
+}
 
 
 ```
@@ -311,31 +378,50 @@ plotDistToTSS(peakAnnoList)
 
 # Schödel
 https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE167477
+## Load Peaks
+```{r schoedel, eval=FALSE}
+run <- "SKNBE2_HIF1A"
+list.dirs(chipdir)
+SKNBE2.dir <- paste0(chipdir,"SKNBE2")
+list.files(SKNBE2.dir)
+SKNBE2.file <- paste0(SKNBE2.dir,"/GSE167477_RAW.tar")
+file.exists(SKNBE2.file)
+untar(SKNBE2.file,exdir=SKNBE2.dir)
+list.files(SKNBE2.dir)
 
-```{r schoedel}
-SK_N_BE2 <- paste0(chipdir,"/Schödel")
-list.files(SK_N_BE2)
+beddir <- paste(SKNBE2.dir)
 
-run <- "Schödel"
-name <- paste(run,"_",sep="")
+extraCols_narrowPeak <- c(signalValue = "numeric", pValue = "numeric",
+                          qValue = "numeric", peak = "integer")
 
-beddir <- paste(remap_hif1a)
 
-beds <- list.files(beddir, pattern=".bed.gz")
-beds <- file.path(beddir,beds)
 
-peak <- readPeakFile(beds[2])
+beds <- list.files(SKNBE2.dir, pattern=".narrowPeak")
+beds <- file.path(SKNBE2.dir,beds)
+
+peak <- readPeakFile(beds[4])
 length(peak)
 
 peak_table <- {}
+npeak_list <- {}
+diff_peaks_list <- {}
 i <- beds[1]
 for (i in beds) {
-peak <- readPeakFile(i)
-n <- basename(i) %>% str_remove(pattern=".bed.gz")
-print(length(peak))
-peak_table <- rbind(peak_table,data.frame(sample = n, peaks = length(peak)))
+  print(i)
+npeak <- import(i, format = "BED",extraCols = extraCols_narrowPeak)
+n <- paste0("SKNBE2_",str_split(basename(i),pattern="_", simplify = T)[,3])
+npeak1 <- keepStandardChromosomes(npeak, pruning.mode="coarse")
+filtered2 <- findOverlaps(npeak1, bl)
+npeak2 <- npeak1[-from(filtered2)] 
+npeak3 <- npeak2 %>% unique()
+peak_table <- rbind(peak_table,data.frame(sample = n,
+                                          peaks = length(npeak),
+                                          peaks_Chr = length(npeak1),
+                                          peaks_bl = length(npeak2),
+                                          peaks_unique = length(npeak3)))
+npeak_list[[n]] <- npeak3
 }
-peak_table
+peak_table %>% kable()
 
 
 promoter <- getPromoters(TxDb=txdb, upstream=3000, downstream=3000)
@@ -350,44 +436,20 @@ file.exists(beds) %>% summary()
 peak_list <- lapply(beds,readPeakFile)
 peak_list <- lapply(peak_list,keepStandardChromosomes,pruning.mode="coarse")
 
+names <- paste0("SKNBE2_",str_split(basename(beds),pattern="_", simplify = T)[,3])
+names(peak_list) <- names
+
 tagMatrixList_proms <- lapply(peak_list, getTagMatrix, windows=promoter)
 
-tagMatrixList_genes <- lapply(beds, getTagMatrix, windows = genebody, nbin = 100,
-                              upstream = rel(1),downstream = rel(1))
+prom1 <- plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000))+ggtitle(run)
+prom2 <- plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), facet="row")+ggtitle(run)
+prom1+prom2
+tagHeatmap(tagMatrixList_proms[3:4])+ggtitle(run)
 
-
-names <- paste(name,str_split(basename(beds),pattern="_", simplify = T)[,2], sep="")
-
-names(tagMatrixList_proms) <- c(names)
-names(tagMatrixList_genes) <- c(names)
-
-plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000))
-plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), facet="row")
-plotAvgProf(tagMatrixList_proms, xlim=c(-3000, 3000), conf=0.95, resample=500)
-
-#ggsave(file=paste(csrundir,"/",name,"AvgProf_TSS.pdf",sep=""), width = 8, height = 8, device = "pdf")
-
-plotPeakProf(tagMatrixList_genes)
-plotPeakProf(tagMatrixList_genes, conf=0.95, resample=500) #, facet="row"
-
-#ggsave(file=paste(csrundir,"/",name,"PeakProf_gene.pdf",sep=""), width = 8, height = 8, device = "pdf")
-
-tagHeatmap(tagMatrixList_proms)
-
-#ggsave(file=paste(csrundir,"/",name,"Heatmap.pdf",sep=""), width = 12, height = 8, device = "pdf")
-
-peakAnnoList <- lapply(beds, annotatePeak, TxDb=txdb,
+peakAnnoList <- lapply(peak_list, annotatePeak, TxDb=txdb,
                           tssRegion=c(-3000, 3000), verbose=TRUE)
 
-names(peakAnnoList) <- c(names)
-
-plotAnnoBar(peakAnnoList)
-#ggsave(file=paste(csrundir,"/",name,"AnnoBar.pdf",sep=""), width = 12, height = 8, device = "pdf")
-
-plotDistToTSS(peakAnnoList)
-#ggsave(file=paste(csrundir,"/",name,"DistToTSS.pdf",sep=""), width = 12, height = 8, device = "pdf")
-
-
+plotAnnoBar(peakAnnoList)+ggtitle(run)
 
 
 ```

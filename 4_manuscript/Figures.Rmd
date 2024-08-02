@@ -40,6 +40,8 @@ install.packages("reticulate")
 
 ```
 
+Load R libraries. If package is missing, install with 'BiocManager::install("PackageName")'
+
 ```{r librarys, include=FALSE}
 
 library(DESeq2)
