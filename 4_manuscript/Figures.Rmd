@@ -690,12 +690,12 @@ patchwork::wrap_elements(plt1) + patchwork::wrap_elements(plt2)
 # get gene names
 overlap <- calculate.overlap(input_list)
 lapply(overlap,length)
-c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
+# c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
 
 ```
 
 ### SKNBE2
-```{r chip_venn}
+```{r chip_venn_sknbe2}
 # Generate SKNBE2 min list
 input_list <- SKNBE2_genes_list <- SKNBE2_peaks_anno_table %>% lapply('[',,"geneId")
 
@@ -749,7 +749,60 @@ c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
 
 ```
 
+### ReMAP
+```{r chip_venn_remap}
+# Generate SKNBE2 min list
+input_list <- remap_genes_list <- remap_hif1a_peaks_anno_table %>% lapply('[',,"geneId")
+names(remap_genes_list)
+plt1 <- venn.diagram(
+    x = input_list,
+   fill = viridis(length(input_list)),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "SKNBE2")
+patchwork::wrap_elements(plt1) 
 
+overlap <- calculate.overlap(input_list)
+names(overlap)
+# lapply(overlap,length)
+# SKNBE2_genes <- overlap %>% unlist() %>% unique()
+
+
+# Compare with RNA-Seq
+input_list <- c(res_hif1a_2a_list_ens[1],remap_genes_list[c(1,3:5)])
+
+plt1 <- venn.diagram(
+    x = input_list,
+   fill = viridis(10)[c(10,3:6)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "RNA vs- ChIP (SKNBE2)")
+patchwork::wrap_elements(plt1) 
+
+
+
+
+
+# get gene names
+overlap <- calculate.overlap(input_list)
+lapply(overlap,length)
+c(overlap$a31) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
+
+```
 
 # ###
 # ###Old code

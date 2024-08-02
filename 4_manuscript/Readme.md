@@ -8,18 +8,22 @@ Kelterborn
   - [- Load dds](#--load-dds)
   - [- Colour sheme](#--colour-sheme)
   - [-Prepare Results](#-prepare-results)
-- [Figure 1](#figure-1)
+- [Figure 1: Samples QC](#figure-1-samples-qc)
   - [PCA](#pca)
-- [Figure 2](#figure-2)
+- [Figure 2: Differential expressed
+  genes](#figure-2-differential-expressed-genes)
   - [-Volcano_function](#-volcano_function)
   - [-Plot Vulcanos](#-plot-vulcanos)
   - [-Venn](#-venn)
-- [Figure 3](#figure-3)
+- [Figure 3: Gene Cluster](#figure-3-gene-cluster)
   - [Gene Cluster](#gene-cluster)
-- [Figure 4 Hif1a](#figure-4-hif1a)
+- [Figure 4: Gene Set enrichment](#figure-4-gene-set-enrichment)
   - [GO Analysis](#go-analysis)
   - [Cluster GO terms](#cluster-go-terms)
   - [KEGG](#kegg)
+- [Figure 5: Compare with ChIP-Seq](#figure-5-compare-with-chip-seq)
+  - [Load datasets](#load-datasets)
+  - [ChIP Venns](#chip-venns)
 - [](#section)
 - [\###Old code](#old-code)
   - [Enhanced volcano](#enhanced-volcano)
@@ -29,6 +33,9 @@ Kelterborn
 # 0. Load
 
 ## - libraries, folders, R_utils
+
+Load R libraries. If package is missing, install with
+‘BiocManager::install(“PackageName”)’
 
 ## - Load dds
 
@@ -139,7 +146,7 @@ genes_univ %>% is.na() %>% summary()
 
 <img src="Readme_files/figure-gfm/pre_results-1.png" width="50%" /><img src="Readme_files/figure-gfm/pre_results-2.png" width="50%" />
 
-# Figure 1
+# Figure 1: Samples QC
 
 ## PCA
 
@@ -208,7 +215,7 @@ pca1
 
 <img src="Readme_files/figure-gfm/1_pca_plot_final-1.png" width="50%" />
 
-# Figure 2
+# Figure 2: Differential expressed genes
 
 ## -Volcano_function
 
@@ -320,7 +327,7 @@ patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
 
 <img src="Readme_files/figure-gfm/2_venn-1.png" width="50%" />
 
-# Figure 3
+# Figure 3: Gene Cluster
 
 ## Gene Cluster
 
@@ -475,7 +482,7 @@ cluster_venn + cluster
 write.xlsx(res_hif1a_2a,"DEG_genes.xlsx")
 ```
 
-# Figure 4 Hif1a
+# Figure 4: Gene Set enrichment
 
 ## GO Analysis
 
@@ -797,6 +804,880 @@ pathview(gene.data  = res_hif1a_2a_list_ez[[1]],
                      species    = "hsa")
 # ,limit      = list(gene=max(abs(cc_kegg)), cpd=1)
 ```
+
+# Figure 5: Compare with ChIP-Seq
+
+## Load datasets
+
+``` r
+# Own Kelly ChIP-Seq
+load("~/S/AG/AG-Scholz-NGS/Daten/Simon/ChIP_Workflow/git_ChIPSeq_Workflow/Kelly_Hx_Annotated.peaks")
+# ReMAP
+load("~/S/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/git_RNAseq_Kelly_Hx/3A_ChIP-Seq_data/remap_hif1a_peaks_anno_table.peaks")
+# SKNBE2
+load("~/S/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/git_RNAseq_Kelly_Hx/3A_ChIP-Seq_data/SKNBE2_peaks_anno_table.peaks")
+# Schödel
+# load()
+```
+
+## ChIP Venns
+
+### Own data
+
+``` r
+rna_hif1a <- res_hif1a_2a_list_ens[c("HIF1A","both")] %>% unlist() %>% unique()
+
+chip_hif1a_all <- str_detect(names(Kelly_Hx_Annotated),pattern="HIF-1A") %>% Kelly_Hx_Annotated[.] %>% lapply('[',,"geneId") %>% unlist() %>% unique()
+
+# Own data
+input_list <- list(RNA = rna_hif1a,
+                   ChIP_9929 = Kelly_Hx_Annotated[["9929_HIF-1A"]]$geneId,
+                   ChIP_all = chip_hif1a_all)
+                   
+plt1 <- venn.diagram(
+    x = input_list,
+   fill = viridis(3),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "HIF1A")
+
+patchwork::wrap_elements(plt1) 
+```
+
+![](Readme_files/figure-gfm/chip_venn-1.png)<!-- -->
+
+``` r
+# get gene names
+overlap <- calculate.overlap(input_list)
+lapply(overlap,length)
+```
+
+    ## $a5
+    ## [1] 23
+    ## 
+    ## $a2
+    ## [1] 0
+    ## 
+    ## $a4
+    ## [1] 14
+    ## 
+    ## $a6
+    ## [1] 193
+    ## 
+    ## $a1
+    ## [1] 2033
+    ## 
+    ## $a3
+    ## [1] 0
+    ## 
+    ## $a7
+    ## [1] 276
+
+``` r
+c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
+```
+
+| x         |
+|:----------|
+| TERT      |
+| SLC35F3   |
+| PPFIA4    |
+| ELFN2     |
+| ADARB2    |
+| ITGB3     |
+| HBA1      |
+| TFB1M     |
+| SDK1      |
+| SP2-AS1   |
+| NPIPB4    |
+| ZSWIM5    |
+| CADM2     |
+| YAP1      |
+| PGK1      |
+| ANKRD37   |
+| FOXE3     |
+| HTR5A     |
+| CRYBB2P1  |
+| LNPK      |
+| ALDOC     |
+| MTFP1     |
+| LINC02932 |
+| ARRDC2    |
+| LINC03047 |
+| TMEM45A   |
+| LUCAT1    |
+| PCSK5     |
+| GPI       |
+| SFMBT2    |
+| PFKFB4    |
+| STEAP1B   |
+| CROCC2    |
+|           |
+| HMOX1     |
+| TBX3      |
+| SCIRT     |
+
+``` r
+# HIF2A
+lapply(res_hif1a_2a_list_ens,length)
+```
+
+    ## $HIF1A
+    ## [1] 1736
+    ## 
+    ## $HIF2A
+    ## [1] 3133
+    ## 
+    ## $both
+    ## [1] 334
+
+``` r
+rna_hif2a <- res_hif1a_2a_list_ens[c("HIF2A","both")] %>% unlist() %>% unique()
+lapply(res_hif1a_2a_list_ens,length)
+```
+
+    ## $HIF1A
+    ## [1] 1736
+    ## 
+    ## $HIF2A
+    ## [1] 3133
+    ## 
+    ## $both
+    ## [1] 334
+
+``` r
+chip_hif2a_all <- str_detect(names(Kelly_Hx_Annotated),pattern="HIF-2A") %>% Kelly_Hx_Annotated[.] %>% lapply('[',,"geneId") %>% unlist() %>% unique()
+
+# Own data
+input_list <- list(RNA = rna_hif2a,
+                   ChIP_9930 = Kelly_Hx_Annotated[["9930_HIF-2A"]]$geneId,
+                   ChIP_all = chip_hif2a_all)
+                   
+plt1 <- venn.diagram(
+    x = input_list,
+   fill = viridis(3),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "HIF2A")
+
+patchwork::wrap_elements(plt1) 
+```
+
+![](Readme_files/figure-gfm/chip_venn-2.png)<!-- -->
+
+``` r
+# get gene names
+overlap <- calculate.overlap(input_list)
+lapply(overlap,length)
+```
+
+    ## $a5
+    ## [1] 106
+    ## 
+    ## $a2
+    ## [1] 0
+    ## 
+    ## $a4
+    ## [1] 24
+    ## 
+    ## $a6
+    ## [1] 352
+    ## 
+    ## $a1
+    ## [1] 3337
+    ## 
+    ## $a3
+    ## [1] 0
+    ## 
+    ## $a7
+    ## [1] 239
+
+``` r
+c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
+```
+
+| x          |
+|:-----------|
+| LINC01320  |
+| RAG1       |
+| EXT1       |
+| SMOC2      |
+| TNFRSF19   |
+| JPH1       |
+| INSM1      |
+| RASL11B    |
+| OTOF       |
+| BAHCC1     |
+| PDGFC      |
+| CNTN4      |
+| COL23A1    |
+| LINC00624  |
+| SNTG2      |
+| LINC01341  |
+| SOX5       |
+| PBXIP1     |
+| MYT1L      |
+| ZBTB20     |
+| LMF1       |
+| ZNF350-AS1 |
+| ALDH1A2    |
+| CALN1      |
+| RFTN1      |
+| DSP        |
+| KCNMA1     |
+| RBFOX3     |
+| NOG        |
+| NTRK2      |
+| DSP-AS1    |
+| NOD1       |
+| PRICKLE2   |
+| FGD5       |
+| PCDH19     |
+| AQP10      |
+| SOBP       |
+| PLXNA4     |
+| KCNK13     |
+| POU6F2     |
+| GPER1      |
+| LARGE1     |
+| SOX7       |
+| CFAP43     |
+| TIAM1      |
+| MARCHF3    |
+| PIK3R1     |
+| MCC        |
+| PCDH15     |
+| ANKS1A     |
+| LRATD2     |
+| SNCA       |
+| IL6R       |
+| SCARB1     |
+| GGCT       |
+| PRR15      |
+| NECAB1     |
+| COL5A1     |
+| MTUS1      |
+|            |
+|            |
+| KCNJ6      |
+| KIF26B     |
+| SSUH2      |
+| ROBO2      |
+| SULF1      |
+| PDE10A     |
+| RHPN1      |
+| NRXN1      |
+| SAMD4A     |
+| SLC9C2     |
+| CFAP46     |
+| PTPRQ      |
+| CYB5A      |
+| LINC02073  |
+|            |
+|            |
+| COL12A1    |
+| RMST       |
+| NTM        |
+| SDK2       |
+| TMCC3      |
+| CYP2W1     |
+| TUBA8      |
+| PLEKHG4B   |
+|            |
+| CCP110     |
+| LOXL2-AS1  |
+| LINC00967  |
+| LINC01250  |
+| ANKRD60    |
+| MGAT4C     |
+| C8orf34    |
+| ABCA1      |
+| PECAM1     |
+| KIF25      |
+|            |
+|            |
+| NRG3       |
+| FHAD1      |
+| GLI3       |
+| LINC01151  |
+|            |
+| CHST15     |
+| CRTC3      |
+| SNX25      |
+| PLCB4      |
+| PRKCE      |
+| FLNC       |
+| NTNG2      |
+| CDK19      |
+| ZNF19      |
+| TEAD1      |
+| MEF2C-AS1  |
+| SARDH      |
+| SYNE1      |
+| ITGB5      |
+| SLC2A14    |
+| SCAND3     |
+| MIR99AHG   |
+| EGLN3      |
+| MEGF6      |
+| LINC03033  |
+|            |
+|            |
+| HMOX1      |
+| FOS        |
+| TBX3       |
+| KRT17      |
+| SCIRT      |
+
+``` r
+# Compare HIF1A, HIF2A
+
+rna_hif2a <- res_hif1a_2a_list_ens[c("HIF2A","both")] %>% unlist() %>% unique()
+
+chip_hif2a_all <- str_detect(names(Kelly_Hx_Annotated),pattern="HIF-2A") %>% Kelly_Hx_Annotated[.] %>% lapply('[',,"geneId") %>% unlist() %>% unique()
+
+input_list <- c(res_hif1a_2a_list_ens,list(chip_hif1a_all = chip_hif1a_all,
+                   chip_hif2a_all = chip_hif2a_all))
+
+plt1 <- venn.diagram(
+    x = input_list,
+   fill = viridis(5),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "ChIP all"
+   )
+
+input_list <- c(res_hif1a_2a_list_ens,
+                list(ChIP_9929_HIF1A = Kelly_Hx_Annotated[["9929_HIF-1A"]]$geneId,
+                   ChIP_9930_HIF2A = Kelly_Hx_Annotated[["9930_HIF-2A"]]$geneId))
+
+plt2 <- venn.diagram(
+    x = input_list,
+   fill = viridis(5),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "ChIP good samples"
+   )
+
+patchwork::wrap_elements(plt1) + patchwork::wrap_elements(plt2) 
+```
+
+![](Readme_files/figure-gfm/chip_venn-3.png)<!-- -->
+
+``` r
+# get gene names
+overlap <- calculate.overlap(input_list)
+lapply(overlap,length)
+```
+
+    ## $a31
+    ## [1] 0
+    ## 
+    ## $a30
+    ## [1] 0
+    ## 
+    ## $a29
+    ## [1] 0
+    ## 
+    ## $a28
+    ## [1] 0
+    ## 
+    ## $a27
+    ## [1] 0
+    ## 
+    ## $a26
+    ## [1] 0
+    ## 
+    ## $a25
+    ## [1] 19
+    ## 
+    ## $a24
+    ## [1] 0
+    ## 
+    ## $a23
+    ## [1] 0
+    ## 
+    ## $a22
+    ## [1] 0
+    ## 
+    ## $a21
+    ## [1] 0
+    ## 
+    ## $a20
+    ## [1] 0
+    ## 
+    ## $a19
+    ## [1] 0
+    ## 
+    ## $a18
+    ## [1] 5
+    ## 
+    ## $a17
+    ## [1] 0
+    ## 
+    ## $a16
+    ## [1] 4
+    ## 
+    ## $a15
+    ## [1] 56
+    ## 
+    ## $a14
+    ## [1] 12
+    ## 
+    ## $a13
+    ## [1] 0
+    ## 
+    ## $a12
+    ## [1] 0
+    ## 
+    ## $a11
+    ## [1] 0
+    ## 
+    ## $a10
+    ## [1] 81
+    ## 
+    ## $a9
+    ## [1] 0
+    ## 
+    ## $a8
+    ## [1] 14
+    ## 
+    ## $a7
+    ## [1] 19
+    ## 
+    ## $a6
+    ## [1] 2
+    ## 
+    ## $a5
+    ## [1] 286
+    ## 
+    ## $a4
+    ## [1] 110
+    ## 
+    ## $a3
+    ## [1] 328
+    ## 
+    ## $a2
+    ## [1] 3021
+    ## 
+    ## $a1
+    ## [1] 1698
+
+``` r
+# c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
+```
+
+### SKNBE2
+
+``` r
+# Generate SKNBE2 min list
+input_list <- SKNBE2_genes_list <- SKNBE2_peaks_anno_table %>% lapply('[',,"geneId")
+
+plt1 <- venn.diagram(
+    x = input_list,
+   fill = viridis(3),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "SKNBE2")
+patchwork::wrap_elements(plt1) 
+```
+
+![](Readme_files/figure-gfm/chip_venn_sknbe2-1.png)<!-- -->
+
+``` r
+overlap <- calculate.overlap(input_list)
+lapply(overlap,length)
+```
+
+    ## $a5
+    ## [1] 686
+    ## 
+    ## $a2
+    ## [1] 24
+    ## 
+    ## $a4
+    ## [1] 23
+    ## 
+    ## $a6
+    ## [1] 1643
+    ## 
+    ## $a1
+    ## [1] 26
+    ## 
+    ## $a3
+    ## [1] 625
+    ## 
+    ## $a7
+    ## [1] 1339
+
+``` r
+SKNBE2_genes <- c(overlap$a1,overlap$a2,overlap$a3,overlap$a4) %>% unlist() %>% unique()
+
+
+
+# Compare with RNA-Seq
+input_list <- c(res_hif1a_2a_list_ens[1],list(SKNBE2_chip = SKNBE2_genes),res_hif1a_2a_list_ens[2:3])
+
+plt1 <- venn.diagram(
+    x = input_list,
+   fill = viridis(10)[c(3,10,4,5)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "RNA vs- ChIP (SKNBE2)")
+patchwork::wrap_elements(plt1) 
+```
+
+![](Readme_files/figure-gfm/chip_venn_sknbe2-2.png)<!-- -->
+
+``` r
+# get gene names
+overlap <- calculate.overlap(input_list)
+lapply(overlap,length)
+```
+
+    ## $a6
+    ## [1] 0
+    ## 
+    ## $a12
+    ## [1] 0
+    ## 
+    ## $a11
+    ## [1] 0
+    ## 
+    ## $a5
+    ## [1] 0
+    ## 
+    ## $a7
+    ## [1] 0
+    ## 
+    ## $a15
+    ## [1] 36
+    ## 
+    ## $a4
+    ## [1] 0
+    ## 
+    ## $a10
+    ## [1] 0
+    ## 
+    ## $a13
+    ## [1] 75
+    ## 
+    ## $a8
+    ## [1] 8
+    ## 
+    ## $a2
+    ## [1] 0
+    ## 
+    ## $a9
+    ## [1] 1700
+    ## 
+    ## $a14
+    ## [1] 537
+    ## 
+    ## $a1
+    ## [1] 3058
+    ## 
+    ## $a3
+    ## [1] 326
+
+``` r
+c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
+```
+
+| x   |
+|:----|
+
+### ReMAP
+
+``` r
+# Generate SKNBE2 min list
+input_list <- remap_genes_list <- remap_hif1a_peaks_anno_table %>% lapply('[',,"geneId")
+names(remap_genes_list)
+```
+
+    ## [1] "ReMap_hif1a_RCC10"      "ReMap_hif1a_K-562"      "ReMap_hif1a_HUVEC-C"   
+    ## [4] "ReMap_hif1a_macrophage" "ReMap_hif1a_501-mel"
+
+``` r
+plt1 <- venn.diagram(
+    x = input_list,
+   fill = viridis(length(input_list)),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "SKNBE2")
+patchwork::wrap_elements(plt1) 
+```
+
+![](Readme_files/figure-gfm/chip_venn_remap-1.png)<!-- -->
+
+``` r
+overlap <- calculate.overlap(input_list)
+names(overlap)
+```
+
+    ##  [1] "a31" "a30" "a29" "a28" "a27" "a26" "a25" "a24" "a23" "a22" "a21" "a20"
+    ## [13] "a19" "a18" "a17" "a16" "a15" "a14" "a13" "a12" "a11" "a10" "a9"  "a8" 
+    ## [25] "a7"  "a6"  "a5"  "a4"  "a3"  "a2"  "a1"
+
+``` r
+# lapply(overlap,length)
+# SKNBE2_genes <- overlap %>% unlist() %>% unique()
+
+
+# Compare with RNA-Seq
+input_list <- c(res_hif1a_2a_list_ens[1],remap_genes_list[c(1,3:5)])
+
+plt1 <- venn.diagram(
+    x = input_list,
+   fill = viridis(10)[c(10,3:6)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial",
+   main = "RNA vs- ChIP (SKNBE2)")
+patchwork::wrap_elements(plt1) 
+```
+
+![](Readme_files/figure-gfm/chip_venn_remap-2.png)<!-- -->
+
+``` r
+# get gene names
+overlap <- calculate.overlap(input_list)
+lapply(overlap,length)
+```
+
+    ## $a31
+    ## [1] 79
+    ## 
+    ## $a30
+    ## [1] 28
+    ## 
+    ## $a29
+    ## [1] 15
+    ## 
+    ## $a28
+    ## [1] 29
+    ## 
+    ## $a27
+    ## [1] 9
+    ## 
+    ## $a26
+    ## [1] 309
+    ## 
+    ## $a25
+    ## [1] 221
+    ## 
+    ## $a24
+    ## [1] 280
+    ## 
+    ## $a23
+    ## [1] 31
+    ## 
+    ## $a22
+    ## [1] 21
+    ## 
+    ## $a21
+    ## [1] 169
+    ## 
+    ## $a20
+    ## [1] 30
+    ## 
+    ## $a19
+    ## [1] 31
+    ## 
+    ## $a18
+    ## [1] 36
+    ## 
+    ## $a17
+    ## [1] 12
+    ## 
+    ## $a16
+    ## [1] 146
+    ## 
+    ## $a15
+    ## [1] 587
+    ## 
+    ## $a14
+    ## [1] 390
+    ## 
+    ## $a13
+    ## [1] 240
+    ## 
+    ## $a12
+    ## [1] 29
+    ## 
+    ## $a11
+    ## [1] 254
+    ## 
+    ## $a10
+    ## [1] 357
+    ## 
+    ## $a9
+    ## [1] 60
+    ## 
+    ## $a8
+    ## [1] 116
+    ## 
+    ## $a7
+    ## [1] 170
+    ## 
+    ## $a6
+    ## [1] 185
+    ## 
+    ## $a5
+    ## [1] 2742
+    ## 
+    ## $a4
+    ## [1] 2854
+    ## 
+    ## $a3
+    ## [1] 625
+    ## 
+    ## $a2
+    ## [1] 1220
+    ## 
+    ## $a1
+    ## [1] 1040
+
+``` r
+c(overlap$a31) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
+```
+
+| x         |
+|:----------|
+| FAM162A   |
+| PGK1      |
+| ANKZF1    |
+| ANKRD37   |
+| GBE1      |
+| ABCB6     |
+| PPAN      |
+| EFNA3     |
+| ADORA2B   |
+| DDX41     |
+| KDM4C     |
+| LNPK      |
+| PIGA      |
+| HERC3     |
+| AK2       |
+| USP28     |
+| TRIM9     |
+| PPFIA4    |
+| PRELID2   |
+| GRPEL1    |
+| DIPK2A    |
+| PPP1R3E   |
+|           |
+| BNIP3L    |
+| ALDOC     |
+| ZNF160    |
+| BICDL2    |
+| MTFP1     |
+| ARRDC2    |
+| SLC25A36  |
+| LINC03047 |
+| NUDT18    |
+| CFAP96    |
+| LUCAT1    |
+| ANGPTL4   |
+| CPNE5     |
+| PPM1H     |
+| CACNA1C   |
+| FOSL2     |
+| NME1      |
+| EIF4EBP1  |
+|           |
+| VDAC1     |
+| TSR1      |
+| NAT10     |
+| PFKP      |
+| NDC1      |
+| NEMP1     |
+| HSPA9     |
+| WDR43     |
+| SLC7A5    |
+| ZNF770    |
+| CHSY1     |
+| NAV1      |
+| IMP3      |
+| TMEM248   |
+| OPA3      |
+| DLGAP1    |
+| TRMU      |
+| SAP30     |
+| DDX50     |
+| DENND1A   |
+| FEM1C     |
+| DPCD      |
+| FAM117B   |
+| PDE12     |
+| TOMM20    |
+| PPFIA3    |
+| SLC25A26  |
+| MRPL17    |
+| SAP30-DT  |
+| SERGEF    |
+| METTL26   |
+| DUS3L     |
+| PFKFB4    |
+| KLHL3     |
+| SLC8A2    |
+| THAP8     |
+| EPHB1     |
 
 # 
 
