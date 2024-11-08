@@ -330,7 +330,7 @@ outy <- subset(res, padj < 10^ylim) %>% rownames()
 res$outlier <- ifelse(rownames(res) %in% c(outx,outy),"yes","no")
 res$deg <- ifelse(rownames(res) %in% rownames(deg),"hypoxic","n.s.") %>% factor()
 
-res <- res %>% arrange(res$deg)
+res <- res %>% arrange(desc(res$deg))
 
 res[outx,"log2FoldChange"] <- ifelse(res[outx,"log2FoldChange"] > xlim,xlim,-xlim)
 res[outy,"padj"] <- 10^ylim
@@ -347,8 +347,8 @@ volcano_func <- ggplot(res,aes(x=log2FoldChange,y=-log10(padj),color=deg, shape=
         plot.subtitle = element_text(size = 0.5) )+
   ylab("padj (-log10)") +
   xlab("log2-foldchange") +
-  scale_fill_manual(values = alpha(c("grey70",lighten(col,0.3)),0.5)) + 
-  scale_color_manual(values = c("grey40",col)) + 
+  scale_fill_manual(values = alpha(c(lighten(col,0.3),"grey70"),0.5)) + 
+  scale_color_manual(values = c(col,"grey40")) + 
   theme_bw() +
   # geom_text_repel(label=res$symbol, color="black") + 
   removeGrid(x=T, y=T)
@@ -446,9 +446,9 @@ col2 <- colors[4]
 celline="HIF1A"
 
 volcano_Kelly <- volcano_sk3(n="Kelly.Hx.vs.Nx", deg=getdeg("Kelly.Hx.vs.Nx"),col=colors[2], celline="Kelly")
-volcano_hif1a <- volcano_sk3(n="Hif1a.Hx.vs.Nx", deg=getdeg("Hif1aHxNx.vs.KellyHxNx"),col=colors[4], celline="HIF1A")
-volcano_hif2a <- volcano_sk3(n="Hif2a.Hx.vs.Nx", deg=getdeg("Hif2aHxNx.vs.KellyHxNx"),col=colors[6], celline="HIF2A")
-volcano_hif1b <- volcano_sk3(n="Hif1b.Hx.vs.Nx", deg=getdeg("Hif1bHxNx.vs.KellyHxNx"),col=colors[8], celline="HIF1B")
+volcano_hif1a <- volcano_sk3(n="Hif1aHxNx.vs.KellyHxNx", deg=getdeg("Hif1aHxNx.vs.KellyHxNx"),col=colors[4], celline="HIF1A") + ggtitle(label="Difference in Effect vs. Kelly")
+volcano_hif2a <- volcano_sk3(n="Hif2aHxNx.vs.KellyHxNx", deg=getdeg("Hif2aHxNx.vs.KellyHxNx"),col=colors[6], celline="HIF2A")  + ggtitle(label="Difference in Effect vs. Kelly")
+volcano_hif1b <- volcano_sk3(n="Hif1bHxNx.vs.KellyHxNx", deg=getdeg("Hif1bHxNx.vs.KellyHxNx"),col=colors[8], celline="HIF1B")  + ggtitle(label="Difference in Effect vs. Kelly")
 
 (volcano_Kelly+volcano_hif1b + plot_layout(guides = "collect", axes="collect", axis_titles="collect") ) / 
   (volcano_hif1a+volcano_hif2a + plot_layout(guides = "collect", axes="collect", axis_titles="collect") ) & 
