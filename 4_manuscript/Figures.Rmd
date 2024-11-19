@@ -37,7 +37,6 @@ BiocManager::valid()
 BiocManager::install("ggExtra")
 install.packages("reticulate")
 
-
 ```
 
 Load R libraries. If package is missing, install with 'BiocManager::install("PackageName")'
@@ -627,9 +626,7 @@ cluster_p <- ggplot(res_hif1a_2a_p,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, 
   removeGrid(x=T, y=T) +
   coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
 
-cluster_p
-
-cluster_venn + cluster
+cluster + cluster_p
 
 
 write.xlsx(res_hif1a_2a,"DEG_genes.xlsx")
@@ -640,38 +637,47 @@ write.xlsx(res_hif1a_2a,"DEG_genes.xlsx")
 # Table 1: Gene List
 ```{r gene_lists, dpi=300}
 
+colnames(res_hif1a_2a_p) <- c("ENSEMBL","ENTREZ","symbol","baseMean","Kelly.Hx.Nx.L2FC","Kelly.Hx.vs.Nx.padj",
+                           "Hif1a.Hx.Nx.L2FC","Hif1a.Hx.vs.Nx.padj","Hif2a.Hx.vs.Nx.log2FoldChange","Hif2a.Hx.vs.Nx.padj",
+                           "Hif1a.Kelly.L2FC", "Hif1aHxNx.vs.KellyHxNx.padj", "Hif2a.Kelly.L2FC", "Hif2aHxNx.vs.KellyHxNx.padj",
+                           "Hif1b.KellyL2FC","Hif1bHxNx.vs.KellyHxNx.padj", "Hif2a.Hif1a.L2FC", "Hif2aHxNx.vs.Hif1aHxNx.padj",
+                           "venn","group")
+
 HIF1A_genes <- res_hif1a_2a_p %>% 
-  .[order(abs(.$Hif1aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = TRUE),] %>% 
+  .[order(abs(.$Hif1a.Kelly.L2FC), decreasing = TRUE),] %>% 
   filter(group =="HIF1A") %>%
-  filter(baseMean > 1000)
-  
+  filter(baseMean > 500)
+colnames(HIF1A_genes) 
 nrow(HIF1A_genes)
-HIF1A_genes[1:50,] %>% kable()
+HIF1A_genes[1:50,c(3,4,5,7,11)] %>% kable(digits = c(1))
 
 plotCounts_SK(HIF1A_genes[1:9,] %>% rownames()) + labs(title="Hif1A")
+write.xlsx(HIF1A_genes,"HIF1A_genes.xlsx")
 
 
 HIF2A_genes <- res_hif1a_2a_p %>% 
-  .[order(abs(.$Hif1aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = TRUE),] %>% 
+  .[order(abs(.$Hif2a.Kelly.L2FC), decreasing = TRUE),] %>% 
   filter(group =="HIF2A") %>%
-  filter(baseMean > 1000)
+  filter(baseMean > 500)
 nrow(HIF2A_genes)
 
-HIF2A_genes[1:50,] %>% kable()
+HIF2A_genes[1:50,c(3,4,5,7,11)] %>% kable(digits = c(1))
 
 plotCounts_SK(HIF2A_genes[1:9,] %>% rownames()) + labs(title="Hif2A")
+write.xlsx(HIF2A_genes,"HIF2A_genes.xlsx")
 
 
 
 HIF1A_HIF2A_genes <- res_hif1a_2a_p %>% 
-  .[order(abs(.$Hif1aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = TRUE),] %>% 
+  .[order(abs(.$Hif1a.Kelly.L2FC)+abs(.$Hif2a.Kelly.L2FC), decreasing = TRUE),] %>% 
   filter(group =="HIF1A_HIF2A") %>%
-  filter(baseMean > 1000)
+  filter(baseMean > 500)
 nrow(HIF1A_HIF2A_genes)
 
-HIF1A_HIF2A_genes[1:9,] %>% kable()
+HIF1A_HIF2A_genes[1:9,c(3,4,5,7,11)] %>% kable(digits = c(0, 1, 1))
 
 plotCounts_SK(HIF1A_HIF2A_genes[1:9,] %>% rownames()) + labs(title="HIF1A+HIF2A")
+write.xlsx(HIF1A_HIF2A_genes,"HIF1A_HIF2A_genes.xlsx")
 
 
 
@@ -703,7 +709,7 @@ dotplot(GO_cc_groups_BP, showCategory=12)
 ```
 
 ## Cluster GO terms
-```{r}
+```{r go_cluster, fig.height=12.5, fig.width=8.2}
 
 # Search for clusters
 GO_IDs_list <- split(GO_cc_groups_BP@compareClusterResult,f=GO_cc_groups_BP@compareClusterResult$Cluster) %>% lapply('[',,"ID")
