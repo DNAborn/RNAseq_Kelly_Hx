@@ -606,11 +606,82 @@ cluster <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hi
 
 cluster_venn + cluster
 
+# only genes with p < 0.05
+colnames(res_hif1a_2a)
+res_hif1a_2a_p <- filter(res_hif1a_2a, Hif1aHxNx.vs.KellyHxNx.padj < 0.05 & Hif2aHxNx.vs.KellyHxNx.padj < 0.05)
+
+cluster_p <- ggplot(res_hif1a_2a_p,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=group, fill=group)) +
+  geom_hline(yintercept = 0, linewidth = 0.1) + 
+  geom_vline(xintercept = 0, linewidth = 0.1) +
+  geom_abline(intercept=c(1,-1)) +
+  geom_abline(slope=c(-1), intercept = 1) +
+  annotate("segment", x = c(0,1), y = c(1,0), xend = c(-10,11), yend = c(21,-5),color="black") +
+  geom_point(size=1, stroke=0.5, shape=21) +
+  labs(title = "Geometric Cluster (all p < 0.05") +
+  xlab("Hif1a vs. Kelly") +
+  ylab("Hif2a vs. Kelly") +
+  scale_color_manual(values=c(colors[c(4,2,6)],"orange")) +
+  # scale_shape_manual(values = c(21,16)) + 
+  scale_fill_manual(values=alpha(c(colors[c(4,2,6)],"orange"),0.2)) +
+  theme_bw() +
+  removeGrid(x=T, y=T) +
+  coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+
+cluster_p
+
+cluster_venn + cluster
+
 
 write.xlsx(res_hif1a_2a,"DEG_genes.xlsx")
 
 
 ```
+
+# Table 1: Gene List
+```{r}
+
+HIF1A_genes <- res_hif1a_2a_p %>% 
+  .[order(abs(.$Hif1aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = TRUE),] %>% 
+  filter(group =="HIF1A") %>%
+  filter(baseMean > 1000)
+  
+nrow(HIF1A_genes)
+HIF1A_genes[1:50,] %>% kable()
+
+plotCounts_SK(HIF1A_genes[1:9,] %>% rownames()) + labs(title="Hif1A")
+
+
+HIF2A_genes <- res_hif1a_2a_p %>% 
+  .[order(abs(.$Hif1aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = TRUE),] %>% 
+  filter(group =="HIF2A") %>%
+  filter(baseMean > 1000)
+nrow(HIF2A_genes)
+
+HIF2A_genes[1:50,] %>% kable()
+
+plotCounts_SK(HIF2A_genes[1:9,] %>% rownames()) + labs(title="Hif2A")
+
+
+
+HIF1A_HIF2A_genes <- res_hif1a_2a_p %>% 
+  .[order(abs(.$Hif1aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = TRUE),] %>% 
+  filter(group =="HIF1A_HIF2A") %>%
+  filter(baseMean > 1000)
+nrow(HIF1A_HIF2A_genes)
+
+HIF1A_HIF2A_genes[1:9,] %>% kable()
+
+plotCounts_SK(HIF1A_HIF2A_genes[1:9,] %>% rownames()) + labs(title="HIF1A+HIF2A")
+
+
+
+
+
+```
+
+
+
+
 
 # Figure 4: Gene Set enrichment
 ## GO Analysis
