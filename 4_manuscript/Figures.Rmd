@@ -638,7 +638,7 @@ write.xlsx(res_hif1a_2a,"DEG_genes.xlsx")
 ```
 
 # Table 1: Gene List
-```{r}
+```{r gene_lists, dpi=300}
 
 HIF1A_genes <- res_hif1a_2a_p %>% 
   .[order(abs(.$Hif1aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = TRUE),] %>% 
@@ -709,7 +709,12 @@ dotplot(GO_cc_groups_BP, showCategory=12)
 GO_IDs_list <- split(GO_cc_groups_BP@compareClusterResult,f=GO_cc_groups_BP@compareClusterResult$Cluster) %>% lapply('[',,"ID")
 names(GO_IDs_list)
 
-simplifyGOFromMultipleLists(GO_IDs_list[1:2])
+# simplifyGOFromMultipleLists(GO_IDs_list[1:2])
+
+simplifyGO(GO_IDs_list[[1]], column_title = paste0("HIF1A (",length(GO_IDs_list[[1]])," GO terms)"))
+
+simplifyGO(GO_IDs_list[[2]], column_title = paste0("HIF2A (",length(GO_IDs_list[[2]])," GO terms)"))
+
 
 
 ```

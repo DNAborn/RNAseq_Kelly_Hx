@@ -723,7 +723,7 @@ HIF1A_genes[1:50,] %>% kable()
 plotCounts_SK(HIF1A_genes[1:9,] %>% rownames()) + labs(title="Hif1A")
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](Readme_files/figure-gfm/gene_lists-1.png)<!-- -->
 
 ``` r
 HIF2A_genes <- res_hif1a_2a_p %>% 
@@ -796,7 +796,7 @@ HIF2A_genes[1:50,] %>% kable()
 plotCounts_SK(HIF2A_genes[1:9,] %>% rownames()) + labs(title="Hif2A")
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-2-2.png)<!-- -->
+![](Readme_files/figure-gfm/gene_lists-2.png)<!-- -->
 
 ``` r
 HIF1A_HIF2A_genes <- res_hif1a_2a_p %>% 
@@ -828,7 +828,7 @@ HIF1A_HIF2A_genes[1:9,] %>% kable()
 plotCounts_SK(HIF1A_HIF2A_genes[1:9,] %>% rownames()) + labs(title="HIF1A+HIF2A")
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-2-3.png)<!-- -->
+![](Readme_files/figure-gfm/gene_lists-3.png)<!-- -->
 
 # Figure 4: Gene Set enrichment
 
@@ -876,7 +876,7 @@ GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
 dotplot(GO_cc_groups_BP, showCategory=12)
 ```
 
-<img src="Readme_files/figure-gfm/unnamed-chunk-3-1.png" width="50%" />
+<img src="Readme_files/figure-gfm/unnamed-chunk-2-1.png" width="50%" />
 
 ## Cluster GO terms
 
@@ -889,10 +889,18 @@ names(GO_IDs_list)
     ## [1] "HIF1A" "HIF2A" "both"
 
 ``` r
-simplifyGOFromMultipleLists(GO_IDs_list[1:2])
+# simplifyGOFromMultipleLists(GO_IDs_list[1:2])
+
+simplifyGO(GO_IDs_list[[1]], column_title = paste0("HIF1A (",length(GO_IDs_list[[1]])," GO terms)"))
 ```
 
-![](Readme_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](Readme_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+``` r
+simplifyGO(GO_IDs_list[[2]], column_title = paste0("HIF2A (",length(GO_IDs_list[[2]])," GO terms)"))
+```
+
+![](Readme_files/figure-gfm/unnamed-chunk-3-2.png)<!-- -->
 
 ## KEGG
 
@@ -905,7 +913,7 @@ cc_kegg <- compareCluster(geneCluster = res_hif1a_2a_list_ez[1:2],
 dotplot(cc_kegg, showCategory=12)
 ```
 
-<img src="Readme_files/figure-gfm/unnamed-chunk-5-1.png" width="50%" />
+<img src="Readme_files/figure-gfm/unnamed-chunk-4-1.png" width="50%" />
 
 ``` r
 cc_kegg %>% data.frame()
