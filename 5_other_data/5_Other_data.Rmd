@@ -1,0 +1,225 @@
+---
+title: "Other data"
+author: "Kelterborn & Landstorfer"
+date: "2025-01-06"
+output:
+  github_document:
+    html_preview: false
+    toc: true
+    toc_depth: 2
+always_allow_html: true
+editor_options: 
+  chunk_output_type: console
+knit: (function(input_file, encoding) {
+    rmarkdown::render(input_file,output_file= 'Readme.md')
+        })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T,
+                      error=FALSE,
+                      warning=FALSE,
+                      message=FALSE,
+                      dpi=150)
+
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+```
+
+# 0. Load
+
+## - libraries, folders, R_utils
+
+```{r R_update, eval=FALSE, include=FALSE}
+BiocManager::install()
+BiocManager::valid()
+# update.packages(oldPkgs = old.packages())
+BiocManager::install("ggExtra")
+install.packages("reticulate")
+
+```
+
+Load R libraries. If package is missing, install with 'BiocManager::install("PackageName")'
+
+```{r librarys, include=FALSE}
+
+library(DESeq2)
+library(GEOquery)
+library(tidyverse)
+library(CorLevelPlot)
+library(gridExtra)
+library(viridis)
+
+library(clusterProfiler)
+library(ggupset)
+library(enrichplot)
+library(stats)
+library(cowplot)
+library(VennDiagram)
+library(ggplot2)
+library(stringr)
+library(rlang)
+library(reshape2)
+library(readxl)
+library(SummarizedExperiment)
+library(biomaRt)
+library(org.Hs.eg.db)
+library(Rfast)
+library(xlsx)
+library(EnhancedVolcano)
+library(PCAtools)
+library(rgl)
+library(impute)
+library(magrittr)     
+library(flashClust)
+library(AnnotationHub)
+library(venn)
+
+library(gridExtra)
+library(patchwork)
+library(grid)
+library(reshape2)
+
+library(ComplexHeatmap)
+# library(pheatmap)
+library(plyr)
+library(ggExtra)
+
+library(kableExtra)
+library(knitr)
+library(RColorBrewer)
+library(circlize)
+library(devtools)
+
+library(plotly) 
+library(stats) 
+library(tsne)
+library(umap)
+library(Rtsne)
+library(data.table)
+library(colorspace)
+library(DOSE)
+library(simplifyEnrichment)
+library("pathview")
+
+requireNamespace('png', quietly = TRUE)
+
+ifelse(Sys.info()["sysname"]== "Linux",
+       s <- "/mnt/s",
+       s <- "S:")
+dir <- paste(s,"AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all",sep="/")
+gitdir <- paste(dir,"git_RNAseq_Kelly_Hx",sep="/")
+data <- paste(dir,"data",sep="/")
+dgedir <- paste(gitdir,"2B_DGE",sep="/")
+figdir <- paste(gitdir,"4_manuscript",sep="/")
+
+par(mfrow = c(1,1))
+
+futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
+
+source(purl("/home/kelterbs/S/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all/git_RNAseq_Kelly_Hx/functions.Rmd", output = tempfile()), local = knitr::knit_global())
+
+```
+
+
+# Load dataset
+```{r Load_data}
+
+proc_res <- "/mnt/s/AG/AG-Scholz/Helena/Doktorarbeit/WP3/RNA_Seq/HIF_Neuroblastoma/US22502540_252038210079_1_1"
+# raw_table <- read_tsv(proc_res)
+
+
+
+counts <- read.delim(
+  paste("/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/Online_datasets/SRP186383 GSE126805/GSE126805_all.gene_counts.txt",sep=""), header=T)
+
+counts2 <- read.delim(
+  paste("/mnt/s/AG/AG-Scholz/Helena/Doktorarbeit/WP3/RNA_Seq/HIF_Neuroblastoma/US22502540_252038210079_1_1",sep=""), header=F)
+
+counts3 <- read.csv2("/mnt/s/AG/AG-Scholz/Helena/Doktorarbeit/WP3/RNA_Seq/HIF_Neuroblastoma/processedData_Cologne_MAQC_1 color_17_11_2009_11-02-43.txt",
+                     skip = 10,
+                     )
+
+meta <- read_tsv("/mnt/s/AG/AG-Scholz/Helena/Doktorarbeit/WP3/RNA_Seq/HIF_Neuroblastoma/E-MTAB-179.sdrf.txt"
+                                 )
+
+colnames(counts3) <- colnames(counts3) %>% str_replace(pattern="X",replace="")
+rownames(counts3) <- counts3$Experiment
+rownames(counts3) %>% unique() %>% length()
+rownames(counts3) %>% length()
+
+counts3 <- counts3[,-1]
+patients <- counts3[1,]
+counts3 <- counts3[-1,]
+(colnames(counts3) %in% meta$`Scan Name`) %>% summary()
+nrow(meta)
+colnames(counts3) %>% length()
+     
+counts3 <- counts3[,meta$`Scan Name`]
+
+(colnames(counts3) == meta$`Scan Name`) %>% summary()
+
+
+
+
+
+
+meta$patient <- patients[meta$`Scan Name`] %>% as.character()
+
+colnames(meta)
+
+meta[c(1:5),c(27:38)]
+
+meta$`Factor Value[INSSTAGE]` %>% as.factor() %>% levels()
+
+colnames(meta)[27] <- "INS_stage"
+meta$INS_stage <- meta$INS_stage %>% as.factor()
+
+colnames(meta)[32] <- "death_of_disease"
+meta$death_of_disease <- meta$death_of_disease %>% as.factor()
+
+colnames(meta)[29] <- "MYCN"
+meta$MYCN <- meta$MYCN %>% as.factor()
+
+colnames(meta)[28] <- "LOH1P"
+meta$LOH1P <- meta$LOH1P %>% as.factor()
+
+
+```
+
+# Create DDS
+
+```{r dds}
+
+counts3[1,1] # is text
+counts4 <- mutate_all(counts3, function(x) as.numeric(as.character(x)))
+hist(counts4[,1])
+range(counts4)
+counts5 <- counts4+abs(range(counts4)[1])
+counts5 %>% range()
+counts5 <- counts5*1000
+counts5 <- mutate_all(counts5, function(x) as.integer(x))
+
+counts6 <- data.frame(GeneID=rownames(counts5),counts5)
+
+
+##########################################################
+# Construct DESEQDataSet Object
+# design=~Patient + condition + Patient:condition, tidy = TRUE)
+colnames(meta)[c(27:35)]
+
+design=~INS_stage + death_of_disease # + LOH1P + MYCN
+
+dds <- DESeqDataSetFromMatrix(countData=counts6,
+                              colData=meta, 
+                              design=design, tidy = TRUE)
+
+assign(paste("dds_",sample,sep=""),dds)
+dds <- estimateSizeFactors(dds)
+
+##########################################################
+
+
+
+```
+
