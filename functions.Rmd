@@ -3,6 +3,12 @@ title: "R functions"
 output: html_notebook
 ---
 
+# Colors
+```{r}
+colors_paired <- c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00")
+cols <- colors_paired
+```
+
 
 ## - functions
 
@@ -101,7 +107,7 @@ plotCounts_SK2 <- function(data=dds,goi,n="plotCounts"){
     labs(title = paste(s,"(",goi[ig],")",sep=" "))
   plotCounts_SK_list[[paste(n,goi[ig],sep="_")]] <- gcounts
        }
- 
+
 patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) + 
   plot_layout(guides = "collect", axis_titles="collect", axes = 'collect') & 
   plot_annotation(title = n) & 
