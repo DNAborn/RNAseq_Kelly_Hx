@@ -175,22 +175,25 @@ deg_genes_list <- lapply(results_list,topgenes_f) %>%  lapply(.,rownames)
 names(deg_genes_list) <- paste("deg",names(deg_genes_list),sep="_")
 
 main_degs <- c(list("Kelly: Hx.vs.Nx" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
-                     "Hif1b" = deg_genes_list[["deg_Hif1bHxNx.vs.KellyHxNx"]],
-                     "Hif1a" = deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
-                     "Hif2a" = deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]] ))
+                     "dd_Hif1b" = deg_genes_list[["deg_Hif1bHxNx.vs.KellyHxNx"]],
+                     "dd_Hif1a" = deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     "dd_Hif2a" = deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]] ))
 
 
 # Select genes
 hif1a_2a_genes <- c(deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
-                     deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]],
-                    deg_genes_list[["deg_Hif2aHxNx.vs.Hif1aHxNx"]]) %>%
+                     deg_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]) %>%
                   unique()
+
+# deg_genes_list[["deg_Hif2aHxNx.vs.Hif1aHxNx"]]
 
 hif1a_2a_genes %>% length()
 
 # Filter results
 res_names <- names(results_list)
-res_final <- results_list[c("Kelly.Hx.vs.Nx","Hif1a.Hx.vs.Nx","Hif2a.Hx.vs.Nx", "Hif1aHxNx.vs.KellyHxNx","Hif2aHxNx.vs.KellyHxNx","Hif1bHxNx.vs.KellyHxNx","Hif2aHxNx.vs.Hif1aHxNx")] 
+res_final <- results_list[c("Kelly.Hx.vs.Nx","Hif1a.Hx.vs.Nx","Hif2a.Hx.vs.Nx",
+                             "Hx.Hif1a.vs.Kelly","Hx.Hif2a.vs.Kelly","Hx.Hif1b.vs.Kelly","Hx.Hif2a.vs.Hif1a","Hx.Hif1b.vs.Hif1a","Hx.Hif1b.vs.Hif2a" ,
+                             "Hif1aHxNx.vs.KellyHxNx","Hif2aHxNx.vs.KellyHxNx","Hif1bHxNx.vs.KellyHxNx","Hif2aHxNx.vs.Hif1aHxNx")] 
 
 # create table with all results
 res_table <- lapply(res_final,data.frame) %>% lapply(.,"[", , c("log2FoldChange","padj"))
@@ -200,6 +203,23 @@ res_table_final <- cbind(res_table_final,res_table)
 res_hif1a_2a <- res_table_final[hif1a_2a_genes,]
 colnames(res_hif1a_2a)
 
+hist(res_hif1a_2a$baseMean, breaks = 100000, xlim = c(0,500))
+
+# TOP genes
+
+deg_top_genes_list <- lapply(results_list,topgenes_f,p=0.05, l2FC = 2, bM = 100) %>%  lapply(.,rownames) 
+names(deg_top_genes_list) <- paste("deg",names(deg_top_genes_list),sep="_")
+
+# Select genes
+hif1a_2a_top_genes <- c(deg_top_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
+                     deg_top_genes_list[["deg_Hif2aHxNx.vs.KellyHxNx"]]) %>%
+                  unique()
+
+# deg_genes_list[["deg_Hif2aHxNx.vs.Hif1aHxNx"]]
+
+hif1a_2a_top_genes %>% length()
+res_hif1a_2a_top <- res_table_final[hif1a_2a_top_genes,]
+res_hif1a_2a$top <- ifelse(rownames(res_hif1a_2a) %in% hif1a_2a_top_genes,"top","deg")
 
 
 # create table with all shrinked results
@@ -622,7 +642,7 @@ res_hif1a_2a$group <- ifelse(rownames(res_hif1a_2a) %in% rownames(hif_parallel),
                       ifelse(rownames(res_hif1a_2a) %in% rownames(hif2a_up),"HIF2A",
                       ifelse(rownames(res_hif1a_2a) %in% rownames(hif2a_do),"HIF2A",
                       ifelse(rownames(res_hif1a_2a) %in% rownames(hif1a_up),"HIF1A",
-                      ifelse(rownames(res_hif1a_2a) %in% rownames(hif1a_do),"HIF1A","orange")
+                      ifelse(rownames(res_hif1a_2a) %in% rownames(hif1a_do),"HIF1A","opposite")
                       ))))
 
 cluster <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=group, fill=group)) +
@@ -643,6 +663,26 @@ cluster <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hi
   coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
 
 cluster_venn + cluster
+
+# only genes with l2fc > 2
+cluster_top <- ggplot(res_hif1a_2a[hif1a_2a_top_genes,],aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=group, fill=group)) +
+  geom_hline(yintercept = 0, linewidth = 0.1) + 
+  geom_vline(xintercept = 0, linewidth = 0.1) +
+  geom_abline(intercept=c(1,-1)) +
+  geom_abline(slope=c(-1), intercept = 1) +
+  annotate("segment", x = c(0,1), y = c(1,0), xend = c(-10,11), yend = c(21,-5),color="black") +
+  geom_point(size=1, stroke=0.5, shape=21) +
+  labs(title = "Geometric Cluster: l2FC > 2") +
+  xlab("Hif1a vs. Kelly") +
+  ylab("Hif2a vs. Kelly") +
+  scale_color_manual(values=c(colors[c(4,2,6)],"orange")) +
+  # scale_shape_manual(values = c(21,16)) + 
+  scale_fill_manual(values=alpha(c(colors[c(4,2,6)],"orange"),0.2)) +
+  theme_bw() +
+  removeGrid(x=T, y=T) +
+  coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+
+cluster_top
 
 # only genes with p < 0.05
 colnames(res_hif1a_2a)
@@ -669,6 +709,187 @@ cluster_p <- ggplot(res_hif1a_2a_p,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, 
 
 
 write.xlsx(res_hif1a_2a,"DEG_genes.xlsx")
+
+
+```
+
+
+## Cluster Holger
+```{r cluster_holger, fig.width=10, fig.height=4, dpi=300}
+
+# HIF1a stimuliert
+res_table_final %>% colnames()
+results_list %>% names()
+deg_genes_list %>% names()
+hif1a_up_holger <- calculate.overlap(input_list)
+
+
+# HIF1a
+hif1a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.5 & Hx.Hif1a.vs.Kelly.padj < 0.5 & Hx.Hif2a.vs.Hif1a.padj < 0.5 &
+                                                Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
+hif1a_up_holger %>% nrow()
+
+hif1a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.5 & Hx.Hif1a.vs.Kelly.padj < 0.5 & Hx.Hif2a.vs.Hif1a.padj < 0.5 &
+                                                Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < -1)
+hif1a_do_holger %>% nrow()
+
+# HIF2a
+hif2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.5 & Hx.Hif2a.vs.Kelly.padj < 0.5 & Hx.Hif2a.vs.Hif1a.padj < 0.5 &
+                                                Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < -1)
+hif2a_up_holger %>% nrow()
+
+hif2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.5 & Hx.Hif2a.vs.Kelly.padj < 0.5 & Hx.Hif2a.vs.Hif1a.padj < 0.5 &
+                                                Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
+hif2a_do_holger %>% nrow()
+
+res_holger_list <- list("HIF1a_up" = hif1a_up_holger,
+                        "HIF1a_do" = hif1a_do_holger,
+                        "HIF2a_up" = hif2a_up_holger,
+                        "HIF2a_do" = hif2a_do_holger)
+genes_holger_list <- lapply(res_holger_list, rownames)
+
+# Venn
+input_list <- genes_holger_list
+plt_hs <- venn.diagram(
+    x = input_list,
+    fill = colors[c(2,7,3,5)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+patchwork::wrap_elements(plt_hs) 
+
+genes_holger <- genes_holger_list %>% unlist() %>% unique()
+
+res_holger <- res_table_final[genes_holger,]
+res_holger$holger <- ifelse(rownames(res_holger) %in% genes_holger_list$HIF1a_up,"HIF1a_up",
+                           ifelse(rownames(res_holger) %in% genes_holger_list$HIF1a_do,"HIF1a_do",
+                                  ifelse(rownames(res_holger) %in% genes_holger_list$HIF2a_up,"HIF2a_up",
+                                         ifelse(rownames(res_holger) %in% genes_holger_list$HIF2a_do,"HIF2a_do","not_holger"))))
+                                  
+# Compare Holger with interaction (Simon)
+
+input_list <- list(Holger = genes_holger,
+                   interaction = rownames(res_hif1a_2a))
+plt_hs <- venn.diagram(
+    x = input_list,
+    fill = colors[c(2,7)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+patchwork::wrap_elements(plt_hs) 
+
+# Hif1a
+input_list <- list(Holger_HIF1a_up = rownames(hif1a_up_holger),
+                   Interaction_HIF1A = rownames(res_hif1a_2a[res_hif1a_2a$group=="HIF1A",]),
+                   Interaction_HIF2A = rownames(res_hif1a_2a[res_hif1a_2a$group=="HIF2A",]),
+                   Interaction_HIF1A_HIF2A = rownames(res_hif1a_2a[res_hif1a_2a$group=="HIF1A_HIF2A",]),
+                   Interaction_opposite = rownames(res_hif1a_2a[res_hif1a_2a$group=="opposite",]))
+  
+plt_hs <- venn.diagram(
+    x = input_list,
+    fill = colors_v[c(1,4:7)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+patchwork::wrap_elements(plt_hs) 
+
+res_holger[c(CA9,WT1),]
+
+
+cluster <- ggplot(res_holger,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=holger, fill=holger, label=symbol)) +
+  geom_hline(yintercept = 0, linewidth = 0.1) + 
+  geom_vline(xintercept = 0, linewidth = 0.1) +
+  # geom_abline(intercept=c(1,-1)) +
+  # geom_abline(slope=c(-1), intercept = 1) +
+  # annotate("segment", x = c(0,1), y = c(1,0), xend = c(-10,11), yend = c(21,-5),color="black") +
+  geom_point(size=1, stroke=0.5, shape=21) +
+  scale_color_manual(values=colors[c(3:6)]) +
+  # scale_shape_manual(values = c(21,16)) + 
+  scale_fill_manual(values=alpha(colors[c(3:6)],0.2)) +
+  geom_point(data=res_holger[c(CA9,EPO),],fill="red",color="red",size=2) +
+  geom_text_repel(data=res_holger[c(CA9,EPO),],color="red") +
+
+  labs(title = "Geometric Cluster") +
+  xlab("Hif1a vs. Kelly") +
+  ylab("Hif2a vs. Kelly") +
+  
+  theme_bw() +
+  removeGrid(x=T, y=T)  +
+  coord_cartesian(xlim = c(-10, 10),ylim = c(-10,10))
+
+cluster
+
+
+
+# HIF1A
+cluster_1 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif1a.Hx.vs.Nx.log2FoldChange, color=holger, fill=holger, label=symbol)) +
+  geom_hline(yintercept = 0, linewidth = 0.1) + 
+  geom_vline(xintercept = 0, linewidth = 0.1) +
+  # geom_abline(intercept=c(1,-1)) +
+  # geom_abline(slope=c(-1), intercept = 1) +
+  # annotate("segment", x = c(0,1), y = c(1,0), xend = c(-10,11), yend = c(21,-5),color="black") +
+  geom_point(size=1, stroke=0.5, shape=21) +
+  scale_color_manual(values=colors[c(3:6)]) +
+  # scale_shape_manual(values = c(21,16)) + 
+  scale_fill_manual(values=alpha(colors[c(3:6)],0.2)) +
+  geom_point(data=res_holger[c(CA9,EPO),],fill="red",color="red",size=2) +
+  geom_text_repel(data=res_holger[c(CA9,EPO),],color="red") +
+
+  labs(title = "HIF1a ~ Kelly") +
+  xlab("Hif1a: Hx vs. Nx") +
+  ylab("Kelly: Hx vs. Nx") +
+  
+  theme_bw() +
+  removeGrid(x=T, y=T)  +
+  coord_cartesian(xlim = c(-10, 20),ylim = c(-10,20))
+
+# HIF2A
+cluster_2 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif2a.Hx.vs.Nx.log2FoldChange, color=holger, fill=holger, label=symbol)) +
+  geom_hline(yintercept = 0, linewidth = 0.1) + 
+  geom_vline(xintercept = 0, linewidth = 0.1) +
+  # geom_abline(intercept=c(1,-1)) +
+  # geom_abline(slope=c(-1), intercept = 1) +
+  # annotate("segment", x = c(0,1), y = c(1,0), xend = c(-10,11), yend = c(21,-5),color="black") +
+  geom_point(size=1, stroke=0.5, shape=21) +
+  scale_color_manual(values=colors[c(3:6)]) +
+  # scale_shape_manual(values = c(21,16)) + 
+  scale_fill_manual(values=alpha(colors[c(3:6)],0.2)) +
+  geom_point(data=res_holger[c(CA9,EPO),],fill="red",color="red",size=2) +
+  geom_text_repel(data=res_holger[c(CA9,EPO),],color="red") +
+
+  labs(title = "HIF2a ~ Kelly") +
+  xlab("Hif2a: Hx vs. Nx") +
+  ylab("Kelly: Hx vs. Nx") +
+  
+  theme_bw() +
+  removeGrid(x=T, y=T)  +
+  coord_cartesian(xlim = c(-10, 20),ylim = c(-10,20))
+
+cluster_1 + cluster_2 + plot_layout(guides = "collect", axes="collect", axis_titles="collect")
+
+
+write.xlsx(res_holger,"DEG_genes_Holger.xlsx")
 
 
 ```
