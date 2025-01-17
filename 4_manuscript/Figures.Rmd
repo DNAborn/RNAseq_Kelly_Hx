@@ -609,7 +609,7 @@ res_hif1a_2a$venn %>% table()
 
 
 # Cluster Venn
-cluster_venn <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=venn, fill=venn)) +
+cluster_venn <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=venn, fill=venn, label=symbol)) +
   geom_hline(yintercept = 0, linewidth = 0.1) + 
   geom_vline(xintercept = 0, linewidth = 0.1) +
   geom_point(size=1, stroke=0.5, shape=21) +
@@ -619,9 +619,11 @@ cluster_venn <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange,
   scale_color_manual(values=c(colors[c(4,6)],"orange",colors[2])) +
   # scale_shape_manual(values = c(21,16)) + 
   scale_fill_manual(values=alpha(c(colors[c(4,6)],"orange",colors[2]),0.2)) +
+  geom_point(data=res_hif1a_2a[c(CA9,EPO),],fill="red",color="red",size=2) +
+  geom_text_repel(data=res_hif1a_2a[c(CA9,EPO),],color="red") +
   theme_bw() +
   removeGrid(x=T, y=T) +
-  coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+  coord_cartesian(xlim = c(-10, 10),ylim = c(-10,10))
 
 res_hif1a_2a$group %>% table()
 
@@ -645,7 +647,7 @@ res_hif1a_2a$group <- ifelse(rownames(res_hif1a_2a) %in% rownames(hif_parallel),
                       ifelse(rownames(res_hif1a_2a) %in% rownames(hif1a_do),"HIF1A","opposite")
                       ))))
 
-cluster <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=group, fill=group)) +
+cluster <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=group, fill=group, label=symbol)) +
   geom_hline(yintercept = 0, linewidth = 0.1) + 
   geom_vline(xintercept = 0, linewidth = 0.1) +
   geom_abline(intercept=c(1,-1)) +
@@ -658,14 +660,16 @@ cluster <- ggplot(res_hif1a_2a,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hi
   scale_color_manual(values=c(colors[c(4,2,6)],"orange")) +
   # scale_shape_manual(values = c(21,16)) + 
   scale_fill_manual(values=alpha(c(colors[c(4,2,6)],"orange"),0.2)) +
+  geom_point(data=res_hif1a_2a[c(CA9,EPO),],fill="red",color="red",size=2) +
+  geom_text_repel(data=res_hif1a_2a[c(CA9,EPO),],color="red") +
   theme_bw() +
   removeGrid(x=T, y=T) +
-  coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+  coord_cartesian(xlim = c(-10, 10),ylim = c(-10,10))
 
 cluster_venn + cluster
 
 # only genes with l2fc > 2
-cluster_top <- ggplot(res_hif1a_2a[hif1a_2a_top_genes,],aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=group, fill=group)) +
+cluster_top <- ggplot(res_hif1a_2a[hif1a_2a_top_genes,],aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=group, fill=group, label=symbol)) +
   geom_hline(yintercept = 0, linewidth = 0.1) + 
   geom_vline(xintercept = 0, linewidth = 0.1) +
   geom_abline(intercept=c(1,-1)) +
@@ -678,9 +682,11 @@ cluster_top <- ggplot(res_hif1a_2a[hif1a_2a_top_genes,],aes(x=Hif1aHxNx.vs.Kelly
   scale_color_manual(values=c(colors[c(4,2,6)],"orange")) +
   # scale_shape_manual(values = c(21,16)) + 
   scale_fill_manual(values=alpha(c(colors[c(4,2,6)],"orange"),0.2)) +
+  geom_point(data=res_hif1a_2a[c(CA9,EPO),],fill="red",color="red",size=2) +
+  geom_text_repel(data=res_hif1a_2a[c(CA9,EPO),],color="red") +
   theme_bw() +
   removeGrid(x=T, y=T) +
-  coord_cartesian(xlim = c(-5, 5),ylim = c(-5,5))
+  coord_cartesian(xlim = c(-10, 10),ylim = c(-10,10))
 
 cluster_top
 
