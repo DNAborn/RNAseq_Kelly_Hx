@@ -963,46 +963,43 @@ genes_holger_list <- lapply(res_holger_list, rownames)
 genes_holger_list$HIF1a <- c(genes_holger_list$HIF1a_up, genes_holger_list$HIF1a_do)
 genes_holger_list$HIF2a <- c(genes_holger_list$HIF2a_up, genes_holger_list$HIF2a_do)
 genes_holger_list$HIF1a_HIF2a <- c(genes_holger_list$HIF1a_HIF2a_up, genes_holger_list$HIF1a_HIF2a_do)
-
-res_table_final[EPO,]
+lapply(genes_holger_list, length)
 ```
 
-    ##                         ENSEMBL ENTREZ symbol baseMean
-    ## ENSG00000130427 ENSG00000130427   2056    EPO 3453.431
-    ##                 Kelly.Hx.vs.Nx.log2FoldChange Kelly.Hx.vs.Nx.padj
-    ## ENSG00000130427                      12.38712       6.334112e-171
-    ##                 Hif1a.Hx.vs.Nx.log2FoldChange Hif1a.Hx.vs.Nx.padj
-    ## ENSG00000130427                      12.06163       3.130233e-113
-    ##                 Hif2a.Hx.vs.Nx.log2FoldChange Hif2a.Hx.vs.Nx.padj
-    ## ENSG00000130427                      6.411525        1.247505e-17
-    ##                 Hx.Hif1a.vs.Kelly.log2FoldChange Hx.Hif1a.vs.Kelly.padj
-    ## ENSG00000130427                        0.7538427              0.1387593
-    ##                 Hx.Hif2a.vs.Kelly.log2FoldChange Hx.Hif2a.vs.Kelly.padj
-    ## ENSG00000130427                        -7.373195           1.654654e-67
-    ##                 Hx.Hif1b.vs.Kelly.log2FoldChange Hx.Hif1b.vs.Kelly.padj
-    ## ENSG00000130427                        -9.807846           2.199741e-84
-    ##                 Hx.Hif2a.vs.Hif1a.log2FoldChange Hx.Hif2a.vs.Hif1a.padj
-    ## ENSG00000130427                        -8.127037           1.569534e-63
-    ##                 Hx.Hif1b.vs.Hif1a.log2FoldChange Hx.Hif1b.vs.Hif1a.padj
-    ## ENSG00000130427                        -10.56169            4.24063e-81
-    ##                 Hx.Hif1b.vs.Hif2a.log2FoldChange Hx.Hif1b.vs.Hif2a.padj
-    ## ENSG00000130427                        -2.434651            2.61554e-05
-    ##                 Hif1aHxNx.vs.KellyHxNx.log2FoldChange
-    ## ENSG00000130427                            -0.3254896
-    ##                 Hif1aHxNx.vs.KellyHxNx.padj
-    ## ENSG00000130427                    0.842581
-    ##                 Hif2aHxNx.vs.KellyHxNx.log2FoldChange
-    ## ENSG00000130427                             -5.975598
-    ##                 Hif2aHxNx.vs.KellyHxNx.padj
-    ## ENSG00000130427                4.374558e-11
-    ##                 Hif1bHxNx.vs.KellyHxNx.log2FoldChange
-    ## ENSG00000130427                             -9.179111
-    ##                 Hif1bHxNx.vs.KellyHxNx.padj
-    ## ENSG00000130427                9.077866e-26
-    ##                 Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange
-    ## ENSG00000130427                             -5.650108
-    ##                 Hif2aHxNx.vs.Hif1aHxNx.padj
-    ## ENSG00000130427                2.849805e-09
+    ## $HIF1a_up
+    ## [1] 411
+    ## 
+    ## $HIF1a_do
+    ## [1] 55
+    ## 
+    ## $HIF2a_up
+    ## [1] 1413
+    ## 
+    ## $HIF2a_do
+    ## [1] 466
+    ## 
+    ## $HIF1a_HIF2a_up
+    ## [1] 36
+    ## 
+    ## $HIF1a_HIF2a_do
+    ## [1] 30
+    ## 
+    ## $HIF1a
+    ## [1] 466
+    ## 
+    ## $HIF2a
+    ## [1] 1879
+    ## 
+    ## $HIF1a_HIF2a
+    ## [1] 66
+
+``` r
+res_table_final[EPO,] %>% kable()
+```
+
+|  | ENSEMBL | ENTREZ | symbol | baseMean | Kelly.Hx.vs.Nx.log2FoldChange | Kelly.Hx.vs.Nx.padj | Hif1a.Hx.vs.Nx.log2FoldChange | Hif1a.Hx.vs.Nx.padj | Hif2a.Hx.vs.Nx.log2FoldChange | Hif2a.Hx.vs.Nx.padj | Hx.Hif1a.vs.Kelly.log2FoldChange | Hx.Hif1a.vs.Kelly.padj | Hx.Hif2a.vs.Kelly.log2FoldChange | Hx.Hif2a.vs.Kelly.padj | Hx.Hif1b.vs.Kelly.log2FoldChange | Hx.Hif1b.vs.Kelly.padj | Hx.Hif2a.vs.Hif1a.log2FoldChange | Hx.Hif2a.vs.Hif1a.padj | Hx.Hif1b.vs.Hif1a.log2FoldChange | Hx.Hif1b.vs.Hif1a.padj | Hx.Hif1b.vs.Hif2a.log2FoldChange | Hx.Hif1b.vs.Hif2a.padj | Hif1aHxNx.vs.KellyHxNx.log2FoldChange | Hif1aHxNx.vs.KellyHxNx.padj | Hif2aHxNx.vs.KellyHxNx.log2FoldChange | Hif2aHxNx.vs.KellyHxNx.padj | Hif1bHxNx.vs.KellyHxNx.log2FoldChange | Hif1bHxNx.vs.KellyHxNx.padj | Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange | Hif2aHxNx.vs.Hif1aHxNx.padj |
+|:---|:---|---:|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| ENSG00000130427 | ENSG00000130427 | 2056 | EPO | 3453.431 | 12.38712 | 0 | 12.06163 | 0 | 6.411525 | 0 | 0.7538427 | 0.1387593 | -7.373195 | 0 | -9.807846 | 0 | -8.127037 | 0 | -10.56169 | 0 | -2.434651 | 2.62e-05 | -0.3254896 | 0.842581 | -5.975598 | 0 | -9.179111 | 0 | -5.650108 | 0 |
 
 ``` r
 genes_holger <- genes_holger_list %>% unlist() %>% unique()
@@ -1091,471 +1088,14 @@ patchwork::wrap_elements(plt_hs)
 ![](Readme_files/figure-gfm/cluster_holger-3.png)<!-- -->
 
 ``` r
-res_holger$group %>% factor()
+# res_holger$group %>% factor()
+res_holger[c(CA9,WT1),] %>% kable()
 ```
 
-    ##    [1] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##    [7] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [13] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [19] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [25] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [31] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [37] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [43] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [49] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [55] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [61] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [67] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [73] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [79] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [85] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [91] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##   [97] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [103] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [109] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [115] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [121] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [127] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [133] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [139] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [145] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [151] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [157] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [163] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [169] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [175] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [181] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [187] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [193] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [199] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [205] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [211] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [217] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [223] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [229] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [235] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [241] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [247] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [253] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [259] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [265] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [271] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [277] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [283] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [289] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [295] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [301] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [307] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [313] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [319] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [325] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [331] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [337] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [343] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [349] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [355] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [361] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [367] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [373] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [379] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [385] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [391] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [397] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [403] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [409] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [415] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [421] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [427] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [433] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [439] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [445] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [451] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [457] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
-    ##  [463] HIF1a       HIF1a       HIF1a       HIF1a       HIF2a       HIF2a      
-    ##  [469] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [475] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [481] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [487] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [493] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [499] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [505] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [511] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [517] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [523] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [529] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [535] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [541] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [547] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [553] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [559] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [565] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [571] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [577] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [583] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [589] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [595] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [601] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [607] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [613] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [619] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [625] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [631] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [637] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [643] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [649] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [655] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [661] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [667] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [673] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [679] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [685] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [691] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [697] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [703] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [709] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [715] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [721] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [727] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [733] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [739] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [745] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [751] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [757] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [763] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [769] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [775] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [781] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [787] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [793] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [799] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [805] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [811] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [817] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [823] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [829] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [835] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [841] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [847] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [853] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [859] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [865] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [871] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [877] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [883] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [889] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [895] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [901] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [907] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [913] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [919] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [925] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [931] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [937] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [943] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [949] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [955] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [961] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [967] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [973] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [979] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [985] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [991] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ##  [997] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1003] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1009] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1015] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1021] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1027] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1033] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1039] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1045] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1051] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1057] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1063] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1069] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1075] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1081] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1087] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1093] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1099] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1105] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1111] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1117] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1123] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1129] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1135] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1141] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1147] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1153] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1159] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1165] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1171] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1177] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1183] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1189] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1195] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1201] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1207] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1213] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1219] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1225] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1231] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1237] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1243] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1249] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1255] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1261] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1267] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1273] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1279] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1285] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1291] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1297] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1303] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1309] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1315] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1321] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1327] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1333] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1339] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1345] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1351] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1357] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1363] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1369] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1375] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1381] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1387] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1393] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1399] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1405] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1411] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1417] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1423] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1429] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1435] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1441] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1447] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1453] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1459] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1465] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1471] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1477] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1483] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1489] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1495] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1501] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1507] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1513] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1519] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1525] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1531] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1537] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1543] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1549] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1555] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1561] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1567] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1573] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1579] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1585] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1591] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1597] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1603] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1609] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1615] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1621] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1627] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1633] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1639] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1645] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1651] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1657] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1663] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1669] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1675] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1681] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1687] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1693] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1699] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1705] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1711] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1717] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1723] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1729] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1735] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1741] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1747] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1753] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1759] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1765] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1771] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1777] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1783] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1789] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1795] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1801] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1807] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1813] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1819] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1825] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1831] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1837] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1843] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1849] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1855] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1861] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1867] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1873] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1879] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1885] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1891] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1897] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1903] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1909] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1915] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1921] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1927] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1933] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1939] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1945] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1951] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1957] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1963] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1969] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1975] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1981] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1987] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1993] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [1999] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2005] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2011] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2017] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2023] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2029] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2035] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2041] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2047] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2053] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2059] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2065] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2071] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2077] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2083] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2089] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2095] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2101] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2107] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2113] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2119] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2125] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2131] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2137] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2143] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2149] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2155] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2161] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2167] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2173] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2179] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2185] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2191] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2197] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2203] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2209] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2215] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2221] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2227] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2233] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2239] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2245] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2251] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2257] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2263] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2269] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2275] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2281] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2287] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2293] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2299] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2305] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2311] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2317] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2323] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2329] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2335] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
-    ## [2341] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF1a_HIF2a
-    ## [2347] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
-    ## [2353] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
-    ## [2359] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
-    ## [2365] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
-    ## [2371] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
-    ## [2377] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
-    ## [2383] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
-    ## [2389] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
-    ## [2395] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
-    ## [2401] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
-    ## [2407] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
-    ## Levels: HIF1a HIF1a_HIF2a HIF2a
-
-``` r
-res_holger[c(CA9,WT1),]
-```
-
-    ##                         ENSEMBL ENTREZ symbol  baseMean
-    ## ENSG00000107159 ENSG00000107159    768    CA9 3017.8336
-    ## ENSG00000184937 ENSG00000184937   7490    WT1  140.5576
-    ##                 Kelly.Hx.vs.Nx.log2FoldChange Kelly.Hx.vs.Nx.padj
-    ## ENSG00000107159                     10.704262       2.991314e-185
-    ## ENSG00000184937                      8.893613        2.973965e-91
-    ##                 Hif1a.Hx.vs.Nx.log2FoldChange Hif1a.Hx.vs.Nx.padj
-    ## ENSG00000107159                      3.910576        4.101395e-13
-    ## ENSG00000184937                      7.325701        6.355279e-63
-    ##                 Hif2a.Hx.vs.Nx.log2FoldChange Hif2a.Hx.vs.Nx.padj
-    ## ENSG00000107159                     11.455341       9.587918e-125
-    ## ENSG00000184937                      9.831686        2.924521e-34
-    ##                 Hx.Hif1a.vs.Kelly.log2FoldChange Hx.Hif1a.vs.Kelly.padj
-    ## ENSG00000107159                       -7.4408576           4.049199e-79
-    ## ENSG00000184937                       -0.2098319           5.790422e-01
-    ##                 Hx.Hif2a.vs.Kelly.log2FoldChange Hx.Hif2a.vs.Kelly.padj
-    ## ENSG00000107159                         1.108786           7.870728e-03
-    ## ENSG00000184937                        -1.375857           2.442218e-06
-    ##                 Hx.Hif1b.vs.Kelly.log2FoldChange Hx.Hif1b.vs.Kelly.padj
-    ## ENSG00000107159                       -0.7033098           1.197611e-01
-    ## ENSG00000184937                       -3.5442182           1.321695e-27
-    ##                 Hx.Hif2a.vs.Hif1a.log2FoldChange Hx.Hif2a.vs.Hif1a.padj
-    ## ENSG00000107159                         8.549644           4.169517e-82
-    ## ENSG00000184937                        -1.166025           4.549362e-04
-    ##                 Hx.Hif1b.vs.Hif1a.log2FoldChange Hx.Hif1b.vs.Hif1a.padj
-    ## ENSG00000107159                         6.737548           2.627598e-44
-    ## ENSG00000184937                        -3.334386           1.798061e-20
-    ##                 Hx.Hif1b.vs.Hif2a.log2FoldChange Hx.Hif1b.vs.Hif2a.padj
-    ## ENSG00000107159                        -1.812096           2.506072e-04
-    ## ENSG00000184937                        -2.168361           4.275993e-09
-    ##                 Hif1aHxNx.vs.KellyHxNx.log2FoldChange
-    ## ENSG00000107159                             -6.793686
-    ## ENSG00000184937                             -1.567912
-    ##                 Hif1aHxNx.vs.KellyHxNx.padj
-    ## ENSG00000107159                3.202673e-23
-    ## ENSG00000184937                6.649891e-02
-    ##                 Hif2aHxNx.vs.KellyHxNx.log2FoldChange
-    ## ENSG00000107159                             0.7510793
-    ## ENSG00000184937                             0.9380725
-    ##                 Hif2aHxNx.vs.KellyHxNx.padj
-    ## ENSG00000107159                   0.3494878
-    ## ENSG00000184937                   0.4483675
-    ##                 Hif1bHxNx.vs.KellyHxNx.log2FoldChange
-    ## ENSG00000107159                             -1.206613
-    ## ENSG00000184937                             -1.153974
-    ##                 Hif1bHxNx.vs.KellyHxNx.padj
-    ## ENSG00000107159                   0.0957458
-    ## ENSG00000184937                   0.2898088
-    ##                 Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange
-    ## ENSG00000107159                              7.544765
-    ## ENSG00000184937                              2.505985
-    ##                 Hif2aHxNx.vs.Hif1aHxNx.padj group
-    ## ENSG00000107159                1.058525e-24 HIF1a
-    ## ENSG00000184937                1.329956e-02 HIF2a
+|  | ENSEMBL | ENTREZ | symbol | baseMean | Kelly.Hx.vs.Nx.log2FoldChange | Kelly.Hx.vs.Nx.padj | Hif1a.Hx.vs.Nx.log2FoldChange | Hif1a.Hx.vs.Nx.padj | Hif2a.Hx.vs.Nx.log2FoldChange | Hif2a.Hx.vs.Nx.padj | Hx.Hif1a.vs.Kelly.log2FoldChange | Hx.Hif1a.vs.Kelly.padj | Hx.Hif2a.vs.Kelly.log2FoldChange | Hx.Hif2a.vs.Kelly.padj | Hx.Hif1b.vs.Kelly.log2FoldChange | Hx.Hif1b.vs.Kelly.padj | Hx.Hif2a.vs.Hif1a.log2FoldChange | Hx.Hif2a.vs.Hif1a.padj | Hx.Hif1b.vs.Hif1a.log2FoldChange | Hx.Hif1b.vs.Hif1a.padj | Hx.Hif1b.vs.Hif2a.log2FoldChange | Hx.Hif1b.vs.Hif2a.padj | Hif1aHxNx.vs.KellyHxNx.log2FoldChange | Hif1aHxNx.vs.KellyHxNx.padj | Hif2aHxNx.vs.KellyHxNx.log2FoldChange | Hif2aHxNx.vs.KellyHxNx.padj | Hif1bHxNx.vs.KellyHxNx.log2FoldChange | Hif1bHxNx.vs.KellyHxNx.padj | Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange | Hif2aHxNx.vs.Hif1aHxNx.padj | group |
+|:---|:---|---:|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|:---|
+| ENSG00000107159 | ENSG00000107159 | 768 | CA9 | 3017.8336 | 10.704262 | 0 | 3.910576 | 0 | 11.455341 | 0 | -7.4408576 | 0.0000000 | 1.108786 | 0.0078707 | -0.7033098 | 0.1197611 | 8.549644 | 0.0000000 | 6.737548 | 0 | -1.812096 | 0.0002506 | -6.793686 | 0.0000000 | 0.7510793 | 0.3494878 | -1.206613 | 0.0957458 | 7.544765 | 0.0000000 | HIF1a |
+| ENSG00000184937 | ENSG00000184937 | 7490 | WT1 | 140.5576 | 8.893613 | 0 | 7.325701 | 0 | 9.831686 | 0 | -0.2098319 | 0.5790422 | -1.375857 | 0.0000024 | -3.5442182 | 0.0000000 | -1.166025 | 0.0004549 | -3.334386 | 0 | -2.168361 | 0.0000000 | -1.567913 | 0.0664989 | 0.9380725 | 0.4483675 | -1.153974 | 0.2898088 | 2.505985 | 0.0132996 | HIF2a |
 
 ``` r
 cluster <- ggplot(res_holger,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=group, fill=group, label=symbol)) +
@@ -1637,6 +1177,188 @@ cluster_1 + cluster_2 + plot_layout(guides = "collect", axes="collect", axis_tit
 ``` r
 write.xlsx(res_holger,"DEG_genes_Holger.xlsx")
 ```
+
+### TOP genes Holger
+
+``` r
+# HIF1a
+genes_holger_hif1a <- res_holger %>% filter(group == "HIF1a")
+genes_holger_hif1a %>% colnames()
+```
+
+    ##  [1] "ENSEMBL"                              
+    ##  [2] "ENTREZ"                               
+    ##  [3] "symbol"                               
+    ##  [4] "baseMean"                             
+    ##  [5] "Kelly.Hx.vs.Nx.log2FoldChange"        
+    ##  [6] "Kelly.Hx.vs.Nx.padj"                  
+    ##  [7] "Hif1a.Hx.vs.Nx.log2FoldChange"        
+    ##  [8] "Hif1a.Hx.vs.Nx.padj"                  
+    ##  [9] "Hif2a.Hx.vs.Nx.log2FoldChange"        
+    ## [10] "Hif2a.Hx.vs.Nx.padj"                  
+    ## [11] "Hx.Hif1a.vs.Kelly.log2FoldChange"     
+    ## [12] "Hx.Hif1a.vs.Kelly.padj"               
+    ## [13] "Hx.Hif2a.vs.Kelly.log2FoldChange"     
+    ## [14] "Hx.Hif2a.vs.Kelly.padj"               
+    ## [15] "Hx.Hif1b.vs.Kelly.log2FoldChange"     
+    ## [16] "Hx.Hif1b.vs.Kelly.padj"               
+    ## [17] "Hx.Hif2a.vs.Hif1a.log2FoldChange"     
+    ## [18] "Hx.Hif2a.vs.Hif1a.padj"               
+    ## [19] "Hx.Hif1b.vs.Hif1a.log2FoldChange"     
+    ## [20] "Hx.Hif1b.vs.Hif1a.padj"               
+    ## [21] "Hx.Hif1b.vs.Hif2a.log2FoldChange"     
+    ## [22] "Hx.Hif1b.vs.Hif2a.padj"               
+    ## [23] "Hif1aHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [24] "Hif1aHxNx.vs.KellyHxNx.padj"          
+    ## [25] "Hif2aHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [26] "Hif2aHxNx.vs.KellyHxNx.padj"          
+    ## [27] "Hif1bHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [28] "Hif1bHxNx.vs.KellyHxNx.padj"          
+    ## [29] "Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange"
+    ## [30] "Hif2aHxNx.vs.Hif1aHxNx.padj"          
+    ## [31] "group"
+
+``` r
+genes_holger_hif1a <- genes_holger_hif1a %>% .[order(.$baseMean, decreasing = T),]
+genes_holger_hif1a$rank.bm <- seq(1:length(rownames(genes_holger_hif1a)))
+
+genes_holger_hif1a <- genes_holger_hif1a %>% .[order(abs(.$Kelly.Hx.vs.Nx.log2FoldChange), decreasing = T),]
+genes_holger_hif1a$rank.Hx <- seq(1:length(rownames(genes_holger_hif1a)))
+
+genes_holger_hif1a <- genes_holger_hif1a %>% .[order(abs(.$Hif1aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = T),]
+genes_holger_hif1a$rank.H1a <- seq(1:length(rownames(genes_holger_hif1a)))
+
+genes_holger_hif1a <- genes_holger_hif1a %>% .[order(abs(.$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange), decreasing = T),]
+genes_holger_hif1a$rank.H12 <- seq(1:length(rownames(genes_holger_hif1a)))
+
+genes_holger_hif1a$rank.sum <- genes_holger_hif1a$rank.bm + genes_holger_hif1a$rank.Hx + genes_holger_hif1a$rank.H1a + genes_holger_hif1a$rank.H12
+genes_holger_hif1a <- genes_holger_hif1a[order(genes_holger_hif1a$rank.sum),]
+
+plotCounts_SK(genes_holger_hif1a[1:9,] %>% rownames(), n= "Hif1A targets")
+```
+
+![](Readme_files/figure-gfm/cluster_hs_top-1.png)<!-- -->
+
+``` r
+# HIF2a
+genes_holger_hif2a <- res_holger %>% filter(group == "HIF2a")
+genes_holger_hif2a %>% colnames()
+```
+
+    ##  [1] "ENSEMBL"                              
+    ##  [2] "ENTREZ"                               
+    ##  [3] "symbol"                               
+    ##  [4] "baseMean"                             
+    ##  [5] "Kelly.Hx.vs.Nx.log2FoldChange"        
+    ##  [6] "Kelly.Hx.vs.Nx.padj"                  
+    ##  [7] "Hif1a.Hx.vs.Nx.log2FoldChange"        
+    ##  [8] "Hif1a.Hx.vs.Nx.padj"                  
+    ##  [9] "Hif2a.Hx.vs.Nx.log2FoldChange"        
+    ## [10] "Hif2a.Hx.vs.Nx.padj"                  
+    ## [11] "Hx.Hif1a.vs.Kelly.log2FoldChange"     
+    ## [12] "Hx.Hif1a.vs.Kelly.padj"               
+    ## [13] "Hx.Hif2a.vs.Kelly.log2FoldChange"     
+    ## [14] "Hx.Hif2a.vs.Kelly.padj"               
+    ## [15] "Hx.Hif1b.vs.Kelly.log2FoldChange"     
+    ## [16] "Hx.Hif1b.vs.Kelly.padj"               
+    ## [17] "Hx.Hif2a.vs.Hif1a.log2FoldChange"     
+    ## [18] "Hx.Hif2a.vs.Hif1a.padj"               
+    ## [19] "Hx.Hif1b.vs.Hif1a.log2FoldChange"     
+    ## [20] "Hx.Hif1b.vs.Hif1a.padj"               
+    ## [21] "Hx.Hif1b.vs.Hif2a.log2FoldChange"     
+    ## [22] "Hx.Hif1b.vs.Hif2a.padj"               
+    ## [23] "Hif1aHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [24] "Hif1aHxNx.vs.KellyHxNx.padj"          
+    ## [25] "Hif2aHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [26] "Hif2aHxNx.vs.KellyHxNx.padj"          
+    ## [27] "Hif1bHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [28] "Hif1bHxNx.vs.KellyHxNx.padj"          
+    ## [29] "Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange"
+    ## [30] "Hif2aHxNx.vs.Hif1aHxNx.padj"          
+    ## [31] "group"
+
+``` r
+genes_holger_hif2a <- genes_holger_hif2a %>% .[order(.$baseMean, decreasing = T),]
+genes_holger_hif2a$rank.bm <- seq(1:length(rownames(genes_holger_hif2a)))
+
+genes_holger_hif2a <- genes_holger_hif2a %>% .[order(abs(.$Kelly.Hx.vs.Nx.log2FoldChange), decreasing = T),]
+genes_holger_hif2a$rank.Hx <- seq(1:length(rownames(genes_holger_hif2a)))
+
+genes_holger_hif2a <- genes_holger_hif2a %>% .[order(abs(.$Hif2aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = T),]
+genes_holger_hif2a$rank.H2a <- seq(1:length(rownames(genes_holger_hif2a)))
+
+genes_holger_hif2a <- genes_holger_hif2a %>% .[order(abs(.$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange), decreasing = T),]
+genes_holger_hif2a$rank.H12 <- seq(1:length(rownames(genes_holger_hif2a)))
+
+genes_holger_hif2a$rank.sum <- genes_holger_hif2a$rank.bm + genes_holger_hif2a$rank.Hx + genes_holger_hif2a$rank.H2a + genes_holger_hif2a$rank.H12
+genes_holger_hif2a <- genes_holger_hif2a[order(genes_holger_hif2a$rank.sum),]
+
+plotCounts_SK(genes_holger_hif2a[1:9,] %>% rownames(), n= "Hif2a targets")
+```
+
+![](Readme_files/figure-gfm/cluster_hs_top-2.png)<!-- -->
+
+``` r
+# HIF1a_HIF2a
+genes_holger_hif1a_hif2a <- res_holger %>% filter(group == "HIF1a_HIF2a")
+genes_holger_hif1a_hif2a%>% colnames()
+```
+
+    ##  [1] "ENSEMBL"                              
+    ##  [2] "ENTREZ"                               
+    ##  [3] "symbol"                               
+    ##  [4] "baseMean"                             
+    ##  [5] "Kelly.Hx.vs.Nx.log2FoldChange"        
+    ##  [6] "Kelly.Hx.vs.Nx.padj"                  
+    ##  [7] "Hif1a.Hx.vs.Nx.log2FoldChange"        
+    ##  [8] "Hif1a.Hx.vs.Nx.padj"                  
+    ##  [9] "Hif2a.Hx.vs.Nx.log2FoldChange"        
+    ## [10] "Hif2a.Hx.vs.Nx.padj"                  
+    ## [11] "Hx.Hif1a.vs.Kelly.log2FoldChange"     
+    ## [12] "Hx.Hif1a.vs.Kelly.padj"               
+    ## [13] "Hx.Hif2a.vs.Kelly.log2FoldChange"     
+    ## [14] "Hx.Hif2a.vs.Kelly.padj"               
+    ## [15] "Hx.Hif1b.vs.Kelly.log2FoldChange"     
+    ## [16] "Hx.Hif1b.vs.Kelly.padj"               
+    ## [17] "Hx.Hif2a.vs.Hif1a.log2FoldChange"     
+    ## [18] "Hx.Hif2a.vs.Hif1a.padj"               
+    ## [19] "Hx.Hif1b.vs.Hif1a.log2FoldChange"     
+    ## [20] "Hx.Hif1b.vs.Hif1a.padj"               
+    ## [21] "Hx.Hif1b.vs.Hif2a.log2FoldChange"     
+    ## [22] "Hx.Hif1b.vs.Hif2a.padj"               
+    ## [23] "Hif1aHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [24] "Hif1aHxNx.vs.KellyHxNx.padj"          
+    ## [25] "Hif2aHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [26] "Hif2aHxNx.vs.KellyHxNx.padj"          
+    ## [27] "Hif1bHxNx.vs.KellyHxNx.log2FoldChange"
+    ## [28] "Hif1bHxNx.vs.KellyHxNx.padj"          
+    ## [29] "Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange"
+    ## [30] "Hif2aHxNx.vs.Hif1aHxNx.padj"          
+    ## [31] "group"
+
+``` r
+genes_holger_hif1a_hif2a<- genes_holger_hif1a_hif2a%>% .[order(.$baseMean, decreasing = T),]
+genes_holger_hif1a_hif2a$rank.bm <- seq(1:length(rownames(genes_holger_hif1a_hif2a)))
+
+genes_holger_hif1a_hif2a <- genes_holger_hif1a_hif2a %>% .[order(abs(.$Kelly.Hx.vs.Nx.log2FoldChange), decreasing = T),]
+genes_holger_hif1a_hif2a$rank.Hx <- seq(1:length(rownames(genes_holger_hif1a_hif2a)))
+
+genes_holger_hif1a_hif2a <- genes_holger_hif1a_hif2a %>% .[order(abs(.$Hif1aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = T),]
+genes_holger_hif1a_hif2a$rank.H1a <- seq(1:length(rownames(genes_holger_hif1a_hif2a)))
+
+genes_holger_hif1a_hif2a <- genes_holger_hif1a_hif2a %>% .[order(abs(.$Hif2aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = T),]
+genes_holger_hif1a_hif2a$rank.H2a <- seq(1:length(rownames(genes_holger_hif1a_hif2a)))
+
+genes_holger_hif1a_hif2a <- genes_holger_hif1a_hif2a %>% .[order(abs(.$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange), decreasing = F),]
+genes_holger_hif1a_hif2a$rank.H12 <- seq(1:length(rownames(genes_holger_hif1a_hif2a)))
+
+genes_holger_hif1a_hif2a$rank.sum <- genes_holger_hif1a_hif2a$rank.bm + genes_holger_hif1a_hif2a$rank.Hx + genes_holger_hif1a_hif2a$rank.H1a + genes_holger_hif1a_hif2a$rank.H12 + genes_holger_hif1a_hif2a$rank.H2a
+genes_holger_hif1a_hif2a <- genes_holger_hif1a_hif2a[order(genes_holger_hif1a_hif2a$rank.sum),]
+
+plotCounts_SK(genes_holger_hif1a_hif2a[1:9,] %>% rownames(), n= "Hif1A targets")
+```
+
+![](Readme_files/figure-gfm/cluster_hs_top-3.png)<!-- -->
 
 # Table 1: Gene List
 
@@ -1940,9 +1662,29 @@ load(file="GO_analysis/GO_cc_groups_hs.go")
 
 GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
 dotplot(GO_cc_groups_BP, showCategory=10, title = "HS-groups")
+
+# Compare both
+
+load(file="GO_analysis/GO_cc_groups_both.go")
+
+GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
+dotplot(GO_cc_groups_BP, showCategory=10, title = "all-groups")
 ```
 
-<img src="Readme_files/figure-gfm/unnamed-chunk-2-1.png" width="50%" /><img src="Readme_files/figure-gfm/unnamed-chunk-2-2.png" width="50%" />
+<img src="Readme_files/figure-gfm/go-1.png" width="50%" /><img src="Readme_files/figure-gfm/go-2.png" width="50%" /><img src="Readme_files/figure-gfm/go-3.png" width="50%" />
+
+### compare GO
+
+``` r
+# Compare both
+
+load(file="GO_analysis/GO_cc_groups_both.go")
+
+GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
+dotplot(GO_cc_groups_BP, showCategory=10, title = "all-groups")
+```
+
+<img src="Readme_files/figure-gfm/go2-1.png" width="50%" />
 
 ## Cluster GO terms
 
@@ -1996,7 +1738,7 @@ cc_kegg <- compareCluster(geneCluster = res_hif1a_2a_list_ez[1:2],
 dotplot(cc_kegg, showCategory=12, title = "SK")
 ```
 
-<img src="Readme_files/figure-gfm/unnamed-chunk-3-1.png" width="50%" />
+<img src="Readme_files/figure-gfm/kegg-1.png" width="50%" />
 
 ``` r
 cc_kegg %>% data.frame()
@@ -2192,7 +1934,7 @@ cc_kegg <- compareCluster(geneCluster = genes_holger_list_ez[1:2],
 dotplot(cc_kegg, showCategory=12, title = "HS")
 ```
 
-<img src="Readme_files/figure-gfm/unnamed-chunk-3-2.png" width="50%" />
+<img src="Readme_files/figure-gfm/kegg-2.png" width="50%" />
 
 ``` r
 cc_kegg %>% data.frame()

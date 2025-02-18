@@ -754,15 +754,15 @@ hif2a_do_holger %>% nrow()
 
 
 # HIF1a + HIF2a
-hif1a_2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Kelly.padj < 0.05 &
+hif1a_2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & (Hx.Hif1a.vs.Kelly.padj < 0.05 | Hx.Hif2a.vs.Kelly.padj < 0.05) &
                                                 Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1 &
-                                                  Hx.Hif2a.vs.Hif1a.log2FoldChange > -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 1)
+                                                  Hx.Hif2a.vs.Hif1a.log2FoldChange > -0.5 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 0.5)
 hif1a_2a_up_holger %>% nrow()
 
 # HIF1a + HIF2a
-hif1a_2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Kelly.padj < 0.05 &
+hif1a_2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & (Hx.Hif1a.vs.Kelly.padj < 0.05 | Hx.Hif2a.vs.Kelly.padj < 0.05) &
                                                 Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1 &
-                                                  Hx.Hif2a.vs.Hif1a.log2FoldChange > -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 1)
+                                                  Hx.Hif2a.vs.Hif1a.log2FoldChange > -0.5 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 0.5)
 hif1a_2a_do_holger %>% nrow()
 
 
@@ -778,8 +778,9 @@ genes_holger_list <- lapply(res_holger_list, rownames)
 genes_holger_list$HIF1a <- c(genes_holger_list$HIF1a_up, genes_holger_list$HIF1a_do)
 genes_holger_list$HIF2a <- c(genes_holger_list$HIF2a_up, genes_holger_list$HIF2a_do)
 genes_holger_list$HIF1a_HIF2a <- c(genes_holger_list$HIF1a_HIF2a_up, genes_holger_list$HIF1a_HIF2a_do)
+lapply(genes_holger_list, length)
 
-res_table_final[EPO,]
+res_table_final[EPO,] %>% kable()
 
 genes_holger <- genes_holger_list %>% unlist() %>% unique()
 EPO %in% genes_holger
@@ -851,8 +852,8 @@ plt_hs <- venn.diagram(
     cat.fontfamily = "arial")
 
 patchwork::wrap_elements(plt_hs) 
-res_holger$group %>% factor()
-res_holger[c(CA9,WT1),]
+# res_holger$group %>% factor()
+res_holger[c(CA9,WT1),] %>% kable()
 
 cluster <- ggplot(res_holger,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=group, fill=group, label=symbol)) +
   geom_hline(yintercept = 0, linewidth = 0.1) + 
@@ -929,9 +930,100 @@ cluster_1 + cluster_2 + plot_layout(guides = "collect", axes="collect", axis_tit
 write.xlsx(res_holger,"DEG_genes_Holger.xlsx")
 
 
+
 ```
 
-# Table 1: Gene List
+
+### TOP genes Holger
+```{r cluster_hs_top}
+# HIF1a
+genes_holger_hif1a <- res_holger %>% filter(group == "HIF1a")
+genes_holger_hif1a %>% colnames()
+
+genes_holger_hif1a <- genes_holger_hif1a %>% .[order(.$baseMean, decreasing = T),]
+genes_holger_hif1a$rank.bm <- seq(1:length(rownames(genes_holger_hif1a)))
+
+genes_holger_hif1a <- genes_holger_hif1a %>% .[order(abs(.$Kelly.Hx.vs.Nx.log2FoldChange), decreasing = T),]
+genes_holger_hif1a$rank.Hx <- seq(1:length(rownames(genes_holger_hif1a)))
+
+genes_holger_hif1a <- genes_holger_hif1a %>% .[order(abs(.$Hif1aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = T),]
+genes_holger_hif1a$rank.H1a <- seq(1:length(rownames(genes_holger_hif1a)))
+
+genes_holger_hif1a <- genes_holger_hif1a %>% .[order(abs(.$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange), decreasing = T),]
+genes_holger_hif1a$rank.H12 <- seq(1:length(rownames(genes_holger_hif1a)))
+
+genes_holger_hif1a$rank.sum <- genes_holger_hif1a$rank.bm + genes_holger_hif1a$rank.Hx + genes_holger_hif1a$rank.H1a + genes_holger_hif1a$rank.H12
+genes_holger_hif1a <- genes_holger_hif1a[order(genes_holger_hif1a$rank.sum),]
+
+plotCounts_SK(genes_holger_hif1a[1:9,] %>% rownames(), n= "Hif1A targets")
+
+
+# HIF2a
+genes_holger_hif2a <- res_holger %>% filter(group == "HIF2a")
+genes_holger_hif2a %>% colnames()
+
+genes_holger_hif2a <- genes_holger_hif2a %>% .[order(.$baseMean, decreasing = T),]
+genes_holger_hif2a$rank.bm <- seq(1:length(rownames(genes_holger_hif2a)))
+
+genes_holger_hif2a <- genes_holger_hif2a %>% .[order(abs(.$Kelly.Hx.vs.Nx.log2FoldChange), decreasing = T),]
+genes_holger_hif2a$rank.Hx <- seq(1:length(rownames(genes_holger_hif2a)))
+
+genes_holger_hif2a <- genes_holger_hif2a %>% .[order(abs(.$Hif2aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = T),]
+genes_holger_hif2a$rank.H2a <- seq(1:length(rownames(genes_holger_hif2a)))
+
+genes_holger_hif2a <- genes_holger_hif2a %>% .[order(abs(.$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange), decreasing = T),]
+genes_holger_hif2a$rank.H12 <- seq(1:length(rownames(genes_holger_hif2a)))
+
+genes_holger_hif2a$rank.sum <- genes_holger_hif2a$rank.bm + genes_holger_hif2a$rank.Hx + genes_holger_hif2a$rank.H2a + genes_holger_hif2a$rank.H12
+genes_holger_hif2a <- genes_holger_hif2a[order(genes_holger_hif2a$rank.sum),]
+
+plotCounts_SK(genes_holger_hif2a[1:9,] %>% rownames(), n= "Hif2a targets")
+
+
+# HIF1a_HIF2a
+genes_holger_hif1a_hif2a <- res_holger %>% filter(group == "HIF1a_HIF2a")
+genes_holger_hif1a_hif2a%>% colnames()
+
+genes_holger_hif1a_hif2a<- genes_holger_hif1a_hif2a%>% .[order(.$baseMean, decreasing = T),]
+genes_holger_hif1a_hif2a$rank.bm <- seq(1:length(rownames(genes_holger_hif1a_hif2a)))
+
+genes_holger_hif1a_hif2a <- genes_holger_hif1a_hif2a %>% .[order(abs(.$Kelly.Hx.vs.Nx.log2FoldChange), decreasing = T),]
+genes_holger_hif1a_hif2a$rank.Hx <- seq(1:length(rownames(genes_holger_hif1a_hif2a)))
+
+genes_holger_hif1a_hif2a <- genes_holger_hif1a_hif2a %>% .[order(abs(.$Hif1aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = T),]
+genes_holger_hif1a_hif2a$rank.H1a <- seq(1:length(rownames(genes_holger_hif1a_hif2a)))
+
+genes_holger_hif1a_hif2a <- genes_holger_hif1a_hif2a %>% .[order(abs(.$Hif2aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = T),]
+genes_holger_hif1a_hif2a$rank.H2a <- seq(1:length(rownames(genes_holger_hif1a_hif2a)))
+
+genes_holger_hif1a_hif2a <- genes_holger_hif1a_hif2a %>% .[order(abs(.$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange), decreasing = F),]
+genes_holger_hif1a_hif2a$rank.H12 <- seq(1:length(rownames(genes_holger_hif1a_hif2a)))
+
+genes_holger_hif1a_hif2a$rank.sum <- genes_holger_hif1a_hif2a$rank.bm + genes_holger_hif1a_hif2a$rank.Hx + genes_holger_hif1a_hif2a$rank.H1a + genes_holger_hif1a_hif2a$rank.H12 + genes_holger_hif1a_hif2a$rank.H2a
+genes_holger_hif1a_hif2a <- genes_holger_hif1a_hif2a[order(genes_holger_hif1a_hif2a$rank.sum),]
+
+plotCounts_SK(genes_holger_hif1a_hif2a[1:9,] %>% rownames(), n= "Hif1A_HIF2A targets")
+
+
+
+
+```
+
+## HIF independant
+```{r}
+
+hif_a_independant <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 &
+                                                Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
+hif1a_up_holger %>% nrow()
+
+
+
+
+
+```
+
+
+# (Table 1: Gene List)
 ```{r gene_lists, dpi=300}
 
 colnames(res_hif1a_2a_p) <- c("ENSEMBL","ENTREZ","symbol","baseMean","Kelly.Hx.Nx.L2FC","Kelly.Hx.vs.Nx.padj",
@@ -992,7 +1084,7 @@ write.xlsx(HIF1A_HIF2A_genes,"HIF1A_HIF2A_genes.xlsx")
 
 # Figure 4: Gene Set enrichment
 ## GO Analysis
-```{r, fig.height=15, fig.width=10, out.width="50%", fig.show='hold'}
+```{r go, fig.height=12, fig.width=6, out.width="50%", fig.show='hold'}
 # res_hif1a_2a %>% filter(group== "HIF1A") %>% head(n=20) %>% kable()
 res_hif1a_2a_list_ens <- list("HIF1A" = res_hif1a_2a %>% filter(group == "HIF1A") %>% .[,"ENSEMBL"],
                               "HIF2A" = res_hif1a_2a %>% filter(group == "HIF2A") %>% .[,"ENSEMBL"],
@@ -1015,9 +1107,29 @@ load(file="GO_analysis/GO_cc_groups_hs.go")
 GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
 dotplot(GO_cc_groups_BP, showCategory=10, title = "HS-groups")
 
+# Compare both
+
+load(file="GO_analysis/GO_cc_groups_both.go")
+
+GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
+dotplot(GO_cc_groups_BP, showCategory=10, title = "all-groups")
 
 
 ```
+
+
+### compare GO
+```{r go2, fig.height=12, fig.width=8, out.width="50%", fig.show='hold'}
+# Compare both
+
+load(file="GO_analysis/GO_cc_groups_both.go")
+
+GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
+dotplot(GO_cc_groups_BP, showCategory=10, title = "all-groups")
+
+
+```
+
 
 ## Cluster GO terms
 ```{r go_cluster, fig.height=12.5, fig.width=8.2, fig.show='hold'}
@@ -1051,7 +1163,7 @@ simplifyGO(GO_IDs_list[[2]], column_title = paste0("HIF2A (",length(GO_IDs_list[
 ```
 
 ## KEGG
-```{r, fig.height=8, fig.width=6, out.width="50%"}
+```{r kegg, fig.height=8, fig.width=6, out.width="50%"}
 
 res_hif1a_2a_list_ez <- list("HIF1A" = res_hif1a_2a %>% filter(group == "HIF1A") %>% .[,"ENTREZ"],
                               "HIF2A" = res_hif1a_2a %>% filter(group == "HIF2A") %>% .[,"ENTREZ"],
