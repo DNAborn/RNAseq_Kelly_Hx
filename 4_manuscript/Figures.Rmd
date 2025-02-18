@@ -731,31 +731,70 @@ hif1a_up_holger <- calculate.overlap(input_list)
 
 
 # HIF1a
-hif1a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.5 & Hx.Hif1a.vs.Kelly.padj < 0.5 & Hx.Hif2a.vs.Hif1a.padj < 0.5 &
+hif1a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
                                                 Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
 hif1a_up_holger %>% nrow()
 
-hif1a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.5 & Hx.Hif1a.vs.Kelly.padj < 0.5 & Hx.Hif2a.vs.Hif1a.padj < 0.5 &
+hif1a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
                                                 Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < -1)
 hif1a_do_holger %>% nrow()
 
 # HIF2a
-hif2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.5 & Hx.Hif2a.vs.Kelly.padj < 0.5 & Hx.Hif2a.vs.Hif1a.padj < 0.5 &
+hif2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif2a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
+                                                Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < -1)
+EPO %in% rownames(hif2a_up_holger)
+res_table_final[EPO,] %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
                                                 Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < -1)
 hif2a_up_holger %>% nrow()
 
-hif2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.5 & Hx.Hif2a.vs.Kelly.padj < 0.5 & Hx.Hif2a.vs.Hif1a.padj < 0.5 &
+hif2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif2a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05  &
                                                 Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
 hif2a_do_holger %>% nrow()
+
+
+
+# HIF1a + HIF2a
+hif1a_2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Kelly.padj < 0.05 &
+                                                Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1 &
+                                                  Hx.Hif2a.vs.Hif1a.log2FoldChange > -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 1)
+hif1a_2a_up_holger %>% nrow()
+
+# HIF1a + HIF2a
+hif1a_2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Kelly.padj < 0.05 &
+                                                Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1 &
+                                                  Hx.Hif2a.vs.Hif1a.log2FoldChange > -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 1)
+hif1a_2a_do_holger %>% nrow()
+
+
 
 res_holger_list <- list("HIF1a_up" = hif1a_up_holger,
                         "HIF1a_do" = hif1a_do_holger,
                         "HIF2a_up" = hif2a_up_holger,
-                        "HIF2a_do" = hif2a_do_holger)
+                        "HIF2a_do" = hif2a_do_holger,
+                        "HIF1a_HIF2a_up" = hif1a_2a_up_holger,
+                        "HIF1a_HIF2a_do" = hif1a_2a_do_holger)
 genes_holger_list <- lapply(res_holger_list, rownames)
 
+genes_holger_list$HIF1a <- c(genes_holger_list$HIF1a_up, genes_holger_list$HIF1a_do)
+genes_holger_list$HIF2a <- c(genes_holger_list$HIF2a_up, genes_holger_list$HIF2a_do)
+genes_holger_list$HIF1a_HIF2a <- c(genes_holger_list$HIF1a_HIF2a_up, genes_holger_list$HIF1a_HIF2a_do)
+
+res_table_final[EPO,]
+
+genes_holger <- genes_holger_list %>% unlist() %>% unique()
+EPO %in% genes_holger
+
+res_holger <- res_table_final[genes_holger,]
+
+res_holger$group <- ifelse(rownames(res_holger) %in% genes_holger_list$HIF1a,"HIF1a",
+                           ifelse(rownames(res_holger) %in% genes_holger_list$HIF2a,"HIF2a",
+                                  ifelse(rownames(res_holger) %in% genes_holger_list$HIF1a_HIF2a,"HIF1a_HIF2a","not_holger")))
+
+
+
+
 # Venn
-input_list <- genes_holger_list
+input_list <- genes_holger_list[1:4]
 plt_hs <- venn.diagram(
     x = input_list,
     fill = colors[c(2,7,3,5)],
@@ -771,13 +810,6 @@ plt_hs <- venn.diagram(
 
 patchwork::wrap_elements(plt_hs) 
 
-genes_holger <- genes_holger_list %>% unlist() %>% unique()
-
-res_holger <- res_table_final[genes_holger,]
-res_holger$holger <- ifelse(rownames(res_holger) %in% genes_holger_list$HIF1a_up,"HIF1a_up",
-                           ifelse(rownames(res_holger) %in% genes_holger_list$HIF1a_do,"HIF1a_do",
-                                  ifelse(rownames(res_holger) %in% genes_holger_list$HIF2a_up,"HIF2a_up",
-                                         ifelse(rownames(res_holger) %in% genes_holger_list$HIF2a_do,"HIF2a_do","not_holger"))))
                                   
 # Compare Holger with interaction (Simon)
 
@@ -819,20 +851,19 @@ plt_hs <- venn.diagram(
     cat.fontfamily = "arial")
 
 patchwork::wrap_elements(plt_hs) 
-
+res_holger$group %>% factor()
 res_holger[c(CA9,WT1),]
 
-
-cluster <- ggplot(res_holger,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=holger, fill=holger, label=symbol)) +
+cluster <- ggplot(res_holger,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=group, fill=group, label=symbol)) +
   geom_hline(yintercept = 0, linewidth = 0.1) + 
   geom_vline(xintercept = 0, linewidth = 0.1) +
   # geom_abline(intercept=c(1,-1)) +
   # geom_abline(slope=c(-1), intercept = 1) +
   # annotate("segment", x = c(0,1), y = c(1,0), xend = c(-10,11), yend = c(21,-5),color="black") +
   geom_point(size=1, stroke=0.5, shape=21) +
-  scale_color_manual(values=colors[c(3:6)]) +
+  scale_color_manual(values=colors[c(4,2,6)]) +
   # scale_shape_manual(values = c(21,16)) + 
-  scale_fill_manual(values=alpha(colors[c(3:6)],0.2)) +
+  scale_fill_manual(values=alpha(colors[c(4,2,6)],0.2)) +
   geom_point(data=res_holger[c(CA9,EPO),],fill="red",color="red",size=2) +
   geom_text_repel(data=res_holger[c(CA9,EPO),],color="red") +
 
@@ -849,16 +880,16 @@ cluster
 
 
 # HIF1A
-cluster_1 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif1a.Hx.vs.Nx.log2FoldChange, color=holger, fill=holger, label=symbol)) +
+cluster_1 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif1a.Hx.vs.Nx.log2FoldChange, color=group, fill=group, label=symbol)) +
   geom_hline(yintercept = 0, linewidth = 0.1) + 
   geom_vline(xintercept = 0, linewidth = 0.1) +
   # geom_abline(intercept=c(1,-1)) +
   # geom_abline(slope=c(-1), intercept = 1) +
   # annotate("segment", x = c(0,1), y = c(1,0), xend = c(-10,11), yend = c(21,-5),color="black") +
   geom_point(size=1, stroke=0.5, shape=21) +
-  scale_color_manual(values=colors[c(3:6)]) +
+  scale_color_manual(values=colors[c(4,2,6)]) +
   # scale_shape_manual(values = c(21,16)) + 
-  scale_fill_manual(values=alpha(colors[c(3:6)],0.2)) +
+  scale_fill_manual(values=alpha(colors[c(4,2,6)],0.2)) +
   geom_point(data=res_holger[c(CA9,EPO),],fill="red",color="red",size=2) +
   geom_text_repel(data=res_holger[c(CA9,EPO),],color="red") +
 
@@ -871,16 +902,16 @@ cluster_1 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif1a.Hx.v
   coord_cartesian(xlim = c(-10, 20),ylim = c(-10,20))
 
 # HIF2A
-cluster_2 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif2a.Hx.vs.Nx.log2FoldChange, color=holger, fill=holger, label=symbol)) +
+cluster_2 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif2a.Hx.vs.Nx.log2FoldChange, color=group, fill=group, label=symbol)) +
   geom_hline(yintercept = 0, linewidth = 0.1) + 
   geom_vline(xintercept = 0, linewidth = 0.1) +
   # geom_abline(intercept=c(1,-1)) +
   # geom_abline(slope=c(-1), intercept = 1) +
   # annotate("segment", x = c(0,1), y = c(1,0), xend = c(-10,11), yend = c(21,-5),color="black") +
   geom_point(size=1, stroke=0.5, shape=21) +
-  scale_color_manual(values=colors[c(3:6)]) +
+  scale_color_manual(values=colors[c(4,2,6)]) +
   # scale_shape_manual(values = c(21,16)) + 
-  scale_fill_manual(values=alpha(colors[c(3:6)],0.2)) +
+  scale_fill_manual(values=alpha(colors[c(4,2,6)],0.2)) +
   geom_point(data=res_holger[c(CA9,EPO),],fill="red",color="red",size=2) +
   geom_text_repel(data=res_holger[c(CA9,EPO),],color="red") +
 
@@ -961,8 +992,8 @@ write.xlsx(HIF1A_HIF2A_genes,"HIF1A_HIF2A_genes.xlsx")
 
 # Figure 4: Gene Set enrichment
 ## GO Analysis
-```{r, fig.height=8, fig.width=6, out.width="50%"}
-res_hif1a_2a %>% filter(group== "HIF1A") %>% head(n=20) %>% kable()
+```{r, fig.height=15, fig.width=10, out.width="50%", fig.show='hold'}
+# res_hif1a_2a %>% filter(group== "HIF1A") %>% head(n=20) %>% kable()
 res_hif1a_2a_list_ens <- list("HIF1A" = res_hif1a_2a %>% filter(group == "HIF1A") %>% .[,"ENSEMBL"],
                               "HIF2A" = res_hif1a_2a %>% filter(group == "HIF2A") %>% .[,"ENSEMBL"],
                               "both" = res_hif1a_2a %>% filter(group == "HIF1A_HIF2A") %>% .[,"ENSEMBL"])
@@ -974,22 +1005,46 @@ res_hif1a_2a_list_ez <- list("HIF1A" = res_hif1a_2a %>% filter(group == "HIF1A")
 load(file="GO_analysis/GO_cc_groups.go")
 
 GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
-dotplot(GO_cc_groups_BP, showCategory=12)
+dotplot(GO_cc_groups_BP, showCategory=12, title = "SK-groups")
+
+
+# Holger
+
+load(file="GO_analysis/GO_cc_groups_hs.go")
+
+GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
+dotplot(GO_cc_groups_BP, showCategory=10, title = "HS-groups")
+
+
 
 ```
 
 ## Cluster GO terms
-```{r go_cluster, fig.height=12.5, fig.width=8.2}
+```{r go_cluster, fig.height=12.5, fig.width=8.2, fig.show='hold'}
 
 # Search for clusters
+load(file="GO_analysis/GO_cc_groups.go")
+GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
 GO_IDs_list <- split(GO_cc_groups_BP@compareClusterResult,f=GO_cc_groups_BP@compareClusterResult$Cluster) %>% lapply('[',,"ID")
 names(GO_IDs_list)
 
 # simplifyGOFromMultipleLists(GO_IDs_list[1:2])
-
 simplifyGO(GO_IDs_list[[1]], column_title = paste0("HIF1A (",length(GO_IDs_list[[1]])," GO terms)"))
-
 simplifyGO(GO_IDs_list[[2]], column_title = paste0("HIF2A (",length(GO_IDs_list[[2]])," GO terms)"))
+
+
+
+# Holger
+
+# Search for clusters
+load(file="GO_analysis/GO_cc_groups_hs.go")
+GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
+GO_IDs_list <- split(GO_cc_groups_BP@compareClusterResult,f=GO_cc_groups_BP@compareClusterResult$Cluster) %>% lapply('[',,"ID")
+names(GO_IDs_list)
+
+simplifyGO(GO_IDs_list[[1]], column_title = paste0("HIF1A (",length(GO_IDs_list[[1]])," GO terms) -HS"))
+simplifyGO(GO_IDs_list[[2]], column_title = paste0("HIF2A (",length(GO_IDs_list[[2]])," GO terms) -HS"))
+
 
 
 
@@ -997,18 +1052,46 @@ simplifyGO(GO_IDs_list[[2]], column_title = paste0("HIF2A (",length(GO_IDs_list[
 
 ## KEGG
 ```{r, fig.height=8, fig.width=6, out.width="50%"}
+
+res_hif1a_2a_list_ez <- list("HIF1A" = res_hif1a_2a %>% filter(group == "HIF1A") %>% .[,"ENTREZ"],
+                              "HIF2A" = res_hif1a_2a %>% filter(group == "HIF2A") %>% .[,"ENTREZ"],
+                              "both" = res_hif1a_2a %>% filter(group == "HIF1A_HIF2A") %>% .[,"ENTREZ"])
+
 cc_kegg <- compareCluster(geneCluster = res_hif1a_2a_list_ez[1:2],
                           fun = "enrichKEGG",
                           organism     = 'hsa',
                           pvalueCutoff = 0.05)
 
-dotplot(cc_kegg, showCategory=12)
+dotplot(cc_kegg, showCategory=12, title = "SK")
 cc_kegg %>% data.frame()
 
 pathview(gene.data  = res_hif1a_2a_list_ez[[1]],
                      pathway.id = "hsa04115",
                      species    = "hsa")
 # ,limit      = list(gene=max(abs(cc_kegg)), cpd=1)
+
+
+
+# Holger
+genes_holger_list_ez <- list("HIF1A" = res_holger %>% filter(group == "HIF1a") %>% .[,"ENTREZ"],
+                              "HIF2A" = res_holger %>% filter(group == "HIF2a") %>% .[,"ENTREZ"],
+                              "both" = res_holger %>% filter(group == "HIF1a_HIF2a") %>% .[,"ENTREZ"])
+
+cc_kegg <- compareCluster(geneCluster = genes_holger_list_ez[1:2],
+                          fun = "enrichKEGG",
+                          organism     = 'hsa',
+                          pvalueCutoff = 0.05)
+
+dotplot(cc_kegg, showCategory=12, title = "HS")
+cc_kegg %>% data.frame()
+
+pathview(gene.data  = genes_holger_list_ez[[1]],
+                     pathway.id = "hsa04115",
+                     species    = "hsa")
+# ,limit      = list(gene=max(abs(cc_kegg)), cpd=1)
+
+
+
 
 ```
 

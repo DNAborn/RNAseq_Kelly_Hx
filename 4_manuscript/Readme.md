@@ -871,47 +871,158 @@ hif1a_up_holger <- calculate.overlap(input_list)
 
 
 # HIF1a
-hif1a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.5 & Hx.Hif1a.vs.Kelly.padj < 0.5 & Hx.Hif2a.vs.Hif1a.padj < 0.5 &
+hif1a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
                                                 Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
 hif1a_up_holger %>% nrow()
 ```
 
-    ## [1] 449
+    ## [1] 411
 
 ``` r
-hif1a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.5 & Hx.Hif1a.vs.Kelly.padj < 0.5 & Hx.Hif2a.vs.Hif1a.padj < 0.5 &
+hif1a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
                                                 Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < -1)
 hif1a_do_holger %>% nrow()
 ```
 
-    ## [1] 72
+    ## [1] 55
 
 ``` r
 # HIF2a
-hif2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.5 & Hx.Hif2a.vs.Kelly.padj < 0.5 & Hx.Hif2a.vs.Hif1a.padj < 0.5 &
+hif2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif2a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
                                                 Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < -1)
+EPO %in% rownames(hif2a_up_holger)
+```
+
+    ## [1] TRUE
+
+``` r
+res_table_final[EPO,] %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
+                                                Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < -1)
+```
+
+    ##  [1] ENSEMBL                               ENTREZ                               
+    ##  [3] symbol                                baseMean                             
+    ##  [5] Kelly.Hx.vs.Nx.log2FoldChange         Kelly.Hx.vs.Nx.padj                  
+    ##  [7] Hif1a.Hx.vs.Nx.log2FoldChange         Hif1a.Hx.vs.Nx.padj                  
+    ##  [9] Hif2a.Hx.vs.Nx.log2FoldChange         Hif2a.Hx.vs.Nx.padj                  
+    ## [11] Hx.Hif1a.vs.Kelly.log2FoldChange      Hx.Hif1a.vs.Kelly.padj               
+    ## [13] Hx.Hif2a.vs.Kelly.log2FoldChange      Hx.Hif2a.vs.Kelly.padj               
+    ## [15] Hx.Hif1b.vs.Kelly.log2FoldChange      Hx.Hif1b.vs.Kelly.padj               
+    ## [17] Hx.Hif2a.vs.Hif1a.log2FoldChange      Hx.Hif2a.vs.Hif1a.padj               
+    ## [19] Hx.Hif1b.vs.Hif1a.log2FoldChange      Hx.Hif1b.vs.Hif1a.padj               
+    ## [21] Hx.Hif1b.vs.Hif2a.log2FoldChange      Hx.Hif1b.vs.Hif2a.padj               
+    ## [23] Hif1aHxNx.vs.KellyHxNx.log2FoldChange Hif1aHxNx.vs.KellyHxNx.padj          
+    ## [25] Hif2aHxNx.vs.KellyHxNx.log2FoldChange Hif2aHxNx.vs.KellyHxNx.padj          
+    ## [27] Hif1bHxNx.vs.KellyHxNx.log2FoldChange Hif1bHxNx.vs.KellyHxNx.padj          
+    ## [29] Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange Hif2aHxNx.vs.Hif1aHxNx.padj          
+    ## <0 Zeilen> (oder row.names mit Länge 0)
+
+``` r
 hif2a_up_holger %>% nrow()
 ```
 
-    ## [1] 1478
+    ## [1] 1413
 
 ``` r
-hif2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.5 & Hx.Hif2a.vs.Kelly.padj < 0.5 & Hx.Hif2a.vs.Hif1a.padj < 0.5 &
+hif2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif2a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05  &
                                                 Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
 hif2a_do_holger %>% nrow()
 ```
 
-    ## [1] 484
+    ## [1] 466
+
+``` r
+# HIF1a + HIF2a
+hif1a_2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Kelly.padj < 0.05 &
+                                                Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1 &
+                                                  Hx.Hif2a.vs.Hif1a.log2FoldChange > -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 1)
+hif1a_2a_up_holger %>% nrow()
+```
+
+    ## [1] 36
+
+``` r
+# HIF1a + HIF2a
+hif1a_2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Kelly.padj < 0.05 &
+                                                Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1 &
+                                                  Hx.Hif2a.vs.Hif1a.log2FoldChange > -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 1)
+hif1a_2a_do_holger %>% nrow()
+```
+
+    ## [1] 30
 
 ``` r
 res_holger_list <- list("HIF1a_up" = hif1a_up_holger,
                         "HIF1a_do" = hif1a_do_holger,
                         "HIF2a_up" = hif2a_up_holger,
-                        "HIF2a_do" = hif2a_do_holger)
+                        "HIF2a_do" = hif2a_do_holger,
+                        "HIF1a_HIF2a_up" = hif1a_2a_up_holger,
+                        "HIF1a_HIF2a_do" = hif1a_2a_do_holger)
 genes_holger_list <- lapply(res_holger_list, rownames)
 
+genes_holger_list$HIF1a <- c(genes_holger_list$HIF1a_up, genes_holger_list$HIF1a_do)
+genes_holger_list$HIF2a <- c(genes_holger_list$HIF2a_up, genes_holger_list$HIF2a_do)
+genes_holger_list$HIF1a_HIF2a <- c(genes_holger_list$HIF1a_HIF2a_up, genes_holger_list$HIF1a_HIF2a_do)
+
+res_table_final[EPO,]
+```
+
+    ##                         ENSEMBL ENTREZ symbol baseMean
+    ## ENSG00000130427 ENSG00000130427   2056    EPO 3453.431
+    ##                 Kelly.Hx.vs.Nx.log2FoldChange Kelly.Hx.vs.Nx.padj
+    ## ENSG00000130427                      12.38712       6.334112e-171
+    ##                 Hif1a.Hx.vs.Nx.log2FoldChange Hif1a.Hx.vs.Nx.padj
+    ## ENSG00000130427                      12.06163       3.130233e-113
+    ##                 Hif2a.Hx.vs.Nx.log2FoldChange Hif2a.Hx.vs.Nx.padj
+    ## ENSG00000130427                      6.411525        1.247505e-17
+    ##                 Hx.Hif1a.vs.Kelly.log2FoldChange Hx.Hif1a.vs.Kelly.padj
+    ## ENSG00000130427                        0.7538427              0.1387593
+    ##                 Hx.Hif2a.vs.Kelly.log2FoldChange Hx.Hif2a.vs.Kelly.padj
+    ## ENSG00000130427                        -7.373195           1.654654e-67
+    ##                 Hx.Hif1b.vs.Kelly.log2FoldChange Hx.Hif1b.vs.Kelly.padj
+    ## ENSG00000130427                        -9.807846           2.199741e-84
+    ##                 Hx.Hif2a.vs.Hif1a.log2FoldChange Hx.Hif2a.vs.Hif1a.padj
+    ## ENSG00000130427                        -8.127037           1.569534e-63
+    ##                 Hx.Hif1b.vs.Hif1a.log2FoldChange Hx.Hif1b.vs.Hif1a.padj
+    ## ENSG00000130427                        -10.56169            4.24063e-81
+    ##                 Hx.Hif1b.vs.Hif2a.log2FoldChange Hx.Hif1b.vs.Hif2a.padj
+    ## ENSG00000130427                        -2.434651            2.61554e-05
+    ##                 Hif1aHxNx.vs.KellyHxNx.log2FoldChange
+    ## ENSG00000130427                            -0.3254896
+    ##                 Hif1aHxNx.vs.KellyHxNx.padj
+    ## ENSG00000130427                    0.842581
+    ##                 Hif2aHxNx.vs.KellyHxNx.log2FoldChange
+    ## ENSG00000130427                             -5.975598
+    ##                 Hif2aHxNx.vs.KellyHxNx.padj
+    ## ENSG00000130427                4.374558e-11
+    ##                 Hif1bHxNx.vs.KellyHxNx.log2FoldChange
+    ## ENSG00000130427                             -9.179111
+    ##                 Hif1bHxNx.vs.KellyHxNx.padj
+    ## ENSG00000130427                9.077866e-26
+    ##                 Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange
+    ## ENSG00000130427                             -5.650108
+    ##                 Hif2aHxNx.vs.Hif1aHxNx.padj
+    ## ENSG00000130427                2.849805e-09
+
+``` r
+genes_holger <- genes_holger_list %>% unlist() %>% unique()
+EPO %in% genes_holger
+```
+
+    ## [1] TRUE
+
+``` r
+res_holger <- res_table_final[genes_holger,]
+
+res_holger$group <- ifelse(rownames(res_holger) %in% genes_holger_list$HIF1a,"HIF1a",
+                           ifelse(rownames(res_holger) %in% genes_holger_list$HIF2a,"HIF2a",
+                                  ifelse(rownames(res_holger) %in% genes_holger_list$HIF1a_HIF2a,"HIF1a_HIF2a","not_holger")))
+
+
+
+
 # Venn
-input_list <- genes_holger_list
+input_list <- genes_holger_list[1:4]
 plt_hs <- venn.diagram(
     x = input_list,
     fill = colors[c(2,7,3,5)],
@@ -931,14 +1042,6 @@ patchwork::wrap_elements(plt_hs)
 ![](Readme_files/figure-gfm/cluster_holger-1.png)<!-- -->
 
 ``` r
-genes_holger <- genes_holger_list %>% unlist() %>% unique()
-
-res_holger <- res_table_final[genes_holger,]
-res_holger$holger <- ifelse(rownames(res_holger) %in% genes_holger_list$HIF1a_up,"HIF1a_up",
-                           ifelse(rownames(res_holger) %in% genes_holger_list$HIF1a_do,"HIF1a_do",
-                                  ifelse(rownames(res_holger) %in% genes_holger_list$HIF2a_up,"HIF2a_up",
-                                         ifelse(rownames(res_holger) %in% genes_holger_list$HIF2a_do,"HIF2a_do","not_holger"))))
-                                  
 # Compare Holger with interaction (Simon)
 
 input_list <- list(Holger = genes_holger,
@@ -986,6 +1089,414 @@ patchwork::wrap_elements(plt_hs)
 ```
 
 ![](Readme_files/figure-gfm/cluster_holger-3.png)<!-- -->
+
+``` r
+res_holger$group %>% factor()
+```
+
+    ##    [1] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##    [7] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [13] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [19] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [25] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [31] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [37] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [43] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [49] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [55] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [61] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [67] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [73] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [79] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [85] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [91] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##   [97] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [103] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [109] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [115] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [121] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [127] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [133] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [139] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [145] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [151] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [157] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [163] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [169] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [175] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [181] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [187] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [193] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [199] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [205] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [211] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [217] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [223] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [229] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [235] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [241] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [247] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [253] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [259] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [265] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [271] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [277] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [283] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [289] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [295] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [301] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [307] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [313] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [319] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [325] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [331] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [337] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [343] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [349] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [355] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [361] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [367] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [373] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [379] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [385] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [391] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [397] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [403] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [409] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [415] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [421] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [427] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [433] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [439] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [445] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [451] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [457] HIF1a       HIF1a       HIF1a       HIF1a       HIF1a       HIF1a      
+    ##  [463] HIF1a       HIF1a       HIF1a       HIF1a       HIF2a       HIF2a      
+    ##  [469] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [475] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [481] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [487] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [493] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [499] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [505] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [511] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [517] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [523] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [529] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [535] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [541] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [547] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [553] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [559] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [565] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [571] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [577] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [583] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [589] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [595] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [601] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [607] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [613] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [619] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [625] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [631] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [637] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [643] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [649] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [655] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [661] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [667] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [673] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [679] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [685] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [691] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [697] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [703] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [709] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [715] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [721] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [727] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [733] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [739] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [745] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [751] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [757] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [763] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [769] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [775] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [781] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [787] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [793] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [799] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [805] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [811] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [817] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [823] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [829] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [835] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [841] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [847] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [853] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [859] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [865] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [871] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [877] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [883] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [889] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [895] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [901] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [907] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [913] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [919] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [925] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [931] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [937] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [943] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [949] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [955] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [961] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [967] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [973] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [979] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [985] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [991] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ##  [997] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1003] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1009] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1015] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1021] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1027] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1033] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1039] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1045] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1051] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1057] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1063] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1069] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1075] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1081] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1087] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1093] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1099] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1105] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1111] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1117] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1123] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1129] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1135] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1141] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1147] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1153] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1159] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1165] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1171] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1177] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1183] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1189] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1195] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1201] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1207] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1213] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1219] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1225] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1231] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1237] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1243] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1249] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1255] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1261] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1267] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1273] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1279] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1285] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1291] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1297] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1303] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1309] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1315] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1321] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1327] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1333] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1339] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1345] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1351] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1357] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1363] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1369] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1375] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1381] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1387] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1393] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1399] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1405] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1411] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1417] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1423] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1429] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1435] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1441] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1447] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1453] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1459] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1465] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1471] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1477] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1483] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1489] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1495] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1501] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1507] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1513] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1519] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1525] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1531] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1537] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1543] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1549] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1555] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1561] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1567] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1573] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1579] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1585] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1591] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1597] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1603] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1609] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1615] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1621] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1627] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1633] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1639] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1645] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1651] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1657] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1663] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1669] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1675] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1681] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1687] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1693] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1699] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1705] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1711] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1717] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1723] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1729] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1735] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1741] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1747] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1753] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1759] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1765] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1771] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1777] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1783] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1789] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1795] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1801] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1807] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1813] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1819] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1825] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1831] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1837] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1843] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1849] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1855] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1861] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1867] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1873] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1879] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1885] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1891] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1897] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1903] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1909] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1915] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1921] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1927] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1933] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1939] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1945] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1951] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1957] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1963] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1969] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1975] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1981] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1987] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1993] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [1999] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2005] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2011] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2017] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2023] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2029] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2035] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2041] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2047] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2053] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2059] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2065] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2071] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2077] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2083] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2089] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2095] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2101] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2107] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2113] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2119] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2125] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2131] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2137] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2143] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2149] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2155] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2161] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2167] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2173] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2179] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2185] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2191] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2197] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2203] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2209] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2215] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2221] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2227] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2233] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2239] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2245] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2251] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2257] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2263] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2269] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2275] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2281] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2287] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2293] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2299] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2305] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2311] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2317] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2323] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2329] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2335] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF2a      
+    ## [2341] HIF2a       HIF2a       HIF2a       HIF2a       HIF2a       HIF1a_HIF2a
+    ## [2347] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
+    ## [2353] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
+    ## [2359] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
+    ## [2365] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
+    ## [2371] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
+    ## [2377] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
+    ## [2383] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
+    ## [2389] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
+    ## [2395] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
+    ## [2401] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
+    ## [2407] HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a HIF1a_HIF2a
+    ## Levels: HIF1a HIF1a_HIF2a HIF2a
 
 ``` r
 res_holger[c(CA9,WT1),]
@@ -1042,21 +1553,21 @@ res_holger[c(CA9,WT1),]
     ##                 Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange
     ## ENSG00000107159                              7.544765
     ## ENSG00000184937                              2.505985
-    ##                 Hif2aHxNx.vs.Hif1aHxNx.padj   holger
-    ## ENSG00000107159                1.058525e-24 HIF1a_up
-    ## ENSG00000184937                1.329956e-02 HIF2a_up
+    ##                 Hif2aHxNx.vs.Hif1aHxNx.padj group
+    ## ENSG00000107159                1.058525e-24 HIF1a
+    ## ENSG00000184937                1.329956e-02 HIF2a
 
 ``` r
-cluster <- ggplot(res_holger,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=holger, fill=holger, label=symbol)) +
+cluster <- ggplot(res_holger,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2aHxNx.vs.KellyHxNx.log2FoldChange, color=group, fill=group, label=symbol)) +
   geom_hline(yintercept = 0, linewidth = 0.1) + 
   geom_vline(xintercept = 0, linewidth = 0.1) +
   # geom_abline(intercept=c(1,-1)) +
   # geom_abline(slope=c(-1), intercept = 1) +
   # annotate("segment", x = c(0,1), y = c(1,0), xend = c(-10,11), yend = c(21,-5),color="black") +
   geom_point(size=1, stroke=0.5, shape=21) +
-  scale_color_manual(values=colors[c(3:6)]) +
+  scale_color_manual(values=colors[c(4,2,6)]) +
   # scale_shape_manual(values = c(21,16)) + 
-  scale_fill_manual(values=alpha(colors[c(3:6)],0.2)) +
+  scale_fill_manual(values=alpha(colors[c(4,2,6)],0.2)) +
   geom_point(data=res_holger[c(CA9,EPO),],fill="red",color="red",size=2) +
   geom_text_repel(data=res_holger[c(CA9,EPO),],color="red") +
 
@@ -1075,16 +1586,16 @@ cluster
 
 ``` r
 # HIF1A
-cluster_1 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif1a.Hx.vs.Nx.log2FoldChange, color=holger, fill=holger, label=symbol)) +
+cluster_1 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif1a.Hx.vs.Nx.log2FoldChange, color=group, fill=group, label=symbol)) +
   geom_hline(yintercept = 0, linewidth = 0.1) + 
   geom_vline(xintercept = 0, linewidth = 0.1) +
   # geom_abline(intercept=c(1,-1)) +
   # geom_abline(slope=c(-1), intercept = 1) +
   # annotate("segment", x = c(0,1), y = c(1,0), xend = c(-10,11), yend = c(21,-5),color="black") +
   geom_point(size=1, stroke=0.5, shape=21) +
-  scale_color_manual(values=colors[c(3:6)]) +
+  scale_color_manual(values=colors[c(4,2,6)]) +
   # scale_shape_manual(values = c(21,16)) + 
-  scale_fill_manual(values=alpha(colors[c(3:6)],0.2)) +
+  scale_fill_manual(values=alpha(colors[c(4,2,6)],0.2)) +
   geom_point(data=res_holger[c(CA9,EPO),],fill="red",color="red",size=2) +
   geom_text_repel(data=res_holger[c(CA9,EPO),],color="red") +
 
@@ -1097,16 +1608,16 @@ cluster_1 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif1a.Hx.v
   coord_cartesian(xlim = c(-10, 20),ylim = c(-10,20))
 
 # HIF2A
-cluster_2 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif2a.Hx.vs.Nx.log2FoldChange, color=holger, fill=holger, label=symbol)) +
+cluster_2 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif2a.Hx.vs.Nx.log2FoldChange, color=group, fill=group, label=symbol)) +
   geom_hline(yintercept = 0, linewidth = 0.1) + 
   geom_vline(xintercept = 0, linewidth = 0.1) +
   # geom_abline(intercept=c(1,-1)) +
   # geom_abline(slope=c(-1), intercept = 1) +
   # annotate("segment", x = c(0,1), y = c(1,0), xend = c(-10,11), yend = c(21,-5),color="black") +
   geom_point(size=1, stroke=0.5, shape=21) +
-  scale_color_manual(values=colors[c(3:6)]) +
+  scale_color_manual(values=colors[c(4,2,6)]) +
   # scale_shape_manual(values = c(21,16)) + 
-  scale_fill_manual(values=alpha(colors[c(3:6)],0.2)) +
+  scale_fill_manual(values=alpha(colors[c(4,2,6)],0.2)) +
   geom_point(data=res_holger[c(CA9,EPO),],fill="red",color="red",size=2) +
   geom_text_repel(data=res_holger[c(CA9,EPO),],color="red") +
 
@@ -1408,33 +1919,7 @@ write.xlsx(HIF1A_HIF2A_genes,"HIF1A_HIF2A_genes.xlsx")
 ## GO Analysis
 
 ``` r
-res_hif1a_2a %>% filter(group== "HIF1A") %>% head(n=20) %>% kable()
-```
-
-|  | ENSEMBL | ENTREZ | symbol | baseMean | Kelly.Hx.vs.Nx.log2FoldChange | Kelly.Hx.vs.Nx.padj | Hif1a.Hx.vs.Nx.log2FoldChange | Hif1a.Hx.vs.Nx.padj | Hif2a.Hx.vs.Nx.log2FoldChange | Hif2a.Hx.vs.Nx.padj | Hx.Hif1a.vs.Kelly.log2FoldChange | Hx.Hif1a.vs.Kelly.padj | Hx.Hif2a.vs.Kelly.log2FoldChange | Hx.Hif2a.vs.Kelly.padj | Hx.Hif1b.vs.Kelly.log2FoldChange | Hx.Hif1b.vs.Kelly.padj | Hx.Hif2a.vs.Hif1a.log2FoldChange | Hx.Hif2a.vs.Hif1a.padj | Hx.Hif1b.vs.Hif1a.log2FoldChange | Hx.Hif1b.vs.Hif1a.padj | Hx.Hif1b.vs.Hif2a.log2FoldChange | Hx.Hif1b.vs.Hif2a.padj | Hif1aHxNx.vs.KellyHxNx.log2FoldChange | Hif1aHxNx.vs.KellyHxNx.padj | Hif2aHxNx.vs.KellyHxNx.log2FoldChange | Hif2aHxNx.vs.KellyHxNx.padj | Hif1bHxNx.vs.KellyHxNx.log2FoldChange | Hif1bHxNx.vs.KellyHxNx.padj | Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange | Hif2aHxNx.vs.Hif1aHxNx.padj | top | venn | group |
-|:---|:---|---:|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|:---|:---|:---|
-| ENSG00000170525 | ENSG00000170525 | 5209 | PFKFB3 | 8312.9632 | 5.8234937 | 0.0000000 | 0.2920504 | 0.2227293 | 6.4294748 | 0.0000000 | -6.1935877 | 0.0000000 | 1.4318506 | 0.0000000 | 1.2113209 | 0.0000000 | 7.625438 | 0.0e+00 | 7.4049086 | 0.0000000 | -0.2205298 | 0.3992513 | -5.531443 | 0 | 0.6059811 | 0.0560612 | 1.6216771 | 0.0000000 | 6.137424 | 0.0000000 | top | HIF1A | HIF1A |
-| ENSG00000107159 | ENSG00000107159 | 768 | CA9 | 3017.8336 | 10.7042616 | 0.0000000 | 3.9105760 | 0.0000000 | 11.4553409 | 0.0000000 | -7.4408576 | 0.0000000 | 1.1087861 | 0.0078707 | -0.7033098 | 0.1197611 | 8.549644 | 0.0e+00 | 6.7375477 | 0.0000000 | -1.8120959 | 0.0002506 | -6.793686 | 0 | 0.7510793 | 0.3494878 | -1.2066128 | 0.0957458 | 7.544765 | 0.0000000 | top | HIF1A | HIF1A |
-| ENSG00000114023 | ENSG00000114023 | 26355 | FAM162A | 12808.1207 | 2.6749198 | 0.0000000 | -1.0871282 | 0.0000000 | 4.1525578 | 0.0000000 | -4.2446613 | 0.0000000 | 1.0345773 | 0.0000000 | 0.3056867 | 0.0491277 | 5.279239 | 0.0e+00 | 4.5503480 | 0.0000000 | -0.7288906 | 0.0000204 | -3.762048 | 0 | 1.4776380 | 0.0000000 | 0.4415823 | 0.0460083 | 5.239686 | 0.0000000 | top | overlap | HIF1A |
-| ENSG00000176171 | ENSG00000176171 | 664 | BNIP3 | 21434.7075 | 3.1965388 | 0.0000000 | -0.3905581 | 0.0021865 | 4.0130817 | 0.0000000 | -4.2265138 | 0.0000000 | 0.4672074 | 0.0000369 | -0.4555875 | 0.0001873 | 4.693721 | 0.0e+00 | 3.7709263 | 0.0000000 | -0.9227950 | 0.0000000 | -3.587097 | 0 | 0.8165428 | 0.0000005 | -0.0984268 | 0.6234311 | 4.403640 | 0.0000000 | top | HIF1A | HIF1A |
-| ENSG00000228709 | ENSG00000228709 | NA | LINC02575 | 8376.0391 | 9.9795584 | 0.0000000 | 3.7018407 | 0.0000009 | 9.7110362 | 0.0000000 | -8.7587499 | 0.0000000 | 4.0220388 | 0.0000000 | -4.8015951 | 0.0000000 | 12.780789 | 0.0e+00 | 3.9571549 | 0.0000000 | -8.8236338 | 0.0000000 | -6.277718 | 0 | -0.2685222 | 0.7878092 | -2.8390173 | 0.0014617 | 6.009195 | 0.0000000 | top | HIF1A | HIF1A |
-| ENSG00000074800 | ENSG00000074800 | 2023 | ENO1 | 193555.7703 | 1.2878157 | 0.0000000 | -1.6300196 | 0.0000000 | 2.3330043 | 0.0000000 | -3.4082409 | 0.0000000 | 0.5705810 | 0.0008783 | 1.1559790 | 0.0000000 | 3.978822 | 0.0e+00 | 4.5642198 | 0.0000000 | 0.5853980 | 0.0050676 | -2.917835 | 0 | 1.0451886 | 0.0000209 | 1.0149729 | 0.0000614 | 3.963024 | 0.0000000 | top | overlap | HIF1A |
-| ENSG00000159208 | ENSG00000159208 | 148523 | CIART | 2103.7130 | 2.8415121 | 0.0000000 | -0.0961627 | 0.5848455 | 3.8535705 | 0.0000000 | -4.0992651 | 0.0000000 | 0.5895662 | 0.0000236 | -0.0026863 | 0.9879072 | 4.688831 | 0.0e+00 | 4.0965788 | 0.0000000 | -0.5922525 | 0.0005180 | -2.937675 | 0 | 1.0120583 | 0.0000005 | -0.0590673 | 0.8220711 | 3.949733 | 0.0000000 | top | overlap | HIF1A |
-| ENSG00000163536 | ENSG00000163536 | 5274 | SERPINI1 | 881.7979 | 0.4841107 | 0.0208196 | 4.6362397 | 0.0000000 | -0.0677924 | 0.8578828 | -0.7263036 | 0.0098832 | -3.6638728 | 0.0000000 | -3.6191121 | 0.0000000 | -2.937569 | 0.0e+00 | -2.8928085 | 0.0000000 | 0.0447608 | 0.9078642 | 4.152129 | 0 | -0.5519030 | 0.2093907 | -1.6422193 | 0.0000270 | -4.704032 | 0.0000000 | top | HIF1A | HIF1A |
-| ENSG00000101204 | ENSG00000101204 | 1137 | CHRNA4 | 1808.3600 | 11.2833363 | 0.0000000 | 3.8747023 | 0.0000279 | 12.2045196 | 0.0000000 | -7.3444197 | 0.0000000 | 2.6745689 | 0.0001096 | -4.1004183 | 0.0000000 | 10.018989 | 0.0e+00 | 3.2440014 | 0.0001080 | -6.7749871 | 0.0000000 | -7.408634 | 0 | 0.9211833 | 0.5222658 | -2.5145505 | 0.0809627 | 8.329817 | 0.0000000 | top | HIF1A | HIF1A |
-| ENSG00000102144 | ENSG00000102144 | 5230 | PGK1 | 69853.4717 | 2.3595632 | 0.0000000 | 0.1341692 | 0.4241579 | 2.9941319 | 0.0000000 | -2.6841624 | 0.0000000 | 0.2112843 | 0.1650188 | 0.1184220 | 0.4643847 | 2.895447 | 0.0e+00 | 2.8025844 | 0.0000000 | -0.0928623 | 0.6275370 | -2.225394 | 0 | 0.6345687 | 0.0025437 | 0.1551542 | 0.5212432 | 2.859963 | 0.0000000 | top | HIF1A | HIF1A |
-| ENSG00000079739 | ENSG00000079739 | 5236 | PGM1 | 6602.8118 | 1.2982488 | 0.0000000 | -1.1518298 | 0.0000000 | 2.2307331 | 0.0000000 | -2.9568551 | 0.0000000 | 0.4832487 | 0.0080323 | 0.3298568 | 0.0935903 | 3.440104 | 0.0e+00 | 3.2867119 | 0.0000000 | -0.1533918 | 0.5198935 | -2.450079 | 0 | 0.9324843 | 0.0003620 | 0.4075537 | 0.1536669 | 3.382563 | 0.0000000 | top | HIF1A | HIF1A |
-| ENSG00000163516 | ENSG00000163516 | 55139 | ANKZF1 | 4282.9780 | 3.0398887 | 0.0000000 | 0.6596566 | 0.0000669 | 2.8478554 | 0.0000000 | -2.4526108 | 0.0000000 | -0.0401365 | 0.8321146 | -1.7238214 | 0.0000000 | 2.412474 | 0.0e+00 | 0.7287894 | 0.0000411 | -1.6836850 | 0.0000000 | -2.380232 | 0 | -0.1920333 | 0.4795841 | -1.6634039 | 0.0000000 | 2.188199 | 0.0000000 | top | HIF1A | HIF1A |
-| ENSG00000100314 | ENSG00000100314 | 164633 | CABP7 | 2092.2854 | 8.1923082 | 0.0000000 | 4.9574998 | 0.0000000 | 9.3811748 | 0.0000000 | -3.0954011 | 0.0000000 | 1.6788687 | 0.0000000 | -0.9608474 | 0.0006839 | 4.774270 | 0.0e+00 | 2.1345537 | 0.0000000 | -2.6397161 | 0.0000000 | -3.234808 | 0 | 1.1888666 | 0.0060813 | -1.2450997 | 0.0047254 | 4.423675 | 0.0000000 | top | overlap | HIF1A |
-| ENSG00000165802 | ENSG00000165802 | 26012 | NSMF | 12663.1695 | 0.8783827 | 0.0000000 | -1.2842273 | 0.0000000 | 2.3874643 | 0.0000000 | -2.3745478 | 0.0000000 | 1.2421445 | 0.0000000 | -0.1194328 | 0.4977046 | 3.616692 | 0.0e+00 | 2.2551151 | 0.0000000 | -1.3615773 | 0.0000000 | -2.162610 | 0 | 1.5090817 | 0.0000000 | -0.3505130 | 0.1519806 | 3.671692 | 0.0000000 | top | overlap | HIF1A |
-| ENSG00000123095 | ENSG00000123095 | 79365 | BHLHE41 | 591.4573 | 4.7658766 | 0.0000000 | 1.0268082 | 0.0005643 | 7.4469315 | 0.0000000 | -4.1307491 | 0.0000000 | 1.6313180 | 0.0000000 | -2.3192420 | 0.0000000 | 5.762067 | 0.0e+00 | 1.8115071 | 0.0000000 | -3.9505600 | 0.0000000 | -3.739069 | 0 | 2.6810549 | 0.0000000 | -1.8971434 | 0.0000012 | 6.420123 | 0.0000000 | top | overlap | HIF1A |
-| ENSG00000186352 | ENSG00000186352 | 353322 | ANKRD37 | 742.5260 | 2.6555190 | 0.0000000 | 5.6608158 | 0.0000000 | 2.9944297 | 0.0000000 | 1.3732365 | 0.0000000 | -0.0121956 | 0.9522004 | -0.0900940 | 0.6192484 | -1.385432 | 0.0e+00 | -1.4633305 | 0.0000000 | -0.0778984 | 0.7153409 | 3.005297 | 0 | 0.3389107 | 0.2002079 | 0.0346447 | 0.9081232 | -2.666386 | 0.0000000 | top | HIF1A | HIF1A |
-| ENSG00000085563 | ENSG00000085563 | 5243 | ABCB1 | 1046.0696 | -1.9274408 | 0.0000000 | 0.9676360 | 0.0002242 | -2.0925485 | 0.0000000 | -1.5443859 | 0.0000000 | 0.4128375 | 0.0932497 | -0.3813185 | 0.1399479 | 1.957223 | 0.0e+00 | 1.1630674 | 0.0000279 | -0.7941560 | 0.0052787 | 2.895077 | 0 | -0.1651077 | 0.7173453 | 0.3719400 | 0.3326388 | -3.060185 | 0.0000000 | top | HIF1A | HIF1A |
-| ENSG00000261992 | ENSG00000261992 | 57459 | GATAD2B | 453.5022 | 0.2414106 | 0.9269869 | -26.5376503 | 0.0000000 | 20.4094194 | 0.0000000 | -29.6636303 | 0.0000000 | -4.5962392 | 0.1474990 | 2.5566519 | 0.4489840 | 25.067391 | 0.0e+00 | 32.2202822 | 0.0000000 | 7.1528911 | 0.0520575 | -26.779061 | 0 | 20.1680088 | 0.0000026 | -0.1024105 | 0.9860468 | 46.947070 | 0.0000000 | top | overlap | HIF1A |
-| ENSG00000114480 | ENSG00000114480 | 2632 | GBE1 | 3845.3543 | 2.9488275 | 0.0000000 | 0.9458202 | 0.0000000 | 3.8232133 | 0.0000000 | -1.9687288 | 0.0000000 | 0.6076741 | 0.0000375 | -1.3941489 | 0.0000000 | 2.576403 | 0.0e+00 | 0.5745799 | 0.0012319 | -2.0018230 | 0.0000000 | -2.003007 | 0 | 0.8743858 | 0.0000495 | -1.3279561 | 0.0000000 | 2.877393 | 0.0000000 | top | HIF1A | HIF1A |
-| ENSG00000278718 | ENSG00000278718 | 79792 | GSDMD | 364.5132 | 9.9927998 | 0.0000000 | 5.1654055 | 0.0000000 | 7.3256811 | 0.0000000 | -4.5789624 | 0.0000000 | -2.9159244 | 0.0000000 | -10.1215100 | 0.0000000 | 1.663038 | 4.1e-06 | -5.5425476 | 0.0000000 | -7.2055856 | 0.0000000 | -4.827394 | 0 | -2.6671188 | 0.0001387 | -9.0627826 | 0.0000000 | 2.160276 | 0.0049857 | top | overlap | HIF1A |
-
-``` r
+# res_hif1a_2a %>% filter(group== "HIF1A") %>% head(n=20) %>% kable()
 res_hif1a_2a_list_ens <- list("HIF1A" = res_hif1a_2a %>% filter(group == "HIF1A") %>% .[,"ENSEMBL"],
                               "HIF2A" = res_hif1a_2a %>% filter(group == "HIF2A") %>% .[,"ENSEMBL"],
                               "both" = res_hif1a_2a %>% filter(group == "HIF1A_HIF2A") %>% .[,"ENSEMBL"])
@@ -1446,15 +1931,25 @@ res_hif1a_2a_list_ez <- list("HIF1A" = res_hif1a_2a %>% filter(group == "HIF1A")
 load(file="GO_analysis/GO_cc_groups.go")
 
 GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
-dotplot(GO_cc_groups_BP, showCategory=12)
+dotplot(GO_cc_groups_BP, showCategory=12, title = "SK-groups")
+
+
+# Holger
+
+load(file="GO_analysis/GO_cc_groups_hs.go")
+
+GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
+dotplot(GO_cc_groups_BP, showCategory=10, title = "HS-groups")
 ```
 
-<img src="Readme_files/figure-gfm/unnamed-chunk-2-1.png" width="50%" />
+<img src="Readme_files/figure-gfm/unnamed-chunk-2-1.png" width="50%" /><img src="Readme_files/figure-gfm/unnamed-chunk-2-2.png" width="50%" />
 
 ## Cluster GO terms
 
 ``` r
 # Search for clusters
+load(file="GO_analysis/GO_cc_groups.go")
+GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
 GO_IDs_list <- split(GO_cc_groups_BP@compareClusterResult,f=GO_cc_groups_BP@compareClusterResult$Cluster) %>% lapply('[',,"ID")
 names(GO_IDs_list)
 ```
@@ -1463,27 +1958,42 @@ names(GO_IDs_list)
 
 ``` r
 # simplifyGOFromMultipleLists(GO_IDs_list[1:2])
-
 simplifyGO(GO_IDs_list[[1]], column_title = paste0("HIF1A (",length(GO_IDs_list[[1]])," GO terms)"))
+simplifyGO(GO_IDs_list[[2]], column_title = paste0("HIF2A (",length(GO_IDs_list[[2]])," GO terms)"))
+
+
+
+# Holger
+
+# Search for clusters
+load(file="GO_analysis/GO_cc_groups_hs.go")
+GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
+GO_IDs_list <- split(GO_cc_groups_BP@compareClusterResult,f=GO_cc_groups_BP@compareClusterResult$Cluster) %>% lapply('[',,"ID")
+names(GO_IDs_list)
 ```
 
-![](Readme_files/figure-gfm/go_cluster-1.png)<!-- -->
+    ## [1] "HIF1a"       "HIF2a"       "HIF1a_HIF2a"
 
 ``` r
-simplifyGO(GO_IDs_list[[2]], column_title = paste0("HIF2A (",length(GO_IDs_list[[2]])," GO terms)"))
+simplifyGO(GO_IDs_list[[1]], column_title = paste0("HIF1A (",length(GO_IDs_list[[1]])," GO terms) -HS"))
+simplifyGO(GO_IDs_list[[2]], column_title = paste0("HIF2A (",length(GO_IDs_list[[2]])," GO terms) -HS"))
 ```
 
-![](Readme_files/figure-gfm/go_cluster-2.png)<!-- -->
+![](Readme_files/figure-gfm/go_cluster-1.png)![](Readme_files/figure-gfm/go_cluster-2.png)![](Readme_files/figure-gfm/go_cluster-3.png)![](Readme_files/figure-gfm/go_cluster-4.png)
 
 ## KEGG
 
 ``` r
+res_hif1a_2a_list_ez <- list("HIF1A" = res_hif1a_2a %>% filter(group == "HIF1A") %>% .[,"ENTREZ"],
+                              "HIF2A" = res_hif1a_2a %>% filter(group == "HIF2A") %>% .[,"ENTREZ"],
+                              "both" = res_hif1a_2a %>% filter(group == "HIF1A_HIF2A") %>% .[,"ENTREZ"])
+
 cc_kegg <- compareCluster(geneCluster = res_hif1a_2a_list_ez[1:2],
                           fun = "enrichKEGG",
                           organism     = 'hsa',
                           pvalueCutoff = 0.05)
 
-dotplot(cc_kegg, showCategory=12)
+dotplot(cc_kegg, showCategory=12, title = "SK")
 ```
 
 <img src="Readme_files/figure-gfm/unnamed-chunk-3-1.png" width="50%" />
@@ -1663,6 +2173,94 @@ cc_kegg %>% data.frame()
 
 ``` r
 pathview(gene.data  = res_hif1a_2a_list_ez[[1]],
+                     pathway.id = "hsa04115",
+                     species    = "hsa")
+# ,limit      = list(gene=max(abs(cc_kegg)), cpd=1)
+
+
+
+# Holger
+genes_holger_list_ez <- list("HIF1A" = res_holger %>% filter(group == "HIF1a") %>% .[,"ENTREZ"],
+                              "HIF2A" = res_holger %>% filter(group == "HIF2a") %>% .[,"ENTREZ"],
+                              "both" = res_holger %>% filter(group == "HIF1a_HIF2a") %>% .[,"ENTREZ"])
+
+cc_kegg <- compareCluster(geneCluster = genes_holger_list_ez[1:2],
+                          fun = "enrichKEGG",
+                          organism     = 'hsa',
+                          pvalueCutoff = 0.05)
+
+dotplot(cc_kegg, showCategory=12, title = "HS")
+```
+
+<img src="Readme_files/figure-gfm/unnamed-chunk-3-2.png" width="50%" />
+
+``` r
+cc_kegg %>% data.frame()
+```
+
+    ##   Cluster                             category
+    ## 1   HIF1A                       Human Diseases
+    ## 2   HIF1A Environmental Information Processing
+    ## 3   HIF1A                           Metabolism
+    ## 4   HIF1A                           Metabolism
+    ## 5   HIF2A                       Human Diseases
+    ## 6   HIF2A Environmental Information Processing
+    ## 7   HIF2A                       Human Diseases
+    ## 8   HIF2A       Genetic Information Processing
+    ## 9   HIF2A Environmental Information Processing
+    ##                           subcategory       ID
+    ## 1              Cardiovascular disease hsa05416
+    ## 2 Signaling molecules and interaction hsa04080
+    ## 3             Carbohydrate metabolism hsa00010
+    ## 4             Carbohydrate metabolism hsa00500
+    ## 5                Substance dependence hsa05034
+    ## 6 Signaling molecules and interaction hsa04080
+    ## 7                      Immune disease hsa05322
+    ## 8              Replication and repair hsa03440
+    ## 9                 Signal transduction hsa04024
+    ##                               Description GeneRatio  BgRatio RichFactor
+    ## 1                       Viral myocarditis     9/147  70/8541 0.12857143
+    ## 2 Neuroactive ligand-receptor interaction    18/147 370/8541 0.04864865
+    ## 3            Glycolysis / Gluconeogenesis     7/147  67/8541 0.10447761
+    ## 4           Starch and sucrose metabolism     5/147  40/8541 0.12500000
+    ## 5                              Alcoholism    35/539 188/8541 0.18617021
+    ## 6 Neuroactive ligand-receptor interaction    44/539 370/8541 0.11891892
+    ## 7            Systemic lupus erythematosus    22/539 141/8541 0.15602837
+    ## 8                Homologous recombination    10/539  41/8541 0.24390244
+    ## 9                  cAMP signaling pathway    28/539 226/8541 0.12389381
+    ##   FoldEnrichment   zScore       pvalue     p.adjust       qvalue
+    ## 1       7.470262 7.192944 2.759926e-06 6.789417e-04 6.013733e-04
+    ## 2       2.826586 4.753423 6.133518e-05 7.544227e-03 6.682307e-03
+    ## 3       6.070362 5.513601 1.422075e-04 1.166102e-02 1.032876e-02
+    ## 4       7.262755 5.253679 5.713313e-04 3.513688e-02 3.112252e-02
+    ## 5       2.950055 7.016631 4.977553e-09 1.587839e-06 1.535182e-06
+    ## 6       1.884391 4.513686 3.042372e-05 4.852583e-03 4.691658e-03
+    ## 7       2.472427 4.575387 6.636378e-05 7.056682e-03 6.822663e-03
+    ## 8       3.864881 4.772139 1.739205e-04 1.387016e-02 1.341018e-02
+    ## 9       1.963223 3.808674 4.411108e-04 2.814287e-02 2.720957e-02
+    ##                                                                                                                                                                                                                       geneID
+    ## 1                                                                                                                                                                               6640/1837/3689/6641/3119/3908/3107/3106/3133
+    ## 2                                                                                                                                1137/84634/2892/1144/2555/3361/624/136/255061/1132/2903/155/5032/1815/2831/283869/5618/5029
+    ## 3                                                                                                                                                                                          2023/5236/5230/230/7167/2026/2821
+    ## 4                                                                                                                                                                                                   5837/5236/2997/2632/2821
+    ## 5                                      6570/84699/4129/135/1392/4915/3017/8365/6571/94235/2788/8347/64764/8349/399694/54331/8329/85236/554313/8362/8339/8348/8353/8367/3012/8360/8343/8336/8357/8358/8337/84254/4852/814/627
+    ## 6 6915/2696/1906/4986/4923/551/2692/6869/2834/1135/5737/5732/2832/135/2847/56923/122042/4922/1081/1910/9568/6751/8973/1392/2911/6750/3360/3354/6870/5028/147/8862/59350/146/2837/11255/4985/4852/150/1909/134/1138/2894/2558
+    ## 7                                                                                                             730/6737/3017/8365/8347/8349/8329/85236/721/554313/8362/8339/8348/8353/8367/3012/8360/8343/8336/8357/8358/8337
+    ## 8                                                                                                                                                                          57804/672/5888/8438/7517/83990/675/79184/7516/641
+    ## 9                                                                                 2696/84699/1906/2737/11149/10846/5732/6662/135/482/4772/1081/9568/6751/55811/5295/1392/7074/6750/491/3360/3354/64764/4852/1909/814/134/627
+    ##   Count
+    ## 1     9
+    ## 2    18
+    ## 3     7
+    ## 4     5
+    ## 5    35
+    ## 6    44
+    ## 7    22
+    ## 8    10
+    ## 9    28
+
+``` r
+pathview(gene.data  = genes_holger_list_ez[[1]],
                      pathway.id = "hsa04115",
                      species    = "hsa")
 # ,limit      = list(gene=max(abs(cc_kegg)), cpd=1)
