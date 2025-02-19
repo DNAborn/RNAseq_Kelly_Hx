@@ -1132,7 +1132,7 @@ dotplot(GO_cc_groups_BP, showCategory=10, title = "all-groups")
 
 
 ## Cluster GO terms
-```{r go_cluster, fig.height=12.5, fig.width=8.2, fig.show='hold'}
+```{r go_cluster, fig.height=12.5, fig.width=8.2, fig.show='hold', out.width="50%"}
 
 # Search for clusters
 load(file="GO_analysis/GO_cc_groups.go")

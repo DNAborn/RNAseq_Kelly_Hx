@@ -20,7 +20,8 @@ Kelterborn
 - [Figure 3: Gene Cluster](#figure-3-gene-cluster)
   - [Gene Cluster](#gene-cluster)
   - [Cluster Holger](#cluster-holger)
-- [Table 1: Gene List](#table-1-gene-list)
+  - [HIF independant](#hif-independant)
+- [(Table 1: Gene List)](#table-1-gene-list)
 - [Figure 4: Gene Set enrichment](#figure-4-gene-set-enrichment)
   - [GO Analysis](#go-analysis)
   - [Cluster GO terms](#cluster-go-terms)
@@ -933,23 +934,23 @@ hif2a_do_holger %>% nrow()
 
 ``` r
 # HIF1a + HIF2a
-hif1a_2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Kelly.padj < 0.05 &
+hif1a_2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & (Hx.Hif1a.vs.Kelly.padj < 0.05 | Hx.Hif2a.vs.Kelly.padj < 0.05) &
                                                 Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1 &
-                                                  Hx.Hif2a.vs.Hif1a.log2FoldChange > -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 1)
+                                                  Hx.Hif2a.vs.Hif1a.log2FoldChange > -0.5 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 0.5)
 hif1a_2a_up_holger %>% nrow()
 ```
 
-    ## [1] 36
+    ## [1] 29
 
 ``` r
 # HIF1a + HIF2a
-hif1a_2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Kelly.padj < 0.05 &
+hif1a_2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & (Hx.Hif1a.vs.Kelly.padj < 0.05 | Hx.Hif2a.vs.Kelly.padj < 0.05) &
                                                 Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1 &
-                                                  Hx.Hif2a.vs.Hif1a.log2FoldChange > -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 1)
+                                                  Hx.Hif2a.vs.Hif1a.log2FoldChange > -0.5 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 0.5)
 hif1a_2a_do_holger %>% nrow()
 ```
 
-    ## [1] 30
+    ## [1] 16
 
 ``` r
 res_holger_list <- list("HIF1a_up" = hif1a_up_holger,
@@ -979,10 +980,10 @@ lapply(genes_holger_list, length)
     ## [1] 466
     ## 
     ## $HIF1a_HIF2a_up
-    ## [1] 36
+    ## [1] 29
     ## 
     ## $HIF1a_HIF2a_do
-    ## [1] 30
+    ## [1] 16
     ## 
     ## $HIF1a
     ## [1] 466
@@ -991,7 +992,7 @@ lapply(genes_holger_list, length)
     ## [1] 1879
     ## 
     ## $HIF1a_HIF2a
-    ## [1] 66
+    ## [1] 45
 
 ``` r
 res_table_final[EPO,] %>% kable()
@@ -1355,12 +1356,22 @@ genes_holger_hif1a_hif2a$rank.H12 <- seq(1:length(rownames(genes_holger_hif1a_hi
 genes_holger_hif1a_hif2a$rank.sum <- genes_holger_hif1a_hif2a$rank.bm + genes_holger_hif1a_hif2a$rank.Hx + genes_holger_hif1a_hif2a$rank.H1a + genes_holger_hif1a_hif2a$rank.H12 + genes_holger_hif1a_hif2a$rank.H2a
 genes_holger_hif1a_hif2a <- genes_holger_hif1a_hif2a[order(genes_holger_hif1a_hif2a$rank.sum),]
 
-plotCounts_SK(genes_holger_hif1a_hif2a[1:9,] %>% rownames(), n= "Hif1A targets")
+plotCounts_SK(genes_holger_hif1a_hif2a[1:9,] %>% rownames(), n= "Hif1A_HIF2A targets")
 ```
 
 ![](Readme_files/figure-gfm/cluster_hs_top-3.png)<!-- -->
 
-# Table 1: Gene List
+## HIF independant
+
+``` r
+hif_a_independant <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 &
+                                                Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
+hif1a_up_holger %>% nrow()
+```
+
+    ## [1] 411
+
+# (Table 1: Gene List)
 
 ``` r
 colnames(res_hif1a_2a_p) <- c("ENSEMBL","ENTREZ","symbol","baseMean","Kelly.Hx.Nx.L2FC","Kelly.Hx.vs.Nx.padj",
@@ -1721,7 +1732,7 @@ simplifyGO(GO_IDs_list[[1]], column_title = paste0("HIF1A (",length(GO_IDs_list[
 simplifyGO(GO_IDs_list[[2]], column_title = paste0("HIF2A (",length(GO_IDs_list[[2]])," GO terms) -HS"))
 ```
 
-![](Readme_files/figure-gfm/go_cluster-1.png)![](Readme_files/figure-gfm/go_cluster-2.png)![](Readme_files/figure-gfm/go_cluster-3.png)![](Readme_files/figure-gfm/go_cluster-4.png)
+<img src="Readme_files/figure-gfm/go_cluster-1.png" width="50%" /><img src="Readme_files/figure-gfm/go_cluster-2.png" width="50%" /><img src="Readme_files/figure-gfm/go_cluster-3.png" width="50%" /><img src="Readme_files/figure-gfm/go_cluster-4.png" width="50%" />
 
 ## KEGG
 
