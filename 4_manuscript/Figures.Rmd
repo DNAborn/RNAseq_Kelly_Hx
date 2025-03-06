@@ -328,7 +328,7 @@ pca10
 ```
 
 # Example Counts
-```{r example counts}
+```{r example counts, fig.show='hold', out.width="33%"}
 
 # HIF1A: EPO, VEGF, HO-1, ADM, and Glut-1
 EPO <- subset(res_shrink_list[["Kelly.Hx.vs.Nx"]],symbol=="EPO")$ENSEMBL
