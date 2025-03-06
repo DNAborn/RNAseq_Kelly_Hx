@@ -308,21 +308,11 @@ EPO <- subset(res_shrink_list[["Kelly.Hx.vs.Nx"]],symbol=="EPO")$ENSEMBL
 
 
 plotCounts_anno(CA9)
-```
-
-![](Readme_files/figure-gfm/example%20counts-1.png)<!-- -->
-
-``` r
 plotCounts_anno(WT1)
-```
-
-![](Readme_files/figure-gfm/example%20counts-2.png)<!-- -->
-
-``` r
 plotCounts_anno(EPO)
 ```
 
-![](Readme_files/figure-gfm/example%20counts-3.png)<!-- -->
+<img src="Readme_files/figure-gfm/example counts-1.png" width="33%" /><img src="Readme_files/figure-gfm/example counts-2.png" width="33%" /><img src="Readme_files/figure-gfm/example counts-3.png" width="33%" />
 
 # Figure 2: Differential expressed genes
 
@@ -1392,7 +1382,7 @@ Hx.Hif2a.vs.Hif1a_up <- res_table_final %>% filter(Hx.Hif2a.vs.Hif1a.padj < 0.05
 # Hif1a up
 input_list <- list("Hypoxic up" = KellyHx.vs.Nx_up,
                   "Hif1a down" = Hif1aHx.vs.KellyHx_up,
-                  "Hif2a > Hif1a" = Hx.Hif2a.vs.Hif1a_do)
+                  "Hif2a up" = Hx.Hif2a.vs.Hif1a_do)
 venn_h1_up <- venn.diagram(
     x = input_list,
     fill = colors[c(2,3,5)],
@@ -1409,8 +1399,8 @@ patchwork::wrap_elements(venn_h1_up)
 
 # Hif1a do
 input_list <- list("Hypoxic down" = KellyHx.vs.Nx_do,
-                  "Hif1aHx.vs.KellyHx" = Hif1aHx.vs.KellyHx_do,
-                  "Hx.Hif2a.vs.Hif1a" = Hx.Hif2a.vs.Hif1a_up)
+                  "Hif1a up" = Hif1aHx.vs.KellyHx_do,
+                  "Hif2a down" = Hx.Hif2a.vs.Hif1a_up)
 venn_h1_do <- venn.diagram(
     x = input_list,
     fill = colors[c(2,3,5)],
@@ -1427,12 +1417,12 @@ patchwork::wrap_elements(venn_h1_do)
 
 
 # Hif2a up
-input_list <- list("KellyHx.vs.Nx" = KellyHx.vs.Nx_up,
-                  "Hif2aHx.vs.KellyHx" = Hif2aHx.vs.KellyHx_up,
-                  "Hx.Hif2a.vs.Hif1a" = Hx.Hif2a.vs.Hif1a_up)
+input_list <- list("Hypoxic up" = KellyHx.vs.Nx_up,
+                  "Hif2a down" = Hif2aHx.vs.KellyHx_up,
+                  "Hif1a up" = Hx.Hif2a.vs.Hif1a_up)
 venn_h2_up <- venn.diagram(
     x = input_list,
-    fill = colors[c(2,3,5)],
+    fill = colors[c(2,5,3)],
     main.fontface = "bold",
     fontfamily ="Arial",
     category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
@@ -1444,13 +1434,14 @@ venn_h2_up <- venn.diagram(
     cat.fontfamily = "arial")
 patchwork::wrap_elements(venn_h2_up)
 
+
 # Hif2a do
-input_list <- list("KellyHx.vs.Nx" = KellyHx.vs.Nx_do,
-                  "Hif2aHx.vs.KellyHx" = Hif2aHx.vs.KellyHx_do,
-                  "Hx.Hif2a.vs.Hif1a" = Hx.Hif2a.vs.Hif1a_do)
+input_list <- list("Hypoxic down" = KellyHx.vs.Nx_do,
+                  "Hif2a up" = Hif2aHx.vs.KellyHx_do,
+                  "Hif1a down" = Hx.Hif2a.vs.Hif1a_do)
 venn_h2_do <- venn.diagram(
     x = input_list,
-    fill = colors[c(2,3,5)],
+    fill = colors[c(2,5,3)],
     main.fontface = "bold",
     fontfamily ="Arial",
     category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
