@@ -1,6 +1,8 @@
 ---
 title: "R functions"
 output: html_notebook
+editor_options: 
+  chunk_output_type: console
 ---
 
 # Colors
@@ -122,7 +124,7 @@ patchwork::wrap_plots(plotCounts_SK_list,ncol = 3) +
 ```
 
 ```{r counts_anno}
-
+goi <- "ENSG00000107159"
 plotCounts_anno <- function(goi){
 d <- plotCounts(dds, gene=goi, intgroup=c("condition","experiment","genotype","treatment"), returnData=TRUE)
 box <- ggplot(d, aes(x = condition, y = count, fill=treatment, color=treatment)) +

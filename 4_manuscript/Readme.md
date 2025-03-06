@@ -945,12 +945,12 @@ hif1a_2a_up_holger %>% nrow()
 ``` r
 # HIF1a + HIF2a
 hif1a_2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & (Hx.Hif1a.vs.Kelly.padj < 0.05 | Hx.Hif2a.vs.Kelly.padj < 0.05) &
-                                                Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1 # & Hx.Hif2a.vs.Hif1a.log2FoldChange > -0.5 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 0.5
+                                                Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 1
                                                   )
 hif1a_2a_do_holger %>% nrow()
 ```
 
-    ## [1] 48
+    ## [1] 33
 
 ``` r
 res_holger_list <- list("HIF1a_up" = hif1a_up_holger,
@@ -983,7 +983,7 @@ lapply(genes_holger_list, length)
     ## [1] 71
     ## 
     ## $HIF1a_HIF2a_do
-    ## [1] 48
+    ## [1] 33
     ## 
     ## $HIF1a
     ## [1] 466
@@ -992,7 +992,7 @@ lapply(genes_holger_list, length)
     ## [1] 1879
     ## 
     ## $HIF1a_HIF2a
-    ## [1] 119
+    ## [1] 104
 
 ``` r
 res_table_final[EPO,] %>% kable()
@@ -1016,6 +1016,12 @@ res_holger$group <- ifelse(rownames(res_holger) %in% genes_holger_list$HIF1a,"HI
                            ifelse(rownames(res_holger) %in% genes_holger_list$HIF2a,"HIF2a",
                                   ifelse(rownames(res_holger) %in% genes_holger_list$HIF1a_HIF2a,"HIF1a_HIF2a","not_holger")))
 
+subset(res_holger, group == "HIF1a_HIF2a") %>% nrow()
+```
+
+    ## [1] 81
+
+``` r
 # Venn 4
 input_list <- genes_holger_list[c(1,4,2,3)]
 plt_hs <- venn.diagram(
@@ -1032,11 +1038,7 @@ plt_hs <- venn.diagram(
     cat.fontfamily = "arial")
 
 patchwork::wrap_elements(plt_hs)
-```
 
-![](Readme_files/figure-gfm/cluster_holger-1.png)<!-- -->
-
-``` r
 # Venn 3
 input_list <- genes_holger_list[c(7:9)]
 plt_hs <- venn.diagram(
@@ -1053,11 +1055,8 @@ plt_hs <- venn.diagram(
     cat.fontfamily = "arial")
 
 patchwork::wrap_elements(plt_hs) 
-```
 
-![](Readme_files/figure-gfm/cluster_holger-2.png)<!-- -->
 
-``` r
 # Compare Holger with interaction (Simon)
 
 input_list <- list(Holger = genes_holger,
@@ -1076,11 +1075,7 @@ plt_hs <- venn.diagram(
     cat.fontfamily = "arial")
 
 patchwork::wrap_elements(plt_hs) 
-```
 
-![](Readme_files/figure-gfm/cluster_holger-3.png)<!-- -->
-
-``` r
 # Hif1a
 input_list <- list(Holger_HIF1a_up = rownames(hif1a_up_holger),
                    Interaction_HIF1A = rownames(res_hif1a_2a[res_hif1a_2a$group=="HIF1A",]),
@@ -1102,11 +1097,6 @@ plt_hs <- venn.diagram(
     cat.fontfamily = "arial")
 
 patchwork::wrap_elements(plt_hs) 
-```
-
-![](Readme_files/figure-gfm/cluster_holger-4.png)<!-- -->
-
-``` r
 # res_holger$group %>% factor()
 res_holger[c(CA9,WT1),] %>% kable()
 ```
@@ -1139,11 +1129,9 @@ cluster <- ggplot(res_holger,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2
   coord_cartesian(xlim = c(-10, 10),ylim = c(-10,10))
 
 cluster
-```
 
-![](Readme_files/figure-gfm/cluster_holger-5.png)<!-- -->
 
-``` r
+
 # HIF1A
 cluster_1 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif1a.Hx.vs.Nx.log2FoldChange, color=group, fill=group, label=symbol)) +
   geom_hline(yintercept = 0, linewidth = 0.1) + 
@@ -1189,13 +1177,12 @@ cluster_2 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif2a.Hx.v
   coord_cartesian(xlim = c(-10, 20),ylim = c(-10,20))
 
 cluster_1 + cluster_2 + plot_layout(guides = "collect", axes="collect", axis_titles="collect")
-```
 
-![](Readme_files/figure-gfm/cluster_holger-6.png)<!-- -->
 
-``` r
 write.xlsx(res_holger,"DEG_genes_Holger.xlsx")
 ```
+
+<img src="Readme_files/figure-gfm/cluster_holger-1.png" width="50%" /><img src="Readme_files/figure-gfm/cluster_holger-2.png" width="50%" /><img src="Readme_files/figure-gfm/cluster_holger-3.png" width="50%" /><img src="Readme_files/figure-gfm/cluster_holger-4.png" width="50%" /><img src="Readme_files/figure-gfm/cluster_holger-5.png" width="50%" /><img src="Readme_files/figure-gfm/cluster_holger-6.png" width="50%" />
 
 ### TOP genes Holger
 
@@ -1254,11 +1241,6 @@ genes_holger_hif1a$rank.sum <- genes_holger_hif1a$rank.bm + genes_holger_hif1a$r
 genes_holger_hif1a <- genes_holger_hif1a[order(genes_holger_hif1a$rank.sum),]
 
 plotCounts_SK(genes_holger_hif1a[1:9,] %>% rownames(), n= "Hif1A targets")
-```
-
-![](Readme_files/figure-gfm/cluster_hs_top-1.png)<!-- -->
-
-``` r
 write.xlsx(genes_holger_hif1a,"HIF1A_genes.xlsx")
 
 # HIF2a
@@ -1315,11 +1297,6 @@ genes_holger_hif2a$rank.sum <- genes_holger_hif2a$rank.bm + genes_holger_hif2a$r
 genes_holger_hif2a <- genes_holger_hif2a[order(genes_holger_hif2a$rank.sum),]
 
 plotCounts_SK(genes_holger_hif2a[1:9,] %>% rownames(), n= "Hif2a targets")
-```
-
-![](Readme_files/figure-gfm/cluster_hs_top-2.png)<!-- -->
-
-``` r
 write.xlsx(genes_holger_hif2a,"HIF2A_genes.xlsx")
 
 # HIF1a_HIF2a
@@ -1379,13 +1356,10 @@ genes_holger_hif1a_hif2a$rank.sum <- genes_holger_hif1a_hif2a$rank.bm + genes_ho
 genes_holger_hif1a_hif2a <- genes_holger_hif1a_hif2a[order(genes_holger_hif1a_hif2a$rank.sum),]
 
 plotCounts_SK(genes_holger_hif1a_hif2a[1:9,] %>% rownames(), n= "Hif1A_HIF2A targets")
-```
-
-![](Readme_files/figure-gfm/cluster_hs_top-3.png)<!-- -->
-
-``` r
 write.xlsx(genes_holger_hif1a_hif2a,"HIF1A_HIF2A_genes.xlsx")
 ```
+
+<img src="Readme_files/figure-gfm/cluster_hs_top-1.png" width="50%" /><img src="Readme_files/figure-gfm/cluster_hs_top-2.png" width="50%" /><img src="Readme_files/figure-gfm/cluster_hs_top-3.png" width="50%" />
 
 ### Venn
 
@@ -1398,14 +1372,28 @@ hif1a_up_holger %>% nrow()
     ## [1] 411
 
 ``` r
-KellyHx.vs.Nx <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Kelly.Hx.vs.Nx.log2FoldChange > 1) %>% rownames()
-Hif1aHx.vs.KellyHx <- res_table_final %>% filter(Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1) %>% rownames()
-Hx.Hif2a.vs.Hif1a <- res_table_final %>% filter(Hx.Hif2a.vs.Hif1a.padj < 0.05 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1) %>% rownames()
+# Hx
+KellyHx.vs.Nx_up <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Kelly.Hx.vs.Nx.log2FoldChange > 1) %>% rownames()
+KellyHx.vs.Nx_do <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Kelly.Hx.vs.Nx.log2FoldChange < -1) %>% rownames()
 
-input_list <- list("KellyHx.vs.Nx" = KellyHx.vs.Nx,
-                  "Hif1aHx.vs.KellyHx" = Hif1aHx.vs.KellyHx,
-                  "Hx.Hif2a.vs.Hif1a" = Hx.Hif2a.vs.Hif1a)
-plt1 <- venn.diagram(
+# HIF1a
+Hif1aHx.vs.KellyHx_up <- res_table_final %>% filter(Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1) %>% rownames()
+Hif1aHx.vs.KellyHx_do <- res_table_final %>% filter(Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1) %>% rownames()
+
+# HIF2a
+Hif2aHx.vs.KellyHx_up <- res_table_final %>% filter(Hx.Hif2a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1) %>% rownames()
+Hif2aHx.vs.KellyHx_do <- res_table_final %>% filter(Hx.Hif2a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1) %>% rownames()
+
+# Hif1a vs. Hif2a
+Hx.Hif2a.vs.Hif1a_do <- res_table_final %>% filter(Hx.Hif2a.vs.Hif1a.padj < 0.05 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1) %>% rownames()
+Hx.Hif2a.vs.Hif1a_up <- res_table_final %>% filter(Hx.Hif2a.vs.Hif1a.padj < 0.05 & Hx.Hif2a.vs.Hif1a.log2FoldChange < -1) %>% rownames()
+
+
+# Hif1a up
+input_list <- list("Hypoxic up" = KellyHx.vs.Nx_up,
+                  "Hif1a down" = Hif1aHx.vs.KellyHx_up,
+                  "Hif2a > Hif1a" = Hx.Hif2a.vs.Hif1a_do)
+venn_h1_up <- venn.diagram(
     x = input_list,
     fill = colors[c(2,3,5)],
     main.fontface = "bold",
@@ -1417,7 +1405,67 @@ plt1 <- venn.diagram(
     lty = 'blank',
     cat.fontface = "bold",
     cat.fontfamily = "arial")
-patchwork::wrap_elements(plt1)
+patchwork::wrap_elements(venn_h1_up)
+
+# Hif1a do
+input_list <- list("Hypoxic down" = KellyHx.vs.Nx_do,
+                  "Hif1aHx.vs.KellyHx" = Hif1aHx.vs.KellyHx_do,
+                  "Hx.Hif2a.vs.Hif1a" = Hx.Hif2a.vs.Hif1a_up)
+venn_h1_do <- venn.diagram(
+    x = input_list,
+    fill = colors[c(2,3,5)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+patchwork::wrap_elements(venn_h1_do)
+
+
+# Hif2a up
+input_list <- list("KellyHx.vs.Nx" = KellyHx.vs.Nx_up,
+                  "Hif2aHx.vs.KellyHx" = Hif2aHx.vs.KellyHx_up,
+                  "Hx.Hif2a.vs.Hif1a" = Hx.Hif2a.vs.Hif1a_up)
+venn_h2_up <- venn.diagram(
+    x = input_list,
+    fill = colors[c(2,3,5)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+patchwork::wrap_elements(venn_h2_up)
+
+# Hif2a do
+input_list <- list("KellyHx.vs.Nx" = KellyHx.vs.Nx_do,
+                  "Hif2aHx.vs.KellyHx" = Hif2aHx.vs.KellyHx_do,
+                  "Hx.Hif2a.vs.Hif1a" = Hx.Hif2a.vs.Hif1a_do)
+venn_h2_do <- venn.diagram(
+    x = input_list,
+    fill = colors[c(2,3,5)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+patchwork::wrap_elements(venn_h2_do)
+
+
+
+
+
 
 
 input_list <- main_degs[c(3,4,1)]
@@ -1437,10 +1485,10 @@ plt2 <- venn.diagram(
 #     main = "Compare Hif KOs",
 
 
-patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
+# patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
 ```
 
-<img src="Readme_files/figure-gfm/2_venn2-1.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-2.png" width="50%" />
+<img src="Readme_files/figure-gfm/2_venn2-1.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-2.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-3.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-4.png" width="50%" />
 
 ## HIF independant
 
@@ -1560,11 +1608,7 @@ load(file="GO_analysis/GO_cc_groups.go")
 GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
 GO_IDs_list <- split(GO_cc_groups_BP@compareClusterResult,f=GO_cc_groups_BP@compareClusterResult$Cluster) %>% lapply('[',,"ID")
 names(GO_IDs_list)
-```
 
-    ## [1] "HIF1A" "HIF2A" "both"
-
-``` r
 # simplifyGOFromMultipleLists(GO_IDs_list[1:2])
 simplifyGO(GO_IDs_list[[1]], column_title = paste0("HIF1A (",length(GO_IDs_list[[1]])," GO terms)"))
 simplifyGO(GO_IDs_list[[2]], column_title = paste0("HIF2A (",length(GO_IDs_list[[2]])," GO terms)"))
@@ -1578,16 +1622,10 @@ load(file="GO_analysis/GO_cc_groups_hs.go")
 GO_cc_groups_BP <- GO_cc_groups %>% filter(ONTOLOGY=="BP")
 GO_IDs_list <- split(GO_cc_groups_BP@compareClusterResult,f=GO_cc_groups_BP@compareClusterResult$Cluster) %>% lapply('[',,"ID")
 names(GO_IDs_list)
-```
 
-    ## [1] "HIF1a"       "HIF2a"       "HIF1a_HIF2a"
-
-``` r
 simplifyGO(GO_IDs_list[[1]], column_title = paste0("HIF1A (",length(GO_IDs_list[[1]])," GO terms) -HS"))
 simplifyGO(GO_IDs_list[[2]], column_title = paste0("HIF2A (",length(GO_IDs_list[[2]])," GO terms) -HS"))
 ```
-
-<img src="Readme_files/figure-gfm/go_cluster-1.png" width="50%" /><img src="Readme_files/figure-gfm/go_cluster-2.png" width="50%" /><img src="Readme_files/figure-gfm/go_cluster-3.png" width="50%" /><img src="Readme_files/figure-gfm/go_cluster-4.png" width="50%" />
 
 ## KEGG
 
@@ -1707,13 +1745,13 @@ cc_kegg %>% data.frame()
     ## 22 203/8541  0.1330049       1.945197 3.692327 6.258488e-04 1.289248e-02
     ## 23 300/8541  0.1166667       1.706250 3.373571 1.240662e-03 2.396029e-02
     ##          qvalue
-    ## 1  6.506865e-04
-    ## 2  3.483004e-03
-    ## 3  3.483004e-03
-    ## 4  3.483004e-03
-    ## 5  3.665509e-03
-    ## 6  3.795806e-03
-    ## 7  1.633182e-02
+    ## 1  6.482766e-04
+    ## 2  3.470104e-03
+    ## 3  3.470104e-03
+    ## 4  3.470104e-03
+    ## 5  3.651933e-03
+    ## 6  3.781748e-03
+    ## 7  1.627134e-02
     ## 8  2.112183e-05
     ## 9  5.237986e-05
     ## 10 3.307822e-04

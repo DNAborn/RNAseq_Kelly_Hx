@@ -9,7 +9,7 @@ output:
     toc_depth: 2
 always_allow_html: true
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 knit: (function(input_file, encoding) {
     rmarkdown::render(input_file,output_file= 'Readme.md')
         })
@@ -143,7 +143,7 @@ load(file=paste(data,"deseq2_experiment_wgcna.dds", sep="/"))
 dds_e <- dds
 
 # load(file=paste(data,"deseq2_experiment_wgcna.dds", sep="/"))
-# load(file=paste(data,"deseq2_wgcna.dds", sep="/"))
+load(file=paste(data,"deseq2_wgcna.dds", sep="/"))
 
 source_file <- dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(source_file)
@@ -1051,9 +1051,9 @@ Hx.Hif2a.vs.Hif1a_up <- res_table_final %>% filter(Hx.Hif2a.vs.Hif1a.padj < 0.05
 
 
 # Hif1a up
-input_list <- list("KellyHx.vs.Nx" = KellyHx.vs.Nx_up,
-                  "Hif1aHx.vs.KellyHx" = Hif1aHx.vs.KellyHx_up,
-                  "Hx.Hif2a.vs.Hif1a" = Hx.Hif2a.vs.Hif1a_do)
+input_list <- list("Hypoxic up" = KellyHx.vs.Nx_up,
+                  "Hif1a down" = Hif1aHx.vs.KellyHx_up,
+                  "Hif2a > Hif1a" = Hx.Hif2a.vs.Hif1a_do)
 venn_h1_up <- venn.diagram(
     x = input_list,
     fill = colors[c(2,3,5)],
@@ -1069,7 +1069,7 @@ venn_h1_up <- venn.diagram(
 patchwork::wrap_elements(venn_h1_up)
 
 # Hif1a do
-input_list <- list("KellyHx.vs.Nx" = KellyHx.vs.Nx_do,
+input_list <- list("Hypoxic down" = KellyHx.vs.Nx_do,
                   "Hif1aHx.vs.KellyHx" = Hif1aHx.vs.KellyHx_do,
                   "Hx.Hif2a.vs.Hif1a" = Hx.Hif2a.vs.Hif1a_up)
 venn_h1_do <- venn.diagram(
