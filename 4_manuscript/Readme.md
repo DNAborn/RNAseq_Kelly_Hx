@@ -935,22 +935,22 @@ hif2a_do_holger %>% nrow()
 ``` r
 # HIF1a + HIF2a
 hif1a_2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & (Hx.Hif1a.vs.Kelly.padj < 0.05 | Hx.Hif2a.vs.Kelly.padj < 0.05) &
-                                                Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1 &
-                                                  Hx.Hif2a.vs.Hif1a.log2FoldChange > -0.5 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 0.5)
+                                                Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1 # &                                                   Hx.Hif2a.vs.Hif1a.log2FoldChange > -0.5 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 0.5
+                                                )
 hif1a_2a_up_holger %>% nrow()
 ```
 
-    ## [1] 29
+    ## [1] 71
 
 ``` r
 # HIF1a + HIF2a
 hif1a_2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & (Hx.Hif1a.vs.Kelly.padj < 0.05 | Hx.Hif2a.vs.Kelly.padj < 0.05) &
-                                                Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1 &
-                                                  Hx.Hif2a.vs.Hif1a.log2FoldChange > -0.5 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 0.5)
+                                                Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1 # & Hx.Hif2a.vs.Hif1a.log2FoldChange > -0.5 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 0.5
+                                                  )
 hif1a_2a_do_holger %>% nrow()
 ```
 
-    ## [1] 16
+    ## [1] 48
 
 ``` r
 res_holger_list <- list("HIF1a_up" = hif1a_up_holger,
@@ -980,10 +980,10 @@ lapply(genes_holger_list, length)
     ## [1] 466
     ## 
     ## $HIF1a_HIF2a_up
-    ## [1] 29
+    ## [1] 71
     ## 
     ## $HIF1a_HIF2a_do
-    ## [1] 16
+    ## [1] 48
     ## 
     ## $HIF1a
     ## [1] 466
@@ -992,7 +992,7 @@ lapply(genes_holger_list, length)
     ## [1] 1879
     ## 
     ## $HIF1a_HIF2a
-    ## [1] 45
+    ## [1] 119
 
 ``` r
 res_table_final[EPO,] %>% kable()
@@ -1016,14 +1016,32 @@ res_holger$group <- ifelse(rownames(res_holger) %in% genes_holger_list$HIF1a,"HI
                            ifelse(rownames(res_holger) %in% genes_holger_list$HIF2a,"HIF2a",
                                   ifelse(rownames(res_holger) %in% genes_holger_list$HIF1a_HIF2a,"HIF1a_HIF2a","not_holger")))
 
-
-
-
-# Venn
-input_list <- genes_holger_list[1:4]
+# Venn 4
+input_list <- genes_holger_list[c(1,4,2,3)]
 plt_hs <- venn.diagram(
     x = input_list,
-    fill = colors[c(2,7,3,5)],
+    fill = colors[c(4,5,3,6)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+patchwork::wrap_elements(plt_hs)
+```
+
+![](Readme_files/figure-gfm/cluster_holger-1.png)<!-- -->
+
+``` r
+# Venn 3
+input_list <- genes_holger_list[c(7:9)]
+plt_hs <- venn.diagram(
+    x = input_list,
+    fill = colors[c(4,6,2)],
     main.fontface = "bold",
     fontfamily ="Arial",
     category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
@@ -1037,7 +1055,7 @@ plt_hs <- venn.diagram(
 patchwork::wrap_elements(plt_hs) 
 ```
 
-![](Readme_files/figure-gfm/cluster_holger-1.png)<!-- -->
+![](Readme_files/figure-gfm/cluster_holger-2.png)<!-- -->
 
 ``` r
 # Compare Holger with interaction (Simon)
@@ -1060,7 +1078,7 @@ plt_hs <- venn.diagram(
 patchwork::wrap_elements(plt_hs) 
 ```
 
-![](Readme_files/figure-gfm/cluster_holger-2.png)<!-- -->
+![](Readme_files/figure-gfm/cluster_holger-3.png)<!-- -->
 
 ``` r
 # Hif1a
@@ -1086,7 +1104,7 @@ plt_hs <- venn.diagram(
 patchwork::wrap_elements(plt_hs) 
 ```
 
-![](Readme_files/figure-gfm/cluster_holger-3.png)<!-- -->
+![](Readme_files/figure-gfm/cluster_holger-4.png)<!-- -->
 
 ``` r
 # res_holger$group %>% factor()
@@ -1123,7 +1141,7 @@ cluster <- ggplot(res_holger,aes(x=Hif1aHxNx.vs.KellyHxNx.log2FoldChange, y=Hif2
 cluster
 ```
 
-![](Readme_files/figure-gfm/cluster_holger-4.png)<!-- -->
+![](Readme_files/figure-gfm/cluster_holger-5.png)<!-- -->
 
 ``` r
 # HIF1A
@@ -1173,7 +1191,7 @@ cluster_2 <- ggplot(res_holger,aes(y=Kelly.Hx.vs.Nx.log2FoldChange, x=Hif2a.Hx.v
 cluster_1 + cluster_2 + plot_layout(guides = "collect", axes="collect", axis_titles="collect")
 ```
 
-![](Readme_files/figure-gfm/cluster_holger-5.png)<!-- -->
+![](Readme_files/figure-gfm/cluster_holger-6.png)<!-- -->
 
 ``` r
 write.xlsx(res_holger,"DEG_genes_Holger.xlsx")
@@ -1241,6 +1259,8 @@ plotCounts_SK(genes_holger_hif1a[1:9,] %>% rownames(), n= "Hif1A targets")
 ![](Readme_files/figure-gfm/cluster_hs_top-1.png)<!-- -->
 
 ``` r
+write.xlsx(genes_holger_hif1a,"HIF1A_genes.xlsx")
+
 # HIF2a
 genes_holger_hif2a <- res_holger %>% filter(group == "HIF2a")
 genes_holger_hif2a %>% colnames()
@@ -1300,6 +1320,8 @@ plotCounts_SK(genes_holger_hif2a[1:9,] %>% rownames(), n= "Hif2a targets")
 ![](Readme_files/figure-gfm/cluster_hs_top-2.png)<!-- -->
 
 ``` r
+write.xlsx(genes_holger_hif2a,"HIF2A_genes.xlsx")
+
 # HIF1a_HIF2a
 genes_holger_hif1a_hif2a <- res_holger %>% filter(group == "HIF1a_HIF2a")
 genes_holger_hif1a_hif2a%>% colnames()
@@ -1361,6 +1383,65 @@ plotCounts_SK(genes_holger_hif1a_hif2a[1:9,] %>% rownames(), n= "Hif1A_HIF2A tar
 
 ![](Readme_files/figure-gfm/cluster_hs_top-3.png)<!-- -->
 
+``` r
+write.xlsx(genes_holger_hif1a_hif2a,"HIF1A_HIF2A_genes.xlsx")
+```
+
+### Venn
+
+``` r
+hif1a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
+                                                Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
+hif1a_up_holger %>% nrow()
+```
+
+    ## [1] 411
+
+``` r
+KellyHx.vs.Nx <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Kelly.Hx.vs.Nx.log2FoldChange > 1) %>% rownames()
+Hif1aHx.vs.KellyHx <- res_table_final %>% filter(Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1) %>% rownames()
+Hx.Hif2a.vs.Hif1a <- res_table_final %>% filter(Hx.Hif2a.vs.Hif1a.padj < 0.05 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1) %>% rownames()
+
+input_list <- list("KellyHx.vs.Nx" = KellyHx.vs.Nx,
+                  "Hif1aHx.vs.KellyHx" = Hif1aHx.vs.KellyHx,
+                  "Hx.Hif2a.vs.Hif1a" = Hx.Hif2a.vs.Hif1a)
+plt1 <- venn.diagram(
+    x = input_list,
+    fill = colors[c(2,3,5)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+patchwork::wrap_elements(plt1)
+
+
+input_list <- main_degs[c(3,4,1)]
+plt2 <- venn.diagram(
+    x = input_list,
+    fill = colors[c(3,5,2)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+    
+#     main = "Compare Hif KOs",
+
+
+patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
+```
+
+<img src="Readme_files/figure-gfm/2_venn2-1.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-2.png" width="50%" />
+
 ## HIF independant
 
 ``` r
@@ -1381,154 +1462,15 @@ colnames(res_hif1a_2a_p) <- c("ENSEMBL","ENTREZ","symbol","baseMean","Kelly.Hx.N
                            "venn","group")
 
 colnames(res_hif1a_2a)
-```
-
-    ##  [1] "ENSEMBL"                              
-    ##  [2] "ENTREZ"                               
-    ##  [3] "symbol"                               
-    ##  [4] "baseMean"                             
-    ##  [5] "Kelly.Hx.vs.Nx.log2FoldChange"        
-    ##  [6] "Kelly.Hx.vs.Nx.padj"                  
-    ##  [7] "Hif1a.Hx.vs.Nx.log2FoldChange"        
-    ##  [8] "Hif1a.Hx.vs.Nx.padj"                  
-    ##  [9] "Hif2a.Hx.vs.Nx.log2FoldChange"        
-    ## [10] "Hif2a.Hx.vs.Nx.padj"                  
-    ## [11] "Hx.Hif1a.vs.Kelly.log2FoldChange"     
-    ## [12] "Hx.Hif1a.vs.Kelly.padj"               
-    ## [13] "Hx.Hif2a.vs.Kelly.log2FoldChange"     
-    ## [14] "Hx.Hif2a.vs.Kelly.padj"               
-    ## [15] "Hx.Hif1b.vs.Kelly.log2FoldChange"     
-    ## [16] "Hx.Hif1b.vs.Kelly.padj"               
-    ## [17] "Hx.Hif2a.vs.Hif1a.log2FoldChange"     
-    ## [18] "Hx.Hif2a.vs.Hif1a.padj"               
-    ## [19] "Hx.Hif1b.vs.Hif1a.log2FoldChange"     
-    ## [20] "Hx.Hif1b.vs.Hif1a.padj"               
-    ## [21] "Hx.Hif1b.vs.Hif2a.log2FoldChange"     
-    ## [22] "Hx.Hif1b.vs.Hif2a.padj"               
-    ## [23] "Hif1aHxNx.vs.KellyHxNx.log2FoldChange"
-    ## [24] "Hif1aHxNx.vs.KellyHxNx.padj"          
-    ## [25] "Hif2aHxNx.vs.KellyHxNx.log2FoldChange"
-    ## [26] "Hif2aHxNx.vs.KellyHxNx.padj"          
-    ## [27] "Hif1bHxNx.vs.KellyHxNx.log2FoldChange"
-    ## [28] "Hif1bHxNx.vs.KellyHxNx.padj"          
-    ## [29] "Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange"
-    ## [30] "Hif2aHxNx.vs.Hif1aHxNx.padj"          
-    ## [31] "top"                                  
-    ## [32] "venn"                                 
-    ## [33] "group"
-
-``` r
 HIF1A_genes <- res_hif1a_2a %>% 
   .[order(abs(.$Hif1aHxNx.vs.KellyHxNx.log2FoldChange), decreasing = TRUE),] %>% 
   filter(group =="HIF1A") %>%
   filter(baseMean > 500)
 colnames(HIF1A_genes) 
-```
-
-    ##  [1] "ENSEMBL"                              
-    ##  [2] "ENTREZ"                               
-    ##  [3] "symbol"                               
-    ##  [4] "baseMean"                             
-    ##  [5] "Kelly.Hx.vs.Nx.log2FoldChange"        
-    ##  [6] "Kelly.Hx.vs.Nx.padj"                  
-    ##  [7] "Hif1a.Hx.vs.Nx.log2FoldChange"        
-    ##  [8] "Hif1a.Hx.vs.Nx.padj"                  
-    ##  [9] "Hif2a.Hx.vs.Nx.log2FoldChange"        
-    ## [10] "Hif2a.Hx.vs.Nx.padj"                  
-    ## [11] "Hx.Hif1a.vs.Kelly.log2FoldChange"     
-    ## [12] "Hx.Hif1a.vs.Kelly.padj"               
-    ## [13] "Hx.Hif2a.vs.Kelly.log2FoldChange"     
-    ## [14] "Hx.Hif2a.vs.Kelly.padj"               
-    ## [15] "Hx.Hif1b.vs.Kelly.log2FoldChange"     
-    ## [16] "Hx.Hif1b.vs.Kelly.padj"               
-    ## [17] "Hx.Hif2a.vs.Hif1a.log2FoldChange"     
-    ## [18] "Hx.Hif2a.vs.Hif1a.padj"               
-    ## [19] "Hx.Hif1b.vs.Hif1a.log2FoldChange"     
-    ## [20] "Hx.Hif1b.vs.Hif1a.padj"               
-    ## [21] "Hx.Hif1b.vs.Hif2a.log2FoldChange"     
-    ## [22] "Hx.Hif1b.vs.Hif2a.padj"               
-    ## [23] "Hif1aHxNx.vs.KellyHxNx.log2FoldChange"
-    ## [24] "Hif1aHxNx.vs.KellyHxNx.padj"          
-    ## [25] "Hif2aHxNx.vs.KellyHxNx.log2FoldChange"
-    ## [26] "Hif2aHxNx.vs.KellyHxNx.padj"          
-    ## [27] "Hif1bHxNx.vs.KellyHxNx.log2FoldChange"
-    ## [28] "Hif1bHxNx.vs.KellyHxNx.padj"          
-    ## [29] "Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange"
-    ## [30] "Hif2aHxNx.vs.Hif1aHxNx.padj"          
-    ## [31] "top"                                  
-    ## [32] "venn"                                 
-    ## [33] "group"
-
-``` r
 nrow(HIF1A_genes)
-```
-
-    ## [1] 360
-
-``` r
 HIF1A_genes[1:50,c(3,4,5,7,11)] %>% kable(digits = c(1))
-```
 
-|  | symbol | baseMean | Kelly.Hx.vs.Nx.log2FoldChange | Hif1a.Hx.vs.Nx.log2FoldChange | Hx.Hif1a.vs.Kelly.log2FoldChange |
-|:---|:---|---:|---:|---:|---:|
-| ENSG00000101204 | CHRNA4 | 1808.4 | 11.3 | 3.9 | -7.3 |
-| ENSG00000107159 | CA9 | 3017.8 | 10.7 | 3.9 | -7.4 |
-| ENSG00000228709 | LINC02575 | 8376.0 | 10.0 | 3.7 | -8.8 |
-| ENSG00000170525 | PFKFB3 | 8313.0 | 5.8 | 0.3 | -6.2 |
-| ENSG00000163536 | SERPINI1 | 881.8 | 0.5 | 4.6 | -0.7 |
-| ENSG00000114023 | FAM162A | 12808.1 | 2.7 | -1.1 | -4.2 |
-| ENSG00000123095 | BHLHE41 | 591.5 | 4.8 | 1.0 | -4.1 |
-| ENSG00000176171 | BNIP3 | 21434.7 | 3.2 | -0.4 | -4.2 |
-| ENSG00000100314 | CABP7 | 2092.3 | 8.2 | 5.0 | -3.1 |
-| ENSG00000186352 | ANKRD37 | 742.5 | 2.7 | 5.7 | 1.4 |
-| ENSG00000159208 | CIART | 2103.7 | 2.8 | -0.1 | -4.1 |
-| ENSG00000074800 | ENO1 | 193555.8 | 1.3 | -1.6 | -3.4 |
-| ENSG00000085563 | ABCB1 | 1046.1 | -1.9 | 1.0 | -1.5 |
-| ENSG00000101400 | SNTA1 | 786.6 | 2.3 | -0.3 | -2.7 |
-| ENSG00000139832 | RAB20 | 773.5 | 2.7 | 0.2 | -2.7 |
-| ENSG00000079739 | PGM1 | 6602.8 | 1.3 | -1.2 | -3.0 |
-| ENSG00000163516 | ANKZF1 | 4283.0 | 3.0 | 0.7 | -2.5 |
-| ENSG00000146094 | DOK3 | 852.6 | 2.0 | -0.3 | -2.1 |
-| ENSG00000102144 | PGK1 | 69853.5 | 2.4 | 0.1 | -2.7 |
-| ENSG00000165802 | NSMF | 12663.2 | 0.9 | -1.3 | -2.4 |
-| ENSG00000159173 | TNNI1 | 749.0 | 5.0 | 2.9 | -1.6 |
-| ENSG00000118194 | TNNT2 | 956.6 | 2.1 | 0.0 | -1.2 |
-| ENSG00000291995 | GOLGA8A | 11149.1 | 2.5 | 0.4 | -2.0 |
-| ENSG00000291946 | NPW | 893.4 | 1.9 | -0.1 | -3.4 |
-| ENSG00000114480 | GBE1 | 3845.4 | 2.9 | 0.9 | -2.0 |
-| ENSG00000149654 | CDH22 | 873.3 | 4.7 | 2.7 | -1.0 |
-| ENSG00000173157 | ADAMTS20 | 1182.7 | 2.5 | 0.6 | -2.1 |
-| ENSG00000291647 |  | 1641.2 | 2.9 | 1.0 | -1.7 |
-| ENSG00000072682 | P4HA2 | 2487.1 | 3.2 | 1.4 | -2.3 |
-| ENSG00000244165 | P2RY11 | 1131.5 | 1.7 | -0.1 | -2.3 |
-| ENSG00000143590 | EFNA3 | 1307.4 | 1.4 | -0.4 | -2.2 |
-| ENSG00000171385 | KCND3 | 594.6 | 5.1 | 3.3 | -1.5 |
-| ENSG00000138944 | SHISAL1 | 1252.2 | 1.2 | -0.5 | -0.8 |
-| ENSG00000115657 | ABCB6 | 2501.5 | 0.8 | -1.0 | -1.5 |
-| ENSG00000135116 | HRK | 745.7 | -2.1 | -3.8 | -1.7 |
-| ENSG00000152256 | PDK1 | 13129.4 | 2.4 | 0.7 | -2.7 |
-| ENSG00000214063 | TSPAN4 | 1420.6 | 1.7 | 0.1 | -2.1 |
-| ENSG00000169299 | PGM2 | 2050.7 | 0.7 | -1.0 | -1.7 |
-| ENSG00000177181 | RIMKLA | 2825.8 | 1.4 | -0.2 | -1.8 |
-| ENSG00000083444 | PLOD1 | 5404.7 | 1.5 | -0.1 | -2.0 |
-| ENSG00000233841 | HLA-C | 553.1 | 3.6 | 2.0 | -1.8 |
-| ENSG00000054967 | RELT | 1117.5 | -0.1 | -1.7 | -1.5 |
-| ENSG00000214193 | SH3D21 | 1685.4 | 3.8 | 2.3 | -1.5 |
-| ENSG00000125675 | GRIA3 | 658.3 | 1.4 | -0.1 | -1.6 |
-| ENSG00000185633 | NDUFA4L2 | 6442.7 | 8.9 | 7.3 | -2.1 |
-| ENSG00000130810 | PPAN | 5041.5 | 0.1 | -1.4 | -1.6 |
-| ENSG00000183258 | DDX41 | 7789.8 | 1.1 | -0.4 | -1.7 |
-| ENSG00000087116 | ADAMTS2 | 6978.3 | 1.3 | -0.2 | -1.9 |
-| ENSG00000157782 | CABP1 | 1266.1 | 6.6 | 5.1 | -1.2 |
-| ENSG00000197016 | ZNF470 | 857.6 | 0.9 | -0.6 | -1.4 |
-
-``` r
 plotCounts_SK(HIF1A_genes[1:9,] %>% rownames(), n= "Hif1A targets")
-```
-
-![](Readme_files/figure-gfm/gene_lists-1.png)<!-- -->
-
-``` r
 write.xlsx(HIF1A_genes,"HIF1A_genes.xlsx")
 
 
@@ -1537,74 +1479,10 @@ HIF2A_genes <- res_hif1a_2a %>%
   filter(group =="HIF2A") %>%
   filter(baseMean > 500)
 nrow(HIF2A_genes)
-```
 
-    ## [1] 451
-
-``` r
 HIF2A_genes[1:50,c(3,4,5,7,11)] %>% kable(digits = c(1))
-```
 
-|  | symbol | baseMean | Kelly.Hx.vs.Nx.log2FoldChange | Hif1a.Hx.vs.Nx.log2FoldChange | Hx.Hif1a.vs.Kelly.log2FoldChange |
-|:---|:---|---:|---:|---:|---:|
-| ENSG00000144476 | ACKR3 | 922.4 | 9.0 | 8.0 | 0.5 |
-| ENSG00000129675 | ARHGEF6 | 4107.1 | 7.2 | 6.6 | 0.5 |
-| ENSG00000130427 | EPO | 3453.4 | 12.4 | 12.1 | 0.8 |
-| ENSG00000180269 | GPR139 | 744.1 | 5.7 | 4.8 | -0.2 |
-| ENSG00000152822 | GRM1 | 541.8 | 6.7 | 7.8 | 1.9 |
-| ENSG00000105143 | SLC1A6 | 1070.3 | 8.0 | 6.9 | 0.0 |
-| ENSG00000240801 |  | 1426.1 | 2.6 | 4.2 | -5.1 |
-| ENSG00000183691 | NOG | 1680.8 | 12.1 | 10.2 | 0.0 |
-| ENSG00000164451 | CALHM4 | 666.1 | 13.1 | 13.7 | 0.3 |
-| ENSG00000065618 | COL17A1 | 906.4 | 9.2 | 8.3 | 0.2 |
-| ENSG00000154783 | FGD5 | 1756.2 | 3.8 | 3.8 | 0.1 |
-| ENSG00000112936 | C7 | 582.6 | 2.6 | 3.5 | 0.1 |
-| ENSG00000189120 | SP6 | 1446.8 | 5.9 | 7.1 | 2.0 |
-| ENSG00000114200 | BCHE | 2531.6 | 4.5 | 4.5 | 0.3 |
-| ENSG00000129757 | CDKN1C | 1908.5 | 8.0 | 6.3 | -1.7 |
-| ENSG00000203727 | SAMD5 | 519.0 | 7.3 | 7.7 | 1.8 |
-| ENSG00000165194 | PCDH19 | 1974.2 | 2.6 | 3.4 | 1.4 |
-| ENSG00000148053 | NTRK2 | 691.6 | 6.8 | 8.0 | 0.5 |
-| ENSG00000009709 | PAX7 | 1034.3 | 5.6 | 5.6 | 1.3 |
-| ENSG00000221866 | PLXNA4 | 3900.9 | 3.4 | 3.8 | 0.7 |
-| ENSG00000141574 | SECTM1 | 1246.1 | 5.0 | 5.8 | 0.0 |
-| ENSG00000236648 | LINC02810 | 2034.0 | 6.3 | 7.0 | 0.2 |
-| ENSG00000196562 | SULF2 | 5223.1 | -6.1 | -6.6 | -0.5 |
-| ENSG00000171056 | SOX7 | 544.1 | 4.2 | 4.5 | 0.7 |
-| ENSG00000163637 | PRICKLE2 | 2998.0 | 3.5 | 3.9 | 0.7 |
-| ENSG00000116147 | TNR | 1919.3 | 2.3 | 3.5 | 1.1 |
-| ENSG00000143595 | AQP10 | 2711.5 | 4.9 | 5.1 | 0.8 |
-| ENSG00000106100 | NOD1 | 3289.2 | 3.5 | 3.9 | 0.3 |
-| ENSG00000120549 | KIAA1217 | 541.3 | 1.6 | 2.3 | 1.2 |
-| ENSG00000173762 | CD7 | 1205.4 | 3.4 | 4.5 | 1.3 |
-| ENSG00000157087 | ATP2B2 | 1205.7 | 3.5 | 4.0 | 0.9 |
-| ENSG00000165606 | DRGX | 737.6 | -3.3 | -3.4 | 0.3 |
-| ENSG00000096696 | DSP | 525.2 | 10.6 | 14.0 | 2.7 |
-| ENSG00000075223 | SEMA3C | 549.5 | 3.4 | 3.5 | 0.7 |
-| ENSG00000135636 | DYSF | 744.1 | 1.6 | 0.9 | -1.4 |
-| ENSG00000123119 | NECAB1 | 1653.8 | 8.0 | 7.5 | 0.1 |
-| ENSG00000158106 | RHPN1 | 1908.8 | 11.0 | 10.4 | -0.2 |
-| ENSG00000288973 |  | 7448.9 | 4.2 | 4.3 | 0.3 |
-| ENSG00000184384 | MAML2 | 665.5 | 1.8 | 2.3 | 0.8 |
-| ENSG00000076356 | PLXNA2 | 6372.1 | 1.4 | 1.5 | 1.1 |
-| ENSG00000063015 | SEZ6 | 4951.8 | -1.7 | -2.4 | -0.5 |
-| ENSG00000293330 |  | 608.7 | 4.1 | 4.3 | 0.5 |
-| ENSG00000135824 | RGS8 | 1589.5 | 4.6 | 4.4 | 0.5 |
-| ENSG00000197748 | CFAP43 | 1894.9 | 8.0 | 8.9 | 1.1 |
-| ENSG00000040731 | CDH10 | 2554.3 | 4.7 | 4.9 | 0.6 |
-| ENSG00000183018 | SPNS2 | 1635.5 | 6.4 | 5.8 | -0.4 |
-| ENSG00000130052 | STARD8 | 687.2 | 3.1 | 2.9 | -0.9 |
-| ENSG00000008853 | RHOBTB2 | 25463.3 | 3.8 | 4.4 | 0.7 |
-| ENSG00000285438 | SOX7 | 1112.2 | 3.5 | 4.4 | 0.9 |
-| ENSG00000225968 | ELFN1 | 2254.8 | 5.8 | 5.6 | -0.1 |
-
-``` r
 plotCounts_SK(HIF2A_genes[1:9,] %>% rownames(), n= "Hif2A targets")
-```
-
-![](Readme_files/figure-gfm/gene_lists-2.png)<!-- -->
-
-``` r
 write.xlsx(HIF2A_genes,"HIF2A_genes.xlsx")
 
 
@@ -1617,33 +1495,10 @@ HIF1A_HIF2A_genes <- res_hif1a_2a %>%
 # + .$Hif2aHxNx.vs.KellyHxNx.log2FoldChange, 
 
 nrow(HIF1A_HIF2A_genes)
-```
 
-    ## [1] 62
-
-``` r
 HIF1A_HIF2A_genes[c(1:9),c(3,4,5,7,11)] %>% kable(digits = c(0, 1, 1))
-```
 
-|  | symbol | baseMean | Kelly.Hx.vs.Nx.log2FoldChange | Hif1a.Hx.vs.Nx.log2FoldChange | Hx.Hif1a.vs.Kelly.log2FoldChange |
-|:---|:---|---:|---:|---:|---:|
-| ENSG00000180448 | ARHGAP45 | 1013.1 | 6.7 | 5 | -1.2 |
-| ENSG00000128285 | MCHR1 | 1441.3 | 6.0 | 5 | -0.6 |
-| ENSG00000198626 | RYR2 | 551.4 | 5.5 | 5 | -0.1 |
-| ENSG00000100033 | PRODH | 1022.8 | 5.2 | 4 | 0.0 |
-| ENSG00000277196 |  | 1360.4 | 5.1 | 5 | -0.1 |
-| ENSG00000174358 | SLC6A19 | 851.8 | 4.7 | 4 | -1.0 |
-| ENSG00000145911 | N4BP3 | 1053.4 | 3.9 | 3 | -0.8 |
-| ENSG00000128594 | LRRC4 | 700.9 | -3.6 | -3 | 0.8 |
-| ENSG00000174403 | CRMA | 926.1 | 3.5 | 3 | -0.2 |
-
-``` r
 plotCounts_SK(HIF1A_HIF2A_genes[1:9,] %>% rownames(), n ="HIF1A+HIF2A targets")
-```
-
-![](Readme_files/figure-gfm/gene_lists-3.png)<!-- -->
-
-``` r
 write.xlsx(HIF1A_HIF2A_genes,"HIF1A_HIF2A_genes.xlsx")
 ```
 
