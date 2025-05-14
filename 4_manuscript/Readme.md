@@ -474,7 +474,7 @@ getdeg("Kelly.Hx.vs.Nx", pj = 0.01, bM = 100) %>% nrow()
     ## [1] 3332
 
 ``` r
-# Simple Volcanos
+# Simple Volcanos (1)
 volcano_Kelly <- volcano_sk3(n="Kelly.Hx.vs.Nx", deg=getdeg("Kelly.Hx.vs.Nx"),col=colors[2], celline="Kelly")
 volcano_hif1a <- volcano_sk3(n="Hif1a.Hx.vs.Nx", deg=getdeg("Hif1a.Hx.vs.Nx"),col=colors[4], celline="HIF1A")
 volcano_hif2a <- volcano_sk3(n="Hif2a.Hx.vs.Nx", deg=getdeg("Hif2a.Hx.vs.Nx"),col=colors[6], celline="HIF2A")
@@ -493,7 +493,7 @@ n2 <- {}
 deg <- subset(results_list[["Kelly.Hx.vs.Nx"]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()
 
 
-# Two set volcanos
+# Two set volcanos (2)
 n <- "Hif1a.Hx.vs.Nx"
 deg <- subset(results_list[["Hif1a.Hx.vs.Nx"]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()
 deg2 <- subset(results_list[["Hif1aHxNx.vs.KellyHxNx"]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()
@@ -539,7 +539,15 @@ volcano_hif1b <- volcano_sk4(n="Hif1b.Hx.vs.Nx", deg=getdeg("Hif1b.Hx.vs.Nx"), d
 ## -Venn
 
 ``` r
-input_list <- main_degs
+# Volcano (1)
+
+
+simple_degs <- c(list("Kelly: Hx.vs.Nx" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
+                     "Hif1b: Hx.vs.Nx" = deg_genes_list[["deg_Hif1b.Hx.vs.Nx"]],
+                     "Hif1a: Hx.vs.Nx" = deg_genes_list[["deg_Hif1a.Hx.vs.Nx"]],
+                     "Hif2a: Hx.vs.Nx" = deg_genes_list[["deg_Hif2a.Hx.vs.Nx"]] ))
+
+input_list <- simple_degs
 plt1 <- venn.diagram(
     x = input_list,
     fill = colors[c(2,7,3,5)],
@@ -553,8 +561,24 @@ plt1 <- venn.diagram(
     cat.fontface = "bold",
     cat.fontfamily = "arial")
 
-input_list <- main_degs[c(3,4,1)]
+
+# Volcano (2)
+input_list <- main_degs
 plt2 <- venn.diagram(
+    x = input_list,
+    fill = colors[c(2,7,3,5)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+input_list <- main_degs[c(3,4,1)]
+plt2b <- venn.diagram(
     x = input_list,
     fill = colors[c(3,5,2)],
     main.fontface = "bold",
@@ -569,11 +593,11 @@ plt2 <- venn.diagram(
     
 #     main = "Compare Hif KOs",
 
-
-patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
+patchwork::wrap_elements(plt1)
+patchwork::wrap_elements(plt2) / patchwork::wrap_elements(plt2b)
 ```
 
-<img src="Readme_files/figure-gfm/2_venn-1.png" width="50%" />
+<img src="Readme_files/figure-gfm/2_venn-1.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn-2.png" width="50%" />
 
 # Figure 3: Gene Cluster
 

@@ -504,7 +504,7 @@ getdeg <- function(x,
 getdeg("Kelly.Hx.vs.Nx", pj = 0.01, bM = 100) %>% nrow()
 
 
-# Simple Volcanos
+# Simple Volcanos (1)
 volcano_Kelly <- volcano_sk3(n="Kelly.Hx.vs.Nx", deg=getdeg("Kelly.Hx.vs.Nx"),col=colors[2], celline="Kelly")
 volcano_hif1a <- volcano_sk3(n="Hif1a.Hx.vs.Nx", deg=getdeg("Hif1a.Hx.vs.Nx"),col=colors[4], celline="HIF1A")
 volcano_hif2a <- volcano_sk3(n="Hif2a.Hx.vs.Nx", deg=getdeg("Hif2a.Hx.vs.Nx"),col=colors[6], celline="HIF2A")
@@ -520,7 +520,7 @@ n2 <- {}
 deg <- subset(results_list[["Kelly.Hx.vs.Nx"]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()
 
 
-# Two set volcanos
+# Two set volcanos (2)
 n <- "Hif1a.Hx.vs.Nx"
 deg <- subset(results_list[["Hif1a.Hx.vs.Nx"]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()
 deg2 <- subset(results_list[["Hif1aHxNx.vs.KellyHxNx"]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()
@@ -569,7 +569,15 @@ volcano_hif1b <- volcano_sk4(n="Hif1b.Hx.vs.Nx", deg=getdeg("Hif1b.Hx.vs.Nx"), d
 ```{r 2_venn, fig.height=10, fig.width=8, dpi=300, out.width="50%", fig.show='hold'}
 
 
-input_list <- main_degs
+# Volcano (1)
+
+
+simple_degs <- c(list("Kelly: Hx.vs.Nx" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
+                     "Hif1b: Hx.vs.Nx" = deg_genes_list[["deg_Hif1b.Hx.vs.Nx"]],
+                     "Hif1a: Hx.vs.Nx" = deg_genes_list[["deg_Hif1a.Hx.vs.Nx"]],
+                     "Hif2a: Hx.vs.Nx" = deg_genes_list[["deg_Hif2a.Hx.vs.Nx"]] ))
+
+input_list <- simple_degs
 plt1 <- venn.diagram(
     x = input_list,
     fill = colors[c(2,7,3,5)],
@@ -583,8 +591,24 @@ plt1 <- venn.diagram(
     cat.fontface = "bold",
     cat.fontfamily = "arial")
 
-input_list <- main_degs[c(3,4,1)]
+
+# Volcano (2)
+input_list <- main_degs
 plt2 <- venn.diagram(
+    x = input_list,
+    fill = colors[c(2,7,3,5)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+input_list <- main_degs[c(3,4,1)]
+plt2b <- venn.diagram(
     x = input_list,
     fill = colors[c(3,5,2)],
     main.fontface = "bold",
@@ -599,8 +623,8 @@ plt2 <- venn.diagram(
     
 #     main = "Compare Hif KOs",
 
-
-patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
+patchwork::wrap_elements(plt1)
+patchwork::wrap_elements(plt2) / patchwork::wrap_elements(plt2b)
 
 ```
 
@@ -1185,8 +1209,21 @@ hif_a_independant <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 &
                                                 Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
 hif1a_up_holger %>% nrow()
 
+# Hif1b hypoxic genes
+getdeg("Hif1b.Hx.vs.Nx") %>% nrow()
 
+HIF1B_HX_ranked <- topgenes_f(getdeg("Hif1b.Hx.vs.Nx"))
+HIF1B_HX_ranked %>% nrow()
 
+write.xlsx(HIF1B_HX_ranked,"HIF1B_genes.xlsx")
+
+# HIF dependant
+
+Kelly_Hx_genes <- getdeg("Kelly.Hx.vs.Nx") %>% rownames()
+HIF1B_HX_genes <- HIF1B_HX_ranked %>% rownames()
+
+overlap <- calculate.overlap(list(Kelly_Hx_genes,HIF1B_HX_genes))
+overlap$a1 %>% length()
 
 
 ```
