@@ -3,6 +3,7 @@ Figures
 Kelterborn
 2024-07-18
 
+- [test fix](#test-fix)
 - [0. Load](#0-load)
   - [- libraries, folders, R_utils](#--libraries-folders-r_utils)
   - [- Load dds](#--load-dds)
@@ -35,9 +36,14 @@ Kelterborn
   - [Volcanos](#volcanos)
   - [Cluster genes](#cluster-genes)
 
+# test fix
+
 # 0. Load
 
 ## - libraries, folders, R_utils
+
+if (!require(“BiocManager”, quietly = TRUE))
+install.packages(“BiocManager”) BiocManager::install(version = “3.21”)
 
 Load R libraries. If package is missing, install with
 ‘BiocManager::install(“PackageName”)’
@@ -49,7 +55,7 @@ Load R libraries. If package is missing, install with
 ## -Prepare Results
 
 ``` r
-deg_genes_list <- lapply(results_list,topgenes_f) %>%  lapply(.,rownames) 
+deg_genes_list <- lapply(results_list,topgenes_f, bM = 100, p=0.01) %>%  lapply(.,rownames) 
 names(deg_genes_list) <- paste("deg",names(deg_genes_list),sep="_")
 
 main_degs <- c(list("Kelly: Hx.vs.Nx" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
@@ -68,7 +74,7 @@ hif1a_2a_genes <- c(deg_genes_list[["deg_Hif1aHxNx.vs.KellyHxNx"]],
 hif1a_2a_genes %>% length()
 ```
 
-    ## [1] 3395
+    ## [1] 1507
 
 ``` r
 # Filter results
@@ -162,7 +168,7 @@ results_list[[1]]$baseMean %>% hist(breaks=100000, xlim = c(0,100))
 res_hif1a_2a$baseMean %>% min()
 ```
 
-    ## [1] 1.333859
+    ## [1] 100.0206
 
 ``` r
 res_hif1a_2a$baseMean %>% hist(breaks=100000, xlim = c(0,100))
@@ -321,7 +327,16 @@ plotCounts_anno(EPO)
 ``` r
 # res <- res_shrink_list[[n]] %>% data.frame()
 
-getdeg <- function(x){subset(results_list[[x]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()}
+getdeg <- function(x,
+                   padj = 0.05,
+                   bM = 0,
+                   l2fc = 1)
+  {subset(results_list[[x]], padj < padj &
+                              baseMean > bM &
+           (log2FoldChange > l2fc | log2FoldChange < -l2fc)) %>% data.frame()}
+
+
+
 
 volcano_sk3 <- function(n,
                         col="red",
@@ -383,7 +398,7 @@ volcano_func
 ## -Volcano_function2
 
 ``` r
-getdeg <- function(x){subset(results_list[[x]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()}
+# getdeg <- function(x){subset(results_list[[x]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()}
 
 volcano_sk4 <- function(n,
                         col="red",
@@ -443,6 +458,20 @@ volcano_func
 ## -Plot Vulcanos
 
 ### Simple
+
+``` r
+getdeg <- function(x,
+                   pj = 0.01,
+                   bM = 100,
+                   l2fc = 1)
+  {subset(results_list[[x]], padj < pj &
+                              baseMean > bM &
+           (log2FoldChange > l2fc | log2FoldChange < -l2fc)) %>% data.frame()}
+
+getdeg("Kelly.Hx.vs.Nx", pj = 0.01, bM = 100) %>% nrow()
+```
+
+    ## [1] 3332
 
 ``` r
 # Simple Volcanos
@@ -562,13 +591,13 @@ main_degs %>% names()
 length(main_degs[[3]])
 ```
 
-    ## [1] 863
+    ## [1] 304
 
 ``` r
 length(main_degs[[4]])
 ```
 
-    ## [1] 2856
+    ## [1] 1317
 
 ``` r
 venns <- calculate.overlap(main_degs[c(3,4)])
@@ -576,25 +605,25 @@ lapply(venns,length)
 ```
 
     ## $a1
-    ## [1] 863
+    ## [1] 304
     ## 
     ## $a2
-    ## [1] 2856
+    ## [1] 1317
     ## 
     ## $a3
-    ## [1] 324
+    ## [1] 114
 
 ``` r
 venns %>% unlist() %>% length()
 ```
 
-    ## [1] 4043
+    ## [1] 1735
 
 ``` r
 venns %>% unlist() %>% unique() %>% length()
 ```
 
-    ## [1] 3395
+    ## [1] 1507
 
 ``` r
 venns$a1 <- setdiff(venns$a1,venns$a3)
@@ -603,25 +632,25 @@ lapply(venns,length)
 ```
 
     ## $a1
-    ## [1] 539
+    ## [1] 190
     ## 
     ## $a2
-    ## [1] 2532
+    ## [1] 1203
     ## 
     ## $a3
-    ## [1] 324
+    ## [1] 114
 
 ``` r
 venns %>% unlist() %>% length()
 ```
 
-    ## [1] 3395
+    ## [1] 1507
 
 ``` r
 venns %>% unlist() %>% unique() %>% length()
 ```
 
-    ## [1] 3395
+    ## [1] 1507
 
 ``` r
 res_hif1a_2a$venn <- ifelse(rownames(res_hif1a_2a) %in% venns$a1,"HIF1A",
@@ -632,7 +661,7 @@ res_hif1a_2a$venn %>% table()
 
     ## .
     ##   HIF1A   HIF2A overlap 
-    ##     539    2532     324
+    ##     190    1203     114
 
 ``` r
 # Cluster Venn
@@ -1647,166 +1676,187 @@ cc_kegg %>% data.frame()
     ## 5    HIF1A                           Metabolism
     ## 6    HIF1A                           Metabolism
     ## 7    HIF1A                           Metabolism
-    ## 8    HIF2A Environmental Information Processing
-    ## 9    HIF2A Environmental Information Processing
-    ## 10   HIF2A                       Human Diseases
+    ## 8    HIF1A       Genetic Information Processing
+    ## 9    HIF1A                           Metabolism
+    ## 10   HIF1A                           Metabolism
     ## 11   HIF2A Environmental Information Processing
-    ## 12   HIF2A                           Metabolism
-    ## 13   HIF2A                                 <NA>
-    ## 14   HIF2A Environmental Information Processing
-    ## 15   HIF2A                                 <NA>
-    ## 16   HIF2A Environmental Information Processing
-    ## 17   HIF2A                   Organismal Systems
-    ## 18   HIF2A Environmental Information Processing
-    ## 19   HIF2A                   Organismal Systems
+    ## 12   HIF2A Environmental Information Processing
+    ## 13   HIF2A                   Cellular Processes
+    ## 14   HIF2A                       Human Diseases
+    ## 15   HIF2A                   Cellular Processes
+    ## 16   HIF2A                   Cellular Processes
+    ## 17   HIF2A Environmental Information Processing
+    ## 18   HIF2A                           Metabolism
+    ## 19   HIF2A                                 <NA>
     ## 20   HIF2A Environmental Information Processing
-    ## 21   HIF2A                   Cellular Processes
-    ## 22   HIF2A                   Cellular Processes
-    ## 23   HIF2A Environmental Information Processing
+    ## 21   HIF2A                       Human Diseases
+    ## 22   HIF2A                       Human Diseases
+    ## 23   HIF2A                   Organismal Systems
+    ## 24   HIF2A                       Human Diseases
+    ## 25   HIF2A                                 <NA>
+    ## 26   HIF2A Environmental Information Processing
     ##                            subcategory       ID
     ## 1               Replication and repair hsa03030
-    ## 2             Global and overview maps hsa01200
-    ## 3             Global and overview maps hsa01230
-    ## 4              Carbohydrate metabolism hsa00500
-    ## 5              Carbohydrate metabolism hsa00030
+    ## 2              Carbohydrate metabolism hsa00500
+    ## 3             Global and overview maps hsa01200
+    ## 4              Carbohydrate metabolism hsa00030
+    ## 5             Global and overview maps hsa01230
     ## 6              Carbohydrate metabolism hsa00010
     ## 7                Nucleotide metabolism hsa00230
-    ## 8                  Signal transduction hsa04151
-    ## 9  Signaling molecules and interaction hsa04512
-    ## 10                Substance dependence hsa05034
-    ## 11 Signaling molecules and interaction hsa04080
-    ## 12  Glycan biosynthesis and metabolism hsa00534
-    ## 13                                <NA> hsa04820
-    ## 14 Signaling molecules and interaction hsa04514
-    ## 15                                <NA> hsa04081
-    ## 16                 Signal transduction hsa04024
-    ## 17                    Digestive system hsa04974
-    ## 18                 Signal transduction hsa04020
-    ## 19                      Nervous system hsa04727
-    ## 20                 Signal transduction hsa04014
-    ## 21            Transport and catabolism hsa04148
-    ## 22     Cellular community - eukaryotes hsa04510
-    ## 23                 Signal transduction hsa04010
+    ## 8               Replication and repair hsa03440
+    ## 9                Nucleotide metabolism hsa00240
+    ## 10            Global and overview maps hsa01232
+    ## 11 Signaling molecules and interaction hsa04512
+    ## 12                 Signal transduction hsa04151
+    ## 13                       Cell motility hsa04820
+    ## 14                Substance dependence hsa05034
+    ## 15     Cellular community - eukaryotes hsa04510
+    ## 16            Transport and catabolism hsa04148
+    ## 17 Signaling molecules and interaction hsa04080
+    ## 18  Glycan biosynthesis and metabolism hsa00534
+    ## 19                                <NA> hsa04081
+    ## 20 Signaling molecules and interaction hsa04514
+    ## 21           Infectious disease: viral hsa05165
+    ## 22                    Cancer: overview hsa05202
+    ## 23                    Digestive system hsa04974
+    ## 24              Cancer: specific types hsa05215
+    ## 25                                <NA> hsa04082
+    ## 26                 Signal transduction hsa04024
     ##                                                   Description GeneRatio
-    ## 1                                             DNA replication     9/291
-    ## 2                                           Carbon metabolism    14/291
-    ## 3                                 Biosynthesis of amino acids    11/291
-    ## 4                               Starch and sucrose metabolism     8/291
-    ## 5                                   Pentose phosphate pathway     7/291
-    ## 6                                Glycolysis / Gluconeogenesis    10/291
-    ## 7                                           Purine metabolism    13/291
-    ## 8                                  PI3K-Akt signaling pathway    53/584
-    ## 9                                    ECM-receptor interaction    21/584
-    ## 10                                                 Alcoholism    31/584
-    ## 11                    Neuroactive ligand-receptor interaction    49/584
-    ## 12 Glycosaminoglycan biosynthesis - heparan sulfate / heparin     9/584
-    ## 13                               Cytoskeleton in muscle cells    34/584
-    ## 14                                    Cell adhesion molecules    26/584
-    ## 15                                          Hormone signaling    32/584
-    ## 16                                     cAMP signaling pathway    31/584
-    ## 17                           Protein digestion and absorption    18/584
-    ## 18                                  Calcium signaling pathway    33/584
-    ## 19                                          GABAergic synapse    16/584
-    ## 20                                      Ras signaling pathway    31/584
-    ## 21                                              Efferocytosis    23/584
-    ## 22                                             Focal adhesion    27/584
-    ## 23                                     MAPK signaling pathway    35/584
+    ## 1                                             DNA replication     9/224
+    ## 2                               Starch and sucrose metabolism     8/224
+    ## 3                                           Carbon metabolism    13/224
+    ## 4                                   Pentose phosphate pathway     7/224
+    ## 5                                 Biosynthesis of amino acids    10/224
+    ## 6                                Glycolysis / Gluconeogenesis     9/224
+    ## 7                                           Purine metabolism    12/224
+    ## 8                                    Homologous recombination     6/224
+    ## 9                                       Pyrimidine metabolism     7/224
+    ## 10                                      Nucleotide metabolism     8/224
+    ## 11                                   ECM-receptor interaction    19/332
+    ## 12                                 PI3K-Akt signaling pathway    37/332
+    ## 13                               Cytoskeleton in muscle cells    24/332
+    ## 14                                                 Alcoholism    21/332
+    ## 15                                             Focal adhesion    22/332
+    ## 16                                              Efferocytosis    17/332
+    ## 17                    Neuroactive ligand-receptor interaction    29/332
+    ## 18 Glycosaminoglycan biosynthesis - heparan sulfate / heparin     6/332
+    ## 19                                          Hormone signaling    20/332
+    ## 20                                    Cell adhesion molecules    16/332
+    ## 21                             Human papillomavirus infection    26/332
+    ## 22                    Transcriptional misregulation in cancer    18/332
+    ## 23                           Protein digestion and absorption    12/332
+    ## 24                                            Prostate cancer    11/332
+    ## 25                               Neuroactive ligand signaling    17/332
+    ## 26                                     cAMP signaling pathway    18/332
     ##     BgRatio RichFactor FoldEnrichment   zScore       pvalue     p.adjust
-    ## 1   36/8541  0.2500000       7.337629 7.156313 2.289453e-06 6.776780e-04
-    ## 2  116/8541  0.1206897       3.542304 5.177498 3.689469e-05 3.627484e-03
-    ## 3   75/8541  0.1466667       4.304742 5.398555 4.172069e-05 3.627484e-03
-    ## 4   40/8541  0.2000000       5.870103 5.798045 4.902005e-05 3.627484e-03
-    ## 5   31/8541  0.2258065       6.627536 5.894986 6.448581e-05 3.817560e-03
-    ## 6   67/8541  0.1492537       4.380674 5.217289 8.013368e-05 3.953262e-03
-    ## 7  128/8541  0.1015625       2.980912 4.240754 4.022468e-04 1.700929e-02
-    ## 8  362/8541  0.1464088       2.141229 6.010876 7.658678e-08 2.366531e-05
-    ## 9   89/8541  0.2359551       3.450843 6.296386 3.798539e-07 5.868743e-05
-    ## 10 188/8541  0.1648936       2.411569 5.301766 3.598203e-06 3.706149e-04
-    ## 11 370/8541  0.1324324       1.936824 4.990937 4.821667e-06 3.724738e-04
-    ## 12  24/8541  0.3750000       5.484375 5.959707 1.583390e-05 8.966067e-04
-    ## 13 232/8541  0.1465517       2.143319 4.782970 1.740984e-05 8.966067e-04
-    ## 14 158/8541  0.1645570       2.406646 4.834752 2.274737e-05 1.004134e-03
-    ## 15 219/8541  0.1461187       2.136986 4.617683 3.263167e-05 1.260398e-03
-    ## 16 226/8541  0.1371681       2.006084 4.152580 1.445328e-04 4.962293e-03
-    ## 17 105/8541  0.1714286       2.507143 4.209606 2.413192e-04 7.086825e-03
-    ## 18 254/8541  0.1299213       1.900098 3.945199 2.522818e-04 7.086825e-03
-    ## 19  89/8541  0.1797753       2.629213 4.185563 3.026914e-04 7.794304e-03
-    ## 20 238/8541  0.1302521       1.904937 3.835747 3.687983e-04 8.766052e-03
-    ## 21 157/8541  0.1464968       2.142516 3.914237 3.971985e-04 8.766739e-03
-    ## 22 203/8541  0.1330049       1.945197 3.692327 6.258488e-04 1.289248e-02
-    ## 23 300/8541  0.1166667       1.706250 3.373571 1.240662e-03 2.396029e-02
+    ## 1   36/8655 0.25000000       9.659598 8.486204 2.273965e-07 6.276144e-05
+    ## 2   40/8655 0.20000000       7.727679 6.951211 6.686259e-06 7.565836e-04
+    ## 3  117/8655 0.11111111       4.293155 5.845476 9.458356e-06 7.565836e-04
+    ## 4   31/8655 0.22580645       8.724798 7.022739 1.096498e-05 7.565836e-04
+    ## 5   75/8655 0.13333333       5.151786 5.885926 2.097380e-05 1.157754e-03
+    ## 6   67/8655 0.13432836       5.190232 5.612061 5.142546e-05 2.365571e-03
+    ## 7  128/8655 0.09375000       3.622349 4.871810 1.131607e-04 4.461763e-03
+    ## 8   41/8655 0.14634146       5.654399 4.869070 5.920676e-04 2.042633e-02
+    ## 9   58/8655 0.12068966       4.663254 4.562475 6.928955e-04 2.124880e-02
+    ## 10  85/8655 0.09411765       3.636555 3.981518 1.541461e-03 4.254433e-02
+    ## 11  89/8655 0.21348315       5.565351 8.646049 7.289431e-10 1.997304e-07
+    ## 12 362/8655 0.10220994       2.664539 6.461451 3.863704e-08 5.293274e-06
+    ## 13 232/8655 0.10344828       2.696822 5.232200 8.679002e-06 5.414568e-04
+    ## 14 188/8655 0.11170213       2.911994 5.293442 9.870706e-06 5.414568e-04
+    ## 15 203/8655 0.10837438       2.825242 5.255648 9.880598e-06 5.414568e-04
+    ## 16 157/8655 0.10828025       2.822788 4.603256 1.031538e-04 4.710689e-03
+    ## 17 370/8655 0.07837838       2.043268 4.096264 1.904408e-04 7.454396e-03
+    ## 18  24/8655 0.25000000       6.517319 5.405560 2.279962e-04 7.808870e-03
+    ## 19 219/8655 0.09132420       2.380756 4.133407 2.749309e-04 8.370119e-03
+    ## 20 160/8655 0.10000000       2.606928 4.097436 4.101400e-04 1.082877e-02
+    ## 21 333/8655 0.07807808       2.035439 3.848313 4.347316e-04 1.082877e-02
+    ## 22 198/8655 0.09090909       2.369934 3.894590 5.827300e-04 1.330567e-02
+    ## 23 105/8655 0.11428571       2.979346 4.075406 6.568227e-04 1.384380e-02
+    ## 24  98/8655 0.11224490       2.926143 3.829820 1.269857e-03 2.485291e-02
+    ## 25 199/8655 0.08542714       2.227024 3.497313 1.636684e-03 2.989675e-02
+    ## 26 226/8655 0.07964602       2.076314 3.274483 2.633210e-03 4.509372e-02
     ##          qvalue
-    ## 1  6.482766e-04
-    ## 2  3.470104e-03
-    ## 3  3.470104e-03
-    ## 4  3.470104e-03
-    ## 5  3.651933e-03
-    ## 6  3.781748e-03
-    ## 7  1.627134e-02
-    ## 8  2.112183e-05
-    ## 9  5.237986e-05
-    ## 10 3.307822e-04
-    ## 11 3.324413e-04
-    ## 12 8.002417e-04
-    ## 13 8.002417e-04
-    ## 14 8.962121e-04
-    ## 15 1.124934e-03
-    ## 16 4.428959e-03
-    ## 17 6.325151e-03
-    ## 18 6.325151e-03
-    ## 19 6.956592e-03
-    ## 20 7.823899e-03
-    ## 21 7.824513e-03
-    ## 22 1.150683e-02
-    ## 23 2.138510e-02
-    ##                                                                                                                                                                                                                                                                                   geneID
-    ## 1                                                                                                                                                                                                                                         5424/4173/4171/79621/4174/4175/2237/23649/5427
-    ## 2                                                                                                                                                                                                              2023/5230/5223/84706/3098/230/2821/8277/441531/22934/5634/5091/29968/2731
-    ## 3                                                                                                                                                                                                                             2023/5230/5223/84706/230/8277/441531/22934/5634/5091/29968
-    ## 4                                                                                                                                                                                                                                               5236/2632/55276/2997/5836/3098/2821/5837
-    ## 5                                                                                                                                                                                                                                                    5236/55276/230/2821/8277/22934/5634
-    ## 6                                                                                                                                                                                                                                    2023/5230/5236/55276/5223/3098/230/2821/441531/3939
-    ## 7                                                                                                                                                                                                                    5236/55276/9060/3251/204/377841/84618/114/5198/4830/5634/471/654364
-    ## 8  2791/7143/3791/4915/84699/80310/3673/64764/54331/2056/5295/5979/5159/22801/2321/5156/3570/1277/3672/3680/1292/1291/2668/285/8516/3913/7058/5155/9586/54541/2261/6446/1902/2335/3481/3667/56034/94235/118788/256076/8074/1293/2792/2252/4908/1298/3696/2788/57121/5618/2066/1441/26281
-    ## 9                                                                                                                                                                        7143/3673/22801/6385/1277/3672/3680/1292/1291/8516/3913/7058/22987/2335/3339/80144/158326/256076/1293/1298/3696
-    ## 10                                                                                                                    111/2791/4915/84699/64764/54331/4852/8353/8347/9586/399694/1392/94235/135/3017/8329/8357/8344/4129/554313/8365/2792/8343/8339/2788/8360/8367/116443/8348/8350/8358
-    ## 11                                  5732/2741/1901/3061/2911/1906/2837/6750/1910/1135/5028/150/4852/147/3360/56923/4923/11255/2834/8862/5031/4922/7425/1902/2692/1392/135/7432/9248/4986/6751/1268/9568/2696/8973/1903/2895/2914/5733/5737/552/2570/59350/116443/5618/1081/2642/116/2900
-    ## 12                                                                                                                                                                                                                                    9957/9348/2131/266722/26035/222537/64131/2134/9955
-    ## 13                                                                                                       1832/25802/3673/4607/22801/6385/1277/3672/3680/27295/1292/1289/1291/8516/7058/2335/1301/6383/22795/3339/22989/4703/288/256076/23500/8736/1293/1290/1281/1298/3696/1634/825/9172
-    ## 14                                                                                                                                           84189/1002/54413/23705/6385/9369/3680/5789/5818/5797/8516/9378/6383/23114/1364/114798/5010/3683/152404/149461/3696/920/5175/6404/6693/90952
-    ## 15                                                                                                                          111/2791/269/3061/54331/2056/2852/6750/5295/150/147/8660/2834/2692/3481/3667/1392/94235/7432/4879/4986/6751/5744/2696/2792/552/2788/5593/4880/5618/1081/2642
-    ## 16                                                                                                                          5732/5337/111/84699/1906/55811/64764/491/6662/7074/6750/5295/4852/493/3360/11149/10846/9586/1392/135/7432/6751/9568/778/2696/5733/116443/2737/1081/116/64411
-    ## 17                                                                                                                                                                                       206358/1308/1277/1292/1289/1291/80781/1301/91522/1310/1303/1295/256076/7512/1293/1290/1281/1298
-    ## 18                                                                                                                   5137/3791/4915/2911/80310/491/1910/5979/5159/2321/5156/493/147/3360/4923/2668/5155/2261/56034/135/8913/8074/778/3707/2252/5733/5737/552/4485/116443/3270/2066/26281
-    ## 19                                                                                                                                                                                                      111/2791/54331/18/3763/92745/94235/6540/6539/9568/778/2792/9001/140679/2788/2570
-    ## 20                                                                                                                 5337/2791/3791/56924/4915/80310/54331/7074/5295/5159/2321/5156/285/23179/5155/399694/2261/3481/56034/94235/4303/283748/2113/8074/2792/2252/4908/2788/64926/26281/8605
-    ## 21                                                                                                                                                             5732/1901/2056/100133941/5627/4953/9844/10461/6566/5468/1374/80824/5031/1846/6446/6376/51761/51454/177/1844/19/5175/89790
-    ## 22                                                                                                                                         330/7143/3791/56924/80310/3673/5295/5159/22801/2321/5156/1277/3672/3680/1292/1291/8516/3913/7058/5155/399694/2335/56034/256076/1293/1298/3696
-    ## 23                                                                                               7048/3791/4915/80310/4208/5979/5159/2321/5156/2668/285/80824/5971/4217/5155/59283/1846/2261/3481/56034/8913/283748/11184/27330/8074/778/11221/2252/4908/27091/1844/4616/2066/26281/8605
+    ## 1  6.031992e-05
+    ## 2  7.271513e-04
+    ## 3  7.271513e-04
+    ## 4  7.271513e-04
+    ## 5  1.112716e-03
+    ## 6  2.273547e-03
+    ## 7  4.288193e-03
+    ## 8  1.963171e-02
+    ## 9  2.042218e-02
+    ## 10 4.088929e-02
+    ## 11 1.826194e-07
+    ## 12 4.839797e-06
+    ## 13 4.950700e-04
+    ## 14 4.950700e-04
+    ## 15 4.950700e-04
+    ## 16 4.307123e-03
+    ## 17 6.815775e-03
+    ## 18 7.139881e-03
+    ## 19 7.653048e-03
+    ## 20 9.901064e-03
+    ## 21 9.901064e-03
+    ## 22 1.216577e-02
+    ## 23 1.265780e-02
+    ## 24 2.272375e-02
+    ## 25 2.733549e-02
+    ## 26 4.123052e-02
+    ##                                                                                                                                                                                          geneID
+    ## 1                                                                                                                                                5424/4173/4171/79621/4174/4175/2237/23649/5427
+    ## 2                                                                                                                                                      5236/2632/55276/2997/5836/3098/5837/2821
+    ## 3                                                                                                                            2023/5230/5223/84706/3098/230/2821/8277/22934/5634/5091/29968/2731
+    ## 4                                                                                                                                                           5236/55276/230/2821/8277/22934/5634
+    ## 5                                                                                                                                           2023/5230/5223/84706/230/8277/22934/5634/5091/29968
+    ## 6                                                                                                                                                  2023/5230/5236/55276/5223/3098/230/2821/3939
+    ## 7                                                                                                                               5236/55276/204/9060/3251/84618/377841/5198/4830/5634/471/654364
+    ## 8                                                                                                                                                                   79184/5424/672/641/7516/675
+    ## 9                                                                                                                                                      84618/377841/4830/1723/79077/7083/654364
+    ## 10                                                                                                                                                 204/3251/84618/377841/4830/79077/7083/654364
+    ## 11                                                                                          7143/6385/3672/1292/1277/1291/22801/3680/3913/7058/2335/8516/22987/3339/80144/158326/1293/3696/1298
+    ## 12 7143/2791/4915/3791/64764/54331/5295/5159/5979/2056/3672/5156/1292/1277/1291/22801/3680/3913/2321/54541/3570/7058/2335/3481/3667/1902/285/8516/2668/56034/9586/6446/1293/2792/3696/1298/5618
+    ## 13                                                                  1832/6385/3672/1292/1277/1291/1289/22801/3680/27295/7058/2335/6383/1301/8516/3339/22795/288/22989/1293/1290/23500/3696/1298
+    ## 14                                                                                 111/2791/4915/64764/54331/8353/4852/1392/135/8347/3017/9586/8357/554313/8329/8344/8365/2792/116443/8339/8367
+    ## 15                                                                              330/7143/3791/56924/5295/5159/3672/5156/1292/1277/1291/22801/3680/3913/2321/7058/2335/8516/56034/1293/3696/1298
+    ## 16                                                                                                 5732/100133941/5627/9844/2056/6566/4953/1374/80824/10461/5468/5031/1846/1901/6376/6446/51454
+    ## 17                                             5732/2911/2837/6750/1910/5028/11255/150/1135/4852/147/1392/2834/7425/135/5031/1902/8862/1901/4922/4986/2696/2914/1903/5737/5733/2895/116443/5618
+    ## 18                                                                                                                                                           9957/2131/26035/266722/222537/2134
+    ## 19                                                                                             111/2791/269/54331/5295/2852/6750/2056/8660/150/147/1392/2834/3481/3667/4986/4879/2696/2792/5618
+    ## 20                                                                                                        84189/1002/54413/23705/6385/5818/9369/3680/5797/5789/9378/6383/23114/8516/114798/3696
+    ## 21                                                      7143/2308/7474/64764/23462/5295/5159/84441/3672/1292/1277/1291/22801/3680/3913/7058/2335/55502/8516/9586/6934/1293/10379/3696/1298/4855
+    ## 22                                                                                                       3486/2115/330/2308/4208/5081/2119/8353/2321/862/604/5468/5327/3248/2118/4286/8357/1050
+    ## 23                                                                                                                              206358/1292/1308/1277/1291/1289/80781/1301/91522/1293/1290/1298
+    ## 24                                                                                                                                     2308/3645/64764/5295/5159/5156/2119/5327/56034/9586/6934
+    ## 25                                                                                                           111/2791/2911/54331/6530/5028/11255/43/150/147/6511/135/5031/4986/2914/2792/116443
+    ## 26                                                                                                   5732/111/64764/7074/5295/491/6750/6662/493/4852/11149/10846/1392/135/9586/2696/5733/116443
     ##    Count
     ## 1      9
-    ## 2     14
-    ## 3     11
-    ## 4      8
-    ## 5      7
-    ## 6     10
-    ## 7     13
-    ## 8     53
-    ## 9     21
-    ## 10    31
-    ## 11    49
-    ## 12     9
-    ## 13    34
-    ## 14    26
-    ## 15    32
-    ## 16    31
-    ## 17    18
-    ## 18    33
-    ## 19    16
-    ## 20    31
-    ## 21    23
-    ## 22    27
-    ## 23    35
+    ## 2      8
+    ## 3     13
+    ## 4      7
+    ## 5     10
+    ## 6      9
+    ## 7     12
+    ## 8      6
+    ## 9      7
+    ## 10     8
+    ## 11    19
+    ## 12    37
+    ## 13    24
+    ## 14    21
+    ## 15    22
+    ## 16    17
+    ## 17    29
+    ## 18     6
+    ## 19    20
+    ## 20    16
+    ## 21    26
+    ## 22    18
+    ## 23    12
+    ## 24    11
+    ## 25    17
+    ## 26    18
 
 ``` r
 pathview(gene.data  = res_hif1a_2a_list_ez[[1]],
@@ -1835,66 +1885,84 @@ dotplot(cc_kegg, showCategory=12, title = "HS")
 cc_kegg %>% data.frame()
 ```
 
-    ##   Cluster                             category
-    ## 1   HIF1A                       Human Diseases
-    ## 2   HIF1A Environmental Information Processing
-    ## 3   HIF1A                           Metabolism
-    ## 4   HIF1A                           Metabolism
-    ## 5   HIF2A                       Human Diseases
-    ## 6   HIF2A Environmental Information Processing
-    ## 7   HIF2A                       Human Diseases
-    ## 8   HIF2A       Genetic Information Processing
-    ## 9   HIF2A Environmental Information Processing
-    ##                           subcategory       ID
-    ## 1              Cardiovascular disease hsa05416
-    ## 2 Signaling molecules and interaction hsa04080
-    ## 3             Carbohydrate metabolism hsa00010
-    ## 4             Carbohydrate metabolism hsa00500
-    ## 5                Substance dependence hsa05034
-    ## 6 Signaling molecules and interaction hsa04080
-    ## 7                      Immune disease hsa05322
-    ## 8              Replication and repair hsa03440
-    ## 9                 Signal transduction hsa04024
-    ##                               Description GeneRatio  BgRatio RichFactor
-    ## 1                       Viral myocarditis     9/147  70/8541 0.12857143
-    ## 2 Neuroactive ligand-receptor interaction    18/147 370/8541 0.04864865
-    ## 3            Glycolysis / Gluconeogenesis     7/147  67/8541 0.10447761
-    ## 4           Starch and sucrose metabolism     5/147  40/8541 0.12500000
-    ## 5                              Alcoholism    35/539 188/8541 0.18617021
-    ## 6 Neuroactive ligand-receptor interaction    44/539 370/8541 0.11891892
-    ## 7            Systemic lupus erythematosus    22/539 141/8541 0.15602837
-    ## 8                Homologous recombination    10/539  41/8541 0.24390244
-    ## 9                  cAMP signaling pathway    28/539 226/8541 0.12389381
-    ##   FoldEnrichment   zScore       pvalue     p.adjust       qvalue
-    ## 1       7.470262 7.192944 2.759926e-06 6.789417e-04 6.013733e-04
-    ## 2       2.826586 4.753423 6.133518e-05 7.544227e-03 6.682307e-03
-    ## 3       6.070362 5.513601 1.422075e-04 1.166102e-02 1.032876e-02
-    ## 4       7.262755 5.253679 5.713313e-04 3.513688e-02 3.112252e-02
-    ## 5       2.950055 7.016631 4.977553e-09 1.587839e-06 1.535182e-06
-    ## 6       1.884391 4.513686 3.042372e-05 4.852583e-03 4.691658e-03
-    ## 7       2.472427 4.575387 6.636378e-05 7.056682e-03 6.822663e-03
-    ## 8       3.864881 4.772139 1.739205e-04 1.387016e-02 1.341018e-02
-    ## 9       1.963223 3.808674 4.411108e-04 2.814287e-02 2.720957e-02
-    ##                                                                                                                                                                                                                       geneID
-    ## 1                                                                                                                                                                               6640/1837/3689/6641/3119/3908/3107/3106/3133
-    ## 2                                                                                                                                1137/84634/2892/1144/2555/3361/624/136/255061/1132/2903/155/5032/1815/2831/283869/5618/5029
-    ## 3                                                                                                                                                                                          2023/5236/5230/230/7167/2026/2821
-    ## 4                                                                                                                                                                                                   5837/5236/2997/2632/2821
-    ## 5                                      6570/84699/4129/135/1392/4915/3017/8365/6571/94235/2788/8347/64764/8349/399694/54331/8329/85236/554313/8362/8339/8348/8353/8367/3012/8360/8343/8336/8357/8358/8337/84254/4852/814/627
-    ## 6 6915/2696/1906/4986/4923/551/2692/6869/2834/1135/5737/5732/2832/135/2847/56923/122042/4922/1081/1910/9568/6751/8973/1392/2911/6750/3360/3354/6870/5028/147/8862/59350/146/2837/11255/4985/4852/150/1909/134/1138/2894/2558
-    ## 7                                                                                                             730/6737/3017/8365/8347/8349/8329/85236/721/554313/8362/8339/8348/8353/8367/3012/8360/8343/8336/8357/8358/8337
-    ## 8                                                                                                                                                                          57804/672/5888/8438/7517/83990/675/79184/7516/641
-    ## 9                                                                                 2696/84699/1906/2737/11149/10846/5732/6662/135/482/4772/1081/9568/6751/55811/5295/1392/7074/6750/491/3360/3354/64764/4852/1909/814/134/627
-    ##   Count
-    ## 1     9
-    ## 2    18
-    ## 3     7
-    ## 4     5
-    ## 5    35
-    ## 6    44
-    ## 7    22
-    ## 8    10
-    ## 9    28
+    ##    Cluster                             category
+    ## 1    HIF1A                       Human Diseases
+    ## 2    HIF1A                                 <NA>
+    ## 3    HIF1A Environmental Information Processing
+    ## 4    HIF1A                           Metabolism
+    ## 5    HIF1A                           Metabolism
+    ## 6    HIF2A                       Human Diseases
+    ## 7    HIF2A                                 <NA>
+    ## 8    HIF2A Environmental Information Processing
+    ## 9    HIF2A                       Human Diseases
+    ## 10   HIF2A       Genetic Information Processing
+    ## 11   HIF2A Environmental Information Processing
+    ## 12   HIF2A Environmental Information Processing
+    ##                            subcategory       ID
+    ## 1               Cardiovascular disease hsa05416
+    ## 2                                 <NA> hsa04082
+    ## 3  Signaling molecules and interaction hsa04080
+    ## 4              Carbohydrate metabolism hsa00010
+    ## 5              Carbohydrate metabolism hsa00500
+    ## 6                 Substance dependence hsa05034
+    ## 7                                 <NA> hsa04082
+    ## 8  Signaling molecules and interaction hsa04080
+    ## 9                       Immune disease hsa05322
+    ## 10              Replication and repair hsa03440
+    ## 11                 Signal transduction hsa04024
+    ## 12                 Signal transduction hsa04020
+    ##                                Description GeneRatio  BgRatio RichFactor
+    ## 1                        Viral myocarditis     9/147  70/8655 0.12857143
+    ## 2             Neuroactive ligand signaling    13/147 199/8655 0.06532663
+    ## 3  Neuroactive ligand-receptor interaction    18/147 370/8655 0.04864865
+    ## 4             Glycolysis / Gluconeogenesis     7/147  67/8655 0.10447761
+    ## 5            Starch and sucrose metabolism     5/147  40/8655 0.12500000
+    ## 6                               Alcoholism    35/539 188/8655 0.18617021
+    ## 7             Neuroactive ligand signaling    30/539 199/8655 0.15075377
+    ## 8  Neuroactive ligand-receptor interaction    44/539 370/8655 0.11891892
+    ## 9             Systemic lupus erythematosus    22/539 141/8655 0.15602837
+    ## 10                Homologous recombination    10/539  41/8655 0.24390244
+    ## 11                  cAMP signaling pathway    28/539 226/8655 0.12389381
+    ## 12               Calcium signaling pathway    29/539 254/8655 0.11417323
+    ##    FoldEnrichment   zScore       pvalue     p.adjust       qvalue
+    ## 1        7.569971 7.254303 2.478507e-06 6.121912e-04 5.348357e-04
+    ## 2        3.846272 5.339171 3.163985e-05 3.907521e-03 3.413773e-03
+    ## 3        2.864313 4.817557 5.174802e-05 4.260587e-03 3.722226e-03
+    ## 4        6.151386 5.563766 1.310865e-04 8.094589e-03 7.071769e-03
+    ## 5        7.359694 5.298976 5.381139e-04 2.658282e-02 2.322386e-02
+    ## 6        2.989431 7.106811 3.541456e-09 1.133266e-06 1.092260e-06
+    ## 7        2.420731 5.225016 5.110034e-06 8.176054e-04 7.880210e-04
+    ## 8        1.909542 4.607966 2.211547e-05 2.358984e-03 2.273626e-03
+    ## 9        2.505428 4.644452 5.455638e-05 4.364510e-03 4.206584e-03
+    ## 10       3.916467 4.823678 1.560213e-04 9.985361e-03 9.624048e-03
+    ## 11       1.989427 3.884021 3.570988e-04 1.904527e-02 1.835613e-02
+    ## 12       1.833338 3.473797 1.080673e-03 4.940218e-02 4.761460e-02
+    ##                                                                                                                                                                                                                        geneID
+    ## 1                                                                                                                                                                                6640/1837/3689/6641/3119/3908/3107/3106/3133
+    ## 2                                                                                                                                                            1137/2892/2555/114/3361/5579/136/255061/1132/2903/5032/1815/5029
+    ## 3                                                                                                                                 1137/84634/2892/1144/2555/3361/624/136/255061/1132/2903/155/5032/1815/2831/283869/5618/5029
+    ## 4                                                                                                                                                                                           2023/5236/5230/230/7167/2026/2821
+    ## 5                                                                                                                                                                                                    5837/5236/2997/2632/2821
+    ## 6                                       6570/84699/4129/135/1392/4915/3017/8365/6571/94235/2788/8347/64764/8349/399694/54331/8329/85236/554313/8362/8339/8348/8353/8367/3012/8360/8343/8336/8357/8358/8337/84254/4852/814/627
+    ## 7                                                                          6540/6570/4986/43/57030/6539/6869/135/9568/8973/2911/3360/6571/9152/94235/3354/6870/5028/147/146/2788/54331/11255/6530/6506/4985/150/134/3359/2558
+    ## 8  6915/2696/1906/4986/4923/551/2692/6869/2834/1135/5737/5732/2832/135/2847/56923/122042/4922/1081/1910/9568/6751/8973/1392/2911/6750/3360/3354/6870/5028/147/8862/59350/146/2837/11255/4985/4852/150/1909/134/1138/2894/2558
+    ## 9                                                                                                              730/6737/3017/8365/8347/8349/8329/85236/721/554313/8362/8339/8348/8353/8367/3012/8360/8343/8336/8357/8358/8337
+    ## 10                                                                                                                                                                          57804/672/5888/8438/7517/83990/675/79184/7516/641
+    ## 11                                                                                 2696/84699/1906/2737/11149/10846/5732/6662/135/482/4772/1081/9568/6751/55811/5295/1392/7074/6750/491/3360/3354/64764/4852/1909/814/134/627
+    ## 12                                                                                952/8913/6915/5155/4923/2321/7134/6869/84812/8074/5737/135/3270/4772/1910/3707/4915/2911/5137/491/3360/2668/6870/147/146/4485/1909/814/5979
+    ##    Count
+    ## 1      9
+    ## 2     13
+    ## 3     18
+    ## 4      7
+    ## 5      5
+    ## 6     35
+    ## 7     30
+    ## 8     44
+    ## 9     22
+    ## 10    10
+    ## 11    28
+    ## 12    29
 
 ``` r
 pathview(gene.data  = genes_holger_list_ez[[1]],
@@ -1958,63 +2026,53 @@ lapply(overlap,length)
 ```
 
     ## $a5
-    ## [1] 18
+    ## [1] 13
     ## 
     ## $a2
     ## [1] 0
     ## 
     ## $a4
-    ## [1] 13
+    ## [1] 8
     ## 
     ## $a6
-    ## [1] 198
+    ## [1] 203
     ## 
     ## $a1
-    ## [1] 1117
+    ## [1] 579
     ## 
     ## $a3
     ## [1] 0
     ## 
     ## $a7
-    ## [1] 277
+    ## [1] 282
 
 ``` r
 c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
 ```
 
-| x         |
-|:----------|
-| TERT      |
-| SLC35F3   |
-| PPFIA4    |
-| ELFN2     |
-| ADARB2    |
-| ITGB3     |
-| HBA1      |
-| TFB1M     |
-| SDK1      |
-| SP2-AS1   |
-| ZSWIM5    |
-| CADM2     |
-| YAP1      |
-| PGK1      |
-| ANKRD37   |
-| FOXE3     |
-| HTR5A     |
-| CRYBB2P1  |
-| LNPK      |
-| ALDOC     |
-| MTFP1     |
-| LINC02932 |
-| ARRDC2    |
-| LINC03047 |
-| TMEM45A   |
-| LUCAT1    |
-| PCSK5     |
-|           |
-| HMOX1     |
-| TBX3      |
-| SCIRT     |
+| x        |
+|:---------|
+| TERT     |
+| PPFIA4   |
+| SLC35F3  |
+| ELFN2    |
+| TFB1M    |
+| SDK1     |
+| ZSWIM5   |
+| YAP1     |
+| PGK1     |
+| ANKRD37  |
+| CRYBB2P1 |
+| LNPK     |
+| FOXE3    |
+| HTR5A    |
+| ALDOC    |
+| MTFP1    |
+| ARRDC2   |
+| TMEM45A  |
+| PCSK5    |
+|          |
+| TBX3     |
 
 ``` r
 # HIF2A
@@ -2022,13 +2080,13 @@ lapply(res_hif1a_2a_list_ens,length)
 ```
 
     ## $HIF1A
-    ## [1] 814
+    ## [1] 483
     ## 
     ## $HIF2A
-    ## [1] 2092
+    ## [1] 825
     ## 
     ## $both
-    ## [1] 334
+    ## [1] 117
 
 ``` r
 rna_hif2a <- res_hif1a_2a_list_ens[c("HIF2A","both")] %>% unlist() %>% unique()
@@ -2036,13 +2094,13 @@ lapply(res_hif1a_2a_list_ens,length)
 ```
 
     ## $HIF1A
-    ## [1] 814
+    ## [1] 483
     ## 
     ## $HIF2A
-    ## [1] 2092
+    ## [1] 825
     ## 
     ## $both
-    ## [1] 334
+    ## [1] 117
 
 ``` r
 chip_hif2a_all <- str_detect(names(Kelly_Hx_Annotated),pattern="HIF-2A") %>% Kelly_Hx_Annotated[.] %>% lapply('[',,"geneId") %>% unlist() %>% unique()
@@ -2078,25 +2136,25 @@ lapply(overlap,length)
 ```
 
     ## $a5
-    ## [1] 85
+    ## [1] 60
     ## 
     ## $a2
     ## [1] 0
     ## 
     ## $a4
-    ## [1] 16
+    ## [1] 12
     ## 
     ## $a6
-    ## [1] 373
+    ## [1] 398
     ## 
     ## $a1
-    ## [1] 2325
+    ## [1] 870
     ## 
     ## $a3
     ## [1] 0
     ## 
     ## $a7
-    ## [1] 247
+    ## [1] 251
 
 ``` r
 c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
@@ -2104,107 +2162,78 @@ c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
 
 | x         |
 |:----------|
-| LINC01320 |
-| RAG1      |
 | EXT1      |
-| SMOC2     |
 | TNFRSF19  |
+| SMOC2     |
 | JPH1      |
+| BAHCC1    |
 | INSM1     |
 | RASL11B   |
 | OTOF      |
-| BAHCC1    |
-| PDGFC     |
 | CNTN4     |
+| PDGFC     |
 | COL23A1   |
-| LINC00624 |
-| SNTG2     |
 | LINC01341 |
 | RFTN1     |
 | DSP       |
 | KCNMA1    |
-| RBFOX3    |
-| NOG       |
 | NTRK2     |
-| DSP-AS1   |
 | NOD1      |
+| SOBP      |
 | PRICKLE2  |
 | FGD5      |
 | PCDH19    |
+| TIAM1     |
 | AQP10     |
-| SOBP      |
+| LARGE1    |
+| PIK3R1    |
 | PLXNA4    |
+| MCC       |
+| GPER1     |
+| SCARB1    |
+| ANKS1A    |
+| CFAP43    |
+| GGCT      |
 | KCNK13    |
 | POU6F2    |
-| GPER1     |
-| LARGE1    |
 | SOX7      |
-| CFAP43    |
-| TIAM1     |
-| MARCHF3   |
-| PIK3R1    |
-| MCC       |
-| PCDH15    |
-| ANKS1A    |
-| LRATD2    |
 | SNCA      |
-| IL6R      |
-| SCARB1    |
-| GGCT      |
-| PRR15     |
-| NECAB1    |
-| COL5A1    |
-| MTUS1     |
-|           |
-|           |
-| KCNJ6     |
+| MARCHF3   |
 | KIF26B    |
-| SSUH2     |
+| MTUS1     |
+| LRATD2    |
+| NOG       |
+| COL5A1    |
 | ROBO2     |
-| SULF1     |
+| PCDH15    |
+| KCNJ6     |
 | PDE10A    |
-| RHPN1     |
+| NECAB1    |
+| SSUH2     |
+| IL6R      |
+|           |
 | NRXN1     |
-| SAMD4A    |
-| SLC9C2    |
-| CFAP46    |
-| PTPRQ     |
+| RHPN1     |
 | CYB5A     |
-| LINC02073 |
+| SULF1     |
 |           |
+| SDK2      |
+| CCP110    |
+| TMCC3     |
 |           |
-| COL12A1   |
+| PTPRQ     |
+| SAMD4A    |
+| CFAP46    |
+| SLC9C2    |
 | RMST      |
 | NTM       |
-| SDK2      |
-| TMCC3     |
-| CYP2W1    |
-| TUBA8     |
-| PLEKHG4B  |
-|           |
-| CCP110    |
 | LOXL2-AS1 |
-| LINC00967 |
 | LINC01250 |
-| ANKRD60   |
-| MGAT4C    |
-| C8orf34   |
-| ABCA1     |
-| PECAM1    |
 | KIF25     |
-|           |
-|           |
 | NRG3      |
-| FHAD1     |
-| GLI3      |
-| LINC01151 |
 |           |
-|           |
-| HMOX1     |
-| FOS       |
 | TBX3      |
 | KRT17     |
-| SCIRT     |
 
 ``` r
 # Compare HIF1A, HIF2A
@@ -2280,7 +2309,7 @@ lapply(overlap,length)
     ## [1] 0
     ## 
     ## $a25
-    ## [1] 12
+    ## [1] 10
     ## 
     ## $a24
     ## [1] 0
@@ -2301,19 +2330,19 @@ lapply(overlap,length)
     ## [1] 0
     ## 
     ## $a18
-    ## [1] 2
+    ## [1] 0
     ## 
     ## $a17
     ## [1] 0
     ## 
     ## $a16
-    ## [1] 4
+    ## [1] 2
     ## 
     ## $a15
-    ## [1] 66
+    ## [1] 72
     ## 
     ## $a14
-    ## [1] 7
+    ## [1] 4
     ## 
     ## $a13
     ## [1] 0
@@ -2325,34 +2354,34 @@ lapply(overlap,length)
     ## [1] 0
     ## 
     ## $a10
-    ## [1] 67
+    ## [1] 47
     ## 
     ## $a9
     ## [1] 0
     ## 
     ## $a8
-    ## [1] 12
+    ## [1] 11
     ## 
     ## $a7
-    ## [1] 10
+    ## [1] 8
     ## 
     ## $a6
-    ## [1] 2
+    ## [1] 1
     ## 
     ## $a5
-    ## [1] 310
+    ## [1] 340
     ## 
     ## $a4
-    ## [1] 117
+    ## [1] 121
     ## 
     ## $a3
-    ## [1] 328
+    ## [1] 114
     ## 
     ## $a2
-    ## [1] 2006
+    ## [1] 764
     ## 
     ## $a1
-    ## [1] 790
+    ## [1] 464
 
 ``` r
 # c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
@@ -2456,7 +2485,7 @@ lapply(overlap,length)
     ## [1] 0
     ## 
     ## $a15
-    ## [1] 21
+    ## [1] 14
     ## 
     ## $a4
     ## [1] 0
@@ -2465,25 +2494,25 @@ lapply(overlap,length)
     ## [1] 0
     ## 
     ## $a13
-    ## [1] 54
+    ## [1] 29
     ## 
     ## $a8
-    ## [1] 8
+    ## [1] 3
     ## 
     ## $a2
     ## [1] 0
     ## 
     ## $a9
-    ## [1] 793
+    ## [1] 469
     ## 
     ## $a14
-    ## [1] 573
+    ## [1] 610
     ## 
     ## $a1
-    ## [1] 2038
+    ## [1] 796
     ## 
     ## $a3
-    ## [1] 326
+    ## [1] 114
 
 ``` r
 c(overlap$a4,overlap$a5) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
@@ -2564,46 +2593,46 @@ lapply(overlap,length)
 ```
 
     ## $a31
-    ## [1] 42
+    ## [1] 33
     ## 
     ## $a30
-    ## [1] 11
+    ## [1] 9
     ## 
     ## $a29
-    ## [1] 5
+    ## [1] 4
     ## 
     ## $a28
-    ## [1] 14
+    ## [1] 10
     ## 
     ## $a27
     ## [1] 5
     ## 
     ## $a26
-    ## [1] 346
+    ## [1] 355
     ## 
     ## $a25
-    ## [1] 236
+    ## [1] 240
     ## 
     ## $a24
-    ## [1] 297
+    ## [1] 299
     ## 
     ## $a23
-    ## [1] 14
+    ## [1] 10
     ## 
     ## $a22
-    ## [1] 11
+    ## [1] 7
     ## 
     ## $a21
-    ## [1] 179
+    ## [1] 180
     ## 
     ## $a20
-    ## [1] 13
+    ## [1] 10
     ## 
     ## $a19
-    ## [1] 18
+    ## [1] 14
     ## 
     ## $a18
-    ## [1] 17
+    ## [1] 15
     ## 
     ## $a17
     ## [1] 3
@@ -2612,98 +2641,89 @@ lapply(overlap,length)
     ## [1] 150
     ## 
     ## $a15
-    ## [1] 606
+    ## [1] 608
     ## 
     ## $a14
-    ## [1] 403
+    ## [1] 407
     ## 
     ## $a13
-    ## [1] 257
+    ## [1] 261
     ## 
     ## $a12
-    ## [1] 10
+    ## [1] 8
     ## 
     ## $a11
-    ## [1] 264
+    ## [1] 268
     ## 
     ## $a10
-    ## [1] 374
+    ## [1] 377
     ## 
     ## $a9
-    ## [1] 33
+    ## [1] 19
     ## 
     ## $a8
-    ## [1] 61
+    ## [1] 42
     ## 
     ## $a7
-    ## [1] 68
+    ## [1] 47
     ## 
     ## $a6
     ## [1] 194
     ## 
     ## $a5
-    ## [1] 2857
+    ## [1] 2881
     ## 
     ## $a4
-    ## [1] 2918
+    ## [1] 2944
     ## 
     ## $a3
-    ## [1] 645
+    ## [1] 647
     ## 
     ## $a2
-    ## [1] 1251
+    ## [1] 1267
     ## 
     ## $a1
-    ## [1] 489
+    ## [1] 247
 
 ``` r
 c(overlap$a31) %>% unlist() %>% res_hif1a_2a[.,"symbol"] %>% kable()
 ```
 
-| x         |
-|:----------|
-| FAM162A   |
-| PGK1      |
-| ANKZF1    |
-| ANKRD37   |
-| GBE1      |
-| ABCB6     |
-| PPAN      |
-| EFNA3     |
-| ADORA2B   |
-| DDX41     |
-| KDM4C     |
-| LNPK      |
-| PIGA      |
-| HERC3     |
-| AK2       |
-| USP28     |
-| TRIM9     |
-| PPFIA4    |
-| PRELID2   |
-| GRPEL1    |
-| DIPK2A    |
-| PPP1R3E   |
-|           |
-| BNIP3L    |
-| ALDOC     |
-| ZNF160    |
-| BICDL2    |
-| MTFP1     |
-| ARRDC2    |
-| SLC25A36  |
-| LINC03047 |
-| NUDT18    |
-| CFAP96    |
-| LUCAT1    |
-| ANGPTL4   |
-| CPNE5     |
-| PPM1H     |
-| CACNA1C   |
-| FOSL2     |
-| NME1      |
-| EIF4EBP1  |
-|           |
+| x        |
+|:---------|
+| FAM162A  |
+| PGK1     |
+| ANKZF1   |
+| GBE1     |
+| PPAN     |
+| ABCB6    |
+| ANKRD37  |
+| EFNA3    |
+| DDX41    |
+| KDM4C    |
+| AK2      |
+| LNPK     |
+| USP28    |
+| TRIM9    |
+| ADORA2B  |
+| PIGA     |
+| HERC3    |
+| DIPK2A   |
+| GRPEL1   |
+| BNIP3L   |
+| PRELID2  |
+| PPFIA4   |
+| ALDOC    |
+| PPP1R3E  |
+| ZNF160   |
+| MTFP1    |
+| SLC25A36 |
+| ARRDC2   |
+| BICDL2   |
+| CFAP96   |
+| FOSL2    |
+| NME1     |
+| EIF4EBP1 |
 
 # 
 

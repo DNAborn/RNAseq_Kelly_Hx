@@ -176,7 +176,7 @@ df <- data.frame(n=c(1:8),
 ## -Prepare Results
 ```{r pre_results, fig.width=4, fig.show='hold',out.width="50%"}
 
-deg_genes_list <- lapply(results_list,topgenes_f) %>%  lapply(.,rownames) 
+deg_genes_list <- lapply(results_list,topgenes_f, bM = 100, p=0.01) %>%  lapply(.,rownames) 
 names(deg_genes_list) <- paste("deg",names(deg_genes_list),sep="_")
 
 main_degs <- c(list("Kelly: Hx.vs.Nx" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
@@ -360,7 +360,16 @@ plotCounts_anno(EPO)
 
 # res <- res_shrink_list[[n]] %>% data.frame()
 
-getdeg <- function(x){subset(results_list[[x]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()}
+getdeg <- function(x,
+                   padj = 0.05,
+                   bM = 0,
+                   l2fc = 1)
+  {subset(results_list[[x]], padj < padj &
+                              baseMean > bM &
+           (log2FoldChange > l2fc | log2FoldChange < -l2fc)) %>% data.frame()}
+
+
+
 
 volcano_sk3 <- function(n,
                         col="red",
@@ -422,7 +431,7 @@ volcano_func
 ## -Volcano_function2
 ```{r volcano_func2}
 
-getdeg <- function(x){subset(results_list[[x]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()}
+# getdeg <- function(x){subset(results_list[[x]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()}
 
 volcano_sk4 <- function(n,
                         col="red",
@@ -483,6 +492,17 @@ volcano_func
 ## -Plot Vulcanos
 ### Simple
 ```{r 2_volcanos_plot, fig.width=10, fig.height=7.5}
+
+getdeg <- function(x,
+                   pj = 0.01,
+                   bM = 100,
+                   l2fc = 1)
+  {subset(results_list[[x]], padj < pj &
+                              baseMean > bM &
+           (log2FoldChange > l2fc | log2FoldChange < -l2fc)) %>% data.frame()}
+
+getdeg("Kelly.Hx.vs.Nx", pj = 0.01, bM = 100) %>% nrow()
+
 
 # Simple Volcanos
 volcano_Kelly <- volcano_sk3(n="Kelly.Hx.vs.Nx", deg=getdeg("Kelly.Hx.vs.Nx"),col=colors[2], celline="Kelly")
@@ -1025,6 +1045,7 @@ genes_holger_hif1a_hif2a <- genes_holger_hif1a_hif2a[order(genes_holger_hif1a_hi
 
 plotCounts_SK(genes_holger_hif1a_hif2a[1:9,] %>% rownames(), n= "Hif1A_HIF2A targets")
 write.xlsx(genes_holger_hif1a_hif2a,"HIF1A_HIF2A_genes.xlsx")
+
 
 
 
