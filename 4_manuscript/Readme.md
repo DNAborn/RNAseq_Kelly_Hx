@@ -616,7 +616,7 @@ plt4 <- venn.diagram(
 
 
 patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
-(patchwork::wrap_elements(plt4) + patchwork::wrap_elements(plt4)) / (patchwork::wrap_elements(plt4) + patchwork::wrap_elements(plt4))
+patchwork::wrap_elements(plt4) / patchwork::wrap_elements(plt4)
 ```
 
 <img src="Readme_files/figure-gfm/2_venn-1.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn-2.png" width="50%" />
@@ -1436,7 +1436,7 @@ cluster.vs.Hx <- c(list("Kelly: Hx.vs.Nx" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"
                      "Cluster Hif2a" = genes_holger_hif2a %>% rownames() ))
 
 input_list <- cluster.vs.Hx
-plt4 <- venn.diagram(
+plt1 <- venn.diagram(
     x = input_list,
     fill = colors[c(2,7,3,5)],
     main.fontface = "bold",
@@ -1450,9 +1450,7 @@ plt4 <- venn.diagram(
     cat.fontfamily = "arial")
 
 
-patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
-(patchwork::wrap_elements(plt4) + patchwork::wrap_elements(plt4)) / (patchwork::wrap_elements(plt4) + patchwork::wrap_elements(plt4))
-
+patchwork::wrap_elements(plt1)
 
 
 hif1a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
@@ -1583,7 +1581,7 @@ plt2 <- venn.diagram(
 # Cluster Holger vs. All Kelly
 ```
 
-<img src="Readme_files/figure-gfm/2_venn2-1.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-2.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-3.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-4.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-5.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-6.png" width="50%" />
+<img src="Readme_files/figure-gfm/2_venn2-1.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-2.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-3.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-4.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-5.png" width="50%" />
 
 ## HIF independant
 

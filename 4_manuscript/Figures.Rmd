@@ -566,7 +566,7 @@ volcano_hif1b <- volcano_sk4(n="Hif1b.Hx.vs.Nx", deg=getdeg("Hif1b.Hx.vs.Nx"), d
 
 ## -Venn
 
-```{r 2_venn, fig.height=10, fig.width=8, dpi=300, out.width="50%", fig.show='hold'}
+```{r 2_venn, fig.height=6, fig.width=8, dpi=300, out.width="50%", fig.show='hold'}
 
 
 # Volcano (1)
@@ -646,7 +646,7 @@ plt4 <- venn.diagram(
 
 
 patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
-(patchwork::wrap_elements(plt4) + patchwork::wrap_elements(plt4)) / (patchwork::wrap_elements(plt4) + patchwork::wrap_elements(plt4))
+patchwork::wrap_elements(plt4) / patchwork::wrap_elements(plt4)
 
 ```
 
@@ -1099,7 +1099,7 @@ write.xlsx(genes_holger_hif1a_hif2a,"HIF1A_HIF2A_genes.xlsx")
 
 ### Venn
 
-```{r 2_venn2, fig.height=4, fig.width=4, dpi=300, out.width="50%", fig.show='hold'}
+```{r 2_venn2, fig.height=6, fig.width=8, dpi=300, out.width="50%", fig.show='hold'}
 
 # Cluster Holger vs. Kelly + Hif1b
 cluster.vs.Hx <- c(list("Kelly: Hx.vs.Nx" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
@@ -1108,7 +1108,7 @@ cluster.vs.Hx <- c(list("Kelly: Hx.vs.Nx" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"
                      "Cluster Hif2a" = genes_holger_hif2a %>% rownames() ))
 
 input_list <- cluster.vs.Hx
-plt4 <- venn.diagram(
+plt1 <- venn.diagram(
     x = input_list,
     fill = colors[c(2,7,3,5)],
     main.fontface = "bold",
@@ -1122,9 +1122,7 @@ plt4 <- venn.diagram(
     cat.fontfamily = "arial")
 
 
-patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
-(patchwork::wrap_elements(plt4) + patchwork::wrap_elements(plt4)) / (patchwork::wrap_elements(plt4) + patchwork::wrap_elements(plt4))
-
+patchwork::wrap_elements(plt1)
 
 
 hif1a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
