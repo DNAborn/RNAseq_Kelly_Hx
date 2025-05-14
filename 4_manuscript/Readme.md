@@ -593,8 +593,30 @@ plt2b <- venn.diagram(
     
 #     main = "Compare Hif KOs",
 
-patchwork::wrap_elements(plt1)
-patchwork::wrap_elements(plt2) / patchwork::wrap_elements(plt2b)
+# Volcano (4)
+
+simple_degs <- c(list("Kelly: Hx.vs.Nx" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
+                     "Hif1b: Hx.vs.Nx" = deg_genes_list[["deg_Hif1b.Hx.vs.Nx"]],
+                     "Hif1a: Hx.vs.Nx" = deg_genes_list[["deg_Hif1a.Hx.vs.Nx"]],
+                     "Hif2a: Hx.vs.Nx" = deg_genes_list[["deg_Hif2a.Hx.vs.Nx"]] ))
+
+input_list <- simple_degs[c(1,2)]
+plt4 <- venn.diagram(
+    x = input_list,
+    fill = colors[c(2,7)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+
+patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
+(patchwork::wrap_elements(plt4) + patchwork::wrap_elements(plt4)) / (patchwork::wrap_elements(plt4) + patchwork::wrap_elements(plt4))
 ```
 
 <img src="Readme_files/figure-gfm/2_venn-1.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn-2.png" width="50%" />
@@ -1407,6 +1429,32 @@ write.xlsx(genes_holger_hif1a_hif2a,"HIF1A_HIF2A_genes.xlsx")
 ### Venn
 
 ``` r
+# Cluster Holger vs. Kelly + Hif1b
+cluster.vs.Hx <- c(list("Kelly: Hx.vs.Nx" = deg_genes_list[["deg_Kelly.Hx.vs.Nx"]],
+                     "Hif1b: Hx.vs.Nx" = deg_genes_list[["deg_Hif1b.Hx.vs.Nx"]],
+                     "Cluster Hif1a" = genes_holger_hif1a %>% rownames(),
+                     "Cluster Hif2a" = genes_holger_hif2a %>% rownames() ))
+
+input_list <- cluster.vs.Hx
+plt4 <- venn.diagram(
+    x = input_list,
+    fill = colors[c(2,7,3,5)],
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+
+patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
+(patchwork::wrap_elements(plt4) + patchwork::wrap_elements(plt4)) / (patchwork::wrap_elements(plt4) + patchwork::wrap_elements(plt4))
+
+
+
 hif1a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
                                                 Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
 hif1a_up_holger %>% nrow()
@@ -1530,9 +1578,12 @@ plt2 <- venn.diagram(
 
 
 # patchwork::wrap_elements(plt1) / patchwork::wrap_elements(plt2)
+
+
+# Cluster Holger vs. All Kelly
 ```
 
-<img src="Readme_files/figure-gfm/2_venn2-1.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-2.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-3.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-4.png" width="50%" />
+<img src="Readme_files/figure-gfm/2_venn2-1.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-2.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-3.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-4.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-5.png" width="50%" /><img src="Readme_files/figure-gfm/2_venn2-6.png" width="50%" />
 
 ## HIF independant
 
@@ -1543,6 +1594,34 @@ hif1a_up_holger %>% nrow()
 ```
 
     ## [1] 411
+
+``` r
+# Hif1b hypoxic genes
+getdeg("Hif1b.Hx.vs.Nx") %>% nrow()
+```
+
+    ## [1] 1079
+
+``` r
+HIF1B_HX_ranked <- topgenes_f(getdeg("Hif1b.Hx.vs.Nx"))
+HIF1B_HX_ranked %>% nrow()
+```
+
+    ## [1] 1079
+
+``` r
+write.xlsx(HIF1B_HX_ranked,"HIF1B_genes.xlsx")
+
+# HIF dependant
+
+Kelly_Hx_genes <- getdeg("Kelly.Hx.vs.Nx") %>% rownames()
+HIF1B_HX_genes <- HIF1B_HX_ranked %>% rownames()
+
+overlap <- calculate.overlap(list(Kelly_Hx_genes,HIF1B_HX_genes))
+overlap$a1 %>% length()
+```
+
+    ## [1] 3332
 
 # (Table 1: Gene List)
 
