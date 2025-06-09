@@ -204,7 +204,8 @@ res_final <- results_list[c("Kelly.Hx.vs.Nx","Hif1a.Hx.vs.Nx","Hif2a.Hx.vs.Nx",
 res_table <- lapply(res_final,data.frame) %>% lapply(.,"[", , c("log2FoldChange","padj"))
 res_table <- do.call('cbind',res_table)
 res_table_final <- res_final[[1]][,c("ENSEMBL","ENTREZ","symbol","baseMean")] %>% data.frame()
-res_table_final <- cbind(res_table_final,res_table)
+res_table_final_all <- cbind(res_table_final,res_table)
+res_table_final <- filter(res_table_final_all, baseMean > 100)
 res_hif1a_2a <- res_table_final[hif1a_2a_genes,]
 colnames(res_hif1a_2a)
 
@@ -800,38 +801,42 @@ results_list %>% names()
 deg_genes_list %>% names()
 hif1a_up_holger <- calculate.overlap(input_list)
 
+# set limits
+p <- 0.01
+l2f <- 1
+bM <- 100
 
 # HIF1a
-hif1a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
+hif1a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < p & Hx.Hif1a.vs.Kelly.padj < p & Hx.Hif2a.vs.Hif1a.padj < p &
                                                 Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
 hif1a_up_holger %>% nrow()
 
-hif1a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
+hif1a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < p & Hx.Hif1a.vs.Kelly.padj < p & Hx.Hif2a.vs.Hif1a.padj < p &
                                                 Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < -1)
 hif1a_do_holger %>% nrow()
 
 # HIF2a
-hif2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif2a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
+hif2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < p & Hx.Hif2a.vs.Kelly.padj < p & Hx.Hif2a.vs.Hif1a.padj < p &
                                                 Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < -1)
 EPO %in% rownames(hif2a_up_holger)
-res_table_final[EPO,] %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
+res_table_final[EPO,] %>% filter(Kelly.Hx.vs.Nx.padj < p & Hx.Hif1a.vs.Kelly.padj < p & Hx.Hif2a.vs.Hif1a.padj < p &
                                                 Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < -1)
 hif2a_up_holger %>% nrow()
 
-hif2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif2a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05  &
+hif2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < p & Hx.Hif2a.vs.Kelly.padj < p & Hx.Hif2a.vs.Hif1a.padj < p  &
                                                 Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
 hif2a_do_holger %>% nrow()
 
 
 
 # HIF1a + HIF2a
-hif1a_2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & (Hx.Hif1a.vs.Kelly.padj < 0.05 | Hx.Hif2a.vs.Kelly.padj < 0.05) &
+hif1a_2a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < p & (Hx.Hif1a.vs.Kelly.padj < p | Hx.Hif2a.vs.Kelly.padj < p) &
                                                 Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1 # &                                                   Hx.Hif2a.vs.Hif1a.log2FoldChange > -0.5 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 0.5
                                                 )
 hif1a_2a_up_holger %>% nrow()
 
 # HIF1a + HIF2a
-hif1a_2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & (Hx.Hif1a.vs.Kelly.padj < 0.05 | Hx.Hif2a.vs.Kelly.padj < 0.05) &
+hif1a_2a_do_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < p & (Hx.Hif1a.vs.Kelly.padj < p | Hx.Hif2a.vs.Kelly.padj < p) &
                                                 Kelly.Hx.vs.Nx.log2FoldChange < -1 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange < 1
                                                   )
 hif1a_2a_do_holger %>% nrow()
@@ -1125,25 +1130,25 @@ plt1 <- venn.diagram(
 patchwork::wrap_elements(plt1)
 
 
-hif1a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Hif1a.padj < 0.05 &
+hif1a_up_holger <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < p & Hx.Hif1a.vs.Kelly.padj < p & Hx.Hif2a.vs.Hif1a.padj < p &
                                                 Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
 hif1a_up_holger %>% nrow()
 
 # Hx
-KellyHx.vs.Nx_up <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Kelly.Hx.vs.Nx.log2FoldChange > 1) %>% rownames()
-KellyHx.vs.Nx_do <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 & Kelly.Hx.vs.Nx.log2FoldChange < -1) %>% rownames()
+KellyHx.vs.Nx_up <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < p & Kelly.Hx.vs.Nx.log2FoldChange > 1) %>% rownames()
+KellyHx.vs.Nx_do <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < p & Kelly.Hx.vs.Nx.log2FoldChange < -1) %>% rownames()
 
 # HIF1a
-Hif1aHx.vs.KellyHx_up <- res_table_final %>% filter(Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1) %>% rownames()
-Hif1aHx.vs.KellyHx_do <- res_table_final %>% filter(Hx.Hif1a.vs.Kelly.padj < 0.05 & Hx.Hif1a.vs.Kelly.log2FoldChange > 1) %>% rownames()
+Hif1aHx.vs.KellyHx_up <- res_table_final %>% filter(Hx.Hif1a.vs.Kelly.padj < p & Hx.Hif1a.vs.Kelly.log2FoldChange < -1) %>% rownames()
+Hif1aHx.vs.KellyHx_do <- res_table_final %>% filter(Hx.Hif1a.vs.Kelly.padj < p & Hx.Hif1a.vs.Kelly.log2FoldChange > 1) %>% rownames()
 
 # HIF2a
-Hif2aHx.vs.KellyHx_up <- res_table_final %>% filter(Hx.Hif2a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Kelly.log2FoldChange < -1) %>% rownames()
-Hif2aHx.vs.KellyHx_do <- res_table_final %>% filter(Hx.Hif2a.vs.Kelly.padj < 0.05 & Hx.Hif2a.vs.Kelly.log2FoldChange > 1) %>% rownames()
+Hif2aHx.vs.KellyHx_up <- res_table_final %>% filter(Hx.Hif2a.vs.Kelly.padj < p & Hx.Hif2a.vs.Kelly.log2FoldChange < -1) %>% rownames()
+Hif2aHx.vs.KellyHx_do <- res_table_final %>% filter(Hx.Hif2a.vs.Kelly.padj < p & Hx.Hif2a.vs.Kelly.log2FoldChange > 1) %>% rownames()
 
 # Hif1a vs. Hif2a
-Hx.Hif2a.vs.Hif1a_do <- res_table_final %>% filter(Hx.Hif2a.vs.Hif1a.padj < 0.05 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1) %>% rownames()
-Hx.Hif2a.vs.Hif1a_up <- res_table_final %>% filter(Hx.Hif2a.vs.Hif1a.padj < 0.05 & Hx.Hif2a.vs.Hif1a.log2FoldChange < -1) %>% rownames()
+Hx.Hif2a.vs.Hif1a_do <- res_table_final %>% filter(Hx.Hif2a.vs.Hif1a.padj < p & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1) %>% rownames()
+Hx.Hif2a.vs.Hif1a_up <- res_table_final %>% filter(Hx.Hif2a.vs.Hif1a.padj < p & Hx.Hif2a.vs.Hif1a.log2FoldChange < -1) %>% rownames()
 
 
 # Hif1a up
@@ -1257,7 +1262,7 @@ plt2 <- venn.diagram(
 ## HIF independant
 ```{r}
 
-hif_a_independant <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < 0.05 &
+hif_a_independant <- res_table_final %>% filter(Kelly.Hx.vs.Nx.padj < p &
                                                 Kelly.Hx.vs.Nx.log2FoldChange > 1 & Hx.Hif1a.vs.Kelly.log2FoldChange < -1 & Hx.Hif2a.vs.Hif1a.log2FoldChange > 1)
 hif1a_up_holger %>% nrow()
 
