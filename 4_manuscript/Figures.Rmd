@@ -338,6 +338,7 @@ pca10
 
 # HIF1A: EPO, VEGF, HO-1, ADM, and Glut-1
 EPO <- subset(res_shrink_list[["Kelly.Hx.vs.Nx"]],symbol=="EPO")$ENSEMBL
+ENO1 <- subset(res_shrink_list[["Kelly.Hx.vs.Nx"]],symbol=="ENO1")$ENSEMBL
 
 # EPO <- subset(res,symbol=="VEGF-A")
 # EPO <- subset(res,symbol=="EPO")
@@ -350,6 +351,8 @@ EPO <- subset(res_shrink_list[["Kelly.Hx.vs.Nx"]],symbol=="EPO")$ENSEMBL
 plotCounts_anno(CA9)
 plotCounts_anno(WT1)
 plotCounts_anno(EPO)
+
+plotCounts_anno(ENO1)
 
 
 ```
@@ -1470,6 +1473,34 @@ pathview(gene.data  = genes_holger_list_ez[[1]],
 
 ```
 
+## Plot genes from GO terms
+```{r counts_go}
+
+ENO1 <- subset(res_shrink_list[["Kelly.Hx.vs.Nx"]],symbol=="ENO1")$ENSEMBL
+
+goi_hif1a <- subset(res_shrink_list[["Kelly.Hx.vs.Nx"]],symbol %in% c("TPI1", "PGK1", "ALDOC", "ENO1", "ENO2", "PGM1"))$ENSEMBL
+
+plotCounts_SK(goi_hif1a, n= "Hif1A targets")
+
+goi_hif2a <- subset(res_shrink_list[["Kelly.Hx.vs.Nx"]],symbol %in% c("GFRA3", "GFRA1", "MERTK", "GDNF", "PLXNA4", "DPYSL5", "SEMA5A", "TNR", "CNTN6", "ROBO2", "BDNF", "EPHB2", "NRXN3", "NTN3", "NRP2", "EPHA4", "RET", "CITED1", "XRCC2", "RAD51"))$ENSEMBL
+
+plotCounts_SK(goi_hif2a[1:9], n= "Hif2A targets")
+plotCounts_SK(goi_hif2a[10:18], n= "Hif2A targets")
+plotCounts_SK(goi_hif2a[19:20], n= "Hif2A targets")
+
+
+goi_final <- subset(res_shrink_list[["Kelly.Hx.vs.Nx"]],symbol %in% c("CA9", "PFKFB3", "ENO1", "EPO", "SULF2", "GFRA3"))$ENSEMBL
+
+gene_symbols_ordered <- c("CA9", "PFKFB3", "ENO1", "EPO", "SULF2", "GFRA3")
+results_subset <- subset(res_shrink_list[["Kelly.Hx.vs.Nx"]], symbol %in% gene_symbols_ordered)
+order_indices <- match(gene_symbols_ordered, results_subset$symbol)
+goi_final <- results_subset$ENSEMBL[order_indices]
+
+plotCounts_SK(goi_final)
+
+
+
+```
 
 
 
