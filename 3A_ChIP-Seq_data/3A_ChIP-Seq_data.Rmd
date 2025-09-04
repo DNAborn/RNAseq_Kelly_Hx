@@ -9,7 +9,7 @@ output:
     toc_depth: 2
 always_allow_html: true
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 knit: (function(input_file, encoding) {
     rmarkdown::render(input_file,output_file= 'Readme.md')
         })
@@ -59,6 +59,25 @@ library(AnnotationHub)
 library(VennDiagram)
 library(venn)
 library(viridis)
+
+library(ChIPpeakAnno)
+library(trackViewer)
+library(Gviz)
+library(rtracklayer)
+library(trackViewer)
+library(GenomicFeatures)
+library(UpSetR)
+library(grid)
+library(plyr)
+library(tidyGenomeBrowser)
+library(rentrez)
+library("GenomicFeatures")
+library("Gviz")
+library(GenomicRanges)
+library(readtext)
+library(magick)
+library(kableExtra)
+library(colorspace)
 
 requireNamespace('png', quietly = TRUE)
 
@@ -513,3 +532,40 @@ plotAnnoBar(peakAnnoList)+ggtitle(run)
 
 ```
 
+# Visualize Peaks
+## trackViewer example
+```{trackViewer_exampler}
+
+extdata <- system.file("extdata", package="trackViewer",
+                       mustWork=TRUE)
+gr <- GRanges("chr11", IRanges(122929275, 122930122), strand="-")
+fox2 <- importScore(file.path(extdata, "fox2.bed"), format="BED",
+                    ranges=gr)
+fox2$dat <- coverageGR(fox2$dat)
+
+viewTracks(trackList(fox2), gr=gr, autoOptimizeStyle=TRUE, newpage=TRUE)
+
+dt <- DataTrack(range=fox2$dat[strand(fox2$dat)=="-"] , 
+                genome="hg19", type="hist", name="fox2", 
+                window=-1, chromosome="chr11", 
+                fill.histogram="black", col.histogram="NA",
+                background.title="white",
+                col.frame="white", col.axis="black",
+                col="black", col.title="black")
+plotTracks(dt, from=122929275, to=122930122, strand="-")
+
+
+# Maunals
+## tidyGenomeBrowser
+## https://github.com/MalteThodberg/tidyGenomeBrowser/blob/master/README.Rmd
+
+## trackViewer
+## https://bioconductor.org/packages/release/bioc/vignettes/trackViewer/inst/doc/trackViewer.html
+
+## Generate bigwig
+## https://hbctraining.github.io/Intro-to-ChIPseq-flipped/lessons/08_creating_bigwig_files.html
+
+## Normalize bigwig
+## https://www.biostars.org/p/394434/
+
+```
