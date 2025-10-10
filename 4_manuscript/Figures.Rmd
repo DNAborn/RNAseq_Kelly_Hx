@@ -272,11 +272,11 @@ WT1 ="ENSG00000184937"
 
 res_table_final %>% dim()
 res_table_final %>% head()
+results_list %>% names()
+
 write.xlsx(res_table_final,"Results_all.xlsx")
 write.xlsx(results_list["Kelly.Hx.vs.Nx"],"Results_Kelly_Hx_Nx.xlsx")
 
-deg_list %>% names()
-results_list %>% names()
 
 # DEG genes are generated freshly for each figure!!
 # write.xlsx(deg_list["Kelly.Hx.vs.Nx"],"Results_Kelly_Hx_Nx.xlsx")
