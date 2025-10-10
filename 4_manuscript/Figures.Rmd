@@ -173,7 +173,7 @@ df <- data.frame(n=c(1:8),
                  color=colors)
 ```
 
-## -Prepare Results
+## - Prepare Results
 ```{r pre_results, fig.width=4, fig.show='hold',out.width="50%"}
 
 deg_genes_list <- lapply(results_list,topgenes_f, bM = 100, p=0.01) %>%  lapply(.,rownames) 
@@ -262,6 +262,25 @@ res_shrink_list[["Kelly.Hx.vs.Nx"]] %>% subset(symbol=="WT1")
 
 CA9 = "ENSG00000107159"
 WT1 ="ENSG00000184937"
+
+```
+
+
+## - Export results
+```{r export_results}
+
+
+res_table_final %>% dim()
+res_table_final %>% head()
+write.xlsx(res_table_final,"Results_all.xlsx")
+write.xlsx(results_list["Kelly.Hx.vs.Nx"],"Results_Kelly_Hx_Nx.xlsx")
+
+deg_list %>% names()
+results_list %>% names()
+
+# DEG genes are generated freshly for each figure!!
+# write.xlsx(deg_list["Kelly.Hx.vs.Nx"],"Results_Kelly_Hx_Nx.xlsx")
+
 
 ```
 
@@ -508,7 +527,8 @@ getdeg <- function(x,
 getdeg("Kelly.Hx.vs.Nx", pj = 0.01, bM = 100) %>% nrow()
 
 
-# Simple Volcanos (1)
+# Simple Volcanos (1): Hypoxic response (Hif1a.Hx.vs.Nx)
+
 volcano_Kelly <- volcano_sk3(n="Kelly.Hx.vs.Nx", deg=getdeg("Kelly.Hx.vs.Nx"),col=colors[2], celline="Kelly")
 volcano_hif1a <- volcano_sk3(n="Hif1a.Hx.vs.Nx", deg=getdeg("Hif1a.Hx.vs.Nx"),col=colors[4], celline="HIF1A")
 volcano_hif2a <- volcano_sk3(n="Hif2a.Hx.vs.Nx", deg=getdeg("Hif2a.Hx.vs.Nx"),col=colors[6], celline="HIF2A")
@@ -519,18 +539,8 @@ volcano_hif1b <- volcano_sk3(n="Hif1b.Hx.vs.Nx", deg=getdeg("Hif1b.Hx.vs.Nx"),co
   theme(legend.position = 'right')
 
 
-n2 <- {}
 
-deg <- subset(results_list[["Kelly.Hx.vs.Nx"]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()
-
-
-# Two set volcanos (2)
-n <- "Hif1a.Hx.vs.Nx"
-deg <- subset(results_list[["Hif1a.Hx.vs.Nx"]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()
-deg2 <- subset(results_list[["Hif1aHxNx.vs.KellyHxNx"]], padj < 0.05 & (log2FoldChange > 1 | log2FoldChange < -1)) %>% data.frame()
-col <- colors[2]
-col2 <- colors[4]
-celline="HIF1A"
+# Simple volcanos (2): Differential Hypoxic response (Hif1aHxNx.vs.KellyHxNx)
 
 volcano_Kelly <- volcano_sk3(n="Kelly.Hx.vs.Nx", deg=getdeg("Kelly.Hx.vs.Nx"),col=colors[2], celline="Kelly")
 volcano_hif1a <- volcano_sk3(n="Hif1aHxNx.vs.KellyHxNx", deg=getdeg("Hif1aHxNx.vs.KellyHxNx"),col=colors[4], celline="HIF1A") + ggtitle(label="Hif1A_Hx_Nx vs. Kelly_Hx_Nx")
@@ -540,6 +550,15 @@ volcano_hif1b <- volcano_sk3(n="Hif1bHxNx.vs.KellyHxNx", deg=getdeg("Hif1bHxNx.v
 (volcano_Kelly+volcano_hif1b + plot_layout(guides = "collect", axes="collect", axis_titles="collect") ) / 
   (volcano_hif1a+volcano_hif2a + plot_layout(guides = "collect", axes="collect", axis_titles="collect") ) & 
   theme(legend.position = 'right')
+
+# Cutoffs
+print("Cutoffs:\n - p-adjusted < 0.01\n - baseMean > 100\n - log2 fold-change > 1)")
+
+# Export genes
+getdeg("Kelly.Hx.vs.Nx") %>% head()
+getdeg("Kelly.Hx.vs.Nx") %>% nrow()
+write.xlsx(getdeg("Kelly.Hx.vs.Nx"),"DEGs_Kelly_Hx_Nx.xlsx")
+
 
 
 ```
