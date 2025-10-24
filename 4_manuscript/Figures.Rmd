@@ -44,7 +44,10 @@ install.packages("reticulate")
 
 ```
 
-Load R libraries. If package is missing, install with 'BiocManager::install("PackageName")'
+Load R libraries. If package is missing, install with 
+
+BiocManager::install("openxlsx")
+
 
 ```{r librarys, include=FALSE}
 
@@ -70,7 +73,7 @@ library(SummarizedExperiment)
 library(biomaRt)
 library(org.Hs.eg.db)
 library(Rfast)
-library(xlsx)
+# library(xlsx)
 library(EnhancedVolcano)
 library(PCAtools)
 library(rgl)
@@ -84,6 +87,9 @@ library(gridExtra)
 library(patchwork)
 library(grid)
 library(reshape2)
+
+library(umap)
+library(plotly)
 
 library(ComplexHeatmap)
 # library(pheatmap)
@@ -106,6 +112,7 @@ library(colorspace)
 library(DOSE)
 library(simplifyEnrichment)
 library("pathview")
+library(openxlsx)
 
 requireNamespace('png', quietly = TRUE)
 
@@ -275,7 +282,7 @@ res_table_final %>% head()
 results_list %>% names()
 
 write.xlsx(res_table_final,"Results_all.xlsx")
-write.xlsx(results_list["Kelly.Hx.vs.Nx"],"Results_Kelly_Hx_Nx.xlsx")
+write.xlsx(results_list[["Kelly.Hx.vs.Nx"]], "Results_Kelly_Hx_Nx.xlsx")
 
 
 # DEG genes are generated freshly for each figure!!
@@ -1364,7 +1371,106 @@ write.xlsx(HIF1A_HIF2A_genes,"HIF1A_HIF2A_genes.xlsx")
 ```
 
 
+# UMAP
+```{r umap}
+res_holger
+res_hif1a_2a %>% nrow()
+res_hif1a_2a %>% head()
+colnames(res_hif1a_2a)
 
+res_holger %>% nrow()
+res_holger %>% head()
+res_holger %>% colnames()
+
+levels(res_holger$group %>% factor())
+
+df <- res_holger
+
+feature_cols <- c(
+  "Kelly.Hx.vs.Nx.log2FoldChange",
+  "Hif1a.Hx.vs.Nx.log2FoldChange",
+  "Hif2a.Hx.vs.Nx.log2FoldChange",
+  "Hif1aHxNx.vs.KellyHxNx.log2FoldChange",
+  "Hif2aHxNx.vs.KellyHxNx.log2FoldChange",
+  "Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange"
+)
+
+
+if (!all(feature_cols %in% colnames(df))) {
+  stop("Nicht alle Feature-Spalten im Dataframe gefunden!")
+}
+
+features_scaled <- df %>%
+  select(all_of(feature_cols)) %>%
+  scale()
+
+# 5. UMAP-Berechnung durchführen
+# n_neighbors und min_dist sind die wichtigsten Parameter.
+# n_neighbors: Wie viele Nachbarn werden betrachtet? (kleiner = lokaler Fokus)
+# min_dist: Wie dicht dürfen Punkte gepackt werden? (kleiner = dichtere Cluster)
+set.seed(42) # Für reproduzierbare Ergebnisse
+umap_results <- umap(
+  features_scaled, 
+  n_neighbors = 15, 
+  min_dist = 0.1, 
+  n_components = 2
+)
+
+# 6. UMAP-Koordinaten zum ursprünglichen Dataframe hinzufügen
+df_umap <- df %>%
+  mutate(
+    UMAP1 = umap_results$layout[, 1],
+    UMAP2 = umap_results$layout[, 2]
+  )
+
+# 7. Interaktiven Plot mit ggplot2 und plotly erstellen
+
+# Die Spalte, nach der wir einfärben (deine Hauptfrage)
+color_mapping <- c(
+  "HIF1a" = "blue",
+  "HIF2a" = "green",
+  "HIF1a_HIF2a" = "purple"
+)
+
+# 8. Interaktiven Plot mit ggplot2 und plotly erstellen
+
+p <- df_umap %>%
+  ggplot(aes(
+    x = UMAP1, 
+    y = UMAP2,
+    # Definiere die Farbe basierend auf der 'group'-Spalte
+    color = group,
+    # Definiere den Text für den Tooltip (beim Hovern)
+    text = paste(
+      "Gen:", symbol,
+      "<br>Gruppe:", group,
+      "<br>HIF1A LFC:", round(Hif1a.Hx.vs.Nx.log2FoldChange, 2),
+      "<br>HIF2A LFC:", round(Hif2a.Hx.vs.Nx.log2FoldChange, 2)
+    )
+  )) +
+  geom_point(alpha = 0.8, size = 1.5) +
+  
+  # *** HIER IST DIE ÄNDERUNG ***
+  # Verwende deine manuelle Farbskala
+  scale_color_manual(
+    values = color_mapping,
+    name = "Gen-Gruppe" # Legende-Titel
+  ) +
+  
+  labs(
+    title = "UMAP der Gen-Reaktionsprofile nach Gruppe",
+    x = "UMAP Dimension 1",
+    y = "UMAP Dimension 2"
+  ) +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank())
+
+
+# 9. Plot interaktiv machen
+# ggplotly(p, tooltip = "text")
+p
+
+```
 
 
 # Figure 4: Gene Set enrichment
