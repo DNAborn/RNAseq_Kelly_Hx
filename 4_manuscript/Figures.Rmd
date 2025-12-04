@@ -273,34 +273,6 @@ WT1 ="ENSG00000184937"
 ```
 
 
-## - Export results
-```{r export_results}
-
-
-res_table_final %>% dim()
-res_table_final %>% head()
-results_list %>% names()
-
-write.xlsx(res_table_final,"Results_all.xlsx")
-write.xlsx(results_list[["Kelly.Hx.vs.Nx"]], "Results_Kelly_Hx_Nx.xlsx")
-
-
-# DEG genes are generated freshly for each figure!!
-# write.xlsx(deg_list["Kelly.Hx.vs.Nx"],"Results_Kelly_Hx_Nx.xlsx")
-
-
-```
-
-
-# Master Table
-```{r master_table}
-
-
-
-
-
-```
-
 
 
 # Figure 1: Samples QC
@@ -1380,6 +1352,386 @@ write.xlsx(HIF1A_HIF2A_genes,"HIF1A_HIF2A_genes.xlsx")
 
 
 ```
+
+## - Export results
+```{r export_results}
+
+# Include Groups in all results table
+
+res_table_final$group <- ifelse(rownames(res_table_final) %in% genes_holger_list$HIF1a,"HIF1a",
+                           ifelse(rownames(res_table_final) %in% genes_holger_list$HIF2a,"HIF2a",
+                                  ifelse(rownames(res_table_final) %in% genes_holger_list$HIF1a_HIF2a,"HIF1a_HIF2a","NA")))
+
+res_table_final %>% dim()
+res_table_final %>% head()
+results_list %>% names()
+
+write.xlsx(res_table_final,"Results_Kelly_all.xlsx")
+write.xlsx(results_list[["Kelly.Hx.vs.Nx"]], "Results_Kelly_Hx_Nx.xlsx")
+
+
+# DEG genes are generated freshly for each figure!!
+# write.xlsx(deg_list["Kelly.Hx.vs.Nx"],"Results_Kelly_Hx_Nx.xlsx")
+
+
+```
+
+# Combine Master Table
+```{r master_table_combine, eval=FALSE}
+
+# master_table <- read.xlsx("/mnt/s/AG/AG-Scholz/Neuroblastoma_HIF/RNA-Seq data/Own data/master_table.xlsx")
+
+master_table %>% dim()
+master_table %>% colnames()
+# master_table %>% head()
+res_table_final %>% dim()
+res_table_final %>% colnames()
+# res_table_final %>% head()
+
+rownames(master_table) <- master_table$Ensembl
+(rownames(master_table) == rownames(res_table_final)) %>% summary()
+# results_list[["Kelly.Hx.vs.Nx"]] %>% head()
+
+final_combined_table <- master_table %>%
+  left_join(
+    res_table_final %>% select(ENSEMBL, group), # Nur ID und die neue Spalte 'group' auswählen
+    by = c("Ensembl" = "ENSEMBL")               # Mappen von 'Ensembl' auf 'ENSEMBL'
+  )
+
+master_table <- final_combined_table
+
+colnames(master_table)
+colnames(master_table)[5] <- "baseMean_Kelly"
+
+rownames(master_table) <- master_table$Ensembl
+
+write.xlsx(master_table,"master_table.xlsx")
+
+
+
+# Add SKNAS Info
+## cutoff padj < 0.05, L2FC > 0.5, bM > 100
+master_table$SKNAS_Hx <- {}
+master_table$SKNAS_Hx <- ifelse(master_table$BaseMean_SKNAS > 100 &
+                                  (master_table$log2FC_SKNAS > 0.5 |
+                                  master_table$log2FC_SKNAS < -0.5) &
+                                  master_table$padj_SKNAS < 0.05,
+                                TRUE,FALSE)
+master_table$SKNAS_Hx %>% summary()
+
+# Add SHSY5Y Info
+## cutoff padj < 0.05, L2FC > 0.5, bM > 100
+master_table$SHSY5Y_Hx <- ifelse(master_table$BaseMean_SHSY5Y > 100 &
+                                  (master_table$log2FC_SHSY5Y > 0.5 |
+                                  master_table$log2FC_SHSY5Y < -0.5) &
+                                  master_table$padj_SHSY5Y < 0.05,
+                                TRUE,FALSE)
+master_table$SHSY5Y_Hx %>% summary()
+
+# Add Kelly Hx Info
+## cutoff padj < 0.01, L2FC > 1, bM > 100
+master_table$Kelly_Hx <- ifelse(master_table$baseMean_Kelly > 100 &
+                                  (master_table$Kelly.Hx.vs.Nx.log2FoldChange > 1 |
+                                  master_table$Kelly.Hx.vs.Nx.log2FoldChange < -1) &
+                                  master_table$Kelly.Hx.vs.Nx.padj < 0.01,
+                                TRUE,FALSE)
+master_table$Kelly_Hx %>% summary()
+
+master_table %>% filter(SKNAS_Hx ==TRUE & SHSY5Y_Hx == TRUE & Kelly_Hx==TRUE) %>% nrow()
+
+
+master_table$group_Kellyonly <- ifelse(master_table$group == "HIF1a" & 
+                                         (master_table$SKNAS_Hx != TRUE & master_table$SHSY5Y_Hx != TRUE),
+                                       "HIF1a",
+                                   ifelse(master_table$group == "HIF2a" & 
+                                         (master_table$SKNAS_Hx != TRUE & master_table$SHSY5Y_Hx != TRUE),
+                                       "HIF2a",
+                                       ifelse(master_table$group == "HIF1a_HIF2a" & 
+                                         (master_table$SKNAS_Hx != TRUE & master_table$SHSY5Y_Hx != TRUE),
+                                       "HIF1a_HIF2a","NA")))
+
+master_table$Kellyonly <- ifelse(master_table$group == "HIF1a" & 
+                                         (master_table$SKNAS_Hx != TRUE & master_table$SHSY5Y_Hx != TRUE),
+                                       "HIF1a",
+                                   ifelse(master_table$group == "HIF2a" & 
+                                         (master_table$SKNAS_Hx != TRUE & master_table$SHSY5Y_Hx != TRUE),
+                                       "HIF2a",
+                                       ifelse(master_table$group == "HIF1a_HIF2a" & 
+                                         (master_table$SKNAS_Hx != TRUE & master_table$SHSY5Y_Hx != TRUE),
+                                       "HIF1a_HIF2a","NA")))
+
+master_table$group_Kellyonly %>% table()                  
+
+write.xlsx(master_table,"master_table.xlsx")
+
+
+```
+
+
+# Master Table Dive
+## Venn
+```{r master_table, fig.show='hold', out.width="50%"}
+master_table <- {}
+master_table <- read.xlsx("/mnt/s/AG/AG-Scholz/Neuroblastoma_HIF/RNA-Seq data/Own data/master_table.xlsx")
+rownames(master_table) <- master_table$Ensembl
+
+colnames(master_table)
+
+input_list <- list("SKNAS_Hx" = master_table %>% filter(SKNAS_Hx ==TRUE) %>% rownames(),
+                     "SHSY5Y_Hx" = master_table %>% filter(SHSY5Y_Hx == TRUE) %>% rownames(),
+                   "Kelly_Hx" = master_table %>% filter(Kelly_Hx==TRUE) %>% rownames())
+
+plt1 <- venn.diagram(
+    x = input_list,
+    fill = viridis(3),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+patchwork::wrap_elements(plt1)
+
+
+input_list <- list("SKNAS_Hx" = master_table %>% filter(SKNAS_Hx ==TRUE) %>% rownames(),
+                     "SHSY5Y_Hx" = master_table %>% filter(SHSY5Y_Hx == TRUE) %>% rownames(),
+                     "Hif1a" = master_table %>% filter(group == "HIF1a") %>% rownames(),
+                     "HIF2a" = master_table %>% filter(group == "HIF2a") %>% rownames(),
+                   "Kelly_Hx" = master_table %>% filter(Kelly_Hx==TRUE) %>% rownames()
+)
+
+plt2 <- venn.diagram(
+    x = input_list,
+    fill = viridis(length(input_list)),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+patchwork::wrap_elements(plt2)
+
+input_list <- list("Hif1a" = master_table %>% filter(group == "HIF1a") %>% rownames(),
+                     "HIF2a" = master_table %>% filter(group == "HIF2a") %>% rownames(),
+                   "Kelly_Hx" = master_table %>% filter(Kelly_Hx==TRUE & SKNAS_Hx != TRUE & SHSY5Y_Hx != TRUE) %>% rownames()
+)
+
+plt3 <- venn.diagram(
+    x = input_list,
+    fill = viridis(length(input_list)),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+patchwork::wrap_elements(plt3)
+
+
+
+input_list <- list("Hif1a" = master_table %>% filter(group == "HIF1a") %>% rownames(),
+                     "HIF2a" = master_table %>% filter(group == "HIF2a") %>% rownames(),
+                   "SKNAS_Hx" = master_table %>% filter(SKNAS_Hx ==TRUE) %>% rownames(),
+                     "SHSY5Y_Hx" = master_table %>% filter(SHSY5Y_Hx == TRUE) %>% rownames()
+)
+
+plt4 <- venn.diagram(
+    x = input_list,
+    fill = viridis(length(input_list)),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+patchwork::wrap_elements(plt4)
+
+input_list <- list("Hif1a" = master_table %>% filter(group == "HIF1a") %>% rownames(),
+                     "HIF2a" = master_table %>% filter(group == "HIF2a") %>% rownames(),
+                   "SKNAS-SHSY5Y_Hx" = master_table %>% filter(SKNAS_Hx ==TRUE | SHSY5Y_Hx == TRUE) %>% rownames()
+)
+plt5 <- venn.diagram(
+    x = input_list,
+    fill = viridis(length(input_list)),
+    main.fontface = "bold",
+    fontfamily ="Arial",
+    category.names = paste(names(input_list),"\n(",input_list %>% summary() %>% .[c(1:length(input_list))],")",sep=""),
+    force.unique = TRUE, na = "remove", total.population = TRUE,
+    filename = NULL,
+    lwd = 2,
+    lty = 'blank',
+    cat.fontface = "bold",
+    cat.fontfamily = "arial")
+
+patchwork::wrap_elements(plt5)
+
+
+```
+
+
+## Volcanos
+```{r master_volcanos}
+
+Kelly_only <- master_table %>% filter(group_Kellyonly %in% c("HIF1a","HIF2a","HIF1a_HIF2a"))
+
+colnames(Kelly_only)
+
+plot(y = -log(Kelly_only$p_value_HR), x = Kelly_only$HR, title(main = "Hazard Ratio of HIF1a/Hif2a genes"))
+
+Kelly_ready <- Kelly_only %>%
+  mutate(
+    log2HR = log2(HR),
+    logP   = -log10(p_value_HR))
+
+p_cutoff <- 0.005
+hr_cutoff <- 2
+
+labels_to_show <- Kelly_ready %>%
+  filter(
+    p_value_HR < p_cutoff &          # Muss signifikant sein
+    (HR > hr_cutoff | HR < (1/hr_cutoff)) # Muss relevanten Effekt haben (Risiko oder Schutz)
+  )
+
+ggplot(data = Kelly_ready, aes(x = log2HR, y = logP, colour = group)) +
+  geom_point(alpha = 0.8, size = 1.5) +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed") + 
+  geom_vline(xintercept = c(log2(0.67), log2(1.5)), linetype = "dotted") +
+  theme_minimal() +
+geom_text_repel(
+    data = labels_to_show,    # Wir nutzen nur die gefilterten "Top-Kandidaten"
+    aes(label = Symbol),      # Hier kommt der Gen-Name rein
+    size = 3,                 # Schriftgröße
+    box.padding = 0.5,        # Abstand der Labels zueinander
+    max.overlaps = 30,        # Wenn es zu voll wird: Limit erhöhen oder strenger filtern
+    show.legend = FALSE       # Keine Legende für den Text a
+  ) +  labs(title = "Hazard Ratio",subtitle = "HR > 1.5 | HR < 0.67 & p < 0.05)", x =  "log2(Hazard Ratio)", y = "-log10(p-value)")
+
+
+```
+
+
+## Core Genes
+```{r HR_core}
+
+Kelly_HR <- Kelly_ready %>% filter(p_value_HR < 0.05 & (HR > 1.5 | HR < 0.67))
+Kelly_HR %>% nrow()
+
+colnames(Kelly_HR)
+
+master_table$group_Kellyonly %>% table()
+
+ggplot(data = Kelly_HR, aes(x = log2HR, y = Kelly.Hx.vs.Nx.log2FoldChange, colour = group)) +
+  geom_point(alpha = 0.8, size = 1.5) +
+  theme_minimal() + 
+  labs(title = "Core Hx-HR Genes",x = "log2(Hazard Ratio)", y = "log2(Kelly-Hx)")
+
+master_table$core <- ifelse(master_table$group_Kellyonly != "NA" & 
+                              master_table$HR > 1.5 &
+                                master_table$Kelly.Hx.vs.Nx.log2FoldChange > 1,
+                               "Hx_HR_up",
+                               ifelse(master_table$group_Kellyonly != "NA" & 
+                              master_table$HR < 0.67 &
+                                master_table$Kelly.Hx.vs.Nx.log2FoldChange < -1,
+                              "Hx_HR_down",FALSE))
+
+master_table %>% filter(core == "Hx_HR_up" | core == "Hx_HR_down") %>% nrow()
+master_table %>% filter(core == "Hx_HR_up" | core == "Hx_HR_down") %>% .$Symbol
+
+
+
+# Plot
+
+combined_data <- Kelly_HR
+x_col <- "log2HR"          # Name deiner Hazard Ratio Spalte (log2)
+y_col <- "Kelly.Hx.vs.Nx.log2FoldChange"   # Name deiner Hypoxie Expressions Spalte (log2)
+
+# 1. Daten vorbereiten & Quadranten definieren
+# Wir nutzen jetzt direkt die echten Spaltennamen aus deinem head()
+plot_data <- combined_data %>%
+  mutate(
+    Quadrant = case_when(
+      # Oben Rechts: Hypoxie hoch & Risiko hoch (Deine Top-Kandidaten)
+      log2HR > 0 & Kelly.Hx.vs.Nx.log2FoldChange > 0 ~ "Q1: Hypoxie-Driven Risk",
+      
+      # Unten Links: Hypoxie runter & Schutz weg (Verlust von Suppressoren)
+      log2HR < 0 & Kelly.Hx.vs.Nx.log2FoldChange < 0 ~ "Q3: Lost Suppressor",
+      
+      # Oben Links: Hypoxie hoch, aber protektiv (Stressantwort)
+      log2HR < 0 & Kelly.Hx.vs.Nx.log2FoldChange > 0 ~ "Q2: Protective Response",
+      
+      # Unten Rechts: Paradox
+      log2HR > 0 & Kelly.Hx.vs.Nx.log2FoldChange < 0 ~ "Q4: Paradoxical",
+      
+      TRUE ~ "Borderline"
+    )
+  )
+
+# 2. Labels filtern
+# Wir beschriften nur die "bösen" (Q1) und die "verlorenen guten" (Q3)
+labels_data <- plot_data %>%
+  filter(Quadrant %in% c("Q1: Hypoxie-Driven Risk", "Q3: Lost Suppressor")) %>%
+  # Optional: Nur die signifikantesten beschriften, falls es zu viele sind
+  # filter(p_value_HR < 0.05) %>% 
+  head(30) # Begrenzung auf 30 Labels, damit der Plot lesbar bleibt
+
+# 3. Plotten
+ggplot(plot_data, aes(x = log2HR, y = Kelly.Hx.vs.Nx.log2FoldChange, color = Quadrant)) +
+  geom_point(alpha = 0.7, size = 2) +
+  
+  # Achsenkreuz bei 0
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  
+  # Farben zuweisen
+  scale_color_manual(values = c(
+    "Q1: Hypoxie-Driven Risk" = "firebrick",  # Rot (Gefahr!)
+    "Q3: Lost Suppressor"     = "steelblue",  # Blau (Verlust)
+    "Q2: Protective Response" = "lightgrey",  # Grau (Unwichtig)
+    "Q4: Paradoxical"         = "lightgrey",  # Grau (Unwichtig)
+    "Borderline"              = "black"
+  )) +
+  
+  # Beschriftung der Gene
+  geom_text_repel(
+    data = labels_data,
+    aes(label = symbol), # Hier nutzen wir die Spalte 'symbol'
+    size = 3.5,
+    box.padding = 0.5,
+    max.overlaps = 50,
+    show.legend = FALSE
+  ) +
+  
+  # Achsenbeschriftung
+  labs(
+    x = "Klinisches Risiko (log2 Hazard Ratio)",
+    y = "Hypoxie Reaktion (log2 Fold Change)",
+    title = "Identifikation kritischer Hypoxie-Treiber",
+    subtitle = "Oben Rechts (Rot): Gene, die durch Hypoxie aktiviert werden UND das Sterberisiko erhöhen"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+```
+
+
+
+
 
 
 # UMAP
