@@ -1450,16 +1450,6 @@ master_table$group_Kellyonly <- ifelse(master_table$group == "HIF1a" &
                                          (master_table$SKNAS_Hx != TRUE & master_table$SHSY5Y_Hx != TRUE),
                                        "HIF1a_HIF2a","NA")))
 
-master_table$Kellyonly <- ifelse(master_table$group == "HIF1a" & 
-                                         (master_table$SKNAS_Hx != TRUE & master_table$SHSY5Y_Hx != TRUE),
-                                       "HIF1a",
-                                   ifelse(master_table$group == "HIF2a" & 
-                                         (master_table$SKNAS_Hx != TRUE & master_table$SHSY5Y_Hx != TRUE),
-                                       "HIF2a",
-                                       ifelse(master_table$group == "HIF1a_HIF2a" & 
-                                         (master_table$SKNAS_Hx != TRUE & master_table$SHSY5Y_Hx != TRUE),
-                                       "HIF1a_HIF2a","NA")))
-
 master_table$group_Kellyonly %>% table()                  
 
 write.xlsx(master_table,"master_table.xlsx")
