@@ -292,6 +292,17 @@ write.xlsx(results_list[["Kelly.Hx.vs.Nx"]], "Results_Kelly_Hx_Nx.xlsx")
 ```
 
 
+# Master Table
+```{r master_table}
+
+
+
+
+
+```
+
+
+
 # Figure 1: Samples QC
 ## PCA
 ```{r 1_pca_pre}
