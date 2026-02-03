@@ -29,6 +29,7 @@ Kelterborn
   - [Venn](#venn-1)
   - [Volcanos](#volcanos)
   - [Core Genes](#core-genes)
+- [Groups vs. Hx Genes](#groups-vs-hx-genes)
 - [UMAP](#umap)
 - [Figure 4: Gene Set enrichment](#figure-4-gene-set-enrichment)
   - [GO Analysis](#go-analysis)
@@ -1953,9 +1954,20 @@ master_table$group_Kellyonly <- ifelse(master_table$group == "HIF1a" &
                                        "HIF2a",
                                        ifelse(master_table$group == "HIF1a_HIF2a" & 
                                          (master_table$SKNAS_Hx != TRUE & master_table$SHSY5Y_Hx != TRUE),
-                                       "HIF1a_HIF2a","NA")))
+                                       "HIF1a_HIF2a","")))
 
 master_table$group_Kellyonly %>% table()                  
+
+master_table$core <- ifelse(master_table$group_Kellyonly %in% c("HIF1a","HIF2a","HIF1a_HIF2a") & 
+                              master_table$HR > 1.5 &
+                                master_table$Kelly.Hx.vs.Nx.log2FoldChange > 1,
+                               "Hx_HR_up",
+                               ifelse(master_table$group_Kellyonly %in% c("HIF1a","HIF2a","HIF1a_HIF2a") & 
+                              master_table$HR < 0.67 &
+                                master_table$Kelly.Hx.vs.Nx.log2FoldChange < -1,
+                              "Hx_HR_down",""))
+
+master_table$core %>% table()                  
 
 write.xlsx(master_table,"master_table.xlsx")
 ```
@@ -2017,7 +2029,8 @@ colnames(master_table)
     ## [43] "SKNAS_Hx"                             
     ## [44] "SHSY5Y_Hx"                            
     ## [45] "Kelly_Hx"                             
-    ## [46] "group_Kellyonly"
+    ## [46] "group_Kellyonly"                      
+    ## [47] "core"
 
 ``` r
 input_list <- list("SKNAS_Hx" = master_table %>% filter(SKNAS_Hx ==TRUE) %>% rownames(),
@@ -2180,7 +2193,8 @@ colnames(Kelly_only)
     ## [43] "SKNAS_Hx"                             
     ## [44] "SHSY5Y_Hx"                            
     ## [45] "Kelly_Hx"                             
-    ## [46] "group_Kellyonly"
+    ## [46] "group_Kellyonly"                      
+    ## [47] "core"
 
 ``` r
 plot(y = -log(Kelly_only$p_value_HR), x = Kelly_only$HR, title(main = "Hazard Ratio of HIF1a/Hif2a genes"))
@@ -2279,16 +2293,17 @@ colnames(Kelly_HR)
     ## [44] "SHSY5Y_Hx"                            
     ## [45] "Kelly_Hx"                             
     ## [46] "group_Kellyonly"                      
-    ## [47] "log2HR"                               
-    ## [48] "logP"
+    ## [47] "core"                                 
+    ## [48] "log2HR"                               
+    ## [49] "logP"
 
 ``` r
 master_table$group_Kellyonly %>% table()
 ```
 
     ## .
-    ##       HIF1a HIF1a_HIF2a       HIF2a 
-    ##          42          10         395
+    ##                   HIF1a HIF1a_HIF2a       HIF2a 
+    ##        3524          42          10         395
 
 ``` r
 ggplot(data = Kelly_HR, aes(x = log2HR, y = Kelly.Hx.vs.Nx.log2FoldChange, colour = group)) +
@@ -2300,15 +2315,6 @@ ggplot(data = Kelly_HR, aes(x = log2HR, y = Kelly.Hx.vs.Nx.log2FoldChange, colou
 ![](Readme_files/figure-gfm/HR_core-1.png)<!-- -->
 
 ``` r
-master_table$core <- ifelse(master_table$group_Kellyonly != "NA" & 
-                              master_table$HR > 1.5 &
-                                master_table$Kelly.Hx.vs.Nx.log2FoldChange > 1,
-                               "Hx_HR_up",
-                               ifelse(master_table$group_Kellyonly != "NA" & 
-                              master_table$HR < 0.67 &
-                                master_table$Kelly.Hx.vs.Nx.log2FoldChange < -1,
-                              "Hx_HR_down",FALSE))
-
 master_table %>% filter(core == "Hx_HR_up" | core == "Hx_HR_down") %>% nrow()
 ```
 
@@ -2403,6 +2409,8 @@ ggplot(plot_data, aes(x = log2HR, y = Kelly.Hx.vs.Nx.log2FoldChange, color = Qua
 ```
 
 ![](Readme_files/figure-gfm/HR_core-2.png)<!-- -->
+
+# Groups vs. Hx Genes
 
 # UMAP
 

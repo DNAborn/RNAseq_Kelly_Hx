@@ -1448,11 +1448,73 @@ master_table$group_Kellyonly <- ifelse(master_table$group == "HIF1a" &
                                        "HIF2a",
                                        ifelse(master_table$group == "HIF1a_HIF2a" & 
                                          (master_table$SKNAS_Hx != TRUE & master_table$SHSY5Y_Hx != TRUE),
-                                       "HIF1a_HIF2a","NA")))
+                                       "HIF1a_HIF2a","")))
 
 master_table$group_Kellyonly %>% table()                  
 
-write.xlsx(master_table,"master_table.xlsx")
+master_table$core <- ifelse(master_table$group_Kellyonly %in% c("HIF1a","HIF2a","HIF1a_HIF2a") & 
+                              master_table$HR > 1.5 &
+                                master_table$Kelly.Hx.vs.Nx.log2FoldChange > 1,
+                               "Hx_HR_up",
+                               ifelse(master_table$group_Kellyonly %in% c("HIF1a","HIF2a","HIF1a_HIF2a") & 
+                              master_table$HR < 0.67 &
+                                master_table$Kelly.Hx.vs.Nx.log2FoldChange < -1,
+                              "Hx_HR_down",""))
+
+master_table$core %>% table()
+
+# Add counts
+counts_norm <- counts(dds, normalized=TRUE) %>% 
+  as.data.frame() %>%
+  rownames_to_column(var = "gene_id")
+
+meta <- colData(dds) %>% as.data.frame()
+new_names <- paste(meta$condition)
+
+colnames(counts_norm)[-1] <- make.unique(new_names, sep="_")
+
+print(head(colnames(counts_norm)))
+
+counts_norm <- counts_norm %>%
+  select(
+    gene_id,                # ID immer zuerst
+    matches("^Kelly_Nx"),   # Alle Kelly Normoxie Replikate
+    matches("^Kelly_Hx"),   # Alle Kelly Hypoxie Replikate
+    matches("^HIF1A_Nx"),  
+    matches("^HIF1A_Hx"),
+    matches("^HIF2A_Nx"),
+    matches("^HIF2A_Hx"),
+    matches("^HIF1B_Nx"),
+    matches("^HIF1B_Hx"),
+    everything()            
+  )
+
+# combine counts with master table
+if(!"gene_id" %in% colnames(counts_norm)) {
+  counts_norm <- counts_norm %>% rownames_to_column("gene_id")
+}
+colnames(counts_norm)[1] <- "Ensembl"
+
+counts(dds, normalized=TRUE) %>% 
+  as.data.frame() %>%
+  rownames_to_column("gene_id") %>% .[c(3),c(1,24)]
+
+colData(dds)[23,c("condition","filename")]
+
+counts_norm[3,c(1,34:40)]
+
+
+# 2. Zusammenfügen (Join)
+master_counts_table <- left_join(master_table, counts_norm, by = "Ensembl")
+
+write.xlsx(master_counts_table,"master_counts_table.xlsx")
+
+
+
+# Filter for ML
+
+master_counts_table %>% colnames()
+
 
 
 ```
@@ -1631,17 +1693,9 @@ ggplot(data = Kelly_HR, aes(x = log2HR, y = Kelly.Hx.vs.Nx.log2FoldChange, colou
   theme_minimal() + 
   labs(title = "Core Hx-HR Genes",x = "log2(Hazard Ratio)", y = "log2(Kelly-Hx)")
 
-master_table$core <- ifelse(master_table$group_Kellyonly != "NA" & 
-                              master_table$HR > 1.5 &
-                                master_table$Kelly.Hx.vs.Nx.log2FoldChange > 1,
-                               "Hx_HR_up",
-                               ifelse(master_table$group_Kellyonly != "NA" & 
-                              master_table$HR < 0.67 &
-                                master_table$Kelly.Hx.vs.Nx.log2FoldChange < -1,
-                              "Hx_HR_down",FALSE))
-
 master_table %>% filter(core == "Hx_HR_up" | core == "Hx_HR_down") %>% nrow()
 master_table %>% filter(core == "Hx_HR_up" | core == "Hx_HR_down") %>% .$Symbol
+
 
 
 
@@ -1719,6 +1773,13 @@ ggplot(plot_data, aes(x = log2HR, y = Kelly.Hx.vs.Nx.log2FoldChange, color = Qua
 
 ```
 
+# Groups vs. Hx Genes
+```{r Hx_group}
+
+
+
+
+```
 
 
 
