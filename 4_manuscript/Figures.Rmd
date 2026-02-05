@@ -1468,8 +1468,10 @@ counts_norm <- counts(dds, normalized=TRUE) %>%
   as.data.frame() %>%
   rownames_to_column(var = "gene_id")
 
+colnames(counts_norm)[1] <- "Ensembl"
+
 meta <- colData(dds) %>% as.data.frame()
-new_names <- paste(meta$condition)
+new_names <- paste("counts", meta$condition, sep="_")
 
 colnames(counts_norm)[-1] <- make.unique(new_names, sep="_")
 
@@ -1477,7 +1479,7 @@ print(head(colnames(counts_norm)))
 
 counts_norm <- counts_norm %>%
   select(
-    gene_id,                # ID immer zuerst
+    Ensembl,                # ID immer zuerst
     matches("^Kelly_Nx"),   # Alle Kelly Normoxie Replikate
     matches("^Kelly_Hx"),   # Alle Kelly Hypoxie Replikate
     matches("^HIF1A_Nx"),  
@@ -1488,12 +1490,6 @@ counts_norm <- counts_norm %>%
     matches("^HIF1B_Hx"),
     everything()            
   )
-
-# combine counts with master table
-if(!"gene_id" %in% colnames(counts_norm)) {
-  counts_norm <- counts_norm %>% rownames_to_column("gene_id")
-}
-colnames(counts_norm)[1] <- "Ensembl"
 
 counts(dds, normalized=TRUE) %>% 
   as.data.frame() %>%
@@ -1509,6 +1505,7 @@ master_counts_table <- left_join(master_table, counts_norm, by = "Ensembl")
 
 write.xlsx(master_counts_table,"master_counts_table.xlsx")
 
+master_counts_table$group %
 
 
 # Filter for ML
