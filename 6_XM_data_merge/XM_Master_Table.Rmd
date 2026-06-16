@@ -1,0 +1,628 @@
+---
+title: "XM vs SK Mapping QC"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo=FALSE)
+``` 
+
+
+
+# Vergleich SK - XM dataset
+
+# Prepare R
+```{r library}
+
+library(dplyr)
+library(DESeq2)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(ggrepel)
+
+```
+
+# Load dds
+```{r dds}
+# XM_dds_ready <- readRDS(
+#   file = "/Users/simonkelterborn/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/! Files 1/Manuscripts/Kelly hypoxia/XM/dds_filtered_ready_for_DESeq2.rds"
+# )
+
+XM_dds_meta <- readRDS(
+  file = "/Users/simonkelterborn/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/! Files 1/Manuscripts/Kelly hypoxia/XM/dds_filtered_with_metadata.rds"
+)
+
+load(
+  file= "/Users/simonkelterborn/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/! Files 1/Manuscripts/Kelly hypoxia/XM/deseq2_wgcna.dds"
+)
+SK_dds <- dds
+
+dim(XM_dds_meta)
+dim(SK_dds)
+
+```
+
+# Compare Samples
+```{r sample_table}
+
+# =========================================================
+# 0) Counts extrahieren und Korrelationsmatrix berechnen
+# =========================================================
+
+# Counts aus beiden dds
+counts_SK <- assay(SK_dds, "counts")
+counts_XM <- assay(XM_dds_meta, "counts")
+
+# Gemeinsame Gene
+common_genes <- intersect(rownames(counts_SK), rownames(counts_XM))
+
+counts_SK <- counts_SK[common_genes, ]
+counts_XM <- counts_XM[common_genes, ]
+
+# log2-Transformation
+log_SK <- log2(counts_SK + 1)
+log_XM <- log2(counts_XM + 1)
+
+# Korrelationsmatrix: SK-Samples (Zeilen) vs XM-Samples (Spalten)
+cor_matrix <- cor(log_SK, log_XM, method = "pearson")
+
+# =========================================================
+# 1) best_matches und match_table bauen
+# =========================================================
+
+best_matches <- apply(cor_matrix, 1, function(x) {
+  list(
+    best_XM_sample = names(sort(x, decreasing = TRUE))[1],
+    correlation    = sort(x, decreasing = TRUE)[1],
+    rank           = order(x, decreasing = TRUE)[1]
+  )
+})
+
+match_table <- data.frame(
+  your_sample    = rownames(cor_matrix),                         # SK-Sample (mit RNA_-Präfix)
+  best_XM_sample = sapply(best_matches, function(x) x$best_XM_sample),
+  correlation    = sapply(best_matches, function(x) x$correlation),
+  rank           = sapply(best_matches, function(x) x$rank),
+  stringsAsFactors = FALSE
+) %>%
+  arrange(desc(correlation))
+
+# =========================================================
+# 2) Master-Tabelle über alle 88 XM-Samples
+# =========================================================
+
+# 2.1 Sample-Namen
+sk_samples <- colnames(SK_dds)
+xm_samples <- colnames(XM_dds_meta)
+
+core_sk <- sub("^RNA_", "", sk_samples)
+core_xm <- xm_samples
+
+# 2.2 SK-Basistabelle
+sk_tab <- data.frame(
+  core    = core_sk,
+  sk_name = sk_samples,
+  stringsAsFactors = FALSE
+)
+
+# 2.3 XM-Basistabelle
+xm_tab <- data.frame(
+  core    = core_xm,
+  xm_name = xm_samples,
+  stringsAsFactors = FALSE
+)
+
+# 2.4 XM-Metadaten + XM_group
+xm_cd <- as.data.frame(colData(XM_dds_meta))
+xm_cd$core <- rownames(xm_cd)
+
+xm_meta <- xm_cd %>%
+  transmute(
+    core,
+    condition_XM = as.character(condition),
+    genotype_XM  = as.character(genotype),
+    XM_group     = paste(genotype_XM, condition_XM, sep = "_")
+  )
+
+# 2.5 SK-Metadaten
+sk_cd <- as.data.frame(colData(SK_dds))
+sk_cd$sk_name <- rownames(sk_cd)
+
+# falls rownames != colnames, auf colnames mappen
+if (!all(sk_tab$sk_name %in% sk_cd$sk_name)) {
+  sk_cd$sk_name <- colnames(SK_dds)
+}
+
+sk_meta <- sk_tab %>%
+  left_join(
+    sk_cd %>%
+      transmute(
+        sk_name,
+        condition_SK = as.character(condition)
+      ),
+    by = "sk_name"
+  )
+
+# 2.6 Korrelationstabelle vorbereiten
+cor_tab <- match_table %>%
+  mutate(core = sub("^RNA_", "", your_sample)) %>%
+  select(core, correlation)
+
+# 2.7 gemeinsame Kern-IDs
+common_core <- intersect(core_sk, core_xm)
+
+# 2.8 Vergleichstabelle für gemeinsame Samples (Difference)
+cond_compare <- sk_meta %>%
+  filter(core %in% common_core) %>%
+  inner_join(
+    xm_meta %>% filter(core %in% common_core),
+    by = "core"
+  ) %>%
+  mutate(
+    SK_expected_XM_group = case_when(
+      condition_SK == "Kelly_Nx" ~ "WT_Nx",
+      condition_SK == "Kelly_Hx" ~ "WT_Hx",
+      condition_SK == "HIF1B_Nx" ~ "HIF1b-KO_Nx",
+      condition_SK == "HIF1B_Hx" ~ "HIF1b-KO_Hx",
+      condition_SK == "HIF1A_Nx" ~ "HIF1a-KO_Nx",
+      condition_SK == "HIF1A_Hx" ~ "HIF1a-KO_Hx",
+      condition_SK == "HIF2A_Nx" ~ "HIF2a-KO_Nx",
+      condition_SK == "HIF2A_Hx" ~ "HIF2a-KO_Hx",
+      TRUE ~ NA_character_
+    ),
+    Difference = ifelse(
+      !is.na(SK_expected_XM_group) & SK_expected_XM_group == XM_group,
+      ".",
+      paste0("SK:", condition_SK, " | XM:", XM_group)
+    )
+  ) %>%
+  select(core, sk_name, condition_SK, Difference)
+
+# 2.9 Master-Tabelle: alle XM-Samples, SK-Infos wo vorhanden
+master_tab <- xm_tab %>%
+  left_join(xm_meta,      by = "core") %>%                                     # XM_group für alle 88
+  left_join(sk_meta,      by = "core") %>%                                     # sk_name, condition_SK (falls vorhanden)
+  left_join(cor_tab,      by = "core") %>%                                     # correlation
+  left_join(cond_compare %>% select(core, Difference), by = "core") %>%        # Difference für gemeinsame
+  mutate(
+    sk_name      = ifelse(is.na(sk_name),      "removed", sk_name),
+    condition_SK = ifelse(is.na(condition_SK), "removed", condition_SK),
+    XM_group     = ifelse(is.na(XM_group),     "removed", XM_group),
+    Difference   = ifelse(is.na(Difference),   "removed", Difference)
+  ) %>%
+  select(core, sk_name, xm_name, condition_SK, XM_group, correlation, Difference)
+
+master_tab %>%
+  kable() %>%
+  kable_styling(full_width = FALSE, position = "left") %>%
+  scroll_box(height = "400px")
+
+
+```
+
+
+
+
+
+# Plot counts
+```{r counts}
+
+# =========================================================
+# Funktion: XM-Counts für ein Gen-Symbol holen + Status
+# =========================================================
+
+get_xm_counts_by_symbol <- function(gene_symbol, XM_dds_meta, master_tab) {
+  rd_xm <- as.data.frame(rowData(XM_dds_meta))
+  
+  idx_xm <- which(rd_xm$gene_name == gene_symbol)
+  if (length(idx_xm) == 0) {
+    stop("Gen-Symbol nicht in XM_dds_meta gefunden: ", gene_symbol)
+  }
+  if (length(idx_xm) > 1) {
+    warning("Mehrere Zeilen für Symbol ", gene_symbol, " – nehme erste.")
+    idx_xm <- idx_xm[1]
+  }
+  
+  xm_counts <- assay(XM_dds_meta, "counts")[idx_xm, , drop = FALSE]
+  
+  xm_df <- data.frame(
+    core    = colnames(XM_dds_meta),
+    xm_name = colnames(XM_dds_meta),
+    counts  = as.numeric(xm_counts[1, ]),
+    stringsAsFactors = FALSE
+  )
+  
+  # master_tab dranhängen: sk_name, XM_group, Difference
+  xm_df <- xm_df %>%
+    left_join(
+      master_tab %>%
+        select(core, sk_name, XM_group, Difference),
+      by = "core"
+    ) %>%
+    mutate(
+      gene       = gene_symbol,
+      log_counts = log2(counts + 1),
+      # Status: Konflikt / removed / ok
+      is_conflict = !is.na(Difference) & Difference != "." & Difference != "removed",
+      is_removed  = sk_name == "removed",
+      status = case_when(
+        is_removed            ~ "removed",
+        is_conflict           ~ "conflict",
+        TRUE                  ~ "ok"
+      ),
+      # S-Nummer aus core extrahieren, z.B. P2041_S39 -> 39
+      S_num = sub(".*_S(\\d+)$", "\\1", core),
+      conflict_label = ifelse(
+        is_conflict,
+        paste0(XM_group, "_", S_num),
+        NA_character_
+      )
+    )
+  
+  xm_df
+}
+
+# =========================================================
+# Beispiel: CA9 in XM plotten
+# =========================================================
+
+df_ca9_xm <- get_xm_counts_by_symbol("CA9", XM_dds_meta, master_tab)
+
+# kurz prüfen, wie viele removed es gibt
+table(df_ca9_xm$status)
+# sollte u.a. "removed" mit 11 Einträgen enthalten
+
+status_colors <- c(
+  conflict = "red",
+  removed  = "blue",
+  ok       = "palegreen3"
+)
+
+ggplot(df_ca9_xm, aes(x = XM_group, y = log_counts)) +
+  # Boxplots über alle XM-Samples pro Gruppe
+  geom_boxplot(
+    aes(group = XM_group),
+    outlier.shape = NA,
+    alpha = 0.2
+  ) +
+  # Punkte: nur XM, Farbe nach Status
+  geom_jitter(
+    aes(color = status),
+    width = 0.2,
+    height = 0,
+    size = 2,
+    alpha = 0.9
+  ) +
+  scale_color_manual(
+    values = status_colors,
+    breaks = intersect(names(status_colors), unique(df_ca9_xm$status))
+  ) +
+  # Konfliktpunkte labeln mit group + S-Nummer
+  ggrepel::geom_text_repel(
+    data = df_ca9_xm %>% filter(is_conflict),
+    aes(label = conflict_label),
+    size = 3,
+    max.overlaps = Inf,
+    show.legend = FALSE
+  ) +
+  labs(
+    title = "XM-Counts (CA9) – Konflikte rot, XM-only removed blau",
+    x = "XM_group (genotype_condition)",
+    y = "XM log2(counts + 1)",
+    color = "Status"
+  ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+# =========================================================
+# CA9, LDHA, PGK1
+# =========================================================
+
+
+# 1) Daten holen
+df_ca9  <- get_xm_counts_by_symbol("CA9",  XM_dds_meta, master_tab)
+df_ldha <- get_xm_counts_by_symbol("LDHA", XM_dds_meta, master_tab)
+df_pgk1 <- get_xm_counts_by_symbol("PGK1", XM_dds_meta, master_tab)
+
+status_cols <- c(
+  conflict = "red",
+  removed  = "blue",
+  ok       = "palegreen3"
+)
+
+plot_counts_gene <- function(df_gene, title_text) {
+  ggplot(df_gene, aes(x = XM_group, y = log_counts)) +
+    geom_boxplot(
+      aes(group = XM_group),
+      outlier.shape = NA,
+      alpha = 0.2
+    ) +
+    geom_jitter(
+      aes(color = status),
+      width = 0.2,
+      height = 0,
+      size = 2,
+      alpha = 0.9
+    ) +
+    scale_color_manual(values = status_cols) +
+    ggrepel::geom_text_repel(
+      data = df_gene %>% filter(status == "conflict"),
+      aes(label = conflict_label),
+      size = 3,
+      max.overlaps = Inf,
+      show.legend = FALSE
+    ) +
+    labs(
+      title = title_text,
+      x = "XM_group (genotype_condition)",
+      y = "XM log2(counts + 1)",
+      color = "Status"
+    ) +
+    theme_bw() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      plot.title  = element_text(face = "bold")
+    )
+}
+
+p_ca9  <- plot_counts_gene(df_ca9,  "CA9 – XM-Counts")
+p_ldha <- plot_counts_gene(df_ldha, "LDHA – XM-Counts (HIF1-Target)")
+p_pgk1 <- plot_counts_gene(df_pgk1, "PGK1 – XM-Counts (HIF1-Target)")
+
+# p_ca9
+p_ldha
+p_pgk1
+
+
+```
+
+
+
+# PCA Plot
+
+```{r pca}
+
+# 1. Hilfsfunktionen und Farben
+
+parse_group_type_time <- function(group_vec) {
+  data.frame(group_raw = group_vec, stringsAsFactors = FALSE) %>%
+    mutate(
+      treatment = case_when(
+        grepl("Nx", group_raw, ignore.case = TRUE) ~ "Nx",
+        grepl("Hx", group_raw, ignore.case = TRUE) ~ "Hx",
+        TRUE ~ NA_character_
+      ),
+      genotype = case_when(
+        grepl("Kelly", group_raw, ignore.case = TRUE) ~ "Kelly",
+        grepl("^WT_",  group_raw, ignore.case = TRUE) ~ "Kelly",
+        grepl("HIF1B", group_raw, ignore.case = TRUE) ~ "HIF1B",
+        grepl("HIF1b", group_raw, ignore.case = TRUE) ~ "HIF1B",
+        grepl("HIF1A", group_raw, ignore.case = TRUE) ~ "HIF1A",
+        grepl("HIF1a", group_raw, ignore.case = TRUE) ~ "HIF1A",
+        grepl("HIF2A", group_raw, ignore.case = TRUE) ~ "HIF2A",
+        grepl("HIF2a", group_raw, ignore.case = TRUE) ~ "HIF2A",
+        TRUE ~ "other"
+      )
+    )
+}
+
+geno_cols <- c(
+  Kelly = "#B57BB5",
+  HIF1B = "#C8922E",
+  HIF1A = "#4C4FB8",
+  HIF2A = "#4DAF4A",
+  other = "grey70"
+)
+
+##############################################################
+# 2. PCA für SK_dds (nur relevante Spalten aus colData)
+
+# --- SK ---
+vsd_SK <- vst(SK_dds, blind = TRUE)
+pca_SK <- prcomp(t(assay(vsd_SK)))
+percentVar_SK <- pca_SK$sdev^2 / sum(pca_SK$sdev^2)
+
+pca_df_SK <- as.data.frame(pca_SK$x[, 1:2])
+pca_df_SK$sample <- rownames(pca_df_SK)
+
+sk_cd <- as.data.frame(colData(SK_dds))
+sk_cd$sample <- rownames(sk_cd)
+
+# hier NUR condition holen und klar benennen
+sk_meta <- sk_cd %>%
+  transmute(
+    sample,
+    condition_SK = as.character(condition)
+  )
+
+pca_df_SK <- pca_df_SK %>%
+  left_join(sk_meta, by = "sample") %>%
+  mutate(
+    core = sub("^RNA_", "", sample),
+    group_use = condition_SK
+  ) %>%
+  left_join(
+    master_tab %>% select(core, sk_name, XM_group, Difference),
+    by = "core"
+  )
+
+parsed_SK <- parse_group_type_time(pca_df_SK$group_use)
+pca_df_SK <- bind_cols(pca_df_SK, parsed_SK %>% select(genotype, treatment)) %>%
+  mutate(
+    is_removed = !is.na(sk_name) & sk_name == "removed",
+    is_conflict = !is.na(Difference) & Difference != "." & Difference != "removed"
+  )
+
+
+
+##############################################################
+# 3. PCA für XM_dds_meta (XM_group aus master_tab)
+
+# --- XM ---
+vsd_XM <- vst(XM_dds_meta, blind = TRUE)
+pca_XM <- prcomp(t(assay(vsd_XM)))
+percentVar_XM <- pca_XM$sdev^2 / sum(pca_XM$sdev^2)
+
+pca_df_XM <- as.data.frame(pca_XM$x[, 1:2])
+pca_df_XM$sample <- rownames(pca_df_XM)
+
+pca_df_XM <- pca_df_XM %>%
+  mutate(core = sample) %>%
+  left_join(
+    master_tab %>% select(core, sk_name, XM_group, Difference),
+    by = "core"
+  ) %>%
+  mutate(group_use = XM_group)
+
+parsed_XM <- parse_group_type_time(pca_df_XM$group_use)
+pca_df_XM <- bind_cols(pca_df_XM, parsed_XM %>% select(genotype, treatment)) %>%
+  mutate(
+    is_removed = !is.na(sk_name) & sk_name == "removed",
+    is_conflict = !is.na(Difference) & Difference != "." & Difference != "removed"
+  )
+
+pca_df_SK <- pca_df_SK %>%
+  mutate(
+    is_removed = !is.na(sk_name) & sk_name == "removed",
+    is_conflict = !is.na(Difference) & Difference != "." & Difference != "removed",
+    marker = case_when(
+      is_conflict ~ "conflict",
+      is_removed  ~ "removed",
+      TRUE        ~ "none"
+    )
+  )
+
+pca_df_XM <- pca_df_XM %>%
+  mutate(
+    is_removed = !is.na(sk_name) & sk_name == "removed",
+    is_conflict = !is.na(Difference) & Difference != "." & Difference != "removed",
+    marker = case_when(
+      is_conflict ~ "conflict",
+      is_removed  ~ "removed",
+      TRUE        ~ "none"
+    )
+  )
+
+##############################################################
+# 4. Plotfunktion im gewünschten Stil
+
+plot_pca_custom <- function(pca_df, percentVar, title_text) {
+  
+  # Dummy-Daten nur für die Marker-Legende
+  marker_legend_df <- data.frame(
+    PC2 = c(NA, NA),
+    PC1 = c(NA, NA),
+    marker = c("conflict", "removed")
+  )
+  
+  ggplot() +
+    geom_hline(yintercept = 0, color = "grey70", linewidth = 0.4) +
+    geom_vline(xintercept = 0, color = "grey70", linewidth = 0.4) +
+    
+    # 1) Große Punkte zuerst
+    # Hx = gefüllt
+    geom_point(
+      data = pca_df %>% filter(treatment == "Hx"),
+      aes(x = PC2, y = PC1, color = genotype, shape = treatment),
+      size = 5,
+      alpha = 0.6
+    ) +
+    
+    # Nx = offen
+    geom_point(
+      data = pca_df %>% filter(treatment == "Nx"),
+      aes(x = PC2, y = PC1, color = genotype, shape = treatment),
+      size = 5,
+      alpha = 0.8,
+      stroke = 1.4
+    ) +
+    
+    # 2) Dummy-Layer für Marker-Legende
+    geom_point(
+      data = marker_legend_df,
+      aes(x = PC2, y = PC1, fill = marker),
+      shape = 21,
+      size = 2.5,
+      color = "black",
+      stroke = 0.3,
+      inherit.aes = FALSE
+    ) +
+    
+    # 3) Ganz am Ende: Marker oben drauf
+    geom_point(
+      data = pca_df %>% filter(marker == "removed"),
+      aes(x = PC2, y = PC1),
+      shape = 16,
+      size = 2.0,
+      color = "blue",
+      inherit.aes = FALSE,
+      show.legend = FALSE
+    ) +
+    
+    geom_point(
+      data = pca_df %>% filter(marker == "conflict"),
+      aes(x = PC2, y = PC1),
+      shape = 16,
+      size = 2.0,
+      color = "red",
+      inherit.aes = FALSE,
+      show.legend = FALSE
+    ) +
+    
+    # Genotyp-Farben
+    scale_color_manual(
+      name = "genotype",
+      values = geno_cols,
+      breaks = c("Kelly", "HIF1A", "HIF2A", "HIF1B")
+    ) +
+    
+    # Treatment-Formen
+    scale_shape_manual(
+      name = "treatment",
+      values = c(Nx = 1, Hx = 16),
+      breaks = c("Nx", "Hx")
+    ) +
+    
+    # Marker-Legende
+    scale_fill_manual(
+      name = "marker",
+      values = c(conflict = "red", removed = "blue"),
+      breaks = c("conflict", "removed")
+    ) +
+    
+    labs(
+      title = title_text,
+      x = paste0("PC2: ", round(percentVar[2] * 100, 1), "% variance"),
+      y = paste0("PC1: ", round(percentVar[1] * 100, 1), "% variance")
+    ) +
+    theme_bw(base_size = 16) +
+    theme(
+      plot.title = element_text(size = 20),
+      panel.grid = element_blank(),
+      legend.position = "right"
+    ) +
+    coord_equal()
+}
+
+##############################################################
+# 5. Plots erzeugen
+
+p_sk <- plot_pca_custom(pca_df_SK, percentVar_SK, "SK_dds PCA")
+p_xm <- plot_pca_custom(pca_df_XM, percentVar_XM, "XM_dds_meta PCA")
+
+p_sk
+p_xm
+
+
+
+levels(factor(pca_df_XM$marker))
+
+```
+
