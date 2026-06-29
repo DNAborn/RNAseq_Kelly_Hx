@@ -230,10 +230,27 @@ echo "Starte Salmon Indexing: $indexname"
 # indexparentdir="/mnt/s/AG/AG-Scholz-NGS/Daten/Salmon/index"
 
 indexdir="$indexparentdir/$indexname"
+# rm -rf $indexdir
 mkdir -p $indexdir
-
+# export LC_ALL=C
+LC_ALL=C LANG=C salmon index -t gentrome_human_ensh38.fa.gz -d decoys_human_ensh38.txt -p 20 -i $indexdir
 salmon index -t gentrome_human_ensh38.fa.gz -d decoys_human_ensh38.txt -p 20 -i $indexdir
 
+
+# Linux
+~/Downloads/salmon-linux-x86_64/bin/salmon index \
+ -t gentrome_human_ensh38.fa.gz \
+ -d decoys_human_ensh38.txt \
+ -p 20 \
+ -i $indexdir
+
+
+# Mac
+salmon index \
+  -t "/Users/simonkelterborn/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/! Files 1/Manuscripts/Kelly hypoxia/Ens116/gentrome_human_ensh38.fa.gz" \
+  --decoys "/Users/simonkelterborn/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/! Files 1/Manuscripts/Kelly hypoxia/Ens116/decoys_human_ensh38.txt" \
+  -i "/Users/simonkelterborn/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/! Files 1/Manuscripts/Kelly hypoxia/Ens116/human_ens116_index" \
+  -p 6
 
 ```
 
@@ -258,15 +275,16 @@ fastqfiles_all=("${fastqfiles[@]}" "${fastqfiles2[@]}" "${fastqfiles3[@]}")
 
 echo "Gefundene R1-Dateien: ${#fastqfiles_all[@]}"
 
-mkdir $quantdir
+# Sicherer Ordneraufruf
+mkdir -p "$quantdir"
 
 for R1 in "${fastqfiles_all[@]}"; do
     # Dateinamen und Sample-Namen extrahieren
     bfn=$(basename "$R1")
     samp=${bfn%"_R1_001.fastq.gz"}
     
-    # R2 Dateinamen ableiten
-    R2="${R1/R1/R2}"
+    # Präziser R2-Austausch (schützt vor 'R1' im Ordnernamen)
+    R2="${R1/_R1_001.fastq.gz/_R2_001.fastq.gz}"
     
     echo "Processing Sample: $samp"
     
@@ -281,6 +299,7 @@ for R1 in "${fastqfiles_all[@]}"; do
     
     outquant="${quantdir}/${samp}_quant"
     
+    # Der optimierte Salmon v1.12 quant Aufruf
     salmon quant -i "$indexdir" -l A \
      -1 "$R1" \
      -2 "$R2" \
@@ -289,6 +308,58 @@ for R1 in "${fastqfiles_all[@]}"; do
      --seqBias \
      -o "$outquant"
 done
+
+
+
+
+
+
+# --- Validierungs-Block ---
+echo ""
+echo "========================================="
+echo "Mapping abgeschlossen. Starte Überprüfung..."
+echo "========================================="
+
+# Die Anzahl der R1-Dateien ist unser Zielwert
+expected_count=${#fastqfiles_all[@]}
+success_count=0
+missing_samples=()
+
+for R1 in "${fastqfiles_all[@]}"; do
+    # Sample-Namen exakt wie in der Hauptschleife extrahieren
+    bfn=$(basename "$R1")
+    samp=${bfn%"_R1_001.fastq.gz"}
+    
+    # Der erwartete Pfad zur finalen Output-Datei
+    expected_sf="${quantdir}/${samp}_quant/quant.sf"
+    
+    # Prüfen, ob die Datei existiert und größer als 0 Byte ist
+    if [[ -s "$expected_sf" ]]; then
+        ((success_count++))
+    else
+        missing_samples+=("$samp")
+    fi
+done
+
+echo "Erwartete Quantifizierungen: $expected_count"
+echo "Erfolgreich abgeschlossen:   $success_count"
+echo ""
+
+if [[ $success_count -eq $expected_count ]]; then
+    echo "✅ PERFEKT! Alle $expected_count Proben wurden vollständig und fehlerfrei gequanted."
+else
+    echo "❌ ACHTUNG! Es fehlen $((expected_count - success_count)) Proben (oder sie sind unvollständig)."
+    echo "Bitte überprüfe die Logs für folgende Samples:"
+    for missing in "${missing_samples[@]}"; do
+        echo " - $missing"
+    done
+fi
+echo "========================================="
+
+
+
+
+
 
 
 
