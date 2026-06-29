@@ -211,18 +211,10 @@ echo "Kombiniere Sequenzen zum Gentrome..."
 cat transcriptome_complete.fa.gz Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz > gentrome_human_ensh38.fa.gz
 
 # 5. Salmon Index erstellen
-
-# Salmon v2 (hatte Probleme mit vollem decoy aware index)
 mamba create -n salmon2 salmon
 mamba activate salmon2
 salmon --version
 # salmon 2.2.1
-
-# Zurück zu Salmon v1
-mamba activate salmon
-# mamba install "salmon=1.12.1"
-mamba install "salmon<2"
-# salmon 1.12.1
 
 indexname="${species}_ens${release}_index"
 echo "Starte Salmon Indexing: $indexname"
@@ -248,7 +240,7 @@ salmon index -t gentrome_human_ensh38.fa.gz -d decoys_human_ensh38.txt -p 20 -i 
 # dir="/mnt/s/AG/AG-Scholz-NGS/Daten/Simon/RNA-Seq_Kelly_all"
 # quantdir="$dir/quants3"
 
-mamba activate salmon
+mamba activate salmon2
 
 fastqfiles=("$fastqdir"/*R1*.fastq.gz)
 fastqfiles2=("$fastqdir2"/*R1*.fastq.gz)
