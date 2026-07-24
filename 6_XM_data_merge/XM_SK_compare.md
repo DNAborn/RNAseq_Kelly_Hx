@@ -697,6 +697,84 @@ removed
 
 <td style="text-align:left;">
 
+P2041_S55
+</td>
+
+<td style="text-align:left;">
+
+RNA_P2041_S55
+</td>
+
+<td style="text-align:left;">
+
+P2041_S55
+</td>
+
+<td style="text-align:left;">
+
+Kelly_Nx
+</td>
+
+<td style="text-align:left;">
+
+WT_Nx
+</td>
+
+<td style="text-align:right;">
+
+0.9906489
+</td>
+
+<td style="text-align:left;">
+
+.
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+P2041_S56
+</td>
+
+<td style="text-align:left;">
+
+RNA_P2041_S56
+</td>
+
+<td style="text-align:left;">
+
+P2041_S56
+</td>
+
+<td style="text-align:left;">
+
+HIF1B_Hx
+</td>
+
+<td style="text-align:left;">
+
+HIF1b-KO_Nx
+</td>
+
+<td style="text-align:right;">
+
+0.9908269
+</td>
+
+<td style="text-align:left;">
+
+SK:HIF1B_Hx &#124; XM:HIF1b-KO_Nx
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
 P2041_S37
 </td>
 
@@ -736,22 +814,22 @@ WT_Nx
 
 <td style="text-align:left;">
 
-P2041_S38
+P2041_S58
 </td>
 
 <td style="text-align:left;">
 
-RNA_P2041_S38
+RNA_P2041_S58
 </td>
 
 <td style="text-align:left;">
 
-P2041_S38
+P2041_S58
 </td>
 
 <td style="text-align:left;">
 
-HIF1B_Nx
+Kelly_Hx
 </td>
 
 <td style="text-align:left;">
@@ -761,12 +839,51 @@ HIF1b-KO_Nx
 
 <td style="text-align:right;">
 
-0.9898090
+0.9876028
 </td>
 
 <td style="text-align:left;">
 
-.
+SK:Kelly_Hx &#124; XM:HIF1b-KO_Nx
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+P2041_S57
+</td>
+
+<td style="text-align:left;">
+
+RNA_P2041_S57
+</td>
+
+<td style="text-align:left;">
+
+P2041_S57
+</td>
+
+<td style="text-align:left;">
+
+HIF1B_Nx
+</td>
+
+<td style="text-align:left;">
+
+HIF1b-KO_Hx
+</td>
+
+<td style="text-align:right;">
+
+0.9912902
+</td>
+
+<td style="text-align:left;">
+
+SK:HIF1B_Nx &#124; XM:HIF1b-KO_Hx
 </td>
 
 </tr>
@@ -795,7 +912,7 @@ HIF1B_Nx
 
 <td style="text-align:left;">
 
-HIF1b-KO_Hx
+HIF1b-KO_Nx
 </td>
 
 <td style="text-align:right;">
@@ -805,7 +922,46 @@ HIF1b-KO_Hx
 
 <td style="text-align:left;">
 
-SK:HIF1B_Nx &#124; XM:HIF1b-KO_Hx
+.
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+P2041_S38
+</td>
+
+<td style="text-align:left;">
+
+RNA_P2041_S38
+</td>
+
+<td style="text-align:left;">
+
+P2041_S38
+</td>
+
+<td style="text-align:left;">
+
+HIF1B_Nx
+</td>
+
+<td style="text-align:left;">
+
+WT_Hx
+</td>
+
+<td style="text-align:right;">
+
+0.9898090
+</td>
+
+<td style="text-align:left;">
+
+SK:HIF1B_Nx &#124; XM:WT_Hx
 </td>
 
 </tr>
@@ -853,17 +1009,95 @@ HIF1b-KO_Nx
 
 <td style="text-align:left;">
 
-P2041_S41
+P2041_S46
 </td>
 
 <td style="text-align:left;">
 
-RNA_P2041_S41
+removed
 </td>
 
 <td style="text-align:left;">
 
-P2041_S41
+P2041_S46
+</td>
+
+<td style="text-align:left;">
+
+removed
+</td>
+
+<td style="text-align:left;">
+
+HIF1a-KO_Hx
+</td>
+
+<td style="text-align:right;">
+
+NA
+</td>
+
+<td style="text-align:left;">
+
+removed
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+P2041_S45
+</td>
+
+<td style="text-align:left;">
+
+removed
+</td>
+
+<td style="text-align:left;">
+
+P2041_S45
+</td>
+
+<td style="text-align:left;">
+
+removed
+</td>
+
+<td style="text-align:left;">
+
+HIF1a-KO_Hx
+</td>
+
+<td style="text-align:right;">
+
+NA
+</td>
+
+<td style="text-align:left;">
+
+removed
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+P2041_S54
+</td>
+
+<td style="text-align:left;">
+
+RNA_P2041_S54
+</td>
+
+<td style="text-align:left;">
+
+P2041_S54
 </td>
 
 <td style="text-align:left;">
@@ -873,17 +1107,56 @@ HIF1B_Hx
 
 <td style="text-align:left;">
 
-WT_Nx
+HIF1b-KO_Hx
 </td>
 
 <td style="text-align:right;">
 
-0.9909260
+0.9898128
 </td>
 
 <td style="text-align:left;">
 
-SK:HIF1B_Hx &#124; XM:WT_Nx
+.
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+P2041_S44
+</td>
+
+<td style="text-align:left;">
+
+removed
+</td>
+
+<td style="text-align:left;">
+
+P2041_S44
+</td>
+
+<td style="text-align:left;">
+
+removed
+</td>
+
+<td style="text-align:left;">
+
+HIF1a-KO_Nx
+</td>
+
+<td style="text-align:right;">
+
+NA
+</td>
+
+<td style="text-align:left;">
+
+removed
 </td>
 
 </tr>
@@ -912,7 +1185,7 @@ Kelly_Nx
 
 <td style="text-align:left;">
 
-WT_Hx
+WT_Nx
 </td>
 
 <td style="text-align:right;">
@@ -922,7 +1195,7 @@ WT_Hx
 
 <td style="text-align:left;">
 
-SK:Kelly_Nx &#124; XM:WT_Hx
+.
 </td>
 
 </tr>
@@ -931,100 +1204,22 @@ SK:Kelly_Nx &#124; XM:WT_Hx
 
 <td style="text-align:left;">
 
-P2041_S43
+P2041_S41
 </td>
 
 <td style="text-align:left;">
 
-RNA_P2041_S43
+RNA_P2041_S41
 </td>
 
 <td style="text-align:left;">
 
-P2041_S43
+P2041_S41
 </td>
 
 <td style="text-align:left;">
 
-Kelly_Hx
-</td>
-
-<td style="text-align:left;">
-
-HIF1b-KO_Nx
-</td>
-
-<td style="text-align:right;">
-
-0.9880579
-</td>
-
-<td style="text-align:left;">
-
-SK:Kelly_Hx &#124; XM:HIF1b-KO_Nx
-</td>
-
-</tr>
-
-<tr>
-
-<td style="text-align:left;">
-
-P2041_S44
-</td>
-
-<td style="text-align:left;">
-
-removed
-</td>
-
-<td style="text-align:left;">
-
-P2041_S44
-</td>
-
-<td style="text-align:left;">
-
-removed
-</td>
-
-<td style="text-align:left;">
-
-HIF1b-KO_Nx
-</td>
-
-<td style="text-align:right;">
-
-NA
-</td>
-
-<td style="text-align:left;">
-
-removed
-</td>
-
-</tr>
-
-<tr>
-
-<td style="text-align:left;">
-
-P2041_S45
-</td>
-
-<td style="text-align:left;">
-
-removed
-</td>
-
-<td style="text-align:left;">
-
-P2041_S45
-</td>
-
-<td style="text-align:left;">
-
-removed
+HIF1B_Hx
 </td>
 
 <td style="text-align:left;">
@@ -1034,51 +1229,12 @@ HIF1b-KO_Hx
 
 <td style="text-align:right;">
 
-NA
+0.9909260
 </td>
 
 <td style="text-align:left;">
 
-removed
-</td>
-
-</tr>
-
-<tr>
-
-<td style="text-align:left;">
-
-P2041_S46
-</td>
-
-<td style="text-align:left;">
-
-removed
-</td>
-
-<td style="text-align:left;">
-
-P2041_S46
-</td>
-
-<td style="text-align:left;">
-
-removed
-</td>
-
-<td style="text-align:left;">
-
-WT_Nx
-</td>
-
-<td style="text-align:right;">
-
-NA
-</td>
-
-<td style="text-align:left;">
-
-removed
+.
 </td>
 
 </tr>
@@ -1107,7 +1263,7 @@ HIF1B_Hx
 
 <td style="text-align:left;">
 
-WT_Hx
+HIF1b-KO_Nx
 </td>
 
 <td style="text-align:right;">
@@ -1117,7 +1273,7 @@ WT_Hx
 
 <td style="text-align:left;">
 
-SK:HIF1B_Hx &#124; XM:WT_Hx
+SK:HIF1B_Hx &#124; XM:HIF1b-KO_Nx
 </td>
 
 </tr>
@@ -1146,7 +1302,7 @@ HIF1B_Nx
 
 <td style="text-align:left;">
 
-HIF1a-KO_Nx
+HIF1b-KO_Hx
 </td>
 
 <td style="text-align:right;">
@@ -1156,7 +1312,7 @@ HIF1a-KO_Nx
 
 <td style="text-align:left;">
 
-SK:HIF1B_Nx &#124; XM:HIF1a-KO_Nx
+SK:HIF1B_Nx &#124; XM:HIF1b-KO_Hx
 </td>
 
 </tr>
@@ -1185,7 +1341,7 @@ HIF1B_Nx
 
 <td style="text-align:left;">
 
-HIF1a-KO_Hx
+HIF1b-KO_Nx
 </td>
 
 <td style="text-align:right;">
@@ -1195,7 +1351,7 @@ HIF1a-KO_Hx
 
 <td style="text-align:left;">
 
-SK:HIF1B_Nx &#124; XM:HIF1a-KO_Hx
+.
 </td>
 
 </tr>
@@ -1224,7 +1380,7 @@ HIF1B_Hx
 
 <td style="text-align:left;">
 
-HIF1a-KO_Hx
+HIF1b-KO_Hx
 </td>
 
 <td style="text-align:right;">
@@ -1234,7 +1390,7 @@ HIF1a-KO_Hx
 
 <td style="text-align:left;">
 
-SK:HIF1B_Hx &#124; XM:HIF1a-KO_Hx
+.
 </td>
 
 </tr>
@@ -1360,173 +1516,17 @@ HIF1b-KO_Nx
 
 <td style="text-align:left;">
 
-P2041_S54
+P2041_S43
 </td>
 
 <td style="text-align:left;">
 
-RNA_P2041_S54
+RNA_P2041_S43
 </td>
 
 <td style="text-align:left;">
 
-P2041_S54
-</td>
-
-<td style="text-align:left;">
-
-HIF1B_Hx
-</td>
-
-<td style="text-align:left;">
-
-HIF1b-KO_Hx
-</td>
-
-<td style="text-align:right;">
-
-0.9898128
-</td>
-
-<td style="text-align:left;">
-
-.
-</td>
-
-</tr>
-
-<tr>
-
-<td style="text-align:left;">
-
-P2041_S55
-</td>
-
-<td style="text-align:left;">
-
-RNA_P2041_S55
-</td>
-
-<td style="text-align:left;">
-
-P2041_S55
-</td>
-
-<td style="text-align:left;">
-
-Kelly_Nx
-</td>
-
-<td style="text-align:left;">
-
-HIF1b-KO_Nx
-</td>
-
-<td style="text-align:right;">
-
-0.9906489
-</td>
-
-<td style="text-align:left;">
-
-SK:Kelly_Nx &#124; XM:HIF1b-KO_Nx
-</td>
-
-</tr>
-
-<tr>
-
-<td style="text-align:left;">
-
-P2041_S56
-</td>
-
-<td style="text-align:left;">
-
-RNA_P2041_S56
-</td>
-
-<td style="text-align:left;">
-
-P2041_S56
-</td>
-
-<td style="text-align:left;">
-
-HIF1B_Hx
-</td>
-
-<td style="text-align:left;">
-
-HIF1b-KO_Hx
-</td>
-
-<td style="text-align:right;">
-
-0.9908269
-</td>
-
-<td style="text-align:left;">
-
-.
-</td>
-
-</tr>
-
-<tr>
-
-<td style="text-align:left;">
-
-P2041_S57
-</td>
-
-<td style="text-align:left;">
-
-RNA_P2041_S57
-</td>
-
-<td style="text-align:left;">
-
-P2041_S57
-</td>
-
-<td style="text-align:left;">
-
-HIF1B_Nx
-</td>
-
-<td style="text-align:left;">
-
-HIF1b-KO_Nx
-</td>
-
-<td style="text-align:right;">
-
-0.9912902
-</td>
-
-<td style="text-align:left;">
-
-.
-</td>
-
-</tr>
-
-<tr>
-
-<td style="text-align:left;">
-
-P2041_S58
-</td>
-
-<td style="text-align:left;">
-
-RNA_P2041_S58
-</td>
-
-<td style="text-align:left;">
-
-P2041_S58
+P2041_S43
 </td>
 
 <td style="text-align:left;">
@@ -1536,17 +1536,17 @@ Kelly_Hx
 
 <td style="text-align:left;">
 
-HIF1b-KO_Hx
+WT_Hx
 </td>
 
 <td style="text-align:right;">
 
-0.9876028
+0.9880579
 </td>
 
 <td style="text-align:left;">
 
-SK:Kelly_Hx &#124; XM:HIF1b-KO_Hx
+.
 </td>
 
 </tr>
@@ -3511,12 +3511,12 @@ HIF2a-KO_Hx
 
     ## 
     ## conflict       ok  removed 
-    ##       10       67       11
+    ##        6       71       11
 
-![](XM_Master_Table_files/figure-gfm/counts-1.png)<!-- -->![](XM_Master_Table_files/figure-gfm/counts-2.png)<!-- -->![](XM_Master_Table_files/figure-gfm/counts-3.png)<!-- -->
+![](XM_SK_compare_files/figure-gfm/counts-1.png)<!-- -->![](XM_SK_compare_files/figure-gfm/counts-2.png)<!-- -->![](XM_SK_compare_files/figure-gfm/counts-3.png)<!-- -->
 
 # PCA Plot
 
-![](XM_Master_Table_files/figure-gfm/pca-1.png)<!-- -->![](XM_Master_Table_files/figure-gfm/pca-2.png)<!-- -->
+![](XM_SK_compare_files/figure-gfm/pca-1.png)<!-- -->![](XM_SK_compare_files/figure-gfm/pca-2.png)<!-- -->
 
     ## [1] "conflict" "none"     "removed"
