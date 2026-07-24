@@ -1,0 +1,123 @@
+---
+title: "New Mapping"
+output:
+  github_document:
+    html_preview: false
+    toc: true
+    toc_depth: 2
+always_allow_html: true
+editor_options: 
+  chunk_output_type: console
+knit: (function(input_file, encoding) {
+    rmarkdown::render(input_file,output_file= 'Readme.md')
+        })
+---
+
+# Prepare R
+```{r library}
+
+library(dplyr)
+library(DESeq2)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(ggrepel)
+
+```
+
+# Load dds
+```{r dds}
+# XM_dds_ready <- readRDS(
+#   file = "/Users/simonkelterborn/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/! Files 1/Manuscripts/Kelly hypoxia/XM/dds_filtered_ready_for_DESeq2.rds"
+# )
+
+XM_dds_meta <- readRDS(
+  file = "/Users/simonkelterborn/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/! Files 1/Manuscripts/Kelly hypoxia/XM/dds_filtered_with_metadata.rds"
+)
+
+load(
+  file= "/Users/simonkelterborn/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/! Files 1/Manuscripts/Kelly hypoxia/XM/deseq2_wgcna.dds"
+)
+SK_dds <- dds
+
+dim(XM_dds_meta)
+dim(SK_dds)
+
+```
+
+
+
+```{r r_versions}
+
+
+dds <- SK_dds
+dds_list <- list(SK_dds, XM_dds_meta)
+names(dds_list) <- c("SK_dds", "XM_dds_meta")
+
+
+# SK
+
+dds <- dds_list[[1]]
+print("SK dds")
+
+# 1. metadata() des dds-Objekts aufrufen
+names(metadata(dds))
+
+# 2. txomeInfo auslesen (enthält ENSEMBL/Gencode Release)
+metadata(dds)$txomeInfo
+metadata(dds)$txomeInfo$release
+metadata(dds)$txdbInfo
+metadata(dds)$quantInfo %>% names()
+metadata(dds)$tximetaInfo
+
+
+# 3. Spezifisch die Release-Nummer
+metadata(dds)$txomeInfo$release  
+# z.B. "104", "109", "41" (Gencode)
+
+# 4. Quelle (Ensembl vs. Gencode) und Genome
+metadata(dds)$txomeInfo$source   # z.B. "Ensembl" oder "LocalEnsembl"
+metadata(dds)$txomeInfo$organism # z.B. "Homo sapiens"
+metadata(dds)$txomeInfo$genome   # z.B. "GRCh38"
+
+# 5. Falls txomeInfo nicht vorhanden: quantInfo (Salmon-Version)
+metadata(dds)$quantInfo$salmon_version
+
+metadata(dds)$txomeInfo$release
+
+
+# XM
+
+dds <- dds_list[[2]]
+print("XM dds")
+
+# 1. metadata() des dds-Objekts aufrufen
+names(metadata(dds))
+
+# 2. txomeInfo auslesen (enthält ENSEMBL/Gencode Release)
+metadata(dds)$txomeInfo
+metadata(dds)$txomeInfo$release
+metadata(dds)$txdbInfo
+metadata(dds)$quantInfo %>% names()
+metadata(dds)$tximetaInfo
+
+
+# 3. Spezifisch die Release-Nummer
+metadata(dds)$txomeInfo$release  
+# z.B. "104", "109", "41" (Gencode)
+
+# 4. Quelle (Ensembl vs. Gencode) und Genome
+metadata(dds)$txomeInfo$source   # z.B. "Ensembl" oder "LocalEnsembl"
+metadata(dds)$txomeInfo$organism # z.B. "Homo sapiens"
+metadata(dds)$txomeInfo$genome   # z.B. "GRCh38"
+
+# 5. Falls txomeInfo nicht vorhanden: quantInfo (Salmon-Version)
+metadata(dds)$quantInfo$salmon_version
+
+metadata(dds)$txomeInfo$release
+
+
+
+```
+

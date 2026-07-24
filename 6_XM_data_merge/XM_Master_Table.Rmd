@@ -40,8 +40,12 @@ library(ggrepel)
 #   file = "/Users/simonkelterborn/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/! Files 1/Manuscripts/Kelly hypoxia/XM/dds_filtered_ready_for_DESeq2.rds"
 # )
 
+# XM_dds_meta <- readRDS(
+#   file = "/Users/simonkelterborn/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/! Files 1/Manuscripts/Kelly hypoxia/XM/dds_filtered_with_metadata.rds"
+# )
+
 XM_dds_meta <- readRDS(
-  file = "/Users/simonkelterborn/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/! Files 1/Manuscripts/Kelly hypoxia/XM/dds_filtered_with_metadata.rds"
+  file = "/Users/simonkelterborn/Library/CloudStorage/GoogleDrive-simon.kelterborn@gmail.com/Meine Ablage/OneDrive Charité/dds_filtered_with_metadata.rds"
 )
 
 load(
