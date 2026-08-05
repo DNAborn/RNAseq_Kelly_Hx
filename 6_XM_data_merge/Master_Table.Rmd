@@ -1,0 +1,225 @@
+---
+title: "Master_Table"
+output:
+  github_document:
+    html_preview: false
+    toc: true
+    toc_depth: 2
+always_allow_html: true
+editor_options: 
+  chunk_output_type: console
+knit: (function(input_file, encoding) {
+    rmarkdown::render(input_file,output_file= 'Readme.md')
+        })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo=FALSE)
+``` 
+
+
+```{r load_packages, echo=FALSE}
+BiocManager::install()
+
+library(dplyr)
+library(DESeq2)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(ggrepel)
+
+```
+
+```{r load_data, echo=FALSE}
+
+dds_kelly <- readRDS(
+  file = "/Users/simonkelterborn/Library/CloudStorage/GoogleDrive-simon.kelterborn@gmail.com/Meine Ablage/OneDrive Charité/dds_filtered_with_metadata.rds"
+)
+
+load(
+  file = "/Users/simonkelterborn/Library/CloudStorage/GoogleDrive-simon.kelterborn@gmail.com/Meine Ablage/OneDrive Charité/SKNAS_SHSY5Y.dds"
+)
+dds_SKNAS <- dds
+dds_SKNAS
+
+HR_table <- readxl::read_xlsx("/Users/simonkelterborn/Library/CloudStorage/GoogleDrive-simon.kelterborn@gmail.com/Meine Ablage/OneDrive Charité/HR_genes_Microarray.xlsx")
+
+
+
+```
+
+
+
+```{r check_dds}
+
+# R
+library(tibble)
+
+# Gene aus beiden dds
+genes1 <- rownames(dds_kelly)
+genes2 <- rownames(dds_SKNAS)
+
+# Schnittmenge / Unterschiede
+common_genes <- intersect(genes1, genes2)
+only_in_kelly <- setdiff(genes1, genes2)
+only_in_SKNAS <- setdiff(genes2, genes1)
+
+# Beide dds auf gemeinsame Reihenfolge bringen (falls nötig)
+dds_kelly_shared <- dds_kelly[common_genes, , drop = FALSE]
+dds_SKNAS_shared <- dds_SKNAS[common_genes, , drop = FALSE]
+
+# Kurze Zusammenfassung
+summary_df <- tibble(
+  dataset = c("dds_kelly", "dds_SKNAS", "common"),
+  n_genes = c(length(genes1), length(genes2), length(common_genes))
+)
+
+# Ergebnis zurückgeben
+res_check <- list(
+  common_genes = common_genes,
+  only_in_kelly = only_in_kelly,
+  only_in_SKNAS = only_in_SKNAS,
+  dds_kelly_shared = dds_kelly_shared,
+  dds_SKNAS_shared = dds_SKNAS_shared,
+  summary = summary_df
+)
+
+res_check %>% head()
+
+colData(dds_SKNAS)
+colData(dds_kelly)
+
+```
+
+
+```{r combine_dds}
+
+# r
+library(stringr)
+library(DESeq2)
+
+# 1) Standardisiere SKNAS condition -> "Nx"/"Hx"
+colData(dds_SKNAS)$cond <- case_when(
+  str_detect(tolower(as.character(colData(dds_SKNAS)$Condition)), "^\\s*norm") ~ "Nx",
+  str_detect(tolower(as.character(colData(dds_SKNAS)$Condition)), "^\\s*hyp")  ~ "Hx",
+  TRUE ~ NA_character_
+)
+
+# 2) Kelly: ensure condition column and filter WT samples with Nx/Hx
+colData(dds_kelly)$cond <- as.character(colData(dds_kelly)$condition)
+keep_kelly <- which(colData(dds_kelly)$genotype == "WT" & colData(dds_kelly)$cond %in% c("Nx","Hx"))
+dds_kelly_wt <- dds_kelly[, keep_kelly]
+
+# 3) common genes and subset
+common_genes <- intersect(rownames(dds_kelly_wt), rownames(dds_SKNAS))
+dds_kelly_sub <- dds_kelly_wt[common_genes, , drop = FALSE]
+dds_SKNAS_sub <- dds_SKNAS[common_genes, , drop = FALSE]
+
+# 4) make unique column names and combine
+colnames(dds_kelly_sub) <- paste0("kelly_", colnames(dds_kelly_sub))
+colnames(dds_SKNAS_sub) <- paste0("sknas_", colnames(dds_SKNAS_sub))
+
+
+# Counts extrahieren (als Matrix)
+cnt1 <- as.matrix(assay(dds_kelly_sub))
+cnt2 <- as.matrix(assay(dds_SKNAS_sub))
+
+# kombiniere Counts (Spaltennamen müssen stimmen)
+counts_comb <- cbind(cnt1, cnt2)
+
+# Metadaten für jede Probe in data.frame und RowNames setzen
+cd1 <- as.data.frame(colData(dds_kelly_sub), stringsAsFactors = FALSE)
+cd2 <- as.data.frame(colData(dds_SKNAS_sub), stringsAsFactors = FALSE)
+rownames(cd1) <- colnames(cnt1)
+rownames(cd2) <- colnames(cnt2)
+
+# vereinheitlichte colData nur mit experiment + condition
+coldata_comb <- data.frame(
+  experiment = factor(c(rep("kelly", ncol(cnt1)), rep("sknas", ncol(cnt2)))),
+  condition  = factor(c(as.character(cd1$cond), as.character(cd2$cond))),
+  row.names  = colnames(counts_comb)
+)
+
+# neues DESeqDataSet bauen
+dds_comb <- DESeqDataSetFromMatrix(
+  countData = counts_comb,
+  colData   = coldata_comb,
+  design    = ~ experiment + condition
+)
+
+# (Optional) DESeq laufen lassen:
+# dds_comb <- DESeq(dds_comb)
+
+dds_comb
+
+```
+
+
+```{r SKNAS_KElly}
+
+# line für SKNAS/SHSY5Y bestimmen
+cd2 <- as.data.frame(colData(dds_SKNAS_sub), stringsAsFactors = FALSE)
+line2 <- ifelse(
+  grepl("sk-n-as", tolower(cd2$Celltype)),
+  "SKNAS",
+  "SHSY5Y"
+)
+
+coldata_comb$line <- factor(
+  c(rep("Kelly", ncol(cnt1)), line2),
+  levels = c("Kelly", "SKNAS", "SHSY5Y")
+)
+coldata_comb$condition <- relevel(factor(coldata_comb$condition), "Nx")
+
+dds_comb <- DESeqDataSetFromMatrix(
+  countData = counts_comb,
+  colData   = coldata_comb,
+  design    = ~ line + condition + line:condition
+)
+
+dds_comb <- DESeq(dds_comb)
+resultsNames(dds_comb)
+
+# einzelne Hx:Nx-Vergleiche
+res_kelly  <- results(dds_comb, name = "condition_Hx_vs_Nx")
+res_sknas  <- results(dds_comb, list = c("condition_Hx_vs_Nx", "lineSKNAS.conditionHx"))
+res_shsy5y <- results(dds_comb, list = c("condition_Hx_vs_Nx", "lineSHSY5Y.conditionHx"))
+
+# basal Kelly Nx vs SKNAS Nx / SHSY5Y Nx
+res_sknas_nx  <- results(dds_comb, name = "lineSKNAS")
+res_shsy5y_nx <- results(dds_comb, name = "lineSHSY5Y")
+
+# Interaktion: Hypoxie-Antwort anders als bei Kelly
+res_int_sknas  <- results(dds_comb, name = "lineSKNAS.conditionHx")
+res_int_shsy5y <- results(dds_comb, name = "lineSHSY5Y.conditionHx")
+
+# Gene, wo Kelly Nx anders ist als beide
+sig_sk_nx <- rownames(res_sknas_nx)[which(res_sknas_nx$padj < 0.05 & abs(res_sknas_nx$log2FoldChange) > 1)]
+sig_sh_nx <- rownames(res_shsy5y_nx)[which(res_shsy5y_nx$padj < 0.05 & abs(res_shsy5y_nx$log2FoldChange) > 1)]
+sig_kelly_diff_both <- intersect(sig_sk_nx, sig_sh_nx)
+sig_kelly_diff_one  <- union(sig_sk_nx, sig_sh_nx)
+
+# Gene, wo die Hypoxie-Antwort bei Kelly anders ist als bei beiden
+sig_int_sk <- rownames(res_int_sknas)[which(res_int_sknas$padj < 0.05 & abs(res_int_sknas$log2FoldChange) > 1)]
+sig_int_sh <- rownames(res_int_shsy5y)[which(res_int_shsy5y$padj < 0.05 & abs(res_int_shsy5y$log2FoldChange) > 1)]
+sig_interact_both <- intersect(sig_int_sk, sig_int_sh)
+sig_interact_one  <- union(sig_int_sk, sig_int_sh)
+
+result_list <- list(
+  res_kelly = res_kelly,
+  res_sknas = res_sknas,
+  res_shsy5y = res_shsy5y,
+  res_sknas_nx = res_sknas_nx,
+  res_shsy5y_nx = res_shsy5y_nx,
+  res_int_sknas = res_int_sknas,
+  res_int_shsy5y = res_int_shsy5y,
+  sig_kelly_diff_both = sig_kelly_diff_both,
+  sig_kelly_diff_one = sig_kelly_diff_one,
+  sig_interact_both = sig_interact_both,
+  sig_interact_one = sig_interact_one
+)
+
+result_list
+
+```
