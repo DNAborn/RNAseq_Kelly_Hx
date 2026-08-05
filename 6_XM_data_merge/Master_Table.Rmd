@@ -208,10 +208,40 @@ head(master_table)
 ```
 
 
+# Master counts table (master_table + per-sample normalized counts)
+
+```{r build_master_counts_table}
+
+# Per-sample normalized counts (Kelly only), labeled genotype_condition_replicate
+# instead of the raw sample IDs for readability.
+sample_labels <- colData(dds_kelly) %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("sample_id") %>%
+  dplyr::group_by(genotype, condition) %>%
+  dplyr::mutate(replicate = dplyr::row_number()) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(label = paste(genotype, condition, replicate, sep = "_"))
+
+norm_counts <- counts(dds_kelly, normalized = TRUE)
+colnames(norm_counts) <- sample_labels$label[match(colnames(norm_counts), sample_labels$sample_id)]
+
+counts_df <- norm_counts %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("Ensembl")
+
+master_counts_table <- master_table %>% left_join(counts_df, by = "Ensembl")
+
+dim(master_counts_table)
+colnames(master_counts_table)
+
+```
+
+
 # Export
 
 ```{r export}
 
 openxlsx::write.xlsx(master_table, "master_table.xlsx", rowNames = FALSE)
+openxlsx::write.xlsx(master_counts_table, "master_counts_table.xlsx", rowNames = FALSE)
 
 ```
