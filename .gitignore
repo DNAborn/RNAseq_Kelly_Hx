@@ -53,3 +53,6 @@ rsconnect/
 
 # Excel lock files (created while a workbook is open)
 ~$*.xlsx
+
+# Cached NCBI downloads for the literature coverage columns (re-downloadable)
+6_XM_data_merge/cache/

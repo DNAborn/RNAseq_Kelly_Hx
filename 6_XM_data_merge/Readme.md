@@ -14,6 +14,9 @@ Master_Table
   SH-SY5Y)](#hypoxia-baseline-sk-n-as--sh-sy5y)
   - [Target vs. baseline](#target-vs-baseline)
   - [Venn: Target vs. Hx_Baseline](#venn-target-vs-hx_baseline)
+- [Literature coverage](#literature-coverage)
+  - [Candidates: strong, Kelly-specific, undescribed in
+    hypoxia](#candidates-strong-kelly-specific-undescribed-in-hypoxia)
 - [Master counts table](#master-counts-table)
 - [Export](#export)
 
@@ -634,6 +637,187 @@ wrap_elements(plt_simple) + wrap_elements(plt_full)
 *Venn universe: 23,002 genes testable in at least one baseline line,
 41,535 genes excluded for lack of baseline data.*
 
+# Literature coverage
+
+Two columns describing how well a gene is already studied. Both come
+from NCBI’s curated `gene2pubmed` mapping (Entrez GeneID -\> PubMed ID)
+rather than from per-gene PubMed text searches: it keys on the `ENTREZ`
+column we already have, so ambiguous symbols (`CS`, `AR`, `MARCH1`,
+`SEPT9`) cannot mismatch, and it needs one download instead of 64,537
+API calls.
+
+- `pubmed_total` - curated publications for the gene
+- `pubmed_hypoxia` - of those, publications in the hypoxia / HIF
+  literature
+
+The second column is the useful one here. `pubmed_total` mostly measures
+how long a gene has been known; `pubmed_hypoxia` answers whether *this*
+biology is already described. A strongly induced, Kelly-specific target
+with many publications but none in hypoxia is the interesting case.
+
+Genes without an Entrez ID stay `NA` - unknown coverage, **not** zero.
+Only genes that have an Entrez ID and no linked publication get a real
+`0`.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+cache_dir <- here::here("6_XM_data_merge", "cache")
+dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
+
+g2p_file <- file.path(cache_dir, "gene2pubmed.gz")
+pmid_file <- file.path(cache_dir, "hypoxia_pmids.rds")
+
+if (!file.exists(g2p_file)) {
+  download.file("https://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2pubmed.gz",
+                g2p_file, mode = "wb", quiet = TRUE)
+}
+
+# Human subset only; the full file is ~65M rows, so filter while decompressing.
+g2p <- data.table::fread(
+  cmd = sprintf("gzcat %s | awk -F'\t' '$1==9606'", shQuote(g2p_file)),
+  header = FALSE, col.names = c("tax_id", "GeneID", "PubMed_ID"))
+
+hypoxia_query <- paste0(
+  'hypoxia[Title/Abstract] OR "hypoxia-inducible factor"[Title/Abstract] ',
+  'OR HIF-1[Title/Abstract] OR HIF-2[Title/Abstract] OR hypoxia[MeSH Terms]')
+
+if (file.exists(pmid_file)) {
+  hyp_ids <- readRDS(pmid_file)
+} else {
+  # esearch and efetch both cap at 10,000 records per request, so the result set
+  # is split by publication year, and years above the cap by month.
+  qenc <- URLencode(paste0("(", hypoxia_query, ")"), reserved = TRUE)
+  esearch <- function(mind, maxd, retmax) {
+    u <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
+                "?db=pubmed&retmode=json&retmax=", retmax, "&term=", qenc,
+                "&datetype=pdat&mindate=", mind, "&maxdate=", maxd)
+    for (att in 1:4) {
+      j <- tryCatch(jsonlite::fromJSON(u), error = function(e) NULL)
+      if (!is.null(j) && !is.null(j$esearchresult$count)) return(j$esearchresult)
+      Sys.sleep(1.5)
+    }
+    stop("esearch failed for ", mind, "-", maxd)
+  }
+  window_ids <- function(mind, maxd) {
+    n <- as.integer(esearch(mind, maxd, 0)$count)
+    if (n == 0) return(character(0))
+    if (n > 9500) return(NULL)
+    Sys.sleep(0.36)
+    as.character(esearch(mind, maxd, 10000)$idlist)
+  }
+  hyp_ids <- character(0)
+  for (y in 1945:as.integer(format(Sys.Date(), "%Y"))) {
+    Sys.sleep(0.36)
+    got <- window_ids(y, y)
+    if (is.null(got)) {
+      for (m in 1:12) {
+        Sys.sleep(0.36)
+        md <- sprintf("%d/%02d", y, m)
+        got_m <- window_ids(md, md)
+        if (is.null(got_m)) stop("month window still above the cap: ", md)
+        hyp_ids <- c(hyp_ids, got_m)
+      }
+    } else {
+      hyp_ids <- c(hyp_ids, got)
+    }
+  }
+  hyp_ids <- unique(as.integer(hyp_ids))
+  saveRDS(hyp_ids, pmid_file)
+}
+
+# openxlsx writes NA_character_ as the literal string "NA", so a table that has
+# been through the Excel round trip carries text where a missing value belongs.
+# Normalise before anything keys off is.na().
+entrez <- master_table$ENTREZ
+entrez[entrez %in% c("NA", "")] <- NA_character_
+has_entrez <- !is.na(entrez)
+
+# ENTREZ is ";"-joined where a gene maps to several Entrez IDs - expand to one row
+# per (gene, GeneID) and take the UNION of their PMIDs, so nothing is counted twice.
+map <- data.table::data.table(row_id = seq_len(nrow(master_table)), ENTREZ = entrez)
+map <- map[!is.na(ENTREZ)]
+map <- map[, .(GeneID = as.integer(unlist(strsplit(ENTREZ, ";")))), by = row_id]
+map <- map[!is.na(GeneID)]
+
+hit <- merge(map, g2p[, .(GeneID, PubMed_ID)], by = "GeneID", allow.cartesian = TRUE)
+hit <- unique(hit[, .(row_id, PubMed_ID)])
+hit[, is_hyp := PubMed_ID %in% hyp_ids]
+agg <- hit[, .(total = .N, hypoxia = sum(is_hyp)), by = row_id]
+
+master_table$pubmed_total   <- ifelse(has_entrez, 0L, NA_integer_)
+master_table$pubmed_hypoxia <- ifelse(has_entrez, 0L, NA_integer_)
+master_table$pubmed_total[agg$row_id]   <- agg$total
+master_table$pubmed_hypoxia[agg$row_id] <- agg$hypoxia
+
+master_table <- master_table %>% dplyr::relocate(pubmed_total, pubmed_hypoxia,
+                                                 .after = Hx_Baseline)
+
+tab(data.frame(
+  Group = c("no Entrez ID (NA - unknown)", "Entrez ID, no publication",
+            "at least 1 publication", "at least 1 hypoxia publication"),
+  Genes = c(sum(!has_entrez),
+            sum(master_table$pubmed_total == 0, na.rm = TRUE),
+            sum(master_table$pubmed_total > 0, na.rm = TRUE),
+            sum(master_table$pubmed_hypoxia > 0, na.rm = TRUE))
+), sprintf("Literature coverage (%s hypoxia PMIDs, %s curated human gene-paper links)",
+           format(length(hyp_ids), big.mark = ","), format(nrow(g2p), big.mark = ",")))
+```
+
+</details>
+
+**Literature coverage (210,214 hypoxia PMIDs, 3,322,637 curated human
+gene-paper links)**
+
+| Group                          | Genes |
+|:-------------------------------|------:|
+| no Entrez ID (NA - unknown)    | 35994 |
+| Entrez ID, no publication      |  1993 |
+| at least 1 publication         | 26550 |
+| at least 1 hypoxia publication |  7840 |
+
+Sanity check - the genes with the most hypoxia literature are the ones
+you would expect, which is what makes the column trustworthy:
+
+**Best covered genes in the hypoxia literature**
+
+| symbol | pubmed_total | pubmed_hypoxia |
+|:-------|-------------:|---------------:|
+| HIF1A  |         9767 |           8254 |
+| VEGFA  |        16686 |           1675 |
+| VHL    |         2236 |            827 |
+| CA9    |         1333 |            605 |
+| EPAS1  |          638 |            532 |
+| MTOR   |        13389 |            518 |
+
+## Candidates: strong, Kelly-specific, undescribed in hypoxia
+
+HIF targets that respond only in Kelly, are strongly induced, and are
+established genes (at least 20 publications) with **no** hypoxia
+literature at all.
+
+**Strongly induced Kelly-specific targets with no hypoxia literature**
+
+| symbol | Target | pubmed_total | pubmed_hypoxia | log2FC |
+|:-------|:-------|-------------:|---------------:|-------:|
+| ATP8A2 | Hif2a  |           45 |              0 |   8.69 |
+| LRAT   | Hif1a  |           56 |              0 |   8.33 |
+| FOXC2  | Hif2a  |          170 |              0 |   7.29 |
+| HTR4   | Hif2a  |          107 |              0 |   7.23 |
+| SASH1  | Hif2a  |          112 |              0 |   7.13 |
+| TSPAN8 | Hif2a  |          141 |              0 |   7.11 |
+| NFE2L3 | Hif2a  |           76 |              0 |   7.09 |
+| MGAT4C | Hif2a  |           25 |              0 |   6.42 |
+| GLI3   | Hif2a  |          457 |              0 |   6.29 |
+| C4B    | Hif2a  |          216 |              0 |   6.28 |
+| AKR1D1 | Hif2a  |           48 |              0 |   6.27 |
+| HERC6  | Hif2a  |           29 |              0 |   6.17 |
+
 # Master counts table
 
 The same table plus the per-sample normalized counts of the Kelly
@@ -678,7 +862,7 @@ master_counts_table %>%
 
 </details>
 
-**master_counts_table preview - 142 columns total, 88 of them counts**
+**master_counts_table preview - 144 columns total, 88 of them counts**
 
 | symbol | Target | Hx_Baseline | counts_WT_Nx_1 | counts_WT_Hx_1 | counts_HIF1a-KO_Hx_1 | counts_HIF2a-KO_Hx_1 |
 |:---|:---|:---|---:|---:|---:|---:|
@@ -711,7 +895,7 @@ openxlsx::write.xlsx(master_counts_table,
 
 </details>
 
-- [master_table.xlsx](master_table.xlsx) - 64,537 genes x 54 columns,
-  26.9 MB (statistics only)
+- [master_table.xlsx](master_table.xlsx) - 64,537 genes x 56 columns,
+  27.4 MB (statistics only)
 - [master_counts_table.xlsx](master_counts_table.xlsx) - 64,537 genes x
-  142 columns, 64.2 MB (statistics + per-sample normalized counts)
+  144 columns, 64.7 MB (statistics + per-sample normalized counts)
