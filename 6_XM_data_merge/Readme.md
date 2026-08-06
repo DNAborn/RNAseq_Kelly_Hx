@@ -639,25 +639,36 @@ wrap_elements(plt_simple) + wrap_elements(plt_full)
 
 # Literature coverage
 
-Two columns describing how well a gene is already studied. Both come
-from NCBI’s curated `gene2pubmed` mapping (Entrez GeneID -\> PubMed ID)
-rather than from per-gene PubMed text searches: it keys on the `ENTREZ`
-column we already have, so ambiguous symbols (`CS`, `AR`, `MARCH1`,
-`SEPT9`) cannot mismatch, and it needs one download instead of 64,537
-API calls.
+Three columns describing how well a gene is already studied. The counts
+come from NCBI’s curated `gene2pubmed` mapping (Entrez GeneID -\> PubMed
+ID) rather than from per-gene PubMed text searches - one download
+instead of 64,537 API calls, and no dependence on symbol matching.
 
 - `pubmed_total` - curated publications for the gene
 - `pubmed_hypoxia` - of those, publications in the hypoxia / HIF
   literature
+- `pubmed_source` - how the gene was matched to an Entrez ID
 
 The second column is the useful one here. `pubmed_total` mostly measures
 how long a gene has been known; `pubmed_hypoxia` answers whether *this*
 biology is already described. A strongly induced, Kelly-specific target
 with many publications but none in hypoxia is the interesting case.
 
-Genes without an Entrez ID stay `NA` - unknown coverage, **not** zero.
-Only genes that have an Entrez ID and no linked publication get a real
-`0`.
+**Why three ID sources.** The `ENTREZ` column of our annotation leaves
+35,994 genes unmapped, and a quarter of the HIF targets sit in that
+gap - too many to ignore for a column meant to help prioritise. Two NCBI
+tables close most of it without giving up precision: `gene2ensembl`
+matches on the Ensembl gene ID, and `Homo_sapiens.gene_info` on primary
+symbols and synonyms. Any key pointing at more than one gene is
+discarded, so unlike a `"SYMBOL"[Gene Name]` text search this cannot
+mismatch `CS`, `AR`, `MARCH1` or `SEPT9`.
+
+`pubmed_source` records which route was used, so the value stays usable
+as a soft ranking aid while its provenance is always visible. Genes
+marked `unannotated` have neither an Entrez ID nor a symbol - there is
+no identifier to look literature up by, so they stay `NA` rather than
+being called unstudied. Only genes that were mapped and have no linked
+publication get a real `0`.
 
 <details>
 
@@ -670,18 +681,44 @@ Code
 cache_dir <- here::here("6_XM_data_merge", "cache")
 dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
 
-g2p_file <- file.path(cache_dir, "gene2pubmed.gz")
+ncbi <- c(gene2pubmed  = "https://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2pubmed.gz",
+          gene2ensembl = "https://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2ensembl.gz",
+          gene_info    = paste0("https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/",
+                                "Mammalia/Homo_sapiens.gene_info.gz"))
+files <- file.path(cache_dir, c("gene2pubmed.gz", "gene2ensembl.gz",
+                                "Homo_sapiens.gene_info.gz"))
+names(files) <- names(ncbi)
+for (n in names(files)) {
+  if (!file.exists(files[n])) download.file(ncbi[n], files[n], mode = "wb", quiet = TRUE)
+}
 pmid_file <- file.path(cache_dir, "hypoxia_pmids.rds")
 
-if (!file.exists(g2p_file)) {
-  download.file("https://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2pubmed.gz",
-                g2p_file, mode = "wb", quiet = TRUE)
-}
-
-# Human subset only; the full file is ~65M rows, so filter while decompressing.
+# Human subset only; the full files are tens of millions of rows, so filter while
+# decompressing rather than reading everything into memory.
 g2p <- data.table::fread(
-  cmd = sprintf("gzcat %s | awk -F'\t' '$1==9606'", shQuote(g2p_file)),
+  cmd = sprintf("gzcat %s | awk -F'\t' '$1==9606'", shQuote(files["gene2pubmed"])),
   header = FALSE, col.names = c("tax_id", "GeneID", "PubMed_ID"))
+
+g2e <- data.table::fread(
+  cmd = sprintf("gzcat %s | awk -F'\t' '$1==9606'", shQuote(files["gene2ensembl"])),
+  header = FALSE, select = 1:3, col.names = c("tax_id", "GeneID", "Ensembl"))
+g2e <- unique(g2e[, .(Ensembl, GeneID)])
+
+# Symbol -> GeneID via NCBI's own table (primary symbols first, then synonyms).
+# Any key pointing at more than one gene is dropped, so this cannot mismatch the
+# way a "SYMBOL"[Gene Name] text search would on CS, AR, MARCH1 or SEPT9.
+gi <- data.table::fread(cmd = sprintf("gzcat %s", shQuote(files["gene_info"])),
+                        quote = "", select = c(2, 3, 5),
+                        col.names = c("GeneID", "Symbol", "Synonyms"))
+# NB: the column is called "sym", not "key" - data.table() treats a "key" argument
+# as the key to set rather than as a column.
+prim <- unique(gi[Symbol != "-", .(sym = Symbol, GeneID)])
+prim <- prim[!sym %in% prim[, .N, by = sym][N > 1, sym]]
+syn <- gi[Synonyms != "-"][, .(sym = unlist(strsplit(Synonyms, "|", fixed = TRUE))),
+                           by = GeneID][, .(sym, GeneID)]
+syn <- unique(syn[!sym %in% prim$sym])
+syn <- syn[!sym %in% syn[, .N, by = sym][N > 1, sym]]
+sym_map <- rbind(prim, syn)
 
 hypoxia_query <- paste0(
   'hypoxia[Title/Abstract] OR "hypoxia-inducible factor"[Title/Abstract] ',
@@ -736,50 +773,108 @@ if (file.exists(pmid_file)) {
 # Normalise before anything keys off is.na().
 entrez <- master_table$ENTREZ
 entrez[entrez %in% c("NA", "")] <- NA_character_
-has_entrez <- !is.na(entrez)
 
-# ENTREZ is ";"-joined where a gene maps to several Entrez IDs - expand to one row
-# per (gene, GeneID) and take the UNION of their PMIDs, so nothing is counted twice.
-map <- data.table::data.table(row_id = seq_len(nrow(master_table)), ENTREZ = entrez)
-map <- map[!is.na(ENTREZ)]
-map <- map[, .(GeneID = as.integer(unlist(strsplit(ENTREZ, ";")))), by = row_id]
-map <- map[!is.na(GeneID)]
+# Resolve an Entrez ID per gene from three sources in decreasing directness. The
+# annotation alone leaves 36k genes unmapped, a quarter of them inside the HIF
+# target set, so the two NCBI fallbacks are worth the extra join.
+DT <- data.table::data.table
+n_genes <- nrow(master_table)
 
+from_annot <- DT(row_id = seq_len(n_genes), ENTREZ = entrez)[!is.na(ENTREZ)]
+from_annot <- from_annot[, .(GeneID = as.integer(unlist(strsplit(ENTREZ, ";")))),
+                         by = row_id][!is.na(GeneID)]
+
+open_rows <- setdiff(seq_len(n_genes), from_annot$row_id)
+from_ens <- merge(DT(row_id = open_rows, Ensembl = master_table$Ensembl[open_rows]),
+                  g2e, by = "Ensembl")[, .(row_id, GeneID)]
+
+open_rows <- setdiff(open_rows, from_ens$row_id)
+from_sym <- merge(DT(row_id = open_rows, sym = master_table$symbol[open_rows])[!is.na(sym)],
+                  sym_map, by = "sym")[, .(row_id, GeneID)]
+
+map <- rbind(from_annot, from_ens, from_sym)
+
+# Provenance, so the number stays usable as a soft ranking aid while it is always
+# visible how it was obtained. "unannotated" genes carry neither an Entrez ID nor
+# a symbol - no identifier exists to look literature up by, so they stay NA.
+pubmed_source <- rep("unannotated", n_genes)
+pubmed_source[from_sym$row_id]   <- "symbol_map"
+pubmed_source[from_ens$row_id]   <- "ensembl_map"
+pubmed_source[from_annot$row_id] <- "annotation"
+master_table$pubmed_source <- factor(
+  pubmed_source, levels = c("annotation", "ensembl_map", "symbol_map", "unannotated"))
+
+# Take the UNION of PMIDs across a gene's Entrez IDs, so multi-mapping genes are
+# not counted twice.
 hit <- merge(map, g2p[, .(GeneID, PubMed_ID)], by = "GeneID", allow.cartesian = TRUE)
 hit <- unique(hit[, .(row_id, PubMed_ID)])
 hit[, is_hyp := PubMed_ID %in% hyp_ids]
 agg <- hit[, .(total = .N, hypoxia = sum(is_hyp)), by = row_id]
 
-master_table$pubmed_total   <- ifelse(has_entrez, 0L, NA_integer_)
-master_table$pubmed_hypoxia <- ifelse(has_entrez, 0L, NA_integer_)
+mapped <- pubmed_source != "unannotated"
+master_table$pubmed_total   <- ifelse(mapped, 0L, NA_integer_)
+master_table$pubmed_hypoxia <- ifelse(mapped, 0L, NA_integer_)
 master_table$pubmed_total[agg$row_id]   <- agg$total
 master_table$pubmed_hypoxia[agg$row_id] <- agg$hypoxia
 
-master_table <- master_table %>% dplyr::relocate(pubmed_total, pubmed_hypoxia,
-                                                 .after = Hx_Baseline)
+master_table <- master_table %>%
+  dplyr::relocate(pubmed_total, pubmed_hypoxia, pubmed_source, .after = Hx_Baseline)
 
-tab(data.frame(
-  Group = c("no Entrez ID (NA - unknown)", "Entrez ID, no publication",
-            "at least 1 publication", "at least 1 hypoxia publication"),
-  Genes = c(sum(!has_entrez),
-            sum(master_table$pubmed_total == 0, na.rm = TRUE),
-            sum(master_table$pubmed_total > 0, na.rm = TRUE),
-            sum(master_table$pubmed_hypoxia > 0, na.rm = TRUE))
-), sprintf("Literature coverage (%s hypoxia PMIDs, %s curated human gene-paper links)",
-           format(length(hyp_ids), big.mark = ","), format(nrow(g2p), big.mark = ",")))
+tab(as.data.frame(table(Source = master_table$pubmed_source)),
+    sprintf("How the Entrez ID was resolved (%s hypoxia PMIDs, %s gene-paper links)",
+            format(length(hyp_ids), big.mark = ","), format(nrow(g2p), big.mark = ",")))
 ```
 
 </details>
 
-**Literature coverage (210,214 hypoxia PMIDs, 3,322,637 curated human
+**How the Entrez ID was resolved (210,214 hypoxia PMIDs, 3,322,637
 gene-paper links)**
 
-| Group                          | Genes |
-|:-------------------------------|------:|
-| no Entrez ID (NA - unknown)    | 35994 |
-| Entrez ID, no publication      |  1993 |
-| at least 1 publication         | 26550 |
-| at least 1 hypoxia publication |  7840 |
+| Source      |  Freq |
+|:------------|------:|
+| annotation  | 28543 |
+| ensembl_map | 10618 |
+| symbol_map  |  7484 |
+| unannotated | 17892 |
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+tab(data.frame(
+  Group = c("mapped, no publication", "at least 1 publication",
+            "at least 1 hypoxia publication", "unannotated (NA - no identifier)"),
+  Genes = c(sum(master_table$pubmed_total == 0, na.rm = TRUE),
+            sum(master_table$pubmed_total > 0, na.rm = TRUE),
+            sum(master_table$pubmed_hypoxia > 0, na.rm = TRUE),
+            sum(!mapped))
+), "Literature coverage")
+```
+
+</details>
+
+**Literature coverage**
+
+| Group                            | Genes |
+|:---------------------------------|------:|
+| mapped, no publication           | 12503 |
+| at least 1 publication           | 34142 |
+| at least 1 hypoxia publication   |  7945 |
+| unannotated (NA - no identifier) | 17892 |
+
+Coverage inside the region that actually matters - without the two NCBI
+fallbacks the last two rows would be lost:
+
+**Entrez ID resolution within the target sets**
+
+| Set                    | Genes | annotation | ensembl_map | symbol_map | unannotated |
+|:-----------------------|------:|-----------:|------------:|-----------:|------------:|
+| all HIF targets        |  1837 |       1287 |         112 |         94 |         344 |
+| Kelly-specific targets |   922 |        691 |          52 |         45 |         134 |
 
 Sanity check - the genes with the most hypoxia literature are the ones
 you would expect, which is what makes the column trustworthy:
@@ -862,7 +957,7 @@ master_counts_table %>%
 
 </details>
 
-**master_counts_table preview - 144 columns total, 88 of them counts**
+**master_counts_table preview - 145 columns total, 88 of them counts**
 
 | symbol | Target | Hx_Baseline | counts_WT_Nx_1 | counts_WT_Hx_1 | counts_HIF1a-KO_Hx_1 | counts_HIF2a-KO_Hx_1 |
 |:---|:---|:---|---:|---:|---:|---:|
@@ -895,7 +990,7 @@ openxlsx::write.xlsx(master_counts_table,
 
 </details>
 
-- [master_table.xlsx](master_table.xlsx) - 64,537 genes x 56 columns,
-  27.4 MB (statistics only)
+- [master_table.xlsx](master_table.xlsx) - 64,537 genes x 57 columns,
+  27.7 MB (statistics only)
 - [master_counts_table.xlsx](master_counts_table.xlsx) - 64,537 genes x
-  144 columns, 64.7 MB (statistics + per-sample normalized counts)
+  145 columns, 65.1 MB (statistics + per-sample normalized counts)
