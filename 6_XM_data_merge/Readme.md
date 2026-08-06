@@ -1,45 +1,35 @@
----
-title: "Master_Table"
-output:
-  github_document:
-    html_preview: false
-    toc: true
-    toc_depth: 2
-always_allow_html: true
-editor_options:
-  chunk_output_type: console
-knit: (function(input_file, encoding) {
-    rmarkdown::render(input_file,output_file= 'Readme.md')
-        })
----
+Master_Table
+================
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = TRUE)
+- [Input data](#input-data)
+- [Kelly: fresh contrasts from the new
+  dds](#kelly-fresh-contrasts-from-the-new-dds)
+- [SK-N-AS / SH-SY5Y: independent per-line Hx vs
+  Nx](#sk-n-as--sh-sy5y-independent-per-line-hx-vs-nx)
+- [Combine into master table](#combine-into-master-table)
+  - [Overlap of the Ensembl IDs](#overlap-of-the-ensembl-ids)
+- [Target classification (Kelly
+  only)](#target-classification-kelly-only)
+- [Hypoxia baseline (SK-N-AS /
+  SH-SY5Y)](#hypoxia-baseline-sk-n-as--sh-sy5y)
+  - [Target vs. baseline](#target-vs-baseline)
+  - [Venn: Target vs. Hx_Baseline](#venn-target-vs-hx_baseline)
+- [Master counts table](#master-counts-table)
+- [Export](#export)
 
-# Fold every code block into a collapsible <details> element. GitHub renders this
-# natively, so the rendered Readme.md reads as a summary while the full code stays
-# one click away.
-knitr::knit_hooks$set(source = function(x, options) {
-  paste0("\n<details>\n<summary>Code</summary>\n\n``` r\n",
-         paste(x, collapse = "\n"), "\n```\n\n</details>\n")
-})
+This document merges the three RNA-seq / microarray data sets of the
+project into one **master table**, classifies every gene by its HIF
+dependency, and exports the result as Excel. Code blocks are collapsed -
+click *Code* to expand.
 
-# All summary output in this document goes through kable, so nothing dumps a
-# raw multi-page data.frame into the rendered file. The caption is emitted as a
-# bold line *above* the table - kable's own caption ends up below it, where it
-# reads as a stray sentence on GitHub.
-tab <- function(x, caption = NULL) {
-  md <- paste(knitr::kable(x), collapse = "\n")
-  if (!is.null(caption)) md <- paste0("**", caption, "**\n\n", md)
-  knitr::asis_output(paste0("\n", md, "\n"))
-}
-```
+<details>
 
-This document merges the three RNA-seq / microarray data sets of the project into
-one **master table**, classifies every gene by its HIF dependency, and exports the
-result as Excel. Code blocks are collapsed - click *Code* to expand.
+<summary>
 
-```{r load_packages}
+Code
+</summary>
+
+``` r
 library(dplyr)
 library(DESeq2)
 library(tidyverse)
@@ -56,17 +46,24 @@ invisible(futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagra
 
 colors <- c("lavenderblush3", "lavenderblush4", "#90caf9", "#1976d2",
             "#82e0aa", "#239b56", "#f8c471", "#b9770e")
-
 ```
 
+</details>
 
 # Input data
 
-Three sources go into the master table: the Kelly line with its three HIF knockouts,
-the two MYCN-non-amplified reference lines, and the high-risk microarray gene list.
+Three sources go into the master table: the Kelly line with its three
+HIF knockouts, the two MYCN-non-amplified reference lines, and the
+high-risk microarray gene list.
 
-```{r load_data}
+<details>
 
+<summary>
+
+Code
+</summary>
+
+``` r
 dds_kelly <- readRDS(
   file = "/Users/simonkelterborn/Library/CloudStorage/GoogleDrive-simon.kelterborn@gmail.com/Meine Ablage/! OneDrive Charité/dds_filtered_with_metadata.rds"
 )
@@ -88,21 +85,35 @@ tab(data.frame(
   Genes    = c(nrow(dds_kelly), nrow(dds_SKNAS), nrow(HR_table)),
   Samples  = c(ncol(dds_kelly), ncol(dds_SKNAS), NA)
 ), "Input data sets")
-
 ```
 
+</details>
+
+**Input data sets**
+
+| Data_set | File | Genes | Samples |
+|:---|:---|---:|---:|
+| Kelly (WT + HIF1a/HIF1b/HIF2a KO) | dds_filtered_with_metadata.rds | 64537 | 88 |
+| SK-N-AS / SH-SY5Y | SKNAS_SHSY5Y.dds | 76045 | 12 |
+| High-risk microarray | HR_genes_Microarray.xlsx | 27855 | NA |
 
 # Kelly: fresh contrasts from the new dds
 
-DESeq2 is run once with the full interaction design `~genotype + condition +
-genotype:condition`. All contrasts of interest are then derived from that single
-fit as weighted coefficient vectors, so every comparison shares one dispersion
-estimate. The coefficient names are resolved by pattern instead of being
-hardcoded, because DESeq2 rewrites factor level separators (`HIF1a-KO` becomes
-`HIF1a.KO`).
+DESeq2 is run once with the full interaction design
+`~genotype + condition + genotype:condition`. All contrasts of interest
+are then derived from that single fit as weighted coefficient vectors,
+so every comparison shares one dispersion estimate. The coefficient
+names are resolved by pattern instead of being hardcoded, because DESeq2
+rewrites factor level separators (`HIF1a-KO` becomes `HIF1a.KO`).
 
-```{r kelly_contrasts}
+<details>
 
+<summary>
+
+Code
+</summary>
+
+``` r
 colData(dds_kelly)$genotype <- relevel(factor(colData(dds_kelly)$genotype), "WT")
 colData(dds_kelly)$condition <- relevel(factor(colData(dds_kelly)$condition), "Nx")
 
@@ -204,18 +215,50 @@ tab(data.frame(
   DEGs     = sapply(results_list, function(x) sum(x$padj < 0.05, na.rm = TRUE)),
   row.names = NULL
 ), "Significant genes per contrast (padj < 0.05)")
-
 ```
 
+</details>
+
+**Significant genes per contrast (padj \< 0.05)**
+
+| Contrast               |  DEGs |
+|:-----------------------|------:|
+| Kelly.Hx.vs.Nx         | 16675 |
+| Hif1a.Hx.vs.Nx         | 16883 |
+| Hif1b.Hx.vs.Nx         |  7465 |
+| Hif2a.Hx.vs.Nx         | 11905 |
+| Nx.Hif1a.vs.Kelly      |   623 |
+| Nx.Hif1b.vs.Kelly      |  5717 |
+| Nx.Hif2a.vs.Kelly      |  2424 |
+| Hx.Hif1a.vs.Kelly      |  6956 |
+| Hx.Hif1b.vs.Kelly      | 15787 |
+| Hx.Hif2a.vs.Kelly      | 11524 |
+| Hx.Hif2a.vs.Hif1a      | 14604 |
+| Hx.Hif1b.vs.Hif1a      | 16341 |
+| Hx.Hif1b.vs.Hif2a      | 13268 |
+| Hif1aHxNx.vs.KellyHxNx |  3050 |
+| Hif2aHxNx.vs.KellyHxNx |  7976 |
+| Hif1bHxNx.vs.KellyHxNx |  9584 |
+| Hif2aHxNx.vs.Hif1aHxNx |  9882 |
+| Hx.Hif1b.vs.Hif12a     | 15137 |
+| Hx.Kelly.vs.allHIFs    | 12169 |
+| Hx.vs.Nx               | 18937 |
 
 # SK-N-AS / SH-SY5Y: independent per-line Hx vs Nx
 
-These two lines are analysed separately from Kelly - each gets its own DESeq2 fit
-on the subset of its own samples with the simple design `~Condition`, so their
-hypoxia response is estimated independently of the Kelly model.
+These two lines are analysed separately from Kelly - each gets its own
+DESeq2 fit on the subset of its own samples with the simple design
+`~Condition`, so their hypoxia response is estimated independently of
+the Kelly model.
 
-```{r sknas_shsy5y_contrasts}
+<details>
 
+<summary>
+
+Code
+</summary>
+
+``` r
 get_line_hxvsnx <- function(dds_all, celltype_value, label) {
   dds_sub <- dds_all[, colData(dds_all)$Celltype == celltype_value]
   colData(dds_sub)$Condition <- relevel(factor(colData(dds_sub)$Condition), "Normoxia")
@@ -235,17 +278,24 @@ get_line_hxvsnx <- function(dds_all, celltype_value, label) {
 
 sknas_df  <- get_line_hxvsnx(dds_SKNAS, "SK-N-AS", "SKNAS")
 shsy5y_df <- get_line_hxvsnx(dds_SKNAS, "SH-SY5Y", "SHSY5Y")
-
 ```
 
+</details>
 
 # Combine into master table
 
-All three sources are joined on Ensembl gene ID, with Kelly as the reference gene
-space. Every contrast contributes a `log2FoldChange` and a `padj` column.
+All three sources are joined on Ensembl gene ID, with Kelly as the
+reference gene space. Every contrast contributes a `log2FoldChange` and
+a `padj` column.
 
-```{r build_master_table}
+<details>
 
+<summary>
+
+Code
+</summary>
+
+``` r
 res_table <- lapply(results_list, function(x) data.frame(x)[, c("log2FoldChange", "padj")])
 res_table <- do.call('cbind', res_table)
 
@@ -262,15 +312,22 @@ master_table <- master_table %>%
   left_join(sknas_df, by = "Ensembl") %>%
   left_join(shsy5y_df, by = "Ensembl") %>%
   left_join(HR_table %>% dplyr::rename(p_value_HR = p_value), by = "Ensembl")
-
 ```
+
+</details>
 
 ## Overlap of the Ensembl IDs
 
 How well the three sources cover the Kelly gene space:
 
-```{r ensembl_overlap}
+<details>
 
+<summary>
+
+Code
+</summary>
+
+``` r
 ens_kelly <- master_table$Ensembl
 
 tab(data.frame(
@@ -281,15 +338,31 @@ tab(data.frame(
   Not_in_Kelly      = c(NA, sum(!sknas_df$Ensembl %in% ens_kelly),
                         sum(!HR_table$Ensembl %in% ens_kelly))
 ), "Ensembl ID overlap with the Kelly gene space")
-
 ```
 
-Being present is not the same as being testable: DESeq2's independent filtering
-drops low-count genes, which leaves their `padj` as `NA`. That distinction matters
-for the baseline classification below, so it is counted separately here.
+</details>
 
-```{r baseline_coverage}
+**Ensembl ID overlap with the Kelly gene space**
 
+| Data_set             | Genes | Shared_with_Kelly | Not_in_Kelly |
+|:---------------------|------:|------------------:|-------------:|
+| Kelly (reference)    | 64537 |                NA |           NA |
+| SK-N-AS / SH-SY5Y    | 76045 |             57785 |        18260 |
+| High-risk microarray | 27855 |             25398 |         2457 |
+
+Being present is not the same as being testable: DESeq2’s independent
+filtering drops low-count genes, which leaves their `padj` as `NA`. That
+distinction matters for the baseline classification below, so it is
+counted separately here.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
 coverage <- function(label) {
   bm <- master_table[[paste0("baseMean_", label)]]
   pa <- master_table[[paste0("padj_", label)]]
@@ -301,11 +374,25 @@ coverage <- function(label) {
 
 tab(rbind(coverage("SKNAS"), coverage("SHSY5Y")),
     "Gene coverage of the two baseline lines")
-
 ```
 
-```{r master_table_preview}
+</details>
 
+**Gene coverage of the two baseline lines**
+
+| Line   | Not_in_data_set | Present_but_not_testable | Testable |
+|:-------|----------------:|-------------------------:|---------:|
+| SKNAS  |            6752 |                    36577 |    21208 |
+| SHSY5Y |            6752 |                    37072 |    20713 |
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
 master_table %>%
   dplyr::select(Ensembl, symbol, baseMean_Kelly,
                 Kelly.Hx.vs.Nx.log2FoldChange, Kelly.Hx.vs.Nx.padj,
@@ -314,20 +401,37 @@ master_table %>%
   dplyr::mutate(dplyr::across(where(is.numeric), ~signif(.x, 3))) %>%
   tab(sprintf("master_table preview - first 5 of %s genes, 7 of %d columns",
               format(nrow(master_table), big.mark = ","), ncol(master_table)))
-
 ```
 
+</details>
+
+**master_table preview - first 5 of 64,537 genes, 7 of 52 columns**
+
+| Ensembl | symbol | baseMean_Kelly | Kelly.Hx.vs.Nx.log2FoldChange | Kelly.Hx.vs.Nx.padj | log2FC_SKNAS | log2FC_SHSY5Y |
+|:---|:---|---:|---:|---:|---:|---:|
+| ENSG00000000003 | TSPAN6 | 1.21e+03 | 0.111 | 0.7820 | 0.0795 | 0.0862 |
+| ENSG00000000005 | TNMD | 2.01e-02 | 0.227 | 0.9930 | 0.9080 | NA |
+| ENSG00000000419 | DPM1 | 1.48e+03 | -0.271 | 0.0128 | -0.1050 | -0.1570 |
+| ENSG00000000457 | SCYL3 | 7.48e+02 | 0.390 | 0.0000 | 0.1250 | 0.0748 |
+| ENSG00000000460 | C1orf112 | 1.15e+03 | -0.989 | 0.0000 | -0.8430 | -0.6820 |
 
 # Target classification (Kelly only)
 
-A gene counts as a **HIF target** if it is induced by hypoxia in WT Kelly
-(`padj < 0.05` and `log2FC > 1`) *and* that induction is lost in the respective
-knockout, i.e. the interaction term is significantly negative (`padj < 0.05` and
-`log2FC < -1`). Genes meeting both criteria for HIF1A and HIF2A are labelled
-`Hif1a_Hif2a`. Only Kelly data is used here.
+A gene counts as a **HIF target** if it is induced by hypoxia in WT
+Kelly (`padj < 0.05` and `log2FC > 1`) *and* that induction is lost in
+the respective knockout, i.e. the interaction term is significantly
+negative (`padj < 0.05` and `log2FC < -1`). Genes meeting both criteria
+for HIF1A and HIF2A are labelled `Hif1a_Hif2a`. Only Kelly data is used
+here.
 
-```{r target_column}
+<details>
 
+<summary>
+
+Code
+</summary>
+
+``` r
 padj_cut <- 0.05
 lfc_cut  <- 1
 
@@ -359,28 +463,45 @@ target_f <- factor(ifelse(is.na(master_table$Target), "no target", master_table$
 tab(as.data.frame(table(Target = target_f)),
     sprintf("Target classification (%s genes Hx-induced in WT Kelly)",
             format(sum(hx_up), big.mark = ",")))
-
 ```
 
+</details>
+
+**Target classification (5,882 genes Hx-induced in WT Kelly)**
+
+| Target      |  Freq |
+|:------------|------:|
+| Hif1a       |   322 |
+| Hif2a       |  1472 |
+| Hif1a_Hif2a |    43 |
+| no target   | 62700 |
 
 # Hypoxia baseline (SK-N-AS / SH-SY5Y)
 
-SK-N-AS and SH-SY5Y are both **MYCN-non-amplified** neuroblastoma lines and serve
-as the baseline hypoxia response; Kelly is MYCN-amplified. The same up-criterion
-as for `Target` is applied, so both columns are directly comparable.
+SK-N-AS and SH-SY5Y are both **MYCN-non-amplified** neuroblastoma lines
+and serve as the baseline hypoxia response; Kelly is MYCN-amplified. The
+same up-criterion as for `Target` is applied, so both columns are
+directly comparable.
 
 | Value | Meaning |
-|---|---|
+|----|----|
 | `SKNAS_SHSY5Y` | Hx-induced in both baseline lines |
 | `SKNAS` / `SHSY5Y` | Hx-induced in that line only |
 | `none` | testable in at least one line, but not Hx-induced - the Kelly-specific candidates |
-| `NA` | testable in neither line - unknown, **not** "no response" |
+| `NA` | testable in neither line - unknown, **not** “no response” |
 
-Keeping `NA` separate from `none` matters: without it, genes that were never
-measured in the reference lines would masquerade as Kelly-specific.
+Keeping `NA` separate from `none` matters: without it, genes that were
+never measured in the reference lines would masquerade as
+Kelly-specific.
 
-```{r baseline_column}
+<details>
 
+<summary>
+
+Code
+</summary>
+
+``` r
 up_sknas  <- sig_up(master_table$log2FC_SKNAS,  master_table$padj_SKNAS)
 up_shsy5y <- sig_up(master_table$log2FC_SHSY5Y, master_table$padj_SHSY5Y)
 
@@ -401,17 +522,34 @@ baseline_f <- factor(ifelse(is.na(master_table$Hx_Baseline), "no data",
                      levels = c("none", "SKNAS", "SHSY5Y", "SKNAS_SHSY5Y", "no data"))
 
 tab(as.data.frame(table(Hx_Baseline = baseline_f)), "Baseline hypoxia response")
-
 ```
 
-## Target vs. baseline
+</details>
+
+**Baseline hypoxia response**
+
+| Hx_Baseline  |  Freq |
+|:-------------|------:|
+| none         | 20857 |
+| SKNAS        |  1143 |
+| SHSY5Y       |   565 |
+| SKNAS_SHSY5Y |   437 |
+| no data      | 41535 |
+
+## Target vs. baseline
 
 Rows are the HIF targets from Kelly, columns their behaviour in the
-MYCN-non-amplified lines. The `none` column holds the Kelly-specific targets, the
-`NA` column the ones with no baseline data.
+MYCN-non-amplified lines. The `none` column holds the Kelly-specific
+targets, the `NA` column the ones with no baseline data.
 
-```{r target_baseline_crosstable}
+<details>
 
+<summary>
+
+Code
+</summary>
+
+``` r
 cross <- table(Target = target_f, Baseline = baseline_f)
 
 tab(as.data.frame.matrix(cross),
@@ -419,16 +557,32 @@ tab(as.data.frame.matrix(cross),
             format(sum(!is.na(master_table$Target) &
                        master_table$Hx_Baseline == "none", na.rm = TRUE),
                    big.mark = ",")))
-
 ```
 
-## Venn: Target vs. Hx_Baseline
+</details>
 
-Left: both reference lines pooled into one set. Right: the same comparison with
-SK-N-AS and SH-SY5Y resolved separately.
+**Target x Hx_Baseline - 922 HIF targets are Kelly-specific**
 
-```{r target_baseline_venn, fig.width=10, fig.height=5, dpi=150}
+|             |  none | SKNAS | SHSY5Y | SKNAS_SHSY5Y | no data |
+|:------------|------:|------:|-------:|-------------:|--------:|
+| Hif1a       |    82 |    33 |     63 |           81 |      63 |
+| Hif2a       |   823 |   141 |    107 |           62 |     339 |
+| Hif1a_Hif2a |    17 |     6 |      9 |            3 |       8 |
+| no target   | 19935 |   963 |    386 |          291 |   41125 |
 
+## Venn: Target vs. Hx_Baseline
+
+Left: both reference lines pooled into one set. Right: the same
+comparison with SK-N-AS and SH-SY5Y resolved separately.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
 # Restrict to genes that are testable in at least one baseline line. Otherwise
 # genes with no baseline data would sit outside the SKNAS/SHSY5Y circles and
 # would be read as "Kelly-specific" when they are simply unmeasured.
@@ -471,26 +625,30 @@ plt_full   <- venn_plot(venn_sets, "HIF targets vs. SK-N-AS / SH-SY5Y",
                         colors[c(4, 6, 7, 3)])
 
 wrap_elements(plt_simple) + wrap_elements(plt_full)
-
 ```
 
-```{r venn_universe_note, echo=FALSE, results='asis'}
+</details>
 
-cat(sprintf("*Venn universe: %s genes testable in at least one baseline line, %s genes excluded for lack of baseline data.*\n",
-            format(nrow(venn_universe), big.mark = ","),
-            format(sum(is.na(master_table$Hx_Baseline)), big.mark = ",")))
+![](Readme_files/figure-gfm/target_baseline_venn-1.png)<!-- -->
 
-```
-
+*Venn universe: 23,002 genes testable in at least one baseline line,
+41,535 genes excluded for lack of baseline data.*
 
 # Master counts table
 
-The same table plus the per-sample normalized counts of the Kelly experiment.
-Sample columns are relabelled `counts_genotype_condition_replicate`, so the
-`counts_` prefix separates them from the statistics columns in one selection.
+The same table plus the per-sample normalized counts of the Kelly
+experiment. Sample columns are relabelled
+`counts_genotype_condition_replicate`, so the `counts_` prefix separates
+them from the statistics columns in one selection.
 
-```{r build_master_counts_table}
+<details>
 
+<summary>
+
+Code
+</summary>
+
+``` r
 sample_labels <- colData(dds_kelly) %>%
   as.data.frame() %>%
   tibble::rownames_to_column("sample_id") %>%
@@ -516,14 +674,30 @@ master_counts_table %>%
   dplyr::mutate(dplyr::across(where(is.numeric), ~round(.x, 1))) %>%
   tab(sprintf("master_counts_table preview - %d columns total, %d of them counts",
               ncol(master_counts_table), length(count_cols)))
-
 ```
 
+</details>
+
+**master_counts_table preview - 142 columns total, 88 of them counts**
+
+| symbol | Target | Hx_Baseline | counts_WT_Nx_1 | counts_WT_Hx_1 | counts_HIF1a-KO_Hx_1 | counts_HIF2a-KO_Hx_1 |
+|:---|:---|:---|---:|---:|---:|---:|
+| TSPAN6 | NA | none | 1485.6 | 1473.7 | 1382.9 | 1313.8 |
+| TNMD | NA | NA | 0.0 | 0.0 | 0.0 | 0.0 |
+| DPM1 | NA | none | 1694.3 | 1577.5 | 1491.4 | 1361.1 |
+| SCYL3 | NA | none | 821.4 | 847.9 | 1064.3 | 692.4 |
+| C1orf112 | NA | none | 1454.2 | 715.2 | 727.6 | 874.8 |
 
 # Export
 
-```{r export}
+<details>
 
+<summary>
+
+Code
+</summary>
+
+``` r
 # Absolute paths via here(), so the exports always land in 6_XM_data_merge/ - knit
 # sets the wd to this Rmd's folder, but running the chunks from the console uses
 # the project root, which previously produced a second copy of both files there.
@@ -533,23 +707,11 @@ openxlsx::write.xlsx(master_table,
                      file.path(out_dir, "master_table.xlsx"), rowNames = FALSE)
 openxlsx::write.xlsx(master_counts_table,
                      file.path(out_dir, "master_counts_table.xlsx"), rowNames = FALSE)
-
 ```
 
-```{r export_links, results='asis', echo=FALSE}
+</details>
 
-exports <- list(
-  list(file = "master_table.xlsx",        obj = master_table,
-       note = "statistics only"),
-  list(file = "master_counts_table.xlsx", obj = master_counts_table,
-       note = "statistics + per-sample normalized counts")
-)
-
-for (e in exports) {
-  size_mb <- file.size(file.path(out_dir, e$file)) / 1024^2
-  cat(sprintf("- [%s](%s) - %s genes x %d columns, %.1f MB (%s)\n",
-              e$file, e$file, format(nrow(e$obj), big.mark = ","),
-              ncol(e$obj), size_mb, e$note))
-}
-
-```
+- [master_table.xlsx](master_table.xlsx) - 64,537 genes x 54 columns,
+  26.9 MB (statistics only)
+- [master_counts_table.xlsx](master_counts_table.xlsx) - 64,537 genes x
+  142 columns, 64.2 MB (statistics + per-sample normalized counts)
