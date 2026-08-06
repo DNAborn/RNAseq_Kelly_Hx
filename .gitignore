@@ -47,3 +47,9 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# macOS finder metadata
+.DS_Store
+
+# Excel lock files (created while a workbook is open)
+~$*.xlsx
