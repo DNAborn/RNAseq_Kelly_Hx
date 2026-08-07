@@ -25,6 +25,7 @@ library(tidyverse)
 library(knitr)
 library(ggplot2)
 library(ggrepel)
+library(patchwork)
 library(openxlsx)
 ```
 
@@ -299,41 +300,77 @@ pdat <- dplyr::bind_rows(
 pdat$cls   <- factor(pdat$cls, levels = names(COL))
 pdat$panel <- factor(pdat$panel, levels = c("HIF1A targets", "HIF2A targets"))
 
-lab <- pdat %>% dplyr::filter(kelly, log2HR > log2(1.5)) %>%
-  dplyr::group_by(panel) %>% dplyr::arrange(dplyr::desc(dep)) %>%
-  dplyr::slice_head(n = 8) %>% dplyr::ungroup()
+# Label the periphery: the extremes on either axis, whatever category they fall
+# into. Those are the genes the plot exists to surface.
+edge_labels <- function(d, n_dep = 14, n_hr = 10) {
+  d <- d[!is.na(d$symbol), ]
+  d[unique(c(head(order(-d$dep), n_dep),
+             head(order(-d$log2HR), n_hr),
+             head(order(d$log2HR), n_hr))), ]
+}
+lab <- dplyr::bind_rows(lapply(split(pdat, pdat$panel), edge_labels))
 
 # Size and alpha both carry expression; identical name/breaks/labels make ggplot
 # merge them into a single legend instead of showing the same variable twice.
 expr_breaks <- log10(c(10, 1000, 100000) + 1)
 expr_labels <- c("10", "1k", "100k")
+xr <- range(pdat$log2HR); yr <- range(pdat$dep)
 
-ggplot(pdat, aes(log2HR, dep)) +
-  geom_vline(xintercept = c(log2(1 / 1.5), log2(1.5)), colour = "grey85",
-             linetype = "dotted", linewidth = 0.35) +
-  geom_point(aes(colour = cls, size = expr, alpha = expr)) +
-  ggrepel::geom_text_repel(data = lab, aes(label = symbol), size = 2.5,
-                           colour = "grey15", box.padding = 0.45, max.overlaps = 40,
-                           segment.size = 0.2, segment.colour = "grey55",
-                           min.segment.length = 0) +
-  facet_wrap(~panel) +
-  scale_colour_manual(values = COL, name = NULL, guide = guide_legend(
-    order = 1, ncol = 2, override.aes = list(size = 3.2, alpha = 1))) +
-  scale_size_continuous(range = c(0.8, 5.5), name = "expression (baseMean)",
-    breaks = expr_breaks, labels = expr_labels,
-    guide = guide_legend(order = 2, override.aes = list(colour = "grey35"))) +
-  scale_alpha_continuous(range = c(0.35, 1), name = "expression (baseMean)",
-    breaks = expr_breaks, labels = expr_labels,
-    guide = guide_legend(order = 2, override.aes = list(colour = "grey35"))) +
-  labs(x = "clinical risk    log2(hazard ratio)    ← protective | adverse →",
-       y = sprintf("HIF dependence    −log2FC interaction (capped at %d)", y_cap)) +
-  theme_minimal(base_size = 9) +
-  theme(panel.grid.minor = element_blank(),
-        panel.grid.major = element_line(linewidth = 0.2, colour = "grey94"),
-        strip.text = element_text(face = "bold", size = 10),
-        legend.position = "bottom", legend.box = "horizontal",
-        legend.key.height = unit(0.75, "lines"),
-        legend.title = element_text(size = 8), legend.text = element_text(size = 7.5))
+# Each panel only contains three of the four classes, so its colour legend would
+# miss a key and the two legends would not be recognised as identical - patchwork
+# then stacks both instead of collecting them. This invisible layer carries all
+# four levels in every panel, making the legends match exactly.
+legend_dummy <- data.frame(log2HR = NA_real_, dep = NA_real_, expr = NA_real_,
+                           cls = factor(names(COL), levels = names(COL)))
+
+mk <- function(d, ptitle, show_y) {
+  ggplot(d, aes(log2HR, dep)) +
+    geom_vline(xintercept = c(log2(1 / 1.5), log2(1.5)), colour = "grey85",
+               linetype = "dotted", linewidth = 0.35) +
+    geom_point(aes(colour = cls, size = expr, alpha = expr),
+               show.legend = c(colour = FALSE, size = TRUE, alpha = TRUE)) +
+    geom_point(data = legend_dummy, aes(colour = cls), size = 3.2, alpha = 1,
+               na.rm = TRUE) +
+    ggrepel::geom_text_repel(data = dplyr::filter(lab, panel == d$panel[1]),
+                             aes(label = symbol), size = 3.2, fontface = "bold",
+                             colour = "grey10", box.padding = 0.6,
+                             point.padding = 0.2, max.overlaps = Inf,
+                             max.time = 2, max.iter = 20000, segment.size = 0.2,
+                             segment.colour = "grey55", min.segment.length = 0) +
+    # limits = names(COL) keeps the scale identical in both panels, which is what
+    # lets patchwork collect the two legends into one.
+    scale_colour_manual(values = COL, limits = names(COL), drop = FALSE, name = NULL,
+      guide = guide_legend(order = 1, ncol = 1,
+                           override.aes = list(size = 3.2, alpha = 1))) +
+    scale_size_continuous(range = c(0.8, 5.5), name = "expression (baseMean)",
+      breaks = expr_breaks, labels = expr_labels, limits = range(pdat$expr),
+      guide = guide_legend(order = 2, ncol = 1, override.aes = list(colour = "grey35"))) +
+    scale_alpha_continuous(range = c(0.35, 1), name = "expression (baseMean)",
+      breaks = expr_breaks, labels = expr_labels, limits = range(pdat$expr),
+      guide = guide_legend(order = 2, ncol = 1, override.aes = list(colour = "grey35"))) +
+    coord_cartesian(xlim = xr + c(-0.25, 0.25), ylim = yr + c(-0.15, 0.35)) +
+    labs(title = ptitle, x = "← protective | adverse →",
+         y = if (show_y) sprintf("HIF dependence    −log2FC interaction (capped at %d)",
+                                 y_cap) else NULL) +
+    theme_minimal(base_size = 9) +
+    theme(panel.grid.minor = element_blank(),
+          panel.grid.major = element_line(linewidth = 0.2, colour = "grey94"),
+          plot.title = element_text(face = "bold", size = 11, hjust = 0.5),
+          axis.title.x = element_text(size = 9, colour = "grey25"),
+          legend.key.height = unit(0.9, "lines"),
+          legend.title = element_text(size = 8), legend.text = element_text(size = 8))
+}
+
+p1 <- mk(dplyr::filter(pdat, panel == "HIF1A targets"), "HIF1A targets", TRUE)
+p2 <- mk(dplyr::filter(pdat, panel == "HIF2A targets"), "HIF2A targets", FALSE)
+
+(p1 + patchwork::guide_area() + p2 +
+   patchwork::plot_layout(guides = "collect", widths = c(1, 0.4, 1))) +
+  patchwork::plot_annotation(caption = "clinical risk    log2(hazard ratio)") &
+  theme(legend.box = "vertical", legend.direction = "vertical",
+        legend.justification = "center",
+        plot.caption = element_text(hjust = 0.5, size = 9.5, colour = "grey25",
+                                    margin = margin(t = 4)))
 ```
 
 </details>
