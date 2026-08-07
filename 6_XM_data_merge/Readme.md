@@ -677,6 +677,18 @@ no identifier to look literature up by, so they stay `NA` rather than
 being called unstudied. Only genes that were mapped and have no linked
 publication get a real `0`.
 
+**What the counts are not.** `gene2pubmed` holds *curated
+gene-to-publication links*, not mentions. NCBI creates those mainly for
+papers treating a gene as a molecular entity, which systematically
+undercounts genes whose literature is old, physiological or
+biochemical - `MB` scores 95 against 18,113 PubMed hits for “myoglobin”,
+`HBB` 876 against 286,325 for “hemoglobin”. The column therefore
+measures how intensively a gene is studied *as a gene*. That is usually
+the more useful reading (GAPDH scores 637 despite appearing in tens of
+thousands of papers as a loading control, none of which are about
+GAPDH), but absolute values are not comparable to a PubMed search, and a
+few hundred links already marks a heavily studied gene.
+
 <details>
 
 <summary>

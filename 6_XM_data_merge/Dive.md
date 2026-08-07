@@ -83,10 +83,38 @@ Most of the table is not expressed: 61% of all genes have a
 `baseMean_Kelly` of exactly zero. Expression is therefore the primary
 filter.
 
-A gene is kept anyway if it has at least 100 publications. That rescue
-is there so well-characterised genes stay visible as a reference even
-when they are silent in this cell line - TLR2, HFE, NOD2, POSTN and DCN
-are all annotated HIF targets that a pure expression cutoff would drop.
+A gene is kept anyway if it has at least 50 publications. That rescue is
+there so well-characterised genes stay visible as a reference even when
+they are silent in this cell line - TLR2, HFE, NOD2, POSTN and DCN are
+all annotated HIF targets that a pure expression cutoff would drop.
+
+**The threshold is deliberately low**, because `pubmed_total` counts
+*curated gene-to-publication links*, not mentions. NCBI creates those
+links mainly for papers treating a gene as a molecular entity, which
+systematically undercounts genes whose literature is old, physiological
+or biochemical:
+
+| Gene               | PubMed full-text search | `pubmed_total` |
+|--------------------|------------------------:|---------------:|
+| myoglobin / `MB`   |                  18,113 |             95 |
+| hemoglobin / `HBB` |                 286,325 |            876 |
+| insulin / `INS`    |                 522,216 |          1,034 |
+| `TP53`             |                      \- |         20,399 |
+
+So the column measures how intensively a gene is studied *as a gene*,
+not how famous it is. That is usually the more useful reading here -
+GAPDH scores 637 despite appearing in tens of thousands of papers as a
+loading control, and those papers are not about GAPDH - but classic
+literature is underrepresented, so 50 links already marks a well-studied
+gene.
+
+One consequence of Ensembl-to-Entrez being many-to-one: 1,691 symbols
+occupy more than one row (NLRP2 has four Ensembl loci sharing Entrez
+55655), and each row carries the same literature count. Rows are genes
+as annotated here, so a count of “genes above N publications”
+double-counts those. This comes from the annotation itself, not from the
+fallback mapping - the duplication rate is 12.5% for `annotation` and
+13.2% for `symbol_map`.
 
 Literature coverage is used **only** in that direction: it can keep a
 gene in, it never throws one out. A strongly expressed but unstudied
@@ -104,7 +132,7 @@ Code
 
 ``` r
 min_basemean <- 10
-min_pubmed   <- 100
+min_pubmed   <- 50
 
 expressed <- !is.na(master$baseMean_Kelly) & master$baseMean_Kelly >= min_basemean
 rescued   <- !expressed & !is.na(master$pubmed_total) & master$pubmed_total >= min_pubmed
@@ -130,11 +158,11 @@ tab(data.frame(
 
 **Reduction**
 
-| Step                             | Genes | Share |
-|:---------------------------------|------:|:------|
-| master_counts_table              | 64537 | 100%  |
-| baseMean_Kelly \>= 10            | 18471 | 29%   |
-| \+ rescued: pubmed_total \>= 100 | 20462 | 32%   |
+| Step                            | Genes | Share |
+|:--------------------------------|------:|:------|
+| master_counts_table             | 64537 | 100%  |
+| baseMean_Kelly \>= 10           | 18471 | 29%   |
+| \+ rescued: pubmed_total \>= 50 | 21573 | 33%   |
 
 The rescue adds 11% to the table. Worth knowing before using it: 617 of
 the rescued genes have a `baseMean` of exactly zero, so they enter as
@@ -143,13 +171,13 @@ well-known gene is not expressed in Kelly” - but they should be excluded
 from anything that consumes the count columns, which `dive_reason` makes
 easy.
 
-**Expression of the 1,991 literature-rescued genes**
+**Expression of the 3,102 literature-rescued genes**
 
 | baseMean  | Genes |
 |:----------|------:|
-| exactly 0 |   617 |
-| 0 - 1     |   907 |
-| 1 - 10    |   467 |
+| exactly 0 |   919 |
+| 0 - 1     |  1413 |
+| 1 - 10    |   770 |
 
 What survives, by annotation. The reduction removes three quarters of
 the rows but keeps the large majority of the annotated candidates, which
@@ -159,11 +187,11 @@ is the point:
 
 | Set                     | before | expressed | rescued | after | kept |
 |:------------------------|-------:|----------:|--------:|------:|:-----|
-| all genes               |  64537 |     18471 |    1991 | 20462 | 32%  |
-| HIF targets             |   1837 |      1311 |      52 |  1363 | 74%  |
-| Kelly-specific targets  |    922 |       685 |      32 |   717 | 78%  |
-| HR adverse              |   6081 |      4598 |      70 |  4668 | 77%  |
-| with hypoxia literature |   7945 |      5911 |    1170 |  7081 | 89%  |
+| all genes               |  64537 |     18471 |    3102 | 21573 | 33%  |
+| HIF targets             |   1837 |      1311 |      85 |  1396 | 76%  |
+| Kelly-specific targets  |    922 |       685 |      52 |   737 | 80%  |
+| HR adverse              |   6081 |      4598 |     134 |  4732 | 78%  |
+| with hypoxia literature |   7945 |      5911 |    1497 |  7408 | 93%  |
 
 The best-studied HIF targets that a pure expression cutoff would have
 dropped - all of them now retained by the rescue:
@@ -186,14 +214,14 @@ studied. These are the ones the filter is meant to catch.
 
 **Best-studied HIF targets still removed**
 
-| symbol | Target | baseMean | pubmed_total | pubmed_hypoxia |
-|:-------|:-------|---------:|-------------:|---------------:|
-| PRKG2  | Hif2a  |     9.33 |           97 |              0 |
-| MB     | Hif2a  |     9.41 |           95 |             16 |
-| NLRP2  | Hif1a  |     3.60 |           93 |              0 |
-| ADCY10 | Hif2a  |     5.63 |           89 |              0 |
-| FAM83A | Hif2a  |     1.74 |           89 |              2 |
-| RRAD   | Hif2a  |     8.65 |           88 |              3 |
+| symbol   | Target      | baseMean | pubmed_total | pubmed_hypoxia |
+|:---------|:------------|---------:|-------------:|---------------:|
+| EFHD1    | Hif1a_Hif2a |     3.58 |           49 |              1 |
+| SIGLEC10 | Hif2a       |     8.43 |           49 |              1 |
+| AKR1D1   | Hif2a       |     6.79 |           48 |              0 |
+| ITGBL1   | Hif2a       |     2.96 |           48 |              0 |
+| LAMC3    | Hif1a       |     8.71 |           47 |              1 |
+| ESAM     | Hif2a       |     4.32 |           46 |              0 |
 
 # Reduced table
 
@@ -226,5 +254,5 @@ openxlsx::write.xlsx(dive, out_file, rowNames = FALSE)
 
 </details>
 
-- [master_table_dive.xlsx](master_table_dive.xlsx) - 20,462 genes x 147
-  columns, 33.4 MB
+- [master_table_dive.xlsx](master_table_dive.xlsx) - 21,573 genes x 147
+  columns, 34.5 MB

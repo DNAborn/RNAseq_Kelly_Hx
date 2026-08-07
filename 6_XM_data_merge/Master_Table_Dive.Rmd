@@ -89,10 +89,35 @@ tab(data.frame(
 Most of the table is not expressed: 61% of all genes have a `baseMean_Kelly` of
 exactly zero. Expression is therefore the primary filter.
 
-A gene is kept anyway if it has at least 100 publications. That rescue is there
-so well-characterised genes stay visible as a reference even when they are silent
-in this cell line - TLR2, HFE, NOD2, POSTN and DCN are all annotated HIF targets
+A gene is kept anyway if it has at least 50 publications. That rescue is there so
+well-characterised genes stay visible as a reference even when they are silent in
+this cell line - TLR2, HFE, NOD2, POSTN and DCN are all annotated HIF targets
 that a pure expression cutoff would drop.
+
+**The threshold is deliberately low**, because `pubmed_total` counts *curated
+gene-to-publication links*, not mentions. NCBI creates those links mainly for
+papers treating a gene as a molecular entity, which systematically undercounts
+genes whose literature is old, physiological or biochemical:
+
+| Gene | PubMed full-text search | `pubmed_total` |
+|---|---:|---:|
+| myoglobin / `MB` | 18,113 | 95 |
+| hemoglobin / `HBB` | 286,325 | 876 |
+| insulin / `INS` | 522,216 | 1,034 |
+| `TP53` | - | 20,399 |
+
+So the column measures how intensively a gene is studied *as a gene*, not how
+famous it is. That is usually the more useful reading here - GAPDH scores 637
+despite appearing in tens of thousands of papers as a loading control, and those
+papers are not about GAPDH - but classic literature is underrepresented, so 50
+links already marks a well-studied gene.
+
+One consequence of Ensembl-to-Entrez being many-to-one: 1,691 symbols occupy more
+than one row (NLRP2 has four Ensembl loci sharing Entrez 55655), and each row
+carries the same literature count. Rows are genes as annotated here, so a count
+of "genes above N publications" double-counts those. This comes from the
+annotation itself, not from the fallback mapping - the duplication rate is 12.5%
+for `annotation` and 13.2% for `symbol_map`.
 
 Literature coverage is used **only** in that direction: it can keep a gene in, it
 never throws one out. A strongly expressed but unstudied gene is a candidate, not
@@ -104,7 +129,7 @@ aid.
 ```{r reduction}
 
 min_basemean <- 10
-min_pubmed   <- 100
+min_pubmed   <- 50
 
 expressed <- !is.na(master$baseMean_Kelly) & master$baseMean_Kelly >= min_basemean
 rescued   <- !expressed & !is.na(master$pubmed_total) & master$pubmed_total >= min_pubmed
