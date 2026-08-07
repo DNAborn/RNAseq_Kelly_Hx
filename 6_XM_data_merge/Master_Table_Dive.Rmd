@@ -1,0 +1,182 @@
+---
+title: "Master_Table_Dive"
+output:
+  github_document:
+    html_preview: false
+    toc: true
+    toc_depth: 2
+always_allow_html: true
+editor_options:
+  chunk_output_type: console
+knit: (function(input_file, encoding) {
+    rmarkdown::render(input_file,output_file= 'Dive.md')
+        })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = TRUE)
+
+# Fold every code block into a collapsible <details> element. GitHub renders this
+# natively, so the rendered document reads as a summary while the full code stays
+# one click away.
+knitr::knit_hooks$set(source = function(x, options) {
+  paste0("\n<details>\n<summary>Code</summary>\n\n``` r\n",
+         paste(x, collapse = "\n"), "\n```\n\n</details>\n")
+})
+
+# All summary output goes through kable, with the caption as a bold line *above*
+# the table - kable's own caption ends up below it, where it reads as a stray
+# sentence on GitHub.
+tab <- function(x, caption = NULL) {
+  md <- paste(knitr::kable(x), collapse = "\n")
+  if (!is.null(caption)) md <- paste0("**", caption, "**\n\n", md)
+  knitr::asis_output(paste0("\n", md, "\n"))
+}
+```
+
+Follow-up analysis on the annotated master table built in
+[Master_Table.Rmd](Master_Table.Rmd) (see [its rendered output](Readme.md) for how
+the annotation columns are defined). This document starts by reducing the table
+to the genes that are actually worth looking at. Code blocks are collapsed -
+click *Code* to expand.
+
+```{r load_packages}
+library(dplyr)
+library(tidyverse)
+library(knitr)
+library(ggplot2)
+library(openxlsx)
+
+```
+
+
+# Input
+
+`master_counts_table.xlsx` carries everything: the DESeq2 contrasts, the
+annotation columns, and the per-sample normalized counts. Reading 65 MB of Excel
+on every knit is slow, so it is cached as an RDS and only re-read when the xlsx
+is newer.
+
+```{r load_master}
+
+in_dir  <- here::here("6_XM_data_merge")
+xlsx_in <- file.path(in_dir, "master_counts_table.xlsx")
+rds_cache <- file.path(in_dir, "cache", "master_counts_table.rds")
+
+dir.create(dirname(rds_cache), showWarnings = FALSE, recursive = TRUE)
+if (file.exists(rds_cache) &&
+    file.mtime(rds_cache) > file.mtime(xlsx_in)) {
+  master <- readRDS(rds_cache)
+} else {
+  master <- as.data.frame(readxl::read_xlsx(xlsx_in))
+  saveRDS(master, rds_cache)
+}
+
+count_cols <- grep("^counts_", colnames(master), value = TRUE)
+
+tab(data.frame(
+  Item = c("genes", "columns", "of them per-sample counts", "annotation columns"),
+  n    = c(nrow(master), ncol(master), length(count_cols),
+           sum(colnames(master) %in% c("Target", "Hx_Baseline", "pubmed_total",
+                                       "pubmed_hypoxia", "pubmed_source", "HR_risk")))
+), "master_counts_table as loaded")
+
+```
+
+
+# Reduction
+
+Most of the table is not expressed: 61% of all genes have a `baseMean_Kelly` of
+exactly zero. Those rows carry no information about Kelly biology no matter how
+well studied the gene is, so expression is the only filter applied here.
+
+Literature coverage is deliberately **not** used as a cutoff. `pubmed_total` and
+`pubmed_hypoxia` stay in the table as a ranking aid - a strongly expressed but
+unstudied gene is a candidate, not noise, and filtering on publication counts
+would preferentially discard exactly those.
+
+```{r reduction}
+
+min_basemean <- 10
+
+expressed <- !is.na(master$baseMean_Kelly) & master$baseMean_Kelly >= min_basemean
+dive <- master[expressed, ]
+
+tab(data.frame(
+  Step = c("master_counts_table", sprintf("baseMean_Kelly >= %d", min_basemean)),
+  Genes = c(nrow(master), nrow(dive)),
+  Share = c("100%", sprintf("%.0f%%", 100 * nrow(dive) / nrow(master)))
+), "Reduction")
+
+```
+
+What survives, by annotation. The reduction removes three quarters of the rows
+but keeps the large majority of the annotated candidates, which is the point:
+
+```{r reduction_effect, echo=FALSE}
+
+keep_stats <- function(label, sel) {
+  data.frame(Set = label,
+             before = sum(sel),
+             after  = sum(sel & expressed),
+             kept   = sprintf("%.0f%%", 100 * sum(sel & expressed) / max(sum(sel), 1)))
+}
+
+tab(rbind(
+  keep_stats("all genes", rep(TRUE, nrow(master))),
+  keep_stats("HIF targets", !is.na(master$Target)),
+  keep_stats("Kelly-specific targets",
+             !is.na(master$Target) & master$Hx_Baseline == "none" &
+               !is.na(master$Hx_Baseline)),
+  keep_stats("HR adverse", master$HR_risk == "adverse" & !is.na(master$HR_risk)),
+  keep_stats("with hypoxia literature",
+             !is.na(master$pubmed_hypoxia) & master$pubmed_hypoxia > 0)
+), "Effect of the reduction per annotation set")
+
+```
+
+The genes dropped despite being annotated are the ones the filter is meant to
+catch - annotated but silent in this cell line:
+
+```{r dropped_examples, echo=FALSE}
+
+master[!expressed & !is.na(master$Target), ] %>%
+  dplyr::arrange(dplyr::desc(pubmed_total)) %>%
+  dplyr::mutate(baseMean = round(baseMean_Kelly, 2)) %>%
+  dplyr::select(symbol, Target, baseMean, pubmed_total, pubmed_hypoxia) %>%
+  head(8) %>%
+  tab("Best-studied HIF targets removed for lack of expression")
+
+```
+
+
+# Reduced table
+
+```{r dive_preview, echo=FALSE}
+
+dive %>%
+  dplyr::filter(!is.na(Target), Hx_Baseline == "none", !is.na(symbol)) %>%
+  dplyr::arrange(dplyr::desc(Kelly.Hx.vs.Nx.log2FoldChange)) %>%
+  dplyr::mutate(log2FC = round(Kelly.Hx.vs.Nx.log2FoldChange, 2),
+                baseMean = round(baseMean_Kelly, 0)) %>%
+  dplyr::select(symbol, Target, baseMean, log2FC, HR_risk,
+                pubmed_total, pubmed_hypoxia) %>%
+  head(10) %>%
+  tab("Top Kelly-specific targets in the reduced table")
+
+```
+
+```{r export}
+
+out_file <- here::here("6_XM_data_merge", "master_table_dive.xlsx")
+openxlsx::write.xlsx(dive, out_file, rowNames = FALSE)
+
+```
+
+```{r export_link, results='asis', echo=FALSE}
+
+cat(sprintf("- [master_table_dive.xlsx](master_table_dive.xlsx) - %s genes x %d columns, %.1f MB\n",
+            format(nrow(dive), big.mark = ","), ncol(dive),
+            file.size(out_file) / 1024^2))
+
+```
