@@ -87,26 +87,61 @@ tab(data.frame(
 # Reduction
 
 Most of the table is not expressed: 61% of all genes have a `baseMean_Kelly` of
-exactly zero. Those rows carry no information about Kelly biology no matter how
-well studied the gene is, so expression is the only filter applied here.
+exactly zero. Expression is therefore the primary filter.
 
-Literature coverage is deliberately **not** used as a cutoff. `pubmed_total` and
-`pubmed_hypoxia` stay in the table as a ranking aid - a strongly expressed but
-unstudied gene is a candidate, not noise, and filtering on publication counts
-would preferentially discard exactly those.
+A gene is kept anyway if it has at least 100 publications. That rescue is there
+so well-characterised genes stay visible as a reference even when they are silent
+in this cell line - TLR2, HFE, NOD2, POSTN and DCN are all annotated HIF targets
+that a pure expression cutoff would drop.
+
+Literature coverage is used **only** in that direction: it can keep a gene in, it
+never throws one out. A strongly expressed but unstudied gene is a candidate, not
+noise, and filtering on publication counts would preferentially discard exactly
+those - one Kelly-specific target sits at `baseMean` 7,235 with no annotation at
+all. `pubmed_total` and `pubmed_hypoxia` otherwise stay in the table as a ranking
+aid.
 
 ```{r reduction}
 
 min_basemean <- 10
+min_pubmed   <- 100
 
 expressed <- !is.na(master$baseMean_Kelly) & master$baseMean_Kelly >= min_basemean
-dive <- master[expressed, ]
+rescued   <- !expressed & !is.na(master$pubmed_total) & master$pubmed_total >= min_pubmed
+keep      <- expressed | rescued
+
+dive <- master[keep, ]
+
+# Why each gene is in, so the rescued ones can be excluded again downstream
+# without recomputing the rule.
+dive$dive_reason <- ifelse(expressed[keep], "expressed", "literature")
+dive <- dive %>% dplyr::relocate(dive_reason, .after = symbol)
 
 tab(data.frame(
-  Step = c("master_counts_table", sprintf("baseMean_Kelly >= %d", min_basemean)),
-  Genes = c(nrow(master), nrow(dive)),
-  Share = c("100%", sprintf("%.0f%%", 100 * nrow(dive) / nrow(master)))
+  Step = c("master_counts_table",
+           sprintf("baseMean_Kelly >= %d", min_basemean),
+           sprintf("+ rescued: pubmed_total >= %d", min_pubmed)),
+  Genes = c(nrow(master), sum(expressed), nrow(dive)),
+  Share = sprintf("%.0f%%", 100 * c(nrow(master), sum(expressed), nrow(dive)) / nrow(master))
 ), "Reduction")
+
+```
+
+The rescue adds 11% to the table. Worth knowing before using it: 617 of the
+rescued genes have a `baseMean` of exactly zero, so they enter as rows of pure
+zero counts. That is informative as a reference - "this well-known gene is not
+expressed in Kelly" - but they should be excluded from anything that consumes the
+count columns, which `dive_reason` makes easy.
+
+```{r rescue_detail, echo=FALSE}
+
+tab(data.frame(
+  baseMean = c("exactly 0", "0 - 1", "1 - 10"),
+  Genes = c(sum(rescued & master$baseMean_Kelly == 0),
+            sum(rescued & master$baseMean_Kelly > 0 & master$baseMean_Kelly < 1),
+            sum(rescued & master$baseMean_Kelly >= 1 & master$baseMean_Kelly < min_basemean))
+), sprintf("Expression of the %s literature-rescued genes",
+           format(sum(rescued), big.mark = ",")))
 
 ```
 
@@ -117,9 +152,11 @@ but keeps the large majority of the annotated candidates, which is the point:
 
 keep_stats <- function(label, sel) {
   data.frame(Set = label,
-             before = sum(sel),
-             after  = sum(sel & expressed),
-             kept   = sprintf("%.0f%%", 100 * sum(sel & expressed) / max(sum(sel), 1)))
+             before      = sum(sel),
+             expressed   = sum(sel & expressed),
+             rescued     = sum(sel & rescued),
+             after       = sum(sel & keep),
+             kept        = sprintf("%.0f%%", 100 * sum(sel & keep) / max(sum(sel), 1)))
 }
 
 tab(rbind(
@@ -135,17 +172,31 @@ tab(rbind(
 
 ```
 
-The genes dropped despite being annotated are the ones the filter is meant to
-catch - annotated but silent in this cell line:
+The best-studied HIF targets that a pure expression cutoff would have dropped -
+all of them now retained by the rescue:
 
-```{r dropped_examples, echo=FALSE}
+```{r rescued_examples, echo=FALSE}
 
-master[!expressed & !is.na(master$Target), ] %>%
+master[rescued & !is.na(master$Target), ] %>%
   dplyr::arrange(dplyr::desc(pubmed_total)) %>%
   dplyr::mutate(baseMean = round(baseMean_Kelly, 2)) %>%
   dplyr::select(symbol, Target, baseMean, pubmed_total, pubmed_hypoxia) %>%
   head(8) %>%
-  tab("Best-studied HIF targets removed for lack of expression")
+  tab("HIF targets kept by the literature rescue")
+
+```
+
+Still dropped: annotated targets that are both silent and barely studied. These
+are the ones the filter is meant to catch.
+
+```{r dropped_examples, echo=FALSE}
+
+master[!keep & !is.na(master$Target), ] %>%
+  dplyr::arrange(dplyr::desc(pubmed_total)) %>%
+  dplyr::mutate(baseMean = round(baseMean_Kelly, 2)) %>%
+  dplyr::select(symbol, Target, baseMean, pubmed_total, pubmed_hypoxia) %>%
+  head(6) %>%
+  tab("Best-studied HIF targets still removed")
 
 ```
 

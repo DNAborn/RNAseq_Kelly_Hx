@@ -80,15 +80,20 @@ tab(data.frame(
 # Reduction
 
 Most of the table is not expressed: 61% of all genes have a
-`baseMean_Kelly` of exactly zero. Those rows carry no information about
-Kelly biology no matter how well studied the gene is, so expression is
-the only filter applied here.
+`baseMean_Kelly` of exactly zero. Expression is therefore the primary
+filter.
 
-Literature coverage is deliberately **not** used as a cutoff.
-`pubmed_total` and `pubmed_hypoxia` stay in the table as a ranking aid -
-a strongly expressed but unstudied gene is a candidate, not noise, and
-filtering on publication counts would preferentially discard exactly
-those.
+A gene is kept anyway if it has at least 100 publications. That rescue
+is there so well-characterised genes stay visible as a reference even
+when they are silent in this cell line - TLR2, HFE, NOD2, POSTN and DCN
+are all annotated HIF targets that a pure expression cutoff would drop.
+
+Literature coverage is used **only** in that direction: it can keep a
+gene in, it never throws one out. A strongly expressed but unstudied
+gene is a candidate, not noise, and filtering on publication counts
+would preferentially discard exactly those - one Kelly-specific target
+sits at `baseMean` 7,235 with no annotation at all. `pubmed_total` and
+`pubmed_hypoxia` otherwise stay in the table as a ranking aid.
 
 <details>
 
@@ -99,14 +104,25 @@ Code
 
 ``` r
 min_basemean <- 10
+min_pubmed   <- 100
 
 expressed <- !is.na(master$baseMean_Kelly) & master$baseMean_Kelly >= min_basemean
-dive <- master[expressed, ]
+rescued   <- !expressed & !is.na(master$pubmed_total) & master$pubmed_total >= min_pubmed
+keep      <- expressed | rescued
+
+dive <- master[keep, ]
+
+# Why each gene is in, so the rescued ones can be excluded again downstream
+# without recomputing the rule.
+dive$dive_reason <- ifelse(expressed[keep], "expressed", "literature")
+dive <- dive %>% dplyr::relocate(dive_reason, .after = symbol)
 
 tab(data.frame(
-  Step = c("master_counts_table", sprintf("baseMean_Kelly >= %d", min_basemean)),
-  Genes = c(nrow(master), nrow(dive)),
-  Share = c("100%", sprintf("%.0f%%", 100 * nrow(dive) / nrow(master)))
+  Step = c("master_counts_table",
+           sprintf("baseMean_Kelly >= %d", min_basemean),
+           sprintf("+ rescued: pubmed_total >= %d", min_pubmed)),
+  Genes = c(nrow(master), sum(expressed), nrow(dive)),
+  Share = sprintf("%.0f%%", 100 * c(nrow(master), sum(expressed), nrow(dive)) / nrow(master))
 ), "Reduction")
 ```
 
@@ -114,10 +130,26 @@ tab(data.frame(
 
 **Reduction**
 
-| Step                  | Genes | Share |
-|:----------------------|------:|:------|
-| master_counts_table   | 64537 | 100%  |
-| baseMean_Kelly \>= 10 | 18471 | 29%   |
+| Step                             | Genes | Share |
+|:---------------------------------|------:|:------|
+| master_counts_table              | 64537 | 100%  |
+| baseMean_Kelly \>= 10            | 18471 | 29%   |
+| \+ rescued: pubmed_total \>= 100 | 20462 | 32%   |
+
+The rescue adds 11% to the table. Worth knowing before using it: 617 of
+the rescued genes have a `baseMean` of exactly zero, so they enter as
+rows of pure zero counts. That is informative as a reference - “this
+well-known gene is not expressed in Kelly” - but they should be excluded
+from anything that consumes the count columns, which `dive_reason` makes
+easy.
+
+**Expression of the 1,991 literature-rescued genes**
+
+| baseMean  | Genes |
+|:----------|------:|
+| exactly 0 |   617 |
+| 0 - 1     |   907 |
+| 1 - 10    |   467 |
 
 What survives, by annotation. The reduction removes three quarters of
 the rows but keeps the large majority of the annotated candidates, which
@@ -125,18 +157,18 @@ is the point:
 
 **Effect of the reduction per annotation set**
 
-| Set                     | before | after | kept |
-|:------------------------|-------:|------:|:-----|
-| all genes               |  64537 | 18471 | 29%  |
-| HIF targets             |   1837 |  1311 | 71%  |
-| Kelly-specific targets  |    922 |   685 | 74%  |
-| HR adverse              |   6081 |  4598 | 76%  |
-| with hypoxia literature |   7945 |  5911 | 74%  |
+| Set                     | before | expressed | rescued | after | kept |
+|:------------------------|-------:|----------:|--------:|------:|:-----|
+| all genes               |  64537 |     18471 |    1991 | 20462 | 32%  |
+| HIF targets             |   1837 |      1311 |      52 |  1363 | 74%  |
+| Kelly-specific targets  |    922 |       685 |      32 |   717 | 78%  |
+| HR adverse              |   6081 |      4598 |      70 |  4668 | 77%  |
+| with hypoxia literature |   7945 |      5911 |    1170 |  7081 | 89%  |
 
-The genes dropped despite being annotated are the ones the filter is
-meant to catch - annotated but silent in this cell line:
+The best-studied HIF targets that a pure expression cutoff would have
+dropped - all of them now retained by the rescue:
 
-**Best-studied HIF targets removed for lack of expression**
+**HIF targets kept by the literature rescue**
 
 | symbol | Target      | baseMean | pubmed_total | pubmed_hypoxia |
 |:-------|:------------|---------:|-------------:|---------------:|
@@ -148,6 +180,20 @@ meant to catch - annotated but silent in this cell line:
 | DCN    | Hif2a       |     5.09 |          948 |              6 |
 | ABCA4  | Hif1a_Hif2a |     6.61 |          754 |              1 |
 | UGT1A1 | Hif2a       |     1.08 |          753 |              0 |
+
+Still dropped: annotated targets that are both silent and barely
+studied. These are the ones the filter is meant to catch.
+
+**Best-studied HIF targets still removed**
+
+| symbol | Target | baseMean | pubmed_total | pubmed_hypoxia |
+|:-------|:-------|---------:|-------------:|---------------:|
+| PRKG2  | Hif2a  |     9.33 |           97 |              0 |
+| MB     | Hif2a  |     9.41 |           95 |             16 |
+| NLRP2  | Hif1a  |     3.60 |           93 |              0 |
+| ADCY10 | Hif2a  |     5.63 |           89 |              0 |
+| FAM83A | Hif2a  |     1.74 |           89 |              2 |
+| RRAD   | Hif2a  |     8.65 |           88 |              3 |
 
 # Reduced table
 
@@ -180,5 +226,5 @@ openxlsx::write.xlsx(dive, out_file, rowNames = FALSE)
 
 </details>
 
-- [master_table_dive.xlsx](master_table_dive.xlsx) - 18,471 genes x 146
-  columns, 31.5 MB
+- [master_table_dive.xlsx](master_table_dive.xlsx) - 20,462 genes x 147
+  columns, 33.4 MB
