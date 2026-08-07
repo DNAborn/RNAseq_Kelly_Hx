@@ -326,12 +326,12 @@ mk <- function(d, ptitle, show_y) {
   ggplot(d, aes(log2HR, dep)) +
     geom_vline(xintercept = c(-hr_line, hr_line), colour = "black",
                linetype = "dotted", linewidth = 0.6) +
-    annotate("text", x = -hr_line, y = ann_y, label = "← protective",
-             hjust = 1.08, size = 3.1, colour = "grey20") +
-    annotate("text", x = 0, y = ann_y, label = "0",
-             hjust = 0.5, size = 3.1, colour = "grey45") +
-    annotate("text", x = hr_line, y = ann_y, label = "adverse →",
-             hjust = -0.08, size = 3.1, colour = "grey20") +
+    # hjust 1 / 0 puts the "|" glyph itself exactly on the cutoff, so it reads as
+    # a continuation of the threshold line.
+    annotate("text", x = -hr_line, y = ann_y, label = "← protective |",
+             hjust = 1, size = 3.1, colour = "grey20") +
+    annotate("text", x = hr_line, y = ann_y, label = "| adverse →",
+             hjust = 0, size = 3.1, colour = "grey20") +
     geom_point(aes(colour = cls, size = expr, alpha = expr),
                show.legend = c(colour = FALSE, size = TRUE, alpha = TRUE)) +
     geom_point(data = legend_dummy, aes(colour = cls), size = 3.2, alpha = 1,
