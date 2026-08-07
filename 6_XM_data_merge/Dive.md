@@ -323,10 +323,21 @@ xr <- range(pdat$log2HR); yr <- range(pdat$dep)
 legend_dummy <- data.frame(log2HR = NA_real_, dep = NA_real_, expr = NA_real_,
                            cls = factor(names(COL), levels = names(COL)))
 
+# The protective / adverse wording is placed at the cutoff coordinates rather than
+# used as an axis title, so each word butts against its own threshold line.
+hr_line <- log2(1.5)
+ann_y   <- yr[1] - 1.2
+
 mk <- function(d, ptitle, show_y) {
   ggplot(d, aes(log2HR, dep)) +
-    geom_vline(xintercept = c(log2(1 / 1.5), log2(1.5)), colour = "grey85",
-               linetype = "dotted", linewidth = 0.35) +
+    geom_vline(xintercept = c(-hr_line, hr_line), colour = "black",
+               linetype = "dotted", linewidth = 0.6) +
+    annotate("text", x = -hr_line, y = ann_y, label = "← protective",
+             hjust = 1.08, size = 3.1, colour = "grey20") +
+    annotate("text", x = 0, y = ann_y, label = "0",
+             hjust = 0.5, size = 3.1, colour = "grey45") +
+    annotate("text", x = hr_line, y = ann_y, label = "adverse →",
+             hjust = -0.08, size = 3.1, colour = "grey20") +
     geom_point(aes(colour = cls, size = expr, alpha = expr),
                show.legend = c(colour = FALSE, size = TRUE, alpha = TRUE)) +
     geom_point(data = legend_dummy, aes(colour = cls), size = 3.2, alpha = 1,
@@ -348,15 +359,16 @@ mk <- function(d, ptitle, show_y) {
     scale_alpha_continuous(range = c(0.35, 1), name = "expression (baseMean)",
       breaks = expr_breaks, labels = expr_labels, limits = range(pdat$expr),
       guide = guide_legend(order = 2, ncol = 1, override.aes = list(colour = "grey35"))) +
-    coord_cartesian(xlim = xr + c(-0.25, 0.25), ylim = yr + c(-0.15, 0.35)) +
-    labs(title = ptitle, x = "← protective | adverse →",
+    coord_cartesian(xlim = xr + c(-0.25, 0.25), ylim = yr + c(-0.15, 0.35),
+                    clip = "off") +
+    labs(title = ptitle, x = NULL,
          y = if (show_y) sprintf("HIF dependence    −log2FC interaction (capped at %d)",
                                  y_cap) else NULL) +
     theme_minimal(base_size = 9) +
     theme(panel.grid.minor = element_blank(),
           panel.grid.major = element_line(linewidth = 0.2, colour = "grey94"),
           plot.title = element_text(face = "bold", size = 11, hjust = 0.5),
-          axis.title.x = element_text(size = 9, colour = "grey25"),
+          plot.margin = margin(t = 5, r = 8, b = 26, l = 5),
           legend.key.height = unit(0.9, "lines"),
           legend.title = element_text(size = 8), legend.text = element_text(size = 8))
 }
