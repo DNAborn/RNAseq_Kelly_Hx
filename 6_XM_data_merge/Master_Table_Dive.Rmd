@@ -254,28 +254,22 @@ One panel per HIF, showing every target of that HIF against two axes:
   dependent on this HIF*. Capped at 8; nine genes sit above it and are drawn at
   the cap.
 
-Four further variables ride along:
+Two further variables ride along:
 
 | Channel | Meaning |
 |---|---|
-| Hue | red / teal = Kelly-specific, grey = also hypoxic in the baseline lines, pale grey = no baseline data |
-| Saturation | expression (`baseMean_Kelly`) |
-| Size | publications (`pubmed_total`) |
-| Amber ring | at least 50 publications but **none** on hypoxia |
+| Hue | coral / cyan = Kelly-specific, grey = also hypoxic in the baseline lines, pale grey = no baseline data |
+| Size and saturation | expression (`baseMean_Kelly`) - one variable on two channels, so faint small dots are lowly expressed and large solid ones are not |
 
-The ring rule deserves a note. Simply marking "few hypoxia papers" would highlight
-60% of all targets and say nothing - most genes have no hypoxia literature because
-most genes are not well studied at all. Requiring 50 publications first makes the
-absence informative: a gene people have worked on, that nobody has looked at under
-hypoxia. That combination - a **large, ringed, coloured** point in the upper right
-- is the shortlist in visual form.
+Hues are the genotype colours used elsewhere in the project (`#F8766D` for HIF1A,
+`#00BFC4` for HIF2A). The grey had to be lightened to `#D0D0D0`: against a mid
+grey the cyan is indistinguishable for red-green colour deficiency (ΔE 2.3), and
+at this lightness both hues separate cleanly (ΔE 8.6 and 15.3).
 
 ```{r risk_vs_dependence, fig.width=11, fig.height=6.4, dpi=150}
 
-COL <- c("Kelly-specific (HIF1A)" = "#C0392B", "Kelly-specific (HIF2A)" = "#16A085",
-         "also Hx in SK-N-AS / SH-SY5Y" = "#B4B4B4", "no baseline data" = "#E4E4E4")
-COL_RING <- "#E8B006"
-ring_min_total <- 50
+COL <- c("Kelly-specific (HIF1A)" = "#F8766D", "Kelly-specific (HIF2A)" = "#00BFC4",
+         "also Hx in SK-N-AS / SH-SY5Y" = "#D0D0D0", "no baseline data" = "#ECECEC")
 y_cap <- 8
 
 prep <- function(grp, ycol, panel, tgt_lab) {
@@ -288,9 +282,6 @@ prep <- function(grp, ycol, panel, tgt_lab) {
                              Hx_Baseline == "none"  ~ tgt_lab,
                              TRUE ~ "also Hx in SK-N-AS / SH-SY5Y"),
       expr = log10(baseMean_Kelly + 1),
-      pm   = log10(pubmed_total + 1),
-      ring = !is.na(pubmed_hypoxia) & pubmed_hypoxia == 0 &
-             !is.na(pubmed_total) & pubmed_total >= ring_min_total,
       kelly = !is.na(Hx_Baseline) & Hx_Baseline == "none")
 }
 
@@ -302,17 +293,19 @@ pdat <- dplyr::bind_rows(
 pdat$cls   <- factor(pdat$cls, levels = names(COL))
 pdat$panel <- factor(pdat$panel, levels = c("HIF1A targets", "HIF2A targets"))
 
-lab <- pdat %>% dplyr::filter(kelly, ring, log2HR > log2(1.5)) %>%
+lab <- pdat %>% dplyr::filter(kelly, log2HR > log2(1.5)) %>%
   dplyr::group_by(panel) %>% dplyr::arrange(dplyr::desc(dep)) %>%
-  dplyr::slice_head(n = 7) %>% dplyr::ungroup()
+  dplyr::slice_head(n = 8) %>% dplyr::ungroup()
+
+# Size and alpha both carry expression; identical name/breaks/labels make ggplot
+# merge them into a single legend instead of showing the same variable twice.
+expr_breaks <- log10(c(10, 1000, 100000) + 1)
+expr_labels <- c("10", "1k", "100k")
 
 ggplot(pdat, aes(log2HR, dep)) +
   geom_vline(xintercept = c(log2(1 / 1.5), log2(1.5)), colour = "grey85",
              linetype = "dotted", linewidth = 0.35) +
-  geom_point(aes(colour = cls, size = pm, alpha = expr)) +
-  geom_point(data = dplyr::filter(pdat, ring),
-             aes(size = pm, shape = "no hypoxia literature\n(>=50 papers, 0 on hypoxia)"),
-             fill = NA, colour = COL_RING, stroke = 0.65) +
+  geom_point(aes(colour = cls, size = expr, alpha = expr)) +
   ggrepel::geom_text_repel(data = lab, aes(label = symbol), size = 2.5,
                            colour = "grey15", box.padding = 0.45, max.overlaps = 40,
                            segment.size = 0.2, segment.colour = "grey55",
@@ -320,14 +313,12 @@ ggplot(pdat, aes(log2HR, dep)) +
   facet_wrap(~panel) +
   scale_colour_manual(values = COL, name = NULL, guide = guide_legend(
     order = 1, ncol = 2, override.aes = list(size = 3.2, alpha = 1))) +
-  scale_size_continuous(range = c(1, 4.6), name = "publications",
-    breaks = log10(c(10, 100, 1000) + 1), labels = c("10", "100", "1000"),
-    guide = guide_legend(order = 2, override.aes = list(colour = "grey45", alpha = 1))) +
+  scale_size_continuous(range = c(0.8, 5.5), name = "expression (baseMean)",
+    breaks = expr_breaks, labels = expr_labels,
+    guide = guide_legend(order = 2, override.aes = list(colour = "grey35"))) +
   scale_alpha_continuous(range = c(0.35, 1), name = "expression (baseMean)",
-    breaks = log10(c(10, 1000, 100000) + 1), labels = c("10", "1k", "100k"),
-    guide = guide_legend(order = 3, override.aes = list(size = 3.2, colour = "grey25"))) +
-  scale_shape_manual(values = 21, name = NULL, guide = guide_legend(
-    order = 4, override.aes = list(size = 3.4, colour = COL_RING, stroke = 0.9))) +
+    breaks = expr_breaks, labels = expr_labels,
+    guide = guide_legend(order = 2, override.aes = list(colour = "grey35"))) +
   labs(x = "clinical risk    log2(hazard ratio)    ← protective | adverse →",
        y = sprintf("HIF dependence    −log2FC interaction (capped at %d)", y_cap)) +
   theme_minimal(base_size = 9) +
@@ -347,8 +338,7 @@ tab(data.frame(
   Panel = c("HIF1A targets", "HIF2A targets"),
   in_dive = c(n_tot(c("Hif1a", "Hif1a_Hif2a")), n_tot(c("Hif2a", "Hif1a_Hif2a"))),
   plotted = as.integer(table(pdat$panel)),
-  Kelly_specific = as.integer(tapply(pdat$kelly, pdat$panel, sum)),
-  ringed = as.integer(tapply(pdat$ring, pdat$panel, sum))
+  Kelly_specific = as.integer(tapply(pdat$kelly, pdat$panel, sum))
 ), "Genes per panel - the difference to `in_dive` are genes without a usable hazard ratio")
 
 ```
