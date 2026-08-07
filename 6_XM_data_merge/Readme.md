@@ -17,6 +17,10 @@ Master_Table
 - [Literature coverage](#literature-coverage)
   - [Candidates: strong, Kelly-specific, undescribed in
     hypoxia](#candidates-strong-kelly-specific-undescribed-in-hypoxia)
+- [Clinical risk (HR)](#clinical-risk-hr)
+  - [Risk within the HIF targets](#risk-within-the-hif-targets)
+  - [Shortlist: Kelly-specific, adverse prognosis, undescribed in
+    hypoxia](#shortlist-kelly-specific-adverse-prognosis-undescribed-in-hypoxia)
 - [Master counts table](#master-counts-table)
 - [Export](#export)
 
@@ -396,12 +400,15 @@ Code
 </summary>
 
 ``` r
+# p-values are rendered as text: kable applies one numeric format across a whole
+# column, which turns anything below ~1e-4 into a misleading "0.0000".
 master_table %>%
   dplyr::select(Ensembl, symbol, baseMean_Kelly,
                 Kelly.Hx.vs.Nx.log2FoldChange, Kelly.Hx.vs.Nx.padj,
                 log2FC_SKNAS, log2FC_SHSY5Y) %>%
   head(5) %>%
-  dplyr::mutate(dplyr::across(where(is.numeric), ~signif(.x, 3))) %>%
+  dplyr::mutate(Kelly.Hx.vs.Nx.padj = sprintf("%.1e", Kelly.Hx.vs.Nx.padj),
+                dplyr::across(where(is.numeric), ~signif(.x, 3))) %>%
   tab(sprintf("master_table preview - first 5 of %s genes, 7 of %d columns",
               format(nrow(master_table), big.mark = ","), ncol(master_table)))
 ```
@@ -411,12 +418,12 @@ master_table %>%
 **master_table preview - first 5 of 64,537 genes, 7 of 52 columns**
 
 | Ensembl | symbol | baseMean_Kelly | Kelly.Hx.vs.Nx.log2FoldChange | Kelly.Hx.vs.Nx.padj | log2FC_SKNAS | log2FC_SHSY5Y |
-|:---|:---|---:|---:|---:|---:|---:|
-| ENSG00000000003 | TSPAN6 | 1.21e+03 | 0.111 | 0.7820 | 0.0795 | 0.0862 |
-| ENSG00000000005 | TNMD | 2.01e-02 | 0.227 | 0.9930 | 0.9080 | NA |
-| ENSG00000000419 | DPM1 | 1.48e+03 | -0.271 | 0.0128 | -0.1050 | -0.1570 |
-| ENSG00000000457 | SCYL3 | 7.48e+02 | 0.390 | 0.0000 | 0.1250 | 0.0748 |
-| ENSG00000000460 | C1orf112 | 1.15e+03 | -0.989 | 0.0000 | -0.8430 | -0.6820 |
+|:---|:---|---:|---:|:---|---:|---:|
+| ENSG00000000003 | TSPAN6 | 1.21e+03 | 0.111 | 7.8e-01 | 0.0795 | 0.0862 |
+| ENSG00000000005 | TNMD | 2.01e-02 | 0.227 | 9.9e-01 | 0.9080 | NA |
+| ENSG00000000419 | DPM1 | 1.48e+03 | -0.271 | 1.3e-02 | -0.1050 | -0.1570 |
+| ENSG00000000457 | SCYL3 | 7.48e+02 | 0.390 | 8.2e-18 | 0.1250 | 0.0748 |
+| ENSG00000000460 | C1orf112 | 1.15e+03 | -0.989 | 2.5e-29 | -0.8430 | -0.6820 |
 
 # Target classification (Kelly only)
 
@@ -913,6 +920,121 @@ literature at all.
 | AKR1D1 | Hif2a  |           48 |              0 |   6.27 |
 | HERC6  | Hif2a  |           29 |              0 |   6.17 |
 
+# Clinical risk (HR)
+
+`HR` is the hazard ratio from the high-risk neuroblastoma microarray
+cohort: above 1 means high expression goes with worse outcome, below 1
+with better. The cutoff is the one already used in
+`4_manuscript/Figures.Rmd` - `HR > 1.5` or `HR < 0.67` at
+`p_value_HR < 0.05`. The two bounds are reciprocals, so the threshold is
+symmetric on the log scale, which is also the common convention for
+dichotomising hazard ratios.
+
+| Value        | Meaning                                                   |
+|--------------|-----------------------------------------------------------|
+| `adverse`    | HR \> 1.5, p \< 0.05 - high expression, worse prognosis   |
+| `protective` | HR \< 0.67, p \< 0.05 - high expression, better prognosis |
+| `ns`         | tested, but below the effect or significance threshold    |
+| `NA`         | gene not present in the microarray cohort                 |
+
+Two properties of this data are worth knowing before leaning on the
+column. **The p-value does little of the filtering**: 58% of the tested
+genes fall below 0.05 and a BH correction only drops that from 14,759 to
+13,699 genes, so the selection is driven almost entirely by the HR
+magnitude. **The degenerate Cox fits are harmless**: a handful of genes
+carry absurd ratios (TRPV5 at 1.1e29), but those come with p close to 1
+and are removed by the significance filter - 99.6% of all HR values sit
+inside \[0.1, 10\] anyway.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+hr_cut <- 1.5
+hr_p   <- 0.05
+
+master_table$HR_risk <- dplyr::case_when(
+  is.na(master_table$HR) | is.na(master_table$p_value_HR) ~ NA_character_,
+  master_table$p_value_HR < hr_p & master_table$HR > hr_cut     ~ "adverse",
+  master_table$p_value_HR < hr_p & master_table$HR < 1 / hr_cut ~ "protective",
+  TRUE                                                          ~ "ns"
+)
+
+master_table <- master_table %>% dplyr::relocate(HR_risk, .after = pubmed_source)
+
+hr_f <- factor(ifelse(is.na(master_table$HR_risk), "no data", master_table$HR_risk),
+               levels = c("adverse", "protective", "ns", "no data"))
+
+tab(as.data.frame(table(HR_risk = hr_f)),
+    sprintf("Clinical risk classification (HR > %.2f or < %.2f at p < %.2f)",
+            hr_cut, 1 / hr_cut, hr_p))
+```
+
+</details>
+
+**Clinical risk classification (HR \> 1.50 or \< 0.67 at p \< 0.05)**
+
+| HR_risk    |  Freq |
+|:-----------|------:|
+| adverse    |  6081 |
+| protective |  4619 |
+| ns         | 14698 |
+| no data    | 39139 |
+
+## Risk within the HIF targets
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+tab(as.data.frame.matrix(table(Target = target_f, HR = hr_f)),
+    "Target x HR_risk")
+```
+
+</details>
+
+**Target x HR_risk**
+
+|             | adverse | protective |    ns | no data |
+|:------------|--------:|-----------:|------:|--------:|
+| Hif1a       |      29 |         36 |   173 |      84 |
+| Hif2a       |     107 |        168 |   653 |     544 |
+| Hif1a_Hif2a |       3 |          2 |    24 |      14 |
+| no target   |    5942 |       4413 | 13848 |   38497 |
+
+## Shortlist: Kelly-specific, adverse prognosis, undescribed in hypoxia
+
+The three annotations combined - a target that responds only in Kelly,
+predicts worse outcome in patients, and has no hypoxia literature yet.
+
+**Kelly-specific, adverse prognosis, no hypoxia literature**
+
+| symbol    | Target | log2FC |   HR | p_HR    | pubmed_total |
+|:----------|:-------|-------:|-----:|:--------|-------------:|
+| FOXC2     | Hif2a  |   7.29 | 1.91 | 1.7e-03 |          170 |
+| PRR15     | Hif2a  |   5.22 | 1.80 | 5.7e-04 |           16 |
+| HELZ2     | Hif2a  |   3.96 | 1.79 | 9.6e-03 |           55 |
+| OMP       | Hif2a  |   3.82 | 2.48 | 1.9e-06 |           51 |
+| STX5-DT   | Hif2a  |   3.39 | 1.58 | 2.4e-07 |            0 |
+| H2BC7     | Hif2a  |   2.74 | 2.63 | 2.8e-11 |           32 |
+| SPRY3     | Hif2a  |   2.58 | 2.63 | 6.1e-10 |           33 |
+| H4C4      | Hif2a  |   2.57 | 1.63 | 2.5e-07 |          150 |
+| RNF150    | Hif2a  |   2.36 | 3.06 | 8.4e-19 |           24 |
+| LINC01607 | Hif2a  |   2.34 | 1.67 | 1.4e-04 |            0 |
+| SFR1      | Hif2a  |   2.33 | 2.43 | 1.5e-07 |           22 |
+| CFAP70    | Hif2a  |   2.30 | 3.74 | 8.5e-10 |           16 |
+| APOBEC3D  | Hif2a  |   2.25 | 1.66 | 3.3e-03 |           63 |
+| ALDH3B1   | Hif2a  |   2.24 | 2.34 | 1.1e-05 |           41 |
+| LINC01410 | Hif2a  |   2.21 | 2.91 | 3.8e-05 |           12 |
+
 # Master counts table
 
 The same table plus the per-sample normalized counts of the Kelly
@@ -957,7 +1079,7 @@ master_counts_table %>%
 
 </details>
 
-**master_counts_table preview - 145 columns total, 88 of them counts**
+**master_counts_table preview - 146 columns total, 88 of them counts**
 
 | symbol | Target | Hx_Baseline | counts_WT_Nx_1 | counts_WT_Hx_1 | counts_HIF1a-KO_Hx_1 | counts_HIF2a-KO_Hx_1 |
 |:---|:---|:---|---:|---:|---:|---:|
@@ -990,7 +1112,7 @@ openxlsx::write.xlsx(master_counts_table,
 
 </details>
 
-- [master_table.xlsx](master_table.xlsx) - 64,537 genes x 57 columns,
-  27.7 MB (statistics only)
+- [master_table.xlsx](master_table.xlsx) - 64,537 genes x 58 columns,
+  28.0 MB (statistics only)
 - [master_counts_table.xlsx](master_counts_table.xlsx) - 64,537 genes x
-  145 columns, 65.1 MB (statistics + per-sample normalized counts)
+  146 columns, 65.3 MB (statistics + per-sample normalized counts)

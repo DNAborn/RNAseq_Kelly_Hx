@@ -306,12 +306,15 @@ tab(rbind(coverage("SKNAS"), coverage("SHSY5Y")),
 
 ```{r master_table_preview}
 
+# p-values are rendered as text: kable applies one numeric format across a whole
+# column, which turns anything below ~1e-4 into a misleading "0.0000".
 master_table %>%
   dplyr::select(Ensembl, symbol, baseMean_Kelly,
                 Kelly.Hx.vs.Nx.log2FoldChange, Kelly.Hx.vs.Nx.padj,
                 log2FC_SKNAS, log2FC_SHSY5Y) %>%
   head(5) %>%
-  dplyr::mutate(dplyr::across(where(is.numeric), ~signif(.x, 3))) %>%
+  dplyr::mutate(Kelly.Hx.vs.Nx.padj = sprintf("%.1e", Kelly.Hx.vs.Nx.padj),
+                dplyr::across(where(is.numeric), ~signif(.x, 3))) %>%
   tab(sprintf("master_table preview - first 5 of %s genes, 7 of %d columns",
               format(nrow(master_table), big.mark = ","), ncol(master_table)))
 
@@ -720,6 +723,83 @@ master_table %>%
   dplyr::select(symbol, Target, pubmed_total, pubmed_hypoxia, log2FC) %>%
   head(12) %>%
   tab("Strongly induced Kelly-specific targets with no hypoxia literature")
+
+```
+
+
+# Clinical risk (HR)
+
+`HR` is the hazard ratio from the high-risk neuroblastoma microarray cohort:
+above 1 means high expression goes with worse outcome, below 1 with better.
+The cutoff is the one already used in `4_manuscript/Figures.Rmd` - `HR > 1.5` or
+`HR < 0.67` at `p_value_HR < 0.05`. The two bounds are reciprocals, so the
+threshold is symmetric on the log scale, which is also the common convention for
+dichotomising hazard ratios.
+
+| Value | Meaning |
+|---|---|
+| `adverse` | HR > 1.5, p < 0.05 - high expression, worse prognosis |
+| `protective` | HR < 0.67, p < 0.05 - high expression, better prognosis |
+| `ns` | tested, but below the effect or significance threshold |
+| `NA` | gene not present in the microarray cohort |
+
+Two properties of this data are worth knowing before leaning on the column.
+**The p-value does little of the filtering**: 58% of the tested genes fall below
+0.05 and a BH correction only drops that from 14,759 to 13,699 genes, so the
+selection is driven almost entirely by the HR magnitude. **The degenerate Cox
+fits are harmless**: a handful of genes carry absurd ratios (TRPV5 at 1.1e29),
+but those come with p close to 1 and are removed by the significance filter -
+99.6% of all HR values sit inside [0.1, 10] anyway.
+
+```{r hr_column}
+
+hr_cut <- 1.5
+hr_p   <- 0.05
+
+master_table$HR_risk <- dplyr::case_when(
+  is.na(master_table$HR) | is.na(master_table$p_value_HR) ~ NA_character_,
+  master_table$p_value_HR < hr_p & master_table$HR > hr_cut     ~ "adverse",
+  master_table$p_value_HR < hr_p & master_table$HR < 1 / hr_cut ~ "protective",
+  TRUE                                                          ~ "ns"
+)
+
+master_table <- master_table %>% dplyr::relocate(HR_risk, .after = pubmed_source)
+
+hr_f <- factor(ifelse(is.na(master_table$HR_risk), "no data", master_table$HR_risk),
+               levels = c("adverse", "protective", "ns", "no data"))
+
+tab(as.data.frame(table(HR_risk = hr_f)),
+    sprintf("Clinical risk classification (HR > %.2f or < %.2f at p < %.2f)",
+            hr_cut, 1 / hr_cut, hr_p))
+
+```
+
+## Risk within the HIF targets
+
+```{r hr_targets}
+
+tab(as.data.frame.matrix(table(Target = target_f, HR = hr_f)),
+    "Target x HR_risk")
+
+```
+
+## Shortlist: Kelly-specific, adverse prognosis, undescribed in hypoxia
+
+The three annotations combined - a target that responds only in Kelly, predicts
+worse outcome in patients, and has no hypoxia literature yet.
+
+```{r hr_shortlist, echo=FALSE}
+
+master_table %>%
+  dplyr::filter(!is.na(Target), Hx_Baseline == "none", HR_risk == "adverse",
+                !is.na(symbol), pubmed_hypoxia == 0) %>%
+  dplyr::arrange(dplyr::desc(Kelly.Hx.vs.Nx.log2FoldChange)) %>%
+  dplyr::mutate(log2FC = round(Kelly.Hx.vs.Nx.log2FoldChange, 2),
+                HR = round(HR, 2),
+                p_HR = sprintf("%.1e", p_value_HR)) %>%
+  dplyr::select(symbol, Target, log2FC, HR, p_HR, pubmed_total) %>%
+  head(15) %>%
+  tab("Kelly-specific, adverse prognosis, no hypoxia literature")
 
 ```
 
