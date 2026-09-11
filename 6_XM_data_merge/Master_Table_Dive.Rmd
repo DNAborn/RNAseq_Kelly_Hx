@@ -432,14 +432,15 @@ relabel <- c(NDUFA4L2 = "COXFA4L2", ODF3L2 = "CIMAP1B")
 hr_top <- dplyr::bind_rows(
     tibble(symbol = top_hif1a, group = "HIF1A targets"),
     tibble(symbol = top_hif2a, group = "HIF2A targets")) %>%
-  dplyr::left_join(master_table %>% dplyr::select(symbol, HR, p_value_HR),
+  dplyr::left_join(master %>% dplyr::select(symbol, HR, p_value_HR),
                    by = "symbol") %>%
   dplyr::mutate(
     label = ifelse(symbol %in% names(relabel), relabel[symbol], symbol),
     group = factor(group, levels = c("HIF1A targets", "HIF2A targets")),
     sig   = !is.na(p_value_HR) & p_value_HR < 0.05) %>%
   dplyr::group_by(group) %>%
-  dplyr::mutate(label = factor(label, levels = rev(label))) %>%
+  # Highest HR at the top of each panel; genes without survival data at the bottom.
+  dplyr::mutate(label = factor(label, levels = label[order(HR, na.last = FALSE)])) %>%
   dplyr::ungroup()
 
 hr_cols <- c("HIF1A targets" = "#F8766D", "HIF2A targets" = "#00BFC4")
@@ -469,5 +470,197 @@ ggplot(hr_top, aes(y = label, x = HR, colour = group)) +
         strip.text = element_text(face = "bold"))
 
 ```
+
+
+# Hypoxia-induced genes: protective or adverse?
+
+The question, built up in three stages: (1) do the genes that go up under
+hypoxia predict better or worse outcome, (2) does the answer differ between
+HIF1A and HIF2A targets, and (3) does it depend on the MYCN context - Kelly is
+MYCN-amplified, SK-N-AS and SH-SY5Y are not.
+
+Two things to keep in mind when reading the numbers. Only 25,398 of the 64,537
+rows have survival data at all (the hazard ratios come from the high-risk
+microarray cohort), so every set shrinks once it is intersected with the HR
+data. And that background is not 50/50: 23.9% of all genes with survival data
+are `adverse` and 18.2% `protective`, so a raw majority is not yet a signal -
+each set is therefore also tested *against* that background (Fisher test on
+adverse vs protective counts; `OR_adv` > 1 means enriched for adverse).
+
+Sets are defined on the full master table, not the reduced dive table, because
+genes induced only in the baseline lines may fail the Kelly expression filter.
+
+```{r hr_polarity_setup}
+
+up_kelly <- !is.na(master$Kelly.Hx.vs.Nx.padj) & master$Kelly.Hx.vs.Nx.padj < 0.05 &
+            master$Kelly.Hx.vs.Nx.log2FoldChange > 1
+dn_kelly <- !is.na(master$Kelly.Hx.vs.Nx.padj) & master$Kelly.Hx.vs.Nx.padj < 0.05 &
+            master$Kelly.Hx.vs.Nx.log2FoldChange < -1
+up_base  <- (!is.na(master$padj_SKNAS)  & master$padj_SKNAS  < 0.05 & master$log2FC_SKNAS  > 1) |
+            (!is.na(master$padj_SHSY5Y) & master$padj_SHSY5Y < 0.05 & master$log2FC_SHSY5Y > 1)
+
+has_hr  <- !is.na(master$HR)
+bg_adv  <- sum(master$HR_risk == "adverse", na.rm = TRUE)
+bg_prot <- sum(master$HR_risk == "protective", na.rm = TRUE)
+
+# One row of statistics per gene set: the within-set majority (binomial test,
+# adverse vs protective), the enrichment against the background (Fisher), and
+# the continuous shift of the HR distribution (Wilcoxon on log2 HR).
+hr_stats <- function(label, stage, sel) {
+  s    <- sel & has_hr
+  adv  <- sum(master$HR_risk[s] == "adverse")
+  prot <- sum(master$HR_risk[s] == "protective")
+  fis  <- fisher.test(matrix(c(adv, prot, bg_adv - adv, bg_prot - prot), 2))
+  wc   <- wilcox.test(log2(master$HR[s]), log2(master$HR[has_hr & !sel]))
+  data.frame(Set = label, stage = stage,
+             n = sum(sel), HR_data = sum(s),
+             protective = prot, ns = sum(master$HR_risk[s] == "ns"), adverse = adv,
+             pct_prot = 100 * prot / sum(s), pct_adv = 100 * adv / sum(s),
+             median_HR = median(master$HR[s]),
+             p_majority = binom.test(adv, adv + prot)$p.value,
+             OR_adv = unname(fis$estimate), p_vs_bg = fis$p.value,
+             p_shift = wc$p.value)
+}
+
+hr_res <- dplyr::bind_rows(
+  hr_stats("Hx up in Kelly",         "Hx in Kelly",  up_kelly),
+  hr_stats("Hx down in Kelly",       "Hx in Kelly",  dn_kelly),
+  hr_stats("HIF1A targets",          "HIF targets",  master$Target %in% "Hif1a"),
+  hr_stats("HIF2A targets",          "HIF targets",  master$Target %in% "Hif2a"),
+  hr_stats("HIF1A+HIF2A targets",    "HIF targets",  master$Target %in% "Hif1a_Hif2a"),
+  hr_stats("Kelly-specific up",      "MYCN context", up_kelly & !is.na(master$Hx_Baseline) &
+                                                       master$Hx_Baseline == "none"),
+  hr_stats("up in Kelly + baseline", "MYCN context", up_kelly & !is.na(master$Hx_Baseline) &
+                                                       master$Hx_Baseline != "none"),
+  hr_stats("baseline-only up",       "MYCN context", up_base & !up_kelly))
+
+hr_tab <- function(stage) {
+  hr_res %>%
+    dplyr::filter(stage == !!stage) %>%
+    dplyr::mutate(dplyr::across(c(pct_prot, pct_adv), ~sprintf("%.1f%%", .x)),
+                  median_HR = round(median_HR, 2), OR_adv = round(OR_adv, 2),
+                  dplyr::across(c(p_majority, p_vs_bg, p_shift), ~sprintf("%.1e", .x))) %>%
+    dplyr::select(-stage)
+}
+
+```
+
+## Stage 1: what hypoxia regulates in Kelly
+
+Of the `r format(sum(up_kelly), big.mark = ",")` hypoxia-induced genes,
+`r format(hr_res$HR_data[1], big.mark = ",")` have survival data - and among
+those, **protective clearly outnumbers adverse** (651 vs 436, binomial
+p = 9e-11). Against the adverse-leaning background the depletion is even
+stronger (OR 0.47). The mirror image is the more striking result: the genes
+hypoxia *represses* are heavily adverse (42% adverse vs 14% protective,
+OR 2.5, median HR 1.27). In this cohort the adverse part of the hypoxia
+response is what gets switched *off*, not on.
+
+```{r hr_polarity_stage1, echo=FALSE}
+
+tab(hr_tab("Hx in Kelly"), "Hx-regulated genes (Kelly WT, |log2FC| > 1, padj < 0.05) vs survival")
+
+```
+
+## Stage 2: HIF1A vs HIF2A targets
+
+The thesis that HIF1A targets are adverse and HIF2A targets protective is, in
+this form, **not supported**: both target sets lean protective, and HIF1A
+targets are *not* adverse-enriched (12% adverse vs 15% protective). The direct
+comparison of the two ratios is far from significant (Fisher p = 0.40). Only
+the continuous view leaves a hint in the expected direction: the HR
+distribution of HIF2A targets sits slightly lower (median 0.94 vs 1.00,
+Wilcoxon p = 0.013) - a weak protective shift for HIF2A rather than an adverse
+shift for HIF1A. The combined HIF1A+HIF2A set is too small to say anything
+(5 classified genes).
+
+```{r hr_polarity_stage2, echo=FALSE}
+
+tab(hr_tab("HIF targets"), "HIF target sets (Target column) vs survival")
+
+h1 <- master$Target %in% "Hif1a" & has_hr
+h2 <- master$Target %in% "Hif2a" & has_hr
+f12 <- fisher.test(matrix(c(sum(master$HR_risk[h1] == "adverse"),
+                            sum(master$HR_risk[h1] == "protective"),
+                            sum(master$HR_risk[h2] == "adverse"),
+                            sum(master$HR_risk[h2] == "protective")), 2))
+w12 <- wilcox.test(log2(master$HR[h1]), log2(master$HR[h2]))
+
+tab(data.frame(
+  Test = c("adverse:protective ratio, HIF1A vs HIF2A (Fisher)",
+           "log2 HR distribution, HIF1A vs HIF2A (Wilcoxon)"),
+  p = sprintf("%.2g", c(f12$p.value, w12$p.value))
+), "Direct HIF1A vs HIF2A comparison")
+
+```
+
+## Stage 3: the MYCN context
+
+Splitting the hypoxia-induced genes by where they respond: `Hx_Baseline`
+separates the Kelly-specific ones (`none`) from those also induced in SK-N-AS /
+SH-SY5Y; the third set are genes induced *only* in the baseline lines. The
+result is a gradient: the **Kelly-specific response is the most
+protective-leaning** (11% adverse, OR 0.38), the shared response sits in the
+middle, and the baseline-only response is closest to background - still mildly
+protective (OR 0.69, p = 0.017), but with the weakest signal. So the
+protective association of hypoxia-induced genes is strongest exactly in the
+MYCN-amplified context, and no set flips to adverse.
+
+```{r hr_polarity_stage3, echo=FALSE}
+
+tab(hr_tab("MYCN context"), "Hypoxia-induced genes by cell-line context vs survival")
+
+```
+
+## The whole picture
+
+All eight sets on one axis: share of protective genes to the left, adverse to
+the right, with the background shares as dashed reference lines. Every
+hypoxia-*induced* set stays left of the background on the adverse side; only
+the hypoxia-*repressed* genes break the pattern.
+
+```{r hr_polarity_overview, fig.width=8, fig.height=4.5}
+
+pol_cols <- c(protective = "#3B6FC9", adverse = "#E8632C")
+
+pol <- hr_res %>%
+  dplyr::mutate(Set = factor(Set, levels = rev(Set)),
+                stage = factor(stage, levels = unique(stage))) %>%
+  tidyr::pivot_longer(c(pct_prot, pct_adv), names_to = "side", values_to = "pct") %>%
+  dplyr::mutate(side = ifelse(side == "pct_prot", "protective", "adverse"),
+                x = ifelse(side == "protective", -pct, pct),
+                n = ifelse(side == "protective", protective, adverse))
+
+ggplot(pol, aes(x = x, y = Set, fill = side)) +
+  geom_col(width = 0.62) +
+  geom_vline(xintercept = 0, colour = "grey30", linewidth = 0.4) +
+  geom_vline(xintercept = c(-100 * bg_prot / sum(has_hr), 100 * bg_adv / sum(has_hr)),
+             linetype = "dashed", colour = "grey55", linewidth = 0.35) +
+  geom_text(aes(label = n, hjust = ifelse(side == "protective", 1.15, -0.15)),
+            size = 2.9, colour = "grey15") +
+  scale_x_continuous(labels = function(x) sprintf("%g%%", abs(x)),
+                     expand = expansion(mult = 0.12)) +
+  scale_fill_manual(values = pol_cols, breaks = c("protective", "adverse"),
+                    name = NULL) +
+  facet_grid(stage ~ ., scales = "free_y", space = "free_y", switch = "y") +
+  labs(x = "share of genes with survival data (dashed = background)", y = NULL) +
+  theme_minimal(base_size = 10) +
+  theme(panel.grid.major.y = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.placement = "outside",
+        strip.text.y.left = element_text(angle = 0, face = "bold", hjust = 1),
+        legend.position = "top")
+
+```
+
+**Answer to the opening question:** in these data hypoxia-induced genes are
+mainly *protective* - as a raw majority, against the background, and in every
+subset tested. The adverse arm of the hypoxia response consists of the genes
+hypoxia represses. The HIF1A-adverse / HIF2A-protective split does not hold as
+a dichotomy; there is at most a mild protective shift of HIF2A targets. And
+the protective lean is strongest in the Kelly-specific (MYCN-amplified)
+response. All of this is association in a high-risk cohort, not causality -
+adverse-classified single genes still exist in every set (WT1-AS and KLHDC7B
+above are examples).
 
 
