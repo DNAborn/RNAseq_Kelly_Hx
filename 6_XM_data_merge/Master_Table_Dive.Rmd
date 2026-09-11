@@ -407,3 +407,67 @@ cat(sprintf("- [master_table_dive.xlsx](master_table_dive.xlsx) - %s genes x %d 
             file.size(out_file) / 1024^2))
 
 ```
+
+
+# HR Ratio of TOP HIF1A & HIF2A
+
+Hazard ratios for the top HIF1A and HIF2A target genes shown in the HIF-1β
+CUT&RUN figure, in the same order and colours. Filled points are significant in
+the Cox model (p < 0.05); the dashed lines mark the HR 1.5 / 1/1.5 risk
+cutoffs. Two genes carry older symbols in the master table (COXFA4L2 =
+NDUFA4L2, CIMAP1B = ODF3L2) and are relabelled here; LINC02649, STEAP1B-AS1
+and FRG2B have no survival data.
+
+```{r hr_top_targets, fig.width=7.5, fig.height=6}
+
+top_hif1a <- c("FOXE3", "CA9", "ALOX12B", "DENND1C", "TSPEAR-AS1", "LINC02649",
+               "HBD", "ITGB3", "SMIM24", "EXOC3L2", "PFKFB3", "PCP4L1", "CDH15",
+               "NDUFA4L2", "ASCL2", "ERVV-1", "PLVAP", "ARRDC2", "GALR1", "CABP7")
+top_hif2a <- c("ODF3L2", "IL6R", "FLT1", "EPO", "STEAP1B-AS1", "FRG2B", "CALHM4",
+               "KCNK13", "TRAPPC3L", "WT1-AS", "SLC9C2", "SASH1", "THBD",
+               "ARHGEF6", "NTSR1", "AGXT", "KLHDC7B", "SLC46A3", "CFAP43",
+               "PRODH")
+relabel <- c(NDUFA4L2 = "COXFA4L2", ODF3L2 = "CIMAP1B")
+
+hr_top <- dplyr::bind_rows(
+    tibble(symbol = top_hif1a, group = "HIF1A targets"),
+    tibble(symbol = top_hif2a, group = "HIF2A targets")) %>%
+  dplyr::left_join(master_table %>% dplyr::select(symbol, HR, p_value_HR),
+                   by = "symbol") %>%
+  dplyr::mutate(
+    label = ifelse(symbol %in% names(relabel), relabel[symbol], symbol),
+    group = factor(group, levels = c("HIF1A targets", "HIF2A targets")),
+    sig   = !is.na(p_value_HR) & p_value_HR < 0.05) %>%
+  dplyr::group_by(group) %>%
+  dplyr::mutate(label = factor(label, levels = rev(label))) %>%
+  dplyr::ungroup()
+
+hr_cols <- c("HIF1A targets" = "#F8766D", "HIF2A targets" = "#00BFC4")
+
+ggplot(hr_top, aes(y = label, x = HR, colour = group)) +
+  geom_vline(xintercept = 1, colour = "grey30", linewidth = 0.4) +
+  geom_vline(xintercept = c(1/1.5, 1.5), colour = "grey65",
+             linetype = "dashed", linewidth = 0.35) +
+  geom_segment(aes(x = 1, xend = HR, yend = label),
+               linewidth = 0.5, na.rm = TRUE) +
+  geom_point(aes(fill = after_scale(ifelse(hr_top$sig, colour, "white"))),
+             shape = 21, size = 2.6, stroke = 0.9, na.rm = TRUE) +
+  geom_text(data = hr_top %>% dplyr::filter(is.na(HR)),
+            aes(x = 1, label = "n/a"), colour = "grey55",
+            size = 2.8, hjust = -0.4, fontface = "italic") +
+  scale_x_continuous(trans = "log2",
+                     breaks = c(0.5, 1/1.5, 1, 1.5, 2),
+                     labels = c("0.5", "0.67", "1", "1.5", "2")) +
+  scale_colour_manual(values = hr_cols, guide = "none") +
+  facet_wrap(~group, scales = "free_y") +
+  labs(x = "Hazard ratio (log scale)", y = NULL) +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.y = element_text(face = "italic", colour = "grey15"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.major.x = element_line(colour = "grey92"),
+        strip.text = element_text(face = "bold"))
+
+```
+
+
