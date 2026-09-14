@@ -14,7 +14,7 @@ knit: (function(input_file, encoding) {
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = TRUE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = TRUE, dpi = 300)
 
 # Fold every code block into a collapsible <details> element. GitHub renders this
 # natively, so the rendered Readme.md reads as a summary while the full code stays
