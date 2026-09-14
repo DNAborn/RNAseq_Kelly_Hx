@@ -663,4 +663,153 @@ response. All of this is association in a high-risk cohort, not causality -
 adverse-classified single genes still exist in every set (WT1-AS and KLHDC7B
 above are examples).
 
+## The full CUT&RUN overlap lists
+
+The same question, asked of the complete HIF-1β CUT&RUN overlap lists (peaks
+within 100 kb, split into HIF1A-unique and HIF2A-unique genes) instead of the
+RNA-seq-derived sets. All list genes are present in the master table via their
+Ensembl IDs; 24 genes appear on both lists. Following the volcano-plot wording,
+*harmful* here is what the tables call `adverse`. The list membership is also
+available as the `CaR` column of the master table (values `Hif1a` / `Hif2a` /
+`Hif1a_Hif2a`, mirroring `Target`).
+
+The result mirrors stage 2, now from the binding side: the **HIF2A peak list
+is clearly protective-leaning** (92 protective vs 45 harmful of 474 with
+survival data), while the **HIF1A list is balanced** (16 vs 14 of 123) and
+indistinguishable from background. The direct comparison of the two ratios is
+not significant (Fisher p = 0.21) - the lists differ in how strongly they
+deviate from background, not provably from each other.
+
+```{r hr_car_lists, fig.width=8, fig.height=2.6}
+
+car_h1 <- readxl::read_xlsx(here::here("6_XM_data_merge", "HIF1A_unique_genes_100kb.xlsx"))
+car_h2 <- readxl::read_xlsx(here::here("6_XM_data_merge", "HIF2A_unique_genes_100kb.xlsx"))
+
+sel_car1 <- master$Ensembl %in% car_h1$Ensembl
+sel_car2 <- master$Ensembl %in% car_h2$Ensembl
+
+car_res <- dplyr::bind_rows(
+  hr_stats("HIF1A targets", "CUT&RUN", sel_car1),
+  hr_stats("HIF2A targets", "CUT&RUN", sel_car2))
+
+tab(car_res %>%
+      dplyr::mutate(dplyr::across(c(pct_prot, pct_adv), ~sprintf("%.1f%%", .x)),
+                    median_HR = round(median_HR, 2), OR_adv = round(OR_adv, 2),
+                    dplyr::across(c(p_majority, p_vs_bg, p_shift), ~sprintf("%.1e", .x))) %>%
+      dplyr::rename(harmful = adverse, pct_harm = pct_adv, OR_harm = OR_adv) %>%
+      dplyr::select(-stage),
+    "CUT&RUN overlap lists (100 kb) vs survival")
+
+car_cols <- c(protective = "#4682C4", harmful = "#C03A3E")
+
+car_pol <- car_res %>%
+  dplyr::mutate(Set = factor(Set, levels = rev(Set))) %>%
+  tidyr::pivot_longer(c(pct_prot, pct_adv), names_to = "side", values_to = "pct") %>%
+  dplyr::mutate(side = factor(ifelse(side == "pct_prot", "protective", "harmful"),
+                              levels = c("protective", "harmful")),
+                x = ifelse(side == "protective", -pct, pct),
+                n = ifelse(side == "protective", protective, adverse))
+
+ggplot(car_pol, aes(x = x, y = Set, fill = side)) +
+  geom_col(width = 0.55) +
+  geom_vline(xintercept = 0, colour = "grey30", linewidth = 0.4) +
+  geom_vline(xintercept = c(-100 * bg_prot / sum(has_hr), 100 * bg_adv / sum(has_hr)),
+             linetype = "dashed", colour = "grey55", linewidth = 0.35) +
+  geom_text(aes(label = n, hjust = ifelse(side == "protective", 1.15, -0.15)),
+            size = 3, colour = "grey15") +
+  scale_x_continuous(labels = function(x) sprintf("%g%%", abs(x)),
+                     expand = expansion(mult = 0.12)) +
+  scale_fill_manual(values = car_cols, name = NULL) +
+  labs(x = "share of genes with survival data (dashed = background)", y = NULL) +
+  theme_minimal(base_size = 10) +
+  theme(panel.grid.major.y = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = "top")
+
+```
+
+
+# KCNK13, CASP9, DR5: an apoptosis-priming signature?
+
+KCNK13 (THIK-1) is the most protective HIF2A target from the CUT&RUN shortlist
+(HR 0.54) and essentially unstudied in cancer - its literature is about
+microglia, where the channel gates inflammasome activation via K⁺ efflux. K⁺
+efflux is also a permissive condition for apoptosome assembly, and the two
+apoptosis genes that hypoxia co-induces in Kelly are exactly the matching
+pieces: CASP9 (the apoptosome caspase) and TNFRSF10B (death receptor DR5). The
+working hypothesis: HIF2A does not kill the cells, it lowers their apoptosis
+threshold - and tumors that keep this priming intact behave less aggressively.
+
+The counts view below shows the per-sample normalized counts across all four
+genotypes. The KCNK13 induction collapses in the HIF2A-KO, is halved (in log2
+terms) in the HIF1B-KO - consistent with HIF2A needing its dimerization
+partner ARNT - and is untouched in the HIF1A-KO. CASP9 and DR5 move the same
+way at smaller amplitude. SK-N-AS / SH-SY5Y add nothing here: KCNK13 is
+hypoxia-induced there too (log2FC 1.9 in SK-N-AS), and the baseline lines have
+no KO genotypes to separate the HIFs.
+
+```{r kcnk13_counts, fig.width=9, fig.height=3.8}
+
+prime_symbols <- c("KCNK13", "CASP9", "TNFRSF10B")
+prime_display <- c(KCNK13 = "KCNK13 (THIK-1)", CASP9 = "CASP9",
+                   TNFRSF10B = "TNFRSF10B (DR5)")
+
+prime <- master %>%
+  dplyr::filter(symbol %in% prime_symbols) %>%
+  dplyr::group_by(symbol) %>%
+  dplyr::slice_max(baseMean_Kelly, n = 1, with_ties = FALSE) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(panel = sprintf("%s\nHx log2FC %.1f  |  HR %.2f (%s)",
+                                prime_display[symbol],
+                                Kelly.Hx.vs.Nx.log2FoldChange, HR, HR_risk),
+                panel = factor(panel, levels = panel[match(prime_symbols, symbol)]))
+
+cd <- prime %>%
+  dplyr::select(panel, dplyr::all_of(count_cols)) %>%
+  tidyr::pivot_longer(-panel, names_to = "sample", values_to = "counts") %>%
+  dplyr::mutate(
+    genotype = dplyr::recode(sub("_(Nx|Hx)_[0-9]+$", "", sub("^counts_", "", sample)),
+                             "WT" = "Kelly WT", "HIF1a-KO" = "HIF1A-KO",
+                             "HIF2a-KO" = "HIF2A-KO", "HIF1b-KO" = "HIF1B-KO"),
+    genotype = factor(genotype, levels = c("Kelly WT", "HIF1A-KO",
+                                           "HIF2A-KO", "HIF1B-KO")),
+    condition = factor(ifelse(grepl("_Hx_", sample), "Hx", "Nx"),
+                       levels = c("Nx", "Hx")))
+
+cond_cols <- c(Nx = "#3B6FC9", Hx = "#E8632C")
+
+ggplot(cd, aes(genotype, counts + 1, colour = condition)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.12,
+                                             dodge.width = 0.55),
+             size = 1.2, alpha = 0.65) +
+  stat_summary(fun = median, fun.min = median, fun.max = median,
+               geom = "crossbar", width = 0.42, fatten = 0,
+               linewidth = 0.5, position = position_dodge(0.55)) +
+  scale_y_log10(labels = function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  scale_colour_manual(values = cond_cols, name = NULL) +
+  facet_wrap(~panel, scales = "free_y") +
+  labs(x = NULL, y = "normalized counts + 1 (log scale)") +
+  theme_minimal(base_size = 10) +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank(),
+        strip.text = element_text(face = "bold", size = 8.5),
+        axis.text.x = element_text(angle = 30, hjust = 1),
+        legend.position = "top")
+
+```
+
+One honest wrinkle the panel titles expose: the trio is not uniformly
+protective. KCNK13 (0.54) and CASP9 (0.38) are, but DR5 itself scores adverse
+(HR 1.94) - unsurprising for a death receptor that doubles as a general
+stress-response gene, and a reminder that the priming reading rests on the
+K⁺-efflux/apoptosome pair, not on DR5.
+
+The pattern to take away: in WT and HIF1A-KO the three genes move together
+under hypoxia; in HIF2A-KO the response is gone while the cells are exposed to
+the same 1% O₂. If KCNK13 were simply a marker of cells drifting into
+apoptosis, the KOs would induce it like the WT - instead it behaves like a
+deliberate, HIF2A-driven program. Whether that program actually lowers the
+apoptotic threshold is a wet-lab question: Annexin / cleaved-caspase-3 under
+hypoxia in WT vs HIF2A-KO, with and without a THIK-1 blocker.
+
 

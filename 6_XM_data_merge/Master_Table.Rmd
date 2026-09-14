@@ -815,6 +815,36 @@ master_table %>%
 ```
 
 
+# CUT&RUN annotation
+
+The HIF-1β CUT&RUN overlap lists - genes with a peak within 100 kb, split into
+HIF1A-unique and HIF2A-unique - folded in as the `CaR` column, matched by
+Ensembl ID. Genes appearing on both lists are labelled `Hif1a_Hif2a`, mirroring
+the value scheme of `Target`.
+
+```{r car_column}
+
+car_h1 <- readxl::read_xlsx(here::here("6_XM_data_merge", "HIF1A_unique_genes_100kb.xlsx"))
+car_h2 <- readxl::read_xlsx(here::here("6_XM_data_merge", "HIF2A_unique_genes_100kb.xlsx"))
+
+master_table$CaR <- dplyr::case_when(
+  master_table$Ensembl %in% car_h1$Ensembl &
+    master_table$Ensembl %in% car_h2$Ensembl ~ "Hif1a_Hif2a",
+  master_table$Ensembl %in% car_h1$Ensembl   ~ "Hif1a",
+  master_table$Ensembl %in% car_h2$Ensembl   ~ "Hif2a",
+  TRUE                                       ~ NA_character_
+)
+
+master_table <- master_table %>% dplyr::relocate(CaR, .after = HR_risk)
+
+car_f <- factor(ifelse(is.na(master_table$CaR), "no peak", master_table$CaR),
+                levels = c("Hif1a", "Hif2a", "Hif1a_Hif2a", "no peak"))
+
+tab(as.data.frame(table(CaR = car_f)),
+    "CUT&RUN overlap annotation (peaks within 100 kb)")
+
+```
+
 
 # Master counts table
 

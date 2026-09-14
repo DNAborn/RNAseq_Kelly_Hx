@@ -21,6 +21,7 @@ Master_Table
   - [Risk within the HIF targets](#risk-within-the-hif-targets)
   - [Shortlist: Kelly-specific, adverse prognosis, undescribed in
     hypoxia](#shortlist-kelly-specific-adverse-prognosis-undescribed-in-hypoxia)
+- [CUT&RUN annotation](#cutrun-annotation)
 - [Master counts table](#master-counts-table)
 - [Export](#export)
 
@@ -1047,6 +1048,52 @@ predicts worse outcome in patients, and has no hypoxia literature yet.
 | ALDH3B1   | Hif2a  |   2.24 | 2.34 | 1.1e-05 |           41 |
 | LINC01410 | Hif2a  |   2.21 | 2.91 | 3.8e-05 |           12 |
 
+# CUT&RUN annotation
+
+The HIF-1β CUT&RUN overlap lists - genes with a peak within 100 kb,
+split into HIF1A-unique and HIF2A-unique - folded in as the `CaR`
+column, matched by Ensembl ID. Genes appearing on both lists are
+labelled `Hif1a_Hif2a`, mirroring the value scheme of `Target`.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+car_h1 <- readxl::read_xlsx(here::here("6_XM_data_merge", "HIF1A_unique_genes_100kb.xlsx"))
+car_h2 <- readxl::read_xlsx(here::here("6_XM_data_merge", "HIF2A_unique_genes_100kb.xlsx"))
+
+master_table$CaR <- dplyr::case_when(
+  master_table$Ensembl %in% car_h1$Ensembl &
+    master_table$Ensembl %in% car_h2$Ensembl ~ "Hif1a_Hif2a",
+  master_table$Ensembl %in% car_h1$Ensembl   ~ "Hif1a",
+  master_table$Ensembl %in% car_h2$Ensembl   ~ "Hif2a",
+  TRUE                                       ~ NA_character_
+)
+
+master_table <- master_table %>% dplyr::relocate(CaR, .after = HR_risk)
+
+car_f <- factor(ifelse(is.na(master_table$CaR), "no peak", master_table$CaR),
+                levels = c("Hif1a", "Hif2a", "Hif1a_Hif2a", "no peak"))
+
+tab(as.data.frame(table(CaR = car_f)),
+    "CUT&RUN overlap annotation (peaks within 100 kb)")
+```
+
+</details>
+
+**CUT&RUN overlap annotation (peaks within 100 kb)**
+
+| CaR         |  Freq |
+|:------------|------:|
+| Hif1a       |   121 |
+| Hif2a       |   557 |
+| Hif1a_Hif2a |    24 |
+| no peak     | 63835 |
+
 # Master counts table
 
 The same table plus the per-sample normalized counts of the Kelly
@@ -1091,7 +1138,7 @@ master_counts_table %>%
 
 </details>
 
-**master_counts_table preview - 146 columns total, 88 of them counts**
+**master_counts_table preview - 147 columns total, 88 of them counts**
 
 | symbol | Target | Hx_Baseline | counts_WT_Nx_1 | counts_WT_Hx_1 | counts_HIF1a-KO_Hx_1 | counts_HIF2a-KO_Hx_1 |
 |:---|:---|:---|---:|---:|---:|---:|
@@ -1124,7 +1171,7 @@ openxlsx::write.xlsx(master_counts_table,
 
 </details>
 
-- [master_table.xlsx](master_table.xlsx) - 64,537 genes x 58 columns,
-  28.0 MB (statistics only)
+- [master_table.xlsx](master_table.xlsx) - 64,537 genes x 59 columns,
+  28.2 MB (statistics only)
 - [master_counts_table.xlsx](master_counts_table.xlsx) - 64,537 genes x
-  146 columns, 65.3 MB (statistics + per-sample normalized counts)
+  147 columns, 65.6 MB (statistics + per-sample normalized counts)
