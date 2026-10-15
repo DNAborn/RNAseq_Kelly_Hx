@@ -15,6 +15,8 @@ Master_Table_Dive
     Nx)](#3-top-500-hypoxia-regulated-genes-log2-hx-vs-nx)
   - [4. Top 500 hypoxia-regulated genes (z-score per
     line)](#4-top-500-hypoxia-regulated-genes-z-score-per-line)
+  - [5. Top 100 hypoxia-regulated genes, 70 up / 30 down (log2 Hx vs
+    Nx)](#5-top-100-hypoxia-regulated-genes-70-up--30-down-log2-hx-vs-nx)
 - [Hypoxia-induced genes: protective or
   adverse?](#hypoxia-induced-genes-protective-or-adverse)
   - [Stage 1: what hypoxia regulates in
@@ -672,6 +674,27 @@ repeat {
   if (length(hx500) >= 500) break
 }
 
+# Induction dominates the strongest responses (HIF activates; repression is
+# indirect and limited by mRNA decay), so the set above is ~96% up. Smaller
+# variant with a fixed up / down ratio: the same balanced per-line selection,
+# run separately for induced and repressed genes.
+hx_top_dir <- function(n, dir) {
+  rk <- lapply(hm_lines, function(l) {
+    g <- rownames(hx_deg)[hx_deg[, l]]
+    g <- g[sign(hx_resp[g, l]) == dir]
+    g[order(-abs(hx_resp[g, l]))]
+  })
+  k <- 0
+  repeat {
+    k <- k + 1
+    sel <- unique(unlist(lapply(rk, head, k)))
+    if (length(sel) >= n) return(sel)
+  }
+}
+hx100_up   <- hx_top_dir(70, 1)
+hx100_down <- setdiff(hx_top_dir(30, -1), hx100_up)
+hx100      <- c(hx100_up, hx100_down)
+
 # Per-line z-score: every gene scaled to mean 0 / sd 1 within each line.
 hm_z <- hm$mat
 for (l in hm_panels) {
@@ -874,9 +897,8 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
     te <- intersect(names(pos), rownames(tum$z))
     tl <- tum_groups %>%
       dplyr::group_by(panel, label) %>%
-      dplyr::summarise(Ensembl = te,
-                       value = rowMeans(tum$z[te, sample, drop = FALSE]),
-                       .groups = "drop") %>%
+      dplyr::reframe(Ensembl = te,
+                     value = rowMeans(tum$z[te, sample, drop = FALSE])) %>%
       dplyr::mutate(y = pos[Ensembl])
     tum_facet <- facet_grid(. ~ panel, scales = "free_x", space = "free_x")
     p_tum <- ggplot(tl, aes(x = label, y = y, fill = value)) +
@@ -1097,20 +1119,20 @@ hx_heatmap(hx500, rows = hx_rows_500, tumours = TRUE,
 
 ![](Dive_files/figure-gfm/hx_heatmap_hx500-1.png)<!-- -->
 
-**Tumour hypoxia score (mean signed z of the shown genes) per clinical
-group**
+**Tumour hypoxia score (median of the mean signed z of the shown genes)
+per clinical group; p for the overall score**
 
-| panel   | group            | median_score |       p |
-|:--------|:-----------------|-------------:|--------:|
-| MYCN    | not ampl. (408)  |        0.013 | 6.0e-07 |
-| MYCN    | amplified (69)   |       -0.125 |      NA |
-| Stage   | 1-2 (199)        |        0.009 | 1.6e-02 |
-| Stage   | 3 (69)           |        0.005 |      NA |
-| Stage   | 4S (62)          |        0.011 |      NA |
-| Stage   | 4 (148)          |       -0.037 |      NA |
-| Outcome | event-free (323) |        0.007 | 1.9e-02 |
-| Outcome | relapse (64)     |       -0.021 |      NA |
-| Outcome | deceased (91)    |       -0.035 |      NA |
+| panel   | group            |  score | score_up | score_down |       p |
+|:--------|:-----------------|-------:|---------:|-----------:|--------:|
+| MYCN    | not ampl. (408)  |  0.013 |    0.012 |      0.094 | 6.0e-07 |
+| MYCN    | amplified (69)   | -0.125 |   -0.107 |     -0.410 |      NA |
+| Stage   | 1-2 (199)        |  0.009 |    0.011 |      0.132 | 1.6e-02 |
+| Stage   | 3 (69)           |  0.005 |   -0.008 |     -0.041 |      NA |
+| Stage   | 4S (62)          |  0.011 |    0.005 |     -0.010 |      NA |
+| Stage   | 4 (148)          | -0.037 |   -0.033 |     -0.093 |      NA |
+| Outcome | event-free (323) |  0.007 |    0.005 |      0.108 | 1.9e-02 |
+| Outcome | relapse (64)     | -0.021 |   -0.023 |     -0.076 |      NA |
+| Outcome | deceased (91)    | -0.035 |   -0.022 |     -0.180 |      NA |
 
 Counter to the expectation that aggressive tumours are more hypoxic, the
 cell-line hypoxia program is slightly *weaker* in MYCN-amplified
@@ -1155,6 +1177,56 @@ hx_heatmap(hx500, mat = hm_z, lim = 2, rows = hx_rows_500, fill_name = "z-score"
 
 ![](Dive_files/figure-gfm/hx_heatmap_hx500_z-1.png)<!-- -->
 
+## 5. Top 100 hypoxia-regulated genes, 70 up / 30 down (log2 Hx vs Nx)
+
+The strongest hypoxia responses are almost all inductions, so the top
+500 contain only 18 repressed genes. Here the balanced per-line
+selection runs separately for induced and repressed genes: 70 up and 31
+down, roughly the up/down ratio of all hypoxia DEGs. The TOP20 are
+labelled only where they are part of this set.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+hx_heatmap(hx100, rows = hm_rows(hx100), tumours = TRUE,
+           title = "Top 100 hypoxia-regulated genes, 70 up / 30 down (log2 Hx vs Nx; tumours: mean z per group)")
+```
+
+</details>
+
+![](Dive_files/figure-gfm/hx_heatmap_hx100-1.png)<!-- -->
+
+**Tumour hypoxia score for the top 100 (70 up / 30 down) per clinical
+group**
+
+| panel   | group            |  score | score_up | score_down |       p |
+|:--------|:-----------------|-------:|---------:|-----------:|--------:|
+| MYCN    | not ampl. (408)  |  0.015 |    0.002 |      0.070 | 2.0e-07 |
+| MYCN    | amplified (69)   | -0.097 |   -0.011 |     -0.282 |      NA |
+| Stage   | 1-2 (199)        |  0.011 |   -0.007 |      0.083 | 9.6e-01 |
+| Stage   | 3 (69)           | -0.026 |    0.042 |     -0.026 |      NA |
+| Stage   | 4S (62)          |  0.011 |   -0.068 |      0.072 |      NA |
+| Stage   | 4 (148)          | -0.007 |    0.024 |     -0.076 |      NA |
+| Outcome | event-free (323) |  0.007 |   -0.007 |      0.075 | 7.8e-02 |
+| Outcome | relapse (64)     | -0.038 |   -0.028 |      0.002 |      NA |
+| Outcome | deceased (91)    | -0.016 |    0.049 |     -0.170 |      NA |
+
+The split score shows where the MYCN difference of the top 500 comes
+from: the hypoxia-*induced* genes hardly differ between the clinical
+groups (`score_up` near 0), but the hypoxia-*repressed* genes are
+clearly higher in MYCN-amplified tumours (`score_down` −0.28, i.e. they
+do *not* follow the hypoxic repression) and, more weakly, in fatal
+cases. Many of these repressed genes carry an adverse HR (magenta in the
+HR strip). So MYCN-amplified tumours do not look less hypoxic by their
+induced genes - they keep genes high that hypoxia shuts off in the cell
+lines, plausibly MYCN-driven genes such as proliferation and
+biosynthesis genes.
+
 **Median Hx response (log2 vs Nx) per line, and Spearman correlation of
 the per-gene response with Kelly**
 
@@ -1163,6 +1235,7 @@ the per-gene response with Kelly**
 | TOP20 | 40 | 40 | 2.71 | 0.43 | 0.89 | 0.09 | 0.25 |
 | TOP20 + HIF targets | 1717 | 36 | 1.08 | 0.28 | 0.28 | 0.23 | 0.37 |
 | TOP20 + hypoxia-regulated | 519 | 23 | 2.50 | 1.35 | 1.64 | -0.14 | 0.23 |
+| TOP20 + top 100 (70 up / 30 down) | 133 | 8 | 2.66 | 0.51 | 1.71 | 0.46 | 0.56 |
 
 # Hypoxia-induced genes: protective or adverse?
 

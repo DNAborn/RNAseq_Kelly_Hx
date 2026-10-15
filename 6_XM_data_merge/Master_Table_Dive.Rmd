@@ -612,6 +612,27 @@ repeat {
   if (length(hx500) >= 500) break
 }
 
+# Induction dominates the strongest responses (HIF activates; repression is
+# indirect and limited by mRNA decay), so the set above is ~96% up. Smaller
+# variant with a fixed up / down ratio: the same balanced per-line selection,
+# run separately for induced and repressed genes.
+hx_top_dir <- function(n, dir) {
+  rk <- lapply(hm_lines, function(l) {
+    g <- rownames(hx_deg)[hx_deg[, l]]
+    g <- g[sign(hx_resp[g, l]) == dir]
+    g[order(-abs(hx_resp[g, l]))]
+  })
+  k <- 0
+  repeat {
+    k <- k + 1
+    sel <- unique(unlist(lapply(rk, head, k)))
+    if (length(sel) >= n) return(sel)
+  }
+}
+hx100_up   <- hx_top_dir(70, 1)
+hx100_down <- setdiff(hx_top_dir(30, -1), hx100_up)
+hx100      <- c(hx100_up, hx100_down)
+
 # Per-line z-score: every gene scaled to mean 0 / sd 1 within each line.
 hm_z <- hm$mat
 for (l in hm_panels) {
@@ -814,9 +835,8 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
     te <- intersect(names(pos), rownames(tum$z))
     tl <- tum_groups %>%
       dplyr::group_by(panel, label) %>%
-      dplyr::summarise(Ensembl = te,
-                       value = rowMeans(tum$z[te, sample, drop = FALSE]),
-                       .groups = "drop") %>%
+      dplyr::reframe(Ensembl = te,
+                     value = rowMeans(tum$z[te, sample, drop = FALSE])) %>%
       dplyr::mutate(y = pos[Ensembl])
     tum_facet <- facet_grid(. ~ panel, scales = "free_x", space = "free_x")
     p_tum <- ggplot(tl, aes(x = label, y = y, fill = value)) +
@@ -1007,16 +1027,23 @@ hx_heatmap(hx500, rows = hx_rows_500, tumours = TRUE,
 
 # One hypoxia score per tumour (see tum_score), summarised per clinical group;
 # p from a Kruskal-Wallis test within each panel (= Wilcoxon for two groups).
-tum_sc <- tum_groups %>%
-  dplyr::mutate(score = tum_score(hx500)[sample])
-tab(tum_sc %>%
-      dplyr::group_by(panel) %>%
-      dplyr::mutate(p = kruskal.test(score ~ label)$p.value) %>%
-      dplyr::group_by(panel, group = label) %>%
-      dplyr::summarise(median_score = round(median(score), 3),
-                       p = signif(dplyr::first(p), 2), .groups = "drop") %>%
-      dplyr::mutate(p = ifelse(duplicated(panel), NA, p)),
-    "Tumour hypoxia score (mean signed z of the shown genes) per clinical group")
+# Also split by induced / repressed genes (score > 0 = follows the program).
+tum_score_tab <- function(set) {
+  up <- set[sign(rowMeans(hx_resp[set, , drop = FALSE])) > 0]
+  tum_groups %>%
+    dplyr::mutate(score      = tum_score(set)[sample],
+                  score_up   = tum_score(up)[sample],
+                  score_down = tum_score(setdiff(set, up))[sample]) %>%
+    dplyr::group_by(panel) %>%
+    dplyr::mutate(p = kruskal.test(score ~ label)$p.value) %>%
+    dplyr::group_by(panel, group = label) %>%
+    dplyr::summarise(dplyr::across(c(score, score_up, score_down),
+                                   ~round(median(.x), 3)),
+                     p = signif(dplyr::first(p), 2), .groups = "drop") %>%
+    dplyr::mutate(p = ifelse(duplicated(panel), NA, p))
+}
+tab(tum_score_tab(hx500),
+    "Tumour hypoxia score (median of the mean signed z of the shown genes) per clinical group; p for the overall score")
 ```
 
 Counter to the expectation that aggressive tumours are more hypoxic, the
@@ -1050,12 +1077,43 @@ hx_heatmap(hx500, mat = hm_z, lim = 2, rows = hx_rows_500, fill_name = "z-score"
            title = "Top 500 hypoxia-regulated genes (z-score per line; tumours: mean z per group)")
 ```
 
+## 5. Top 100 hypoxia-regulated genes, 70 up / 30 down (log2 Hx vs Nx)
+
+The strongest hypoxia responses are almost all inductions, so the top 500
+contain only `r sum(rowMeans(hx_resp[hx500, ]) < 0)` repressed genes. Here the
+balanced per-line selection runs separately for induced and repressed genes:
+`r length(hx100_up)` up and `r length(hx100_down)` down, roughly the up/down
+ratio of all hypoxia DEGs. The TOP20 are labelled only where they are part of
+this set.
+
+```{r hx_heatmap_hx100, fig.width=11, fig.height=7}
+hx_heatmap(hx100, rows = hm_rows(hx100), tumours = TRUE,
+           title = "Top 100 hypoxia-regulated genes, 70 up / 30 down (log2 Hx vs Nx; tumours: mean z per group)")
+```
+
+```{r hx_tumour_score_100, echo=FALSE}
+
+tab(tum_score_tab(hx100),
+    "Tumour hypoxia score for the top 100 (70 up / 30 down) per clinical group")
+```
+
+The split score shows where the MYCN difference of the top 500 comes from: the
+hypoxia-*induced* genes hardly differ between the clinical groups
+(`score_up` near 0), but the hypoxia-*repressed* genes are clearly higher in
+MYCN-amplified tumours (`score_down` −0.28, i.e. they do *not* follow the
+hypoxic repression) and, more weakly, in fatal cases. Many of these repressed
+genes carry an adverse HR (magenta in the HR strip). So MYCN-amplified tumours
+do not look less hypoxic by their induced genes - they keep genes high that
+hypoxia shuts off in the cell lines, plausibly MYCN-driven genes such as
+proliferation and biosynthesis genes.
+
 ```{r hx_heatmap_summary, echo=FALSE}
 
 tab(dplyr::bind_rows(
       hx_summary("TOP20",                   top20$Ensembl),
       hx_summary("TOP20 + HIF targets",     names(targets)),
-      hx_summary("TOP20 + hypoxia-regulated", hx500)) %>%
+      hx_summary("TOP20 + hypoxia-regulated", hx500),
+      hx_summary("TOP20 + top 100 (70 up / 30 down)", hx100)) %>%
       dplyr::mutate(dplyr::across(Kelly:rho_SHSY5Y, ~round(.x, 2))),
     "Median Hx response (log2 vs Nx) per line, and Spearman correlation of the per-gene response with Kelly")
 
