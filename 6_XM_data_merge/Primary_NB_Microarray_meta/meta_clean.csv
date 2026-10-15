@@ -1,0 +1,479 @@
+INS_stage,LOH1P,MYCN,EFS,Unit[TimeUnit]...31,outcome,OS,Unit[TimeUnit]...34,Factor Value[NBSTATUS],Age_at_diagnosis,Unit[TimeUnit]...37,patient
+4,imbalance (FISH),not amplified,970,days,deceased,1401,days,relapse,1221,days,13264
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1268,days,alive without event,1268,days,Unknown,93,days,17869
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1591,days,alive without event,1591,days,Unknown,49,days,17223
+4,deletion (FISH) or LOH1p (PCR),amplified,4090,days,alive without event,4090,days,Unknown,660,days,2000
+4,Unknown,not amplified,780,days,alive with relapse/primary tumor,840,days,progression,658,days,18212
+2B,deletion (FISH) or LOH1p (PCR),amplified,1555,days,alive without event,1555,days,Unknown,335,days,17320
+4,Unknown,not amplified,519,days,deceased,535,days,progression,1560,days,Italy_1640
+4S,Unknown,not amplified,4705,days,alive without event,4705,days,Unknown,120,days,France_NBAF51
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2467,days,alive without event,2467,days,Unknown,163,days,13744
+1,Unknown,not amplified,349,days,alive without event,349,days,Unknown,11,days,20329
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,2041,days,alive without event,2041,days,Unknown,507,days,15739
+1,Unknown,not amplified,670,days,alive without event,670,days,Unknown,101,days,19520
+4,Unknown,not amplified,2135,days,alive without event,2135,days,Unknown,432,days,USA_93007
+3,Unknown,not amplified,310,days,alive without event,310,days,Unknown,2,days,17686
+2A,Unknown,not amplified,56,days,deceased,522,days,progression,666,days,14312
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,2494,days,alive without event,2494,days,Unknown,1397,days,15941
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,759,days,deceased,1773,days,relapse,4562,days,16797
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,3700,days,alive without event,3700,days,Unknown,190,days,358
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,708,days,alive with relapse/primary tumor,1085,days,relapse,1570,days,18281
+3,Unknown,not amplified,2265,days,alive without event,2265,days,Unknown,38,days,Belgium_104
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,286,days,alive with relapse/primary tumor,2280,days,progression,202,days,8303
+2A,Unknown,not amplified,1615,days,alive without event,1615,days,Unknown,3,days,Belgium_88
+4,Unknown,not amplified,262,days,deceased,541,days,relapse,1488,days,USA_89222
+2B,Unknown,not amplified,467,days,alive without event,467,days,Unknown,2225,days,19624
+4S,Unknown,not amplified,375,days,alive without event,375,days,Unknown,121,days,20080
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,3344,days,alive without event,3344,days,Unknown,417,days,3143
+1,Unknown,not amplified,374,days,alive without event,374,days,Unknown,18,days,19957
+4,deletion (FISH) or LOH1p (PCR),amplified,2038,days,alive without event,2038,days,Unknown,1029,days,16561
+4,deletion (FISH) or LOH1p (PCR),amplified,518,days,deceased,602,days,relapse,982,days,15259
+1,Unknown,not amplified,1110,days,alive without event,1110,days,Unknown,360,days,Spain_00B513
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,3777,days,alive without event,3777,days,Unknown,403,days,300
+1,Unknown,not amplified,1740,days,alive without event,1740,days,Unknown,120,days,Spain_00B2698
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,3011,days,alive without event,3011,days,Unknown,431,days,629
+1,imbalance (FISH),not amplified,1274,days,alive without event,1274,days,Unknown,933,days,18486
+4,Unknown,not amplified,1116,days,alive without event,1116,days,Unknown,215,days,Italy_2397
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1567,days,alive with relapse/primary tumor,2169,days,progression,11,days,15780
+4,Unknown,amplified,418,days,alive with relapse/primary tumor,473,days,relapse,416,days,20039
+4,Unknown,amplified,286,days,deceased,412,days,relapse,357,days,Belgium_29
+1,Unknown,amplified,503,days,alive without event,503,days,Unknown,1742,days,19893
+2,Unknown,not amplified,1244,days,alive without event,1244,days,Unknown,2111,days,18420
+4S,Unknown,not amplified,347,days,alive without event,347,days,Unknown,75,days,20285
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,516,days,alive without event,516,days,Unknown,94,days,15819
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,944,days,alive without event,944,days,Unknown,1644,days,17861
+3,imbalance (FISH),amplified,250,days,deceased,364,days,relapse,1017,days,18173
+4,Unknown,not amplified,1455,days,deceased,2324,days,relapse,1437,days,USA_94087
+4S,Unknown,not amplified,660,days,alive without event,660,days,Unknown,121,days,18870
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,3421,days,alive without event,3421,days,Unknown,541,days,468
+4S,Unknown,not amplified,30,days,deceased,36,days,progression,32,days,Italy_1958
+4,deletion (FISH) or LOH1p (PCR),amplified,351,days,deceased,539,days,relapse,196,days,19685
+3,Unknown,not amplified,1363,days,alive without event,1363,days,Unknown,222,days,17261
+4,Unknown,amplified,300,days,deceased,330,days,relapse,1560,days,Spain_00B443
+4S,Unknown,amplified,348,days,alive without event,348,days,Unknown,134,days,20280
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,939,days,alive without event,939,days,Unknown,121,days,18201
+4,deletion (FISH) or LOH1p (PCR),not amplified,1361,days,alive without event,1361,days,Unknown,619,days,17714
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,3163,days,alive without event,3163,days,Unknown,12,days,321
+4,Unknown,not amplified,357,days,deceased,479,days,relapse,3394,days,3103
+4,Unknown,not amplified,2054,days,alive without event,2054,days,Unknown,810,days,USA_95218
+4,Unknown,amplified,1493,days,alive without event,1493,days,Unknown,1017,days,France_NBAF6
+3,deletion (FISH) or LOH1p (PCR),amplified,402,days,deceased,416,days,relapse,1000,days,15239
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1330,days,alive without event,1330,days,Unknown,49,days,15005
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2549,days,alive without event,2549,days,Unknown,272,days,13525
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1374,days,alive without event,1374,days,Unknown,564,days,16650
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,1398,days,alive without event,1398,days,Unknown,5,days,17705
+1,Unknown,not amplified,2852,days,alive without event,2852,days,Unknown,58,days,Italy_1604
+4,Unknown,not amplified,890,days,deceased,966,days,relapse,841,days,Belgium_49
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2478,days,alive without event,2478,days,Unknown,82,days,14984
+4,Unknown,not amplified,2771,days,alive without event,2771,days,Unknown,21,days,USA_93-225
+4,Unknown,amplified,674,days,alive without event,674,days,Unknown,3749,days,19290
+3,cannot be specified,not amplified,5789,days,alive without event,5789,days,Unknown,202,days,1461
+3,Unknown,not amplified,74,days,alive with relapse/primary tumor,454,days,progression,121,days,20173
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,3208,days,alive without event,3208,days,Unknown,1262,days,2864
+4S,Unknown,not amplified,864,days,alive without event,864,days,Unknown,3,days,17743
+1,Unknown,not amplified,720,days,alive without event,720,days,Unknown,300,days,Spain_01B16030
+4,Unknown,not amplified,4669,days,alive without event,4669,days,Unknown,387,days,USA_89027
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,562,days,alive with relapse/primary tumor,1716,days,relapse,942,days,17209
+1,Unknown,not amplified,1140,days,alive without event,1140,days,Unknown,300,days,Spain_01B1136
+1,Unknown,not amplified,1513,days,alive without event,1513,days,Unknown,186,days,17836
+3,Unknown,amplified,284,days,alive without event,284,days,Unknown,423,days,20273
+1,Unknown,not amplified,256,days,alive without event,256,days,Unknown,437,days,20471
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1666,days,alive without event,1666,days,Unknown,303,days,17078
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,2377,days,alive without event,2377,days,Unknown,971,days,15865
+3,Unknown,not amplified,350,days,alive with relapse/primary tumor,466,days,relapse,1056,days,20153
+4,Unknown,not amplified,200,days,deceased,331,days,relapse,1081,days,Italy_766
+4,imbalance (FISH),not amplified,2016,days,deceased,2836,days,relapse,1808,days,11805
+3,Unknown,not amplified,75,days,alive with relapse/primary tumor,838,days,progression,152,days,19335
+2B,Unknown,not amplified,611,days,alive without event,611,days,Unknown,1099,days,19751
+4,no deletion (FISH) or no LOH1p (PCR),"not amplified, Nmyc gain",597,days,deceased,770,days,relapse,1282,days,18985
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,1119,days,alive without event,1119,days,Unknown,32,days,18087
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,485,days,alive with relapse/primary tumor,2883,days,progression,472,days,9123
+1,Unknown,not amplified,1080,days,alive without event,1080,days,Unknown,60,days,Spain_00B5632
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2751,days,alive without event,2751,days,Unknown,92,days,3523
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1063,days,alive without event,1063,days,Unknown,544,days,15828
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,1076,days,alive without event,1076,days,Unknown,217,days,18844
+4,Unknown,not amplified,227,days,deceased,498,days,relapse,1071,days,USA_94048
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,2661,days,alive without event,2661,days,Unknown,239,days,5043
+1,Unknown,not amplified,1115,days,alive without event,1115,days,Unknown,103,days,18513
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,3802,days,alive without event,3802,days,Unknown,401,days,327
+4S,Unknown,not amplified,1877,days,alive without event,1877,days,Unknown,30,days,France_NBAF54
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,70,days,alive with relapse/primary tumor,1394,days,progression,3,days,18441
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,622,days,deceased,2132,days,relapse,2264,days,616
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,593,days,deceased,1362,days,relapse,987,days,16261
+2B,Unknown,not amplified,374,days,deceased,1135,days,relapse,2885,days,Italy_1084
+4,Unknown,not amplified,2871,days,alive without event,2871,days,Unknown,549,days,USA_91257
+4,Unknown,not amplified,112,days,deceased,239,days,relapse,1968,days,USA_94034
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,2743,days,alive without event,2743,days,Unknown,3,days,9323
+4,Unknown,not amplified,354,days,deceased,441,days,relapse,267,days,UK_33
+4,Unknown,amplified,187,days,deceased,209,days,relapse,489,days,USA_93172
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1961,days,alive without event,1961,days,Unknown,456,days,13564
+1,Unknown,not amplified,1288,days,alive without event,1288,days,Unknown,262,days,18177
+2B,Unknown,not amplified,601,days,alive without event,601,days,Unknown,120,days,19746
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1047,days,alive without event,1047,days,Unknown,35,days,17053
+4S,imbalance (FISH),not amplified,207,days,alive with relapse/primary tumor,1159,days,progression,0,days,18154
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,2022,days,alive without event,2022,days,Unknown,480,days,15293
+4,Unknown,amplified,198,days,deceased,271,days,relapse,676,days,Italy_1289
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,631,days,deceased,1397,days,relapse,1931,days,17618
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,3267,days,alive without event,3267,days,Unknown,479,days,3623
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,2849,days,alive without event,2849,days,Unknown,243,days,10447
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2229,days,alive without event,2229,days,Unknown,204,days,16376
+4S,Unknown,not amplified,164,days,alive with relapse/primary tumor,743,days,progression,3,days,19350
+4,Unknown,not amplified,233,days,deceased,1167,days,relapse,1647,days,Italy_535
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,707,days,alive without event,707,days,Unknown,488,days,3883
+1,Unknown,not amplified,819,days,alive without event,819,days,Unknown,118,days,19513
+1,Unknown,not amplified,2927,days,alive without event,2927,days,Unknown,102,days,France_NBAF53
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1750,days,alive without event,1750,days,Unknown,16,days,17612
+4,deletion (FISH) or LOH1p (PCR),"not amplified, Nmyc gain",3219,days,alive without event,3219,days,Unknown,1486,days,5643
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,876,days,alive without event,876,days,Unknown,765,days,17915
+3,deletion (FISH) or LOH1p (PCR),not amplified,3250,days,alive without event,3250,days,Unknown,181,days,586
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1406,days,alive without event,1406,days,Unknown,502,days,16555
+4,Unknown,amplified,2432,days,alive without event,2432,days,Unknown,1413,days,USA_94042
+4S,Unknown,not amplified,930,days,alive without event,930,days,Unknown,143,days,19038
+3,Unknown,not amplified,295,days,alive with relapse/primary tumor,456,days,progression,448,days,20125
+4,imbalance (FISH),not amplified,455,days,alive with relapse/primary tumor,840,days,relapse,2135,days,19388
+4,Unknown,not amplified,6600,days,alive without event,6600,days,Unknown,1290,days,Israel_831
+2B,Unknown,not amplified,68,days,alive with relapse/primary tumor,735,days,progression,0,days,19757
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,2184,days,alive without event,2184,days,Unknown,379,days,16658
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1405,days,alive without event,1405,days,Unknown,21,days,18167
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2861,days,alive without event,2861,days,Unknown,181,days,10143
+4,Unknown,amplified,274,days,alive without event,274,days,Unknown,633,days,20391
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1262,days,alive with relapse/primary tumor,1470,days,relapse,50,days,18004
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,3069,days,alive without event,3069,days,Unknown,0,days,13384
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,1219,days,alive without event,1219,days,Unknown,370,days,18498
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,3325,days,alive without event,3325,days,Unknown,398,days,609
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,1128,days,alive with relapse/primary tumor,1882,days,progression,47,days,16677
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,497,days,deceased,1445,days,relapse,933,days,3383
+4,deletion (FISH) or LOH1p (PCR),not amplified,196,days,deceased,1014,days,relapse,1363,days,14506
+3,deletion (FISH) or LOH1p (PCR),amplified,1324,days,alive without event,1324,days,Unknown,571,days,17817
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,3534,days,alive without event,3534,days,Unknown,400,days,417
+2,Unknown,not amplified,986,days,alive without event,986,days,Unknown,890,days,18452
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1793,days,alive without event,1793,days,Unknown,887,days,15823
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,3773,days,alive without event,3773,days,Unknown,2003,days,459
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1467,days,alive without event,1467,days,Unknown,121,days,13164
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,363,days,alive with relapse/primary tumor,1063,days,relapse,758,days,17973
+4S,Unknown,not amplified,3832,days,alive without event,3832,days,Unknown,212,days,528
+4S,Unknown,not amplified,5494,days,alive without event,5494,days,Unknown,30,days,France_NBAF48
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,493,days,alive with relapse/primary tumor,3128,days,progression,352,days,671
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,3345,days,alive without event,3345,days,Unknown,173,days,599
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2887,days,alive without event,2887,days,Unknown,743,days,4185
+4S,Unknown,not amplified,637,days,alive without event,637,days,Unknown,80,days,19507
+4,deletion (FISH) or LOH1p (PCR),amplified,946,days,deceased,1375,days,relapse,583,days,16637
+1,imbalance (FISH),not amplified,790,days,alive without event,790,days,Unknown,267,days,18816
+4,Unknown,not amplified,3417,days,alive without event,3417,days,Unknown,180,days,USA_93130
+4S,cannot be specified,not amplified,742,days,alive without event,742,days,Unknown,116,days,18972
+4,deletion (FISH) or LOH1p (PCR),amplified,214,days,deceased,360,days,progression,8278,days,15203
+4,Unknown,amplified,471,days,alive with relapse/primary tumor,472,days,relapse,1171,days,20115
+4,Unknown,not amplified,3283,days,alive without event,3283,days,Unknown,261,days,USA_93162
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,1752,days,alive with relapse/primary tumor,2439,days,relapse,359,days,13747
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,1752,days,alive without event,1752,days,Unknown,1733,days,17001
+3,Unknown,not amplified,665,days,deceased,884,days,relapse,1053,days,USA_90118
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,301,days,alive with relapse/primary tumor,957,days,progression,305,days,19081
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,2016,days,alive without event,2016,days,Unknown,367,days,15070
+1,Unknown,not amplified,497,days,alive without event,497,days,Unknown,226,days,19529
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,810,days,alive without event,810,days,Unknown,313,days,18505
+3,Unknown,not amplified,186,days,alive with relapse/primary tumor,547,days,relapse,0,days,19887
+4,deletion (FISH) or LOH1p (PCR),amplified,482,days,deceased,889,days,progression,279,days,17620
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,994,days,alive without event,994,days,Unknown,461,days,575
+2B,Unknown,not amplified,3109,days,alive without event,3109,days,Unknown,36,days,France_NBAF50
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,2094,days,alive without event,2094,days,Unknown,414,days,10103
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,1135,days,alive without event,1135,days,Unknown,300,days,18800
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,83,days,alive with relapse/primary tumor,824,days,progression,42,days,18904
+4S,Unknown,not amplified,1380,days,alive without event,1380,days,Unknown,6,days,437
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2875,days,alive without event,2875,days,Unknown,499,days,7943
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2639,days,alive without event,2639,days,Unknown,546,days,4443
+4,Unknown,not amplified,219,days,alive without event,219,days,Unknown,1101,days,20420
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,3669,days,alive without event,3669,days,Unknown,466,days,389
+4,Unknown,not amplified,4469,days,alive without event,4469,days,Unknown,75,days,USA_91156
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,486,days,deceased,1293,days,relapse,4394,days,13947
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,2329,days,alive without event,2329,days,Unknown,381,days,15562
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,1043,days,alive without event,1043,days,Unknown,1909,days,18270
+4,Unknown,not amplified,718,days,deceased,1260,days,relapse,1305,days,France_NBAF1
+1,deletion (FISH) or LOH1p (PCR),not amplified,2317,days,alive without event,2317,days,Unknown,465,days,13265
+1,Unknown,not amplified,941,days,alive without event,941,days,Unknown,165,days,19406
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,3493,days,alive without event,3493,days,Unknown,321,days,587
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,715,days,alive with relapse/primary tumor,827,days,relapse,259,days,19461
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,1833,days,alive without event,1833,days,Unknown,344,days,16543
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,1316,days,alive without event,1316,days,Unknown,386,days,17941
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,2632,days,alive without event,2632,days,Unknown,52,days,14006
+1,Unknown,not amplified,810,days,alive without event,810,days,Unknown,300,days,Spain_01B10344
+4,Unknown,not amplified,2947,days,alive without event,2947,days,Unknown,516,days,USA_91017
+4,Unknown,amplified,1077,days,alive without event,1077,days,Unknown,219,days,18960
+1,Unknown,not amplified,361,days,alive without event,361,days,Unknown,460,days,20258
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1017,days,alive without event,1017,days,Unknown,46,days,18086
+3,Unknown,not amplified,59,days,alive with relapse/primary tumor,481,days,progression,49,days,19965
+4,Unknown,not amplified,86,days,alive with relapse/primary tumor,674,days,progression,105,days,19656
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2009,days,alive without event,2009,days,Unknown,460,days,13666
+1,Unknown,not amplified,1590,days,alive without event,1590,days,Unknown,310,days,Spain_00B2431
+1,Unknown,not amplified,1134,days,alive without event,1134,days,Unknown,443,days,18797
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,615,days,alive with relapse/primary tumor,941,days,relapse,1537,days,19142
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2908,days,alive without event,2908,days,Unknown,468,days,6243
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,1259,days,alive without event,1259,days,Unknown,1141,days,17919
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,1654,days,alive without event,1654,days,Unknown,228,days,17189
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,4828,days,alive without event,4828,days,Unknown,56,days,1945
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,2125,days,alive without event,2125,days,Unknown,395,days,15347
+1,Unknown,not amplified,585,days,alive without event,585,days,Unknown,560,days,19856
+2A,Unknown,not amplified,390,days,alive with relapse/primary tumor,406,days,progression,3,days,20170
+3,Unknown,not amplified,188,days,alive with relapse/primary tumor,609,days,progression,84,days,19869
+4,Unknown,amplified,181,days,deceased,846,days,relapse,870,days,UK_6
+4S,Unknown,not amplified,739,days,alive without event,739,days,Unknown,8,days,19696
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,132,days,alive with relapse/primary tumor,2118,days,progression,206,days,16270
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1187,days,alive without event,1187,days,Unknown,63,days,16708
+4,Unknown,not amplified,3945,days,alive without event,3945,days,Unknown,237,days,USA_91-36
+1,Unknown,not amplified,539,days,alive without event,539,days,Unknown,23,days,19861
+4,Unknown,amplified,314,days,deceased,345,days,relapse,633,days,USA_93059
+3,deletion (FISH) or LOH1p (PCR),amplified,620,days,deceased,1081,days,relapse,379,days,4188
+4S,Unknown,not amplified,17,days,alive with relapse/primary tumor,955,days,progression,146,days,19261
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,838,days,deceased,1549,days,relapse,932,days,519
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,1480,days,alive with relapse/primary tumor,2163,days,relapse,2429,days,15991
+3,Unknown,not amplified,2247,days,alive without event,2247,days,Unknown,801,days,USA_91073
+3,deletion (FISH) or LOH1p (PCR),amplified,1541,days,alive without event,1541,days,Unknown,823,days,16938
+2A,Unknown,not amplified,3081,days,alive without event,3081,days,Unknown,1074,days,642
+1,Unknown,not amplified,1410,days,alive without event,1410,days,Unknown,210,days,Spain_00B1748
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1934,days,alive without event,1934,days,Unknown,218,days,16061
+2,Unknown,not amplified,598,days,alive without event,598,days,Unknown,35,days,19818
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2101,days,alive without event,2101,days,Unknown,496,days,404
+2A,Unknown,not amplified,407,days,alive without event,407,days,Unknown,170,days,19984
+3,Unknown,not amplified,592,days,alive without event,592,days,Unknown,218,days,19613
+3,Unknown,not amplified,542,days,alive without event,542,days,Unknown,279,days,19924
+1,Unknown,not amplified,1470,days,alive without event,1470,days,Unknown,240,days,Spain_00B11430
+1,Unknown,not amplified,1984,days,alive without event,1984,days,Unknown,47,days,Italy_1926
+2,no deletion (FISH) or no LOH1p (PCR),not amplified,1857,days,alive without event,1857,days,Unknown,9,days,16885
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,883,days,alive without event,883,days,Unknown,427,days,15065
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,2707,days,alive without event,2707,days,Unknown,228,days,9843
+4,Unknown,not amplified,634,days,deceased,727,days,relapse,1116,days,Italy_1900
+4,Unknown,not amplified,421,days,deceased,638,days,relapse,1858,days,17636
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,206,days,alive with relapse/primary tumor,2120,days,unknown,521,days,13245
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1027,days,alive without event,1027,days,Unknown,530,days,17781
+4,deletion (FISH) or LOH1p (PCR),amplified,212,days,deceased,220,days,relapse,536,days,18043
+4,imbalance (FISH),amplified,443,days,deceased,784,days,relapse,2105,days,17777
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,3312,days,alive without event,3312,days,Unknown,472,days,431
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,98,days,alive with relapse/primary tumor,3072,days,progression,304,days,2681
+4,Unknown,amplified,426,days,deceased,725,days,relapse,2081,days,Italy_1276
+3,deletion (FISH) or LOH1p (PCR),not amplified,2794,days,alive without event,2794,days,Unknown,1071,days,6163
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,4191,days,alive without event,4191,days,Unknown,194,days,493
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1163,days,alive without event,1163,days,Unknown,0,days,18007
+4,Unknown,not amplified,2254,days,alive without event,2254,days,Unknown,318,days,USA_94176
+4,Unknown,not amplified,302,days,deceased,510,days,relapse,450,days,UK_34
+4,deletion (FISH) or LOH1p (PCR),not amplified,475,days,deceased,601,days,progression,724,days,14104
+4,Unknown,not amplified,2621,days,alive without event,2621,days,Unknown,342,days,USA_95082
+3,Unknown,not amplified,74,days,alive with relapse/primary tumor,3511,days,progression,364,days,5383
+3,Unknown,not amplified,2462,days,alive without event,2462,days,Unknown,3,days,France_NBAF29
+4,deletion (FISH) or LOH1p (PCR),amplified,441,days,deceased,478,days,relapse,1964,days,18337
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,2046,days,alive without event,2046,days,Unknown,867,days,15672
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,2274,days,alive without event,2274,days,Unknown,0,days,13024
+4,Unknown,not amplified,2730,days,alive without event,2730,days,Unknown,294,days,USA_95-86
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1262,days,alive with relapse/primary tumor,1470,days,relapse,50,days,18004
+3,Unknown,not amplified,2313,days,alive without event,2313,days,Unknown,921,days,USA_91136
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2167,days,alive without event,2167,days,Unknown,0,days,15675
+4,Unknown,not amplified,2280,days,alive without event,2280,days,Unknown,1050,days,Israel_1357y
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,3472,days,alive without event,3472,days,Unknown,405,days,325
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,3768,days,alive without event,3768,days,Unknown,452,days,315
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1799,days,alive without event,1799,days,Unknown,380,days,6183
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2123,days,alive without event,2123,days,Unknown,446,days,5723
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,1211,days,alive without event,1211,days,Unknown,417,days,6863
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,769,days,alive without event,769,days,Unknown,20,days,18772
+4,Unknown,not amplified,420,days,deceased,960,days,relapse,1830,days,Israel_3143y
+4,deletion (FISH) or LOH1p (PCR),amplified,433,days,deceased,711,days,relapse,517,days,17863
+4,Unknown,amplified,576,days,deceased,1049,days,relapse,1676,days,USA_91194
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,3293,days,alive without event,3293,days,Unknown,545,days,634
+2A,Unknown,not amplified,504,days,alive without event,504,days,Unknown,84,days,19908
+4,imbalance (FISH),not amplified,1349,days,alive without event,1349,days,Unknown,1640,days,17871
+4,Unknown,not amplified,2762,days,alive without event,2762,days,Unknown,291,days,France_NBAF42
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,936,days,alive without event,936,days,Unknown,217,days,18478
+4,deletion (FISH) or LOH1p (PCR),not amplified,532,days,deceased,626,days,relapse,1841,days,226
+1,Unknown,not amplified,231,days,alive without event,231,days,Unknown,56,days,20232
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,2780,days,alive without event,2780,days,Unknown,975,days,5183
+4,deletion (FISH) or LOH1p (PCR),"not amplified, Nmyc gain",344,days,deceased,369,days,relapse,552,days,18726
+4S,no deletion (FISH) or no LOH1p (PCR),amplified,607,days,alive without event,607,days,Unknown,90,days,18926
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1001,days,alive without event,1001,days,Unknown,90,days,18668
+2B,Unknown,not amplified,1148,days,alive without event,1148,days,Unknown,24,days,France_NBAF39
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,33,days,alive with relapse/primary tumor,2416,days,progression,262,days,15296
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1576,days,alive with relapse/primary tumor,5860,days,relapse,8926,days,1695
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,3276,days,alive without event,3276,days,Unknown,529,days,345
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1408,days,alive without event,1408,days,Unknown,337,days,17564
+1,Unknown,not amplified,150,days,alive without event,150,days,Unknown,300,days,Spain_00B21325
+3,Unknown,amplified,295,days,deceased,429,days,relapse,526,days,18417
+3,Unknown,amplified,95,days,deceased,103,days,progression,310,days,20186
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,922,days,deceased,1247,days,relapse,1429,days,432
+3,Unknown,not amplified,954,days,alive without event,954,days,Unknown,385,days,18450
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,959,days,alive without event,959,days,Unknown,301,days,18129
+4,deletion (FISH) or LOH1p (PCR),amplified,795,days,alive without event,795,days,Unknown,880,days,19235
+3,deletion (FISH) or LOH1p (PCR),amplified,1504,days,alive without event,1504,days,Unknown,1308,days,17258
+3,Unknown,not amplified,584,days,alive with relapse/primary tumor,2030,days,progression,2130,days,France_NBAF4
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,917,days,alive without event,917,days,Unknown,1676,days,19079
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,806,days,alive without event,806,days,Unknown,85,days,18722
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,3379,days,alive without event,3379,days,Unknown,495,days,413
+3,Unknown,not amplified,1170,days,deceased,2010,days,relapse,1200,days,Israel_6072y
+4S,deletion (FISH) or LOH1p (PCR),amplified,1307,days,alive without event,1307,days,Unknown,97,days,14533
+2,Unknown,not amplified,5070,days,alive without event,5070,days,Unknown,660,days,Israel_634x
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,155,days,alive with relapse/primary tumor,1443,days,progression,87,days,18076
+4S,imbalance (FISH),not amplified,318,days,alive with relapse/primary tumor,2907,days,progression,165,days,1503
+4,Unknown,amplified,550,days,alive without event,550,days,Unknown,710,days,19986
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,134,days,alive with relapse/primary tumor,2083,days,progression,374,days,13304
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1590,days,alive without event,1590,days,Unknown,118,days,16063
+4,Unknown,not amplified,1132,days,alive without event,1132,days,Unknown,1590,days,18802
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,600,days,alive without event,600,days,Unknown,8,days,19669
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1055,days,alive without event,1055,days,Unknown,147,days,17000
+4S,deletion (FISH) or LOH1p (PCR),amplified,2306,days,alive without event,2306,days,Unknown,217,days,10063
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,4938,days,alive without event,4938,days,Unknown,144,days,1942
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,2965,days,alive without event,2965,days,Unknown,451,days,6763
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2671,days,alive without event,2671,days,Unknown,470,days,6383
+4,Unknown,amplified,563,days,deceased,1073,days,relapse,641,days,17021
+4,Unknown,not amplified,375,days,deceased,735,days,relapse,1113,days,UK_7
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,192,days,alive with relapse/primary tumor,1508,days,progression,6,days,16980
+1,Unknown,not amplified,542,days,alive without event,542,days,Unknown,98,days,19431
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1861,days,alive without event,1861,days,Unknown,379,days,523
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,645,days,deceased,899,days,progression,8983,days,17683
+4,imbalance (FISH),not amplified,2502,days,alive without event,2502,days,Unknown,366,days,15240
+1,Unknown,amplified,685,days,deceased,760,days,relapse,780,days,France_NBAF2
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,540,days,deceased,1120,days,progression,1408,days,18533
+2,Unknown,not amplified,643,days,alive without event,643,days,Unknown,732,days,19194
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,973,days,alive without event,973,days,Unknown,0,days,18930
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1064,days,alive without event,1064,days,Unknown,59,days,18432
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2372,days,alive without event,2372,days,Unknown,420,days,527
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,414,days,deceased,1327,days,progression,4785,days,13884
+1,Unknown,not amplified,3131,days,alive without event,3131,days,Unknown,1833,days,Italy_1554
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,2680,days,alive without event,2680,days,Unknown,108,days,12084
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,2057,days,alive without event,2057,days,Unknown,349,days,16437
+4,Unknown,not amplified,182,days,alive without event,182,days,Unknown,1267,days,20428
+4,Unknown,not amplified,450,days,alive without event,450,days,Unknown,1273,days,20074
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,443,days,alive without event,443,days,Unknown,98,days,19676
+2A,Unknown,not amplified,2163,days,alive without event,2163,days,Unknown,187,days,France_I_NBAF59
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,1316,days,alive without event,1316,days,Unknown,371,days,17665
+4,deletion (FISH) or LOH1p (PCR),amplified,326,days,deceased,391,days,relapse,121,days,14359
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,3388,days,alive without event,3388,days,Unknown,705,days,625
+4,Unknown,amplified,323,days,deceased,487,days,relapse,1611,days,UK_40
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,651,days,alive with relapse/primary tumor,2230,days,progression,453,days,13364
+3,Unknown,not amplified,5040,days,alive without event,5040,days,Unknown,270,days,Israel_660x
+4S,Unknown,not amplified,995,days,alive without event,995,days,Unknown,263,days,19118
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,1258,days,alive without event,1258,days,Unknown,13,days,18428
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,855,days,alive without event,855,days,Unknown,23,days,18953
+3,Unknown,amplified,330,days,deceased,404,days,progression,767,days,18028
+2A,Unknown,not amplified,2926,days,alive without event,2926,days,Unknown,1841,days,9663
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,1924,days,alive without event,1924,days,Unknown,715,days,628
+4,Unknown,not amplified,3948,days,alive without event,3948,days,Unknown,180,days,USA_91292
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,2576,days,alive without event,2576,days,Unknown,498,days,657
+4,Unknown,amplified,223,days,deceased,309,days,relapse,1185,days,France_NBAF7
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,933,days,alive without event,933,days,Unknown,1798,days,18783
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1223,days,alive without event,1223,days,Unknown,128,days,17809
+3,imbalance (FISH),not amplified,483,days,deceased,846,days,progression,1585,days,17721
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2184,days,alive without event,2184,days,Unknown,449,days,13885
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,3832,days,alive without event,3832,days,Unknown,0,days,343
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2856,days,alive without event,2856,days,Unknown,41,days,3463
+4,deletion (FISH) or LOH1p (PCR),not amplified,2491,days,alive without event,2491,days,Unknown,1012,days,13967
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,2197,days,alive without event,2197,days,Unknown,426,days,14527
+4,Unknown,amplified,8,days,deceased,8,days,progression,1471,days,Italy_1869
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,168,days,alive with relapse/primary tumor,2367,days,progression,101,days,7363
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,1996,days,alive without event,1996,days,Unknown,91,days,15773
+1,deletion (FISH) or LOH1p (PCR),amplified,112,days,alive with relapse/primary tumor,2425,days,relapse,451,days,9923
+2B,Unknown,not amplified,2992,days,alive without event,2992,days,Unknown,402,days,624
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,1794,days,alive without event,1794,days,Unknown,528,days,15812
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,3067,days,alive without event,3067,days,Unknown,467,days,2702
+4,Unknown,not amplified,489,days,alive without event,489,days,Unknown,2324,days,19811
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1372,days,alive without event,1372,days,Unknown,463,days,2068
+4,Unknown,not amplified,70,days,alive with relapse/primary tumor,1606,days,relapse,114,days,France_NBAF66
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,1277,days,alive without event,1277,days,Unknown,356,days,16273
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,5019,days,alive without event,5019,days,Unknown,1016,days,1870
+4,Unknown,amplified,269,days,deceased,269,days,relapse,715,days,USA_94170
+1,Unknown,not amplified,2015,days,alive without event,2015,days,Unknown,216,days,Italy_2013
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,3303,days,alive without event,3303,days,Unknown,494,days,672
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,1526,days,alive without event,1526,days,Unknown,7,days,17296
+4S,Unknown,amplified,161,days,deceased,209,days,progression,85,days,19185
+2A,Unknown,not amplified,408,days,alive without event,408,days,Unknown,363,days,20175
+4,deletion (FISH) or LOH1p (PCR),amplified,840,days,deceased,1191,days,relapse,625,days,15316
+3,Unknown,not amplified,2511,days,alive without event,2511,days,Unknown,192,days,Italy_1808
+2B,Unknown,not amplified,2826,days,alive without event,2826,days,Unknown,442,days,5925
+4,no deletion (FISH) or no LOH1p (PCR),"not amplified, Nmyc gain",1399,days,alive with relapse/primary tumor,2043,days,relapse,215,days,16656
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2426,days,alive without event,2426,days,Unknown,546,days,10644
+4,Unknown,amplified,837,days,alive with relapse/primary tumor,2051,days,relapse,1067,days,USA_93256
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,1596,days,alive without event,1596,days,Unknown,515,days,17027
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,3031,days,alive without event,3031,days,Unknown,440,days,3826
+4,imbalance (FISH),not amplified,532,days,deceased,1118,days,relapse,1529,days,18538
+1,Unknown,not amplified,996,days,alive without event,996,days,Unknown,0,days,19186
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,1246,days,alive with relapse/primary tumor,1998,days,relapse,1126,days,16500
+4,Unknown,"not amplified, Nmyc gain",120,days,alive with relapse/primary tumor,1440,days,relapse,750,days,Spain_01B00669
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,1129,days,alive without event,1129,days,Unknown,1701,days,18240
+1,Unknown,not amplified,902,days,alive without event,902,days,Unknown,77,days,19251
+4,cannot be specified,not amplified,828,days,alive with relapse/primary tumor,1224,days,relapse,1524,days,18461
+4,Unknown,not amplified,576,days,alive without event,576,days,Unknown,247,days,19734
+4,deletion (FISH) or LOH1p (PCR),amplified,363,days,deceased,499,days,relapse,3842,days,15282
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,2273,days,alive without event,2273,days,Unknown,429,days,13866
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,705,days,alive with relapse/primary tumor,2441,days,relapse,1424,days,13169
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,105,days,alive with relapse/primary tumor,4401,days,relapse,132,days,2110
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,293,days,alive with relapse/primary tumor,2807,days,progression,227,days,10504
+3,Unknown,not amplified,1112,days,alive without event,1112,days,Unknown,1683,days,18666
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,1046,days,alive without event,1046,days,Unknown,14,days,18874
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2055,days,alive without event,2055,days,Unknown,10,days,15086
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,296,days,alive with relapse/primary tumor,1391,days,progression,10,days,17663
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,399,days,deceased,419,days,progression,144,days,595
+4,Unknown,not amplified,147,days,alive with relapse/primary tumor,3234,days,relapse,1024,days,USA_93235
+4S,Unknown,not amplified,66,days,deceased,66,days,progression,12,days,18540
+2B,Unknown,not amplified,1111,days,alive without event,1111,days,Unknown,680,days,17416
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,555,days,deceased,763,days,relapse,5465,days,2117
+4,Unknown,not amplified,218,days,deceased,364,days,relapse,924,days,USA_93239
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,2900,days,alive without event,2900,days,Unknown,79,days,12126
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,3513,days,alive without event,3513,days,Unknown,526,days,472
+4,deletion (FISH) or LOH1p (PCR),amplified,1197,days,deceased,1695,days,relapse,978,days,15821
+4,deletion (FISH) or LOH1p (PCR),amplified,201,days,deceased,207,days,relapse,1904,days,14529
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1216,days,alive without event,1216,days,Unknown,315,days,18318
+4S,Unknown,not amplified,764,days,alive without event,764,days,Unknown,3,days,France_NBAF56
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,1063,days,alive without event,1063,days,Unknown,1602,days,17831
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,390,days,alive without event,390,days,Unknown,9,days,19626
+4,Unknown,not amplified,2813,days,alive without event,2813,days,Unknown,81,days,USA_91141
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1685,days,alive without event,1685,days,Unknown,35,days,17344
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,3509,days,alive without event,3509,days,Unknown,744,days,462
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1199,days,alive without event,1199,days,Unknown,139,days,18147
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,674,days,deceased,1820,days,relapse,207,days,13746
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,753,days,alive with relapse/primary tumor,2650,days,relapse,1319,days,15475
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1778,days,alive without event,1778,days,Unknown,66,days,15964
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,796,days,alive without event,796,days,Unknown,134,days,18261
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2247,days,alive without event,2247,days,Unknown,465,days,15096
+1,deletion (FISH) or LOH1p (PCR),not amplified,863,days,alive without event,863,days,Unknown,2041,days,18156
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,3898,days,alive without event,3898,days,Unknown,408,days,498
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,2176,days,alive without event,2176,days,Unknown,0,days,15934
+2B,Unknown,amplified,2761,days,alive without event,2761,days,Unknown,270,days,France_NBAF43
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2355,days,alive without event,2355,days,Unknown,425,days,13568
+4,deletion (FISH) or LOH1p (PCR),amplified,945,days,alive without event,945,days,Unknown,769,days,18149
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,1827,days,alive without event,1827,days,Unknown,193,days,16891
+4,Unknown,not amplified,164,days,alive with relapse/primary tumor,2174,days,relapse,1890,days,USA_92154
+4,Unknown,not amplified,349,days,deceased,1341,days,relapse,1764,days,USA_93082
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,2593,days,alive without event,2593,days,Unknown,66,days,8503
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,3249,days,alive without event,3249,days,Unknown,476,days,312
+3,imbalance (FISH),amplified,1477,days,alive without event,1477,days,Unknown,2737,days,17238
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,1219,days,alive without event,1219,days,Unknown,0,days,17240
+4,imbalance (FISH),amplified,305,days,deceased,375,days,progression,589,days,15377
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2557,days,alive without event,2557,days,Unknown,450,days,10724
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,2244,days,alive without event,2244,days,Unknown,1468,days,15983
+2A,Unknown,not amplified,478,days,alive without event,478,days,Unknown,29,days,19977
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,1016,days,alive without event,1016,days,Unknown,256,days,18092
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,983,days,alive without event,983,days,Unknown,824,days,17527
+4,Unknown,amplified,245,days,deceased,415,days,relapse,3072,days,USA_95117
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,2255,days,alive without event,2255,days,Unknown,107,days,15303
+2A,no deletion (FISH) or no LOH1p (PCR),not amplified,54,days,alive with relapse/primary tumor,1307,days,relapse,240,days,17315
+4S,Unknown,not amplified,692,days,alive without event,692,days,Unknown,180,days,19356
+3,deletion (FISH) or LOH1p (PCR),amplified,2391,days,alive without event,2391,days,Unknown,1652,days,15732
+3,Unknown,not amplified,866,days,alive with relapse/primary tumor,1133,days,relapse,1004,days,18458
+3,deletion (FISH) or LOH1p (PCR),amplified,522,days,deceased,1655,days,relapse,1679,days,5703
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2194,days,alive without event,2194,days,Unknown,497,days,14985
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,812,days,deceased,1454,days,relapse,2544,days,9243
+4S,Unknown,not amplified,897,days,alive without event,897,days,Unknown,80,days,19271
+2,Unknown,amplified,570,days,deceased,720,days,relapse,690,days,Spain_03B6659
+3,no deletion (FISH) or no LOH1p (PCR),not amplified,1698,days,alive without event,1698,days,Unknown,1381,days,17229
+4,Unknown,not amplified,602,days,deceased,1229,days,relapse,1545,days,USA_92282
+1,Unknown,unknown,1385,days,alive without event,1385,days,Unknown,734,days,17104
+4S,Unknown,not amplified,1536,days,alive without event,1536,days,Unknown,33,days,France_NBAF26
+1,Unknown,not amplified,518,days,alive without event,518,days,Unknown,356,days,20068
+4,no deletion (FISH) or no LOH1p (PCR),not amplified,2437,days,alive without event,2437,days,Unknown,1085,days,14360
+3,Unknown,not amplified,4890,days,alive without event,4890,days,Unknown,271,days,Israel_795x
+4S,no deletion (FISH) or no LOH1p (PCR),not amplified,3357,days,alive without event,3357,days,Unknown,0,days,494
+4,Unknown,amplified,90,days,deceased,90,days,relapse,3240,days,Spain_02B20617
+1,Unknown,not amplified,439,days,alive without event,439,days,Unknown,262,days,19796
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,670,days,alive without event,670,days,Unknown,700,days,18804
+3,deletion (FISH) or LOH1p (PCR),amplified,347,days,deceased,360,days,progression,1081,days,2056
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,2173,days,alive without event,2173,days,Unknown,638,days,15784
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,1087,days,alive without event,1087,days,Unknown,13,days,17882
+1,no deletion (FISH) or no LOH1p (PCR),amplified,524,days,deceased,592,days,relapse,4131,days,15403
+3,Unknown,not amplified,321,days,alive with relapse/primary tumor,1030,days,relapse,227,days,18981
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,1799,days,alive without event,1799,days,Unknown,151,days,16663
+2B,no deletion (FISH) or no LOH1p (PCR),not amplified,1589,days,alive without event,1589,days,Unknown,458,days,670
+1,no deletion (FISH) or no LOH1p (PCR),not amplified,2908,days,alive without event,2908,days,Unknown,37,days,8523

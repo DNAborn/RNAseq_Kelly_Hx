@@ -56,3 +56,8 @@ rsconnect/
 
 # Cached NCBI downloads for the literature coverage columns (re-downloadable)
 6_XM_data_merge/cache/
+
+# Large raw data (>100 MB, not allowed on GitHub)
+6_XM_data_merge/*Counts_4v1.xlsx
+6_XM_data_merge/Counts_primary_microarray_4v1.xlsx
+6_XM_data_merge/cache/

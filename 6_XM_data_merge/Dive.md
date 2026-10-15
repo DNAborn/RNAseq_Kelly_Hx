@@ -6,6 +6,15 @@ Master_Table_Dive
 - [Reduced table](#reduced-table)
 - [Risk versus HIF dependence](#risk-versus-hif-dependence)
 - [HR Ratio of TOP HIF1A & HIF2A](#hr-ratio-of-top-hif1a--hif2a)
+- [Hypoxia response across cell lines: Kelly vs SK-N-AS /
+  SH-SY5Y](#hypoxia-response-across-cell-lines-kelly-vs-sk-n-as--sh-sy5y)
+  - [1. TOP20 (log2 Hx vs Nx)](#1-top20-log2-hx-vs-nx)
+  - [2. All HIF1A and HIF2A targets (log2 Hx vs
+    Nx)](#2-all-hif1a-and-hif2a-targets-log2-hx-vs-nx)
+  - [3. Top 500 hypoxia-regulated genes (log2 Hx vs
+    Nx)](#3-top-500-hypoxia-regulated-genes-log2-hx-vs-nx)
+  - [4. Top 500 hypoxia-regulated genes (z-score per
+    line)](#4-top-500-hypoxia-regulated-genes-z-score-per-line)
 - [Hypoxia-induced genes: protective or
   adverse?](#hypoxia-induced-genes-protective-or-adverse)
   - [Stage 1: what hypoxia regulates in
@@ -495,6 +504,665 @@ ggplot(hr_top, aes(y = label, x = HR, colour = group)) +
 </details>
 
 ![](Dive_files/figure-gfm/hr_top_targets-1.png)<!-- -->
+
+# Hypoxia response across cell lines: Kelly vs SK-N-AS / SH-SY5Y
+
+How much of the Kelly hypoxia response do the two MYCN-non-amplified
+lines share, and which part of it depends on HIF1A, HIF2A or ARNT? The
+heatmaps show per-sample expression of Kelly WT, the three Kelly KOs,
+SK-N-AS and SH-SY5Y. The lines come from separate experiments, and Kelly
+itself from three sequencing projects, so raw values would mostly show
+line and batch. Each experiment is therefore VST-transformed on its own
+and every gene is centered on the normoxia mean of its own line or KO
+(Kelly: per project). The HIF1A and HIF2A KO samples of project P557 are
+Hx only, have no reference and are left out. Every Nx and Hx block is
+drawn at the same width regardless of its sample number, so Kelly WT (31
+samples) does not outweigh the 6-sample lines. A cell then reads as log2
+change vs normoxia. The Nx columns are therefore white by construction,
+not by a filter - they are the reference, and only their replicate
+scatter remains visible. The price is that baseline differences between
+the lines are removed on purpose; the strip on the left puts the
+expression level (baseMean per line) back in. The last heatmap shows the
+same data as a per-line z-score instead, the more common publication
+style.
+
+Four gene sets, from small to large: the CUT&RUN TOP20, all HIF targets,
+all hypoxia-regulated genes, and the latter again as z-score. The panels
+run SK-N-AS, SH-SY5Y, Kelly WT, then the three Kelly KOs. Rows are
+clustered (Ward) on the mean Hx response of SK-N-AS, SH-SY5Y and Kelly
+WT only - one value per line, so the three lines weigh equally and the
+KOs only show how each cluster depends on HIF1A, HIF2A and ARNT. The
+TOP20 are labelled on the right in every heatmap, on a HIF1A / HIF2A
+coloured background.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+# The DESeq2 objects live on Google Drive; the centered VST matrix is cached so
+# the document also knits without them. Delete the cache to rebuild it.
+hm_cache <- here::here("6_XM_data_merge", "cache", "hx_heatmap_vst.rds")
+
+if (file.exists(hm_cache)) {
+  hm <- readRDS(hm_cache)
+} else {
+  gdrive <- "/Users/simonkelterborn/Library/CloudStorage/GoogleDrive-simon.kelterborn@gmail.com/Meine Ablage/! OneDrive Charité"
+  # Load (not attach) DESeq2 for its S4 methods - attaching would mask dplyr verbs.
+  loadNamespace("DESeq2")
+
+  dds_k <- readRDS(file.path(gdrive, "dds_filtered_with_metadata.rds"))
+  e <- new.env()
+  load(file.path(gdrive, "SKNAS_SHSY5Y.dds"), envir = e)
+  dds_b <- e$dds
+
+  vst_k <- SummarizedExperiment::assay(DESeq2::vst(dds_k, blind = TRUE))
+  vst_b <- SummarizedExperiment::assay(DESeq2::vst(dds_b, blind = TRUE))
+  shared <- intersect(rownames(vst_k), rownames(vst_b))
+
+  cd_k <- SummarizedExperiment::colData(dds_k)
+  ko_names <- c(WT = "Kelly", `HIF1a-KO` = "HIF1A KO", `HIF2a-KO` = "HIF2A KO",
+                `HIF1b-KO` = "ARNT KO")
+  cd_b <- SummarizedExperiment::colData(dds_b)
+  hm_cols <- rbind(
+    data.frame(sample = colnames(vst_k),
+               line = unname(ko_names[as.character(cd_k$genotype)]),
+               condition = as.character(cd_k$condition),
+               batch = paste(cd_k$genotype, cd_k$project)),
+    data.frame(sample = colnames(vst_b), line = as.character(cd_b$Celltype),
+               condition = ifelse(cd_b$Condition == "Hypoxia", "Hx", "Nx"),
+               batch = as.character(cd_b$Celltype)))
+
+  hm_mat <- cbind(vst_k[shared, ], vst_b[shared, ])
+  # Batches without normoxia samples (the P557 KOs are Hx only) have no
+  # reference to center on and are dropped.
+  has_nx <- tapply(hm_cols$condition == "Nx", hm_cols$batch, any)
+  keep   <- has_nx[hm_cols$batch]
+  hm_cols <- hm_cols[keep, ]
+  hm_mat  <- hm_mat[, keep]
+  for (b in unique(hm_cols$batch)) {
+    i <- hm_cols$batch == b
+    hm_mat[, i] <- hm_mat[, i] - rowMeans(hm_mat[, i & hm_cols$condition == "Nx", drop = FALSE])
+  }
+
+  hm <- list(mat = hm_mat, cols = hm_cols)
+  saveRDS(hm, hm_cache)
+}
+
+# Plot order of all sample groups; the HIF KOs are Kelly derivatives.
+hm_panels <- c("SK-N-AS", "SH-SY5Y", "Kelly", "HIF1A KO", "HIF2A KO", "ARNT KO")
+
+tab(as.data.frame.matrix(table(factor(hm$cols$line, levels = hm_panels),
+                               factor(hm$cols$condition, levels = c("Nx", "Hx")))) %>%
+      tibble::rownames_to_column("line") %>%
+      dplyr::mutate(genes = ifelse(dplyr::row_number() == 1, nrow(hm$mat), NA)),
+    "Samples per line and condition (genes present in both experiments)")
+```
+
+</details>
+
+**Samples per line and condition (genes present in both experiments)**
+
+| line     |  Nx |  Hx | genes |
+|:---------|----:|----:|------:|
+| SK-N-AS  |   3 |   3 | 57785 |
+| SH-SY5Y  |   3 |   3 |    NA |
+| Kelly    |  16 |  15 |    NA |
+| HIF1A KO |   9 |  10 |    NA |
+| HIF2A KO |   8 |   8 |    NA |
+| ARNT KO  |   8 |   6 |    NA |
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+hm_lines <- c("SK-N-AS", "SH-SY5Y", "Kelly")
+
+# The TOP20 per HIF from the CUT&RUN figure (top_hif1a / top_hif2a above).
+top20 <- dplyr::bind_rows(
+    tibble(symbol = top_hif1a, group = "HIF1A targets"),
+    tibble(symbol = top_hif2a, group = "HIF2A targets")) %>%
+  dplyr::inner_join(master %>% dplyr::select(symbol, Ensembl, baseMean_Kelly),
+                    by = "symbol") %>%
+  dplyr::group_by(symbol) %>%
+  dplyr::slice_max(baseMean_Kelly, n = 1, with_ties = FALSE) %>%
+  dplyr::ungroup() %>%
+  dplyr::filter(Ensembl %in% rownames(hm$mat)) %>%
+  dplyr::mutate(label = ifelse(symbol %in% names(relabel), relabel[symbol], symbol))
+
+# Hypoxia response per gene and line: mean of the Hx samples, i.e. log2 vs Nx.
+hx_resp <- sapply(hm_lines, function(l)
+  rowMeans(hm$mat[, hm$cols$line == l & hm$cols$condition == "Hx"]))
+
+# All HIF targets from the Target column, as HIF1A / both / HIF2A row groups.
+in_hm <- master %>%
+  dplyr::filter(Ensembl %in% rownames(hm$mat)) %>%
+  dplyr::distinct(Ensembl, .keep_all = TRUE)
+tgt_group <- c(Hif1a = "HIF1A", Hif1a_Hif2a = "both", Hif2a = "HIF2A")
+targets <- in_hm %>% dplyr::filter(!is.na(Target))
+targets <- setNames(tgt_group[targets$Target], targets$Ensembl)
+
+# Hypoxia-regulated genes: padj < 0.05 and |log2FC| > 1 in at least one line.
+deg <- function(l2fc, padj) !is.na(padj) & padj < 0.05 & abs(l2fc) > 1
+hx_deg <- cbind(
+  Kelly     = deg(in_hm$Kelly.Hx.vs.Nx.log2FoldChange, in_hm$Kelly.Hx.vs.Nx.padj),
+  `SK-N-AS` = deg(in_hm$log2FC_SKNAS,  in_hm$padj_SKNAS),
+  `SH-SY5Y` = deg(in_hm$log2FC_SHSY5Y, in_hm$padj_SHSY5Y))
+rownames(hx_deg) <- in_hm$Ensembl
+
+# Too many for one heatmap, and ~90% of them come from Kelly alone. Take the
+# strongest responders of each line in turn (ranked by |VST response|, which
+# damps low-count genes) until 500 genes are reached, so every line contributes
+# its own top genes instead of Kelly swamping the set.
+hx_rank <- lapply(hm_lines, function(l) {
+  g <- rownames(hx_deg)[hx_deg[, l]]
+  g[order(-abs(hx_resp[g, l]))]
+})
+k <- 0
+repeat {
+  k <- k + 1
+  hx500 <- unique(unlist(lapply(hx_rank, head, k)))
+  if (length(hx500) >= 500) break
+}
+
+# Per-line z-score: every gene scaled to mean 0 / sd 1 within each line.
+hm_z <- hm$mat
+for (l in hm_panels) {
+  i <- hm$cols$line == l
+  z <- t(scale(t(hm$mat[, i])))
+  z[is.na(z)] <- 0
+  hm_z[, i] <- z
+}
+
+highlight <- top20 %>% dplyr::select(Ensembl, label, group)
+grp_cols  <- c(HIF1A = unname(hr_cols[1]), both = "#8E7CC3",
+               HIF2A = unname(hr_cols[2]), other = "grey80")
+# Shorter legend keys so all legends fit in one row below the plot.
+hm_guide <- guide_colourbar(barwidth = unit(5, "lines"), barheight = unit(0.6, "lines"),
+                            title.vjust = 0.9)
+
+# Expression level per line for the left-hand strip.
+base_means <- in_hm %>%
+  dplyr::select(Ensembl, Kelly = baseMean_Kelly, `SK-N-AS` = baseMean_SKNAS,
+                `SH-SY5Y` = baseMean_SHSY5Y)
+
+# Primary tumours (Agilent microarray, 478 tumours, already normalised across
+# arrays): best probe per gene (highest mean), log2 with a floor at 16 against
+# the negative background-corrected values, then a z-score per gene across the
+# cohort. Absolute array intensities are not comparable to RNA-seq counts, so
+# only the relative pattern between tumours is used. Cached like the VST.
+tum_cache <- here::here("6_XM_data_merge", "cache", "tumour_z.rds")
+if (file.exists(tum_cache)) {
+  tum <- readRDS(tum_cache)
+} else {
+  arr  <- readxl::read_xlsx(here::here("6_XM_data_merge", "primary_nb_microarra_Counts_4v1.xlsx"))
+  scol <- grep("^X\\d", names(arr), value = TRUE)
+  lg   <- log2(pmax(as.matrix(arr[, scol]), 16))
+  keep <- !is.na(arr$Ensembl) & grepl("^ENSG", arr$Ensembl)
+  best <- tibble(i = which(keep), Ensembl = arr$Ensembl[keep],
+                 m = rowMeans(lg[keep, ])) %>%
+    dplyr::group_by(Ensembl) %>% dplyr::slice_max(m, n = 1, with_ties = FALSE)
+  lg <- lg[best$i, ]
+  rownames(lg) <- best$Ensembl
+  tum <- list(z    = t(scale(t(lg))),
+              mycn = lg["ENSG00000134323", ])
+  tum$z <- tum$z[rowSums(is.na(tum$z)) == 0, ]
+  saveRDS(tum, tum_cache)
+}
+
+# Clinical annotation of the tumours, condensed into three group columns:
+# MYCN status (Nmyc gain counts as not amplified), INSS stage (1-2 pooled) and
+# outcome. Matched to the array columns by scan name.
+tum_meta <- read.csv(here::here("6_XM_data_merge", "Primary_NB_Microarray_meta",
+                                "metadata_nb.csv"), check.names = FALSE)[, -1] %>%
+  dplyr::transmute(
+    sample  = paste0("X", Scan_Name),
+    MYCN    = dplyr::case_when(MYCN == "amplified" ~ "amplified",
+                               grepl("^not amplified", MYCN) ~ "not ampl."),
+    Stage   = dplyr::case_when(INS_stage %in% c("1", "2", "2A", "2B") ~ "1-2",
+                               TRUE ~ INS_stage),
+    Outcome = dplyr::recode(death_of_disease,
+                            `alive without event` = "event-free",
+                            `alive with relapse/primary tumor` = "relapse",
+                            deceased = "deceased")) %>%
+  dplyr::filter(sample %in% colnames(tum$z))
+tum_levels <- list(MYCN    = c("not ampl.", "amplified"),
+                   Stage   = c("1-2", "3", "4S", "4"),
+                   Outcome = c("event-free", "relapse", "deceased"))
+tum_groups <- purrr::imap_dfr(tum_levels, function(lv, panel) {
+  tum_meta %>%
+    dplyr::transmute(sample, panel = panel, group = .data[[panel]]) %>%
+    dplyr::filter(group %in% lv) %>%
+    dplyr::add_count(group) %>%
+    dplyr::mutate(label = factor(paste0(group, " (", n, ")"),
+                                 levels = unique(paste0(group, " (", n, ")")[order(match(group, lv))])))
+}) %>%
+  dplyr::mutate(panel = factor(panel, levels = names(tum_levels)))
+
+# Hypoxia score per tumour: mean z-score of a gene set, each gene signed by
+# the direction of its cell-line response (positive = follows the program).
+tum_score <- function(ens) {
+  te <- intersect(ens, rownames(tum$z))
+  colMeans(tum$z[te, , drop = FALSE] * sign(rowMeans(hx_resp[te, , drop = FALSE])))
+}
+
+# Clinical hazard ratio per gene for the HR strip.
+hr_vals <- in_hm %>% dplyr::select(Ensembl, HR, p_value_HR)
+
+# Row order: Ward clustering on the mean Hx response of the three cell lines
+# (one value per line), so each line weighs the same - clustering on all samples
+# would let the 31 Kelly WT and the KO samples decide. Done separately within
+# each group when `split` is given (named vector Ensembl -> group). Returns y
+# positions with a small gap between groups.
+hm_rows <- function(ens, split = NULL) {
+  if (is.null(split)) split <- setNames(rep("all", length(ens)), ens)
+  grp <- ifelse(ens %in% names(split), split[ens], "other")
+  lv  <- intersect(c(names(grp_cols), "all"), unique(grp))
+  gap <- max(1, round(length(ens) / 100))
+  y <- c(); off <- 0
+  for (g in lv) {
+    e <- ens[grp == g]
+    if (length(e) > 1) e <- e[hclust(dist(hx_resp[e, , drop = FALSE]), method = "ward.D2")$order]
+    y   <- c(y, setNames(off + seq_along(e), e))
+    off <- off + length(e) + gap
+  }
+  list(y = y, group = setNames(grp, ens)[names(y)])
+}
+
+hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
+                       fill_name = "log2 Hx vs Nx", title = NULL, nx = FALSE,
+                       tumours = FALSE) {
+  ens <- union(highlight$Ensembl, ens)
+  if (is.null(rows)) rows <- hm_rows(ens, split)
+  pos <- rows$y
+  n   <- max(pos)
+  m   <- mat[names(pos), , drop = FALSE]
+
+  # Every Nx / Hx block gets the same width (Nx on 0-1, Hx on 1-2), however
+  # many samples it holds - otherwise the 31 Kelly WT samples dominate. With
+  # nx = FALSE only the Hx block is drawn: after centering, Nx holds nothing
+  # but replicate scatter.
+  cols <- hm$cols %>%
+    dplyr::filter(nx | condition == "Hx") %>%
+    dplyr::mutate(line = factor(line, levels = hm_panels),
+                  condition = factor(condition, levels = c("Nx", "Hx"))) %>%
+    dplyr::arrange(line, condition, batch) %>%
+    dplyr::group_by(line, condition) %>%
+    dplyr::mutate(xmin = as.integer(condition) - 1 + (dplyr::row_number() - 1) / dplyr::n(),
+                  xmax = as.integer(condition) - 1 + dplyr::row_number() / dplyr::n()) %>%
+    dplyr::ungroup()
+  long <- tibble(Ensembl = rep(rownames(m), ncol(m)),
+                 sample  = rep(colnames(m), each = nrow(m)),
+                 value   = as.vector(m)) %>%
+    dplyr::mutate(y = pos[Ensembl]) %>%
+    dplyr::inner_join(cols %>% dplyr::select(sample, line, xmin, xmax), by = "sample")
+  xscale <- scale_x_continuous(limits = c(if (nx) 0 else 1, 2), expand = c(0, 0))
+  panel_labs <- labeller(line = c(Kelly = "Kelly WT", setNames(hm_panels[-1], hm_panels[-1])))
+  marks <- highlight %>% dplyr::mutate(y = pos[Ensembl])
+  bm <- base_means %>%
+    dplyr::filter(Ensembl %in% names(pos)) %>%
+    tidyr::pivot_longer(-Ensembl, names_to = "line", values_to = "baseMean") %>%
+    dplyr::mutate(y = pos[Ensembl], line = factor(line, levels = hm_lines))
+
+  yscale <- scale_y_continuous(limits = c(0.5, n + 0.5), expand = c(0, 0),
+                               oob = scales::oob_keep)
+
+  # Nx / Hx written into the bar itself instead of a separate legend.
+  cond_blk <- cols %>% dplyr::distinct(line, condition) %>%
+    dplyr::mutate(x = as.integer(condition) - 0.5)
+
+  p_cond <- ggplot(cond_blk) +
+    geom_rect(aes(xmin = x - 0.5, xmax = x + 0.5, ymin = 0, ymax = 1, fill = condition),
+              show.legend = FALSE) +
+    geom_text(aes(x = x, y = 0.5, label = condition, colour = condition),
+              size = 2.4, fontface = "bold", show.legend = FALSE) +
+    scale_fill_manual(values = c(Nx = "grey82", Hx = "grey35")) +
+    scale_colour_manual(values = c(Nx = "grey25", Hx = "white")) +
+    xscale +
+    facet_grid(. ~ line, labeller = panel_labs) +
+    theme_void(base_size = 10) +
+    theme(strip.text = element_text(face = "bold", size = 8, margin = margin(b = 3)),
+          panel.spacing.x = unit(3, "pt"))
+
+  p_main <- ggplot(long, aes(xmin = xmin, xmax = xmax, ymin = y - 0.5, ymax = y + 0.5,
+                             fill = value)) +
+    geom_rect() +
+    scale_fill_gradient2(low = "#4682C4", mid = "white", high = "#C03A3E",
+                         limits = c(-lim, lim), oob = scales::squish,
+                         name = fill_name, guide = hm_guide) +
+    facet_grid(. ~ line) +
+    xscale + yscale +
+    theme_void(base_size = 10) +
+    theme(strip.text = element_blank(), panel.spacing.x = unit(3, "pt"))
+
+  p_bm <- ggplot(bm, aes(x = line, y = y, fill = log10(baseMean + 1))) +
+    geom_raster() +
+    scale_fill_gradient(low = "#F2F0F7", high = "#3F007D", limits = c(0, 4),
+                        oob = scales::squish, na.value = "grey90",
+                        breaks = 0:4, labels = c("1", "10", "100", "1k", "10k"),
+                        name = "baseMean", guide = hm_guide) +
+    scale_x_discrete(expand = c(0, 0)) + yscale +
+    theme_void(base_size = 10) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7,
+                                     margin = margin(t = 2)))
+
+  # Hazard ratio: green protective, magenta adverse; grey = no survival data.
+  hr <- hr_vals %>% dplyr::filter(Ensembl %in% names(pos)) %>%
+    dplyr::mutate(y = pos[Ensembl])
+  p_hr <- ggplot(hr, aes(x = "HR", y = y, fill = log2(HR))) +
+    geom_raster() +
+    scale_fill_gradient2(low = "#4DAC26", mid = "white", high = "#D01C8B",
+                         limits = c(-1, 1), oob = scales::squish, na.value = "grey90",
+                         breaks = log2(c(0.5, 1/1.5, 1, 1.5, 2)),
+                         labels = c("0.5", "0.67", "1", "1.5", "2"),
+                         name = "HR", guide = hm_guide) +
+    scale_x_discrete(expand = c(0, 0)) + yscale +
+    theme_void(base_size = 10) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7,
+                                     margin = margin(t = 2)))
+
+  # Primary tumours, condensed to clinical groups: mean z-score (across the
+  # cohort) of each gene within each group. Each group column has equal width.
+  if (tumours) {
+    te <- intersect(names(pos), rownames(tum$z))
+    tl <- tum_groups %>%
+      dplyr::group_by(panel, label) %>%
+      dplyr::summarise(Ensembl = te,
+                       value = rowMeans(tum$z[te, sample, drop = FALSE]),
+                       .groups = "drop") %>%
+      dplyr::mutate(y = pos[Ensembl])
+    tum_facet <- facet_grid(. ~ panel, scales = "free_x", space = "free_x")
+    p_tum <- ggplot(tl, aes(x = label, y = y, fill = value)) +
+      geom_raster() +
+      scale_fill_gradient2(low = "#4682C4", mid = "white", high = "#C03A3E",
+                           limits = c(-1, 1), breaks = c(-1, 0, 1), oob = scales::squish,
+                           name = "tumours\n(mean z)", guide = hm_guide) +
+      scale_x_discrete(expand = c(0, 0)) + yscale + tum_facet +
+      theme_void(base_size = 10) +
+      theme(strip.text = element_blank(), panel.spacing.x = unit(3, "pt"),
+            axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7,
+                                       margin = margin(t = 2)))
+    p_tum_top <- ggplot(dplyr::distinct(tl, panel, label),
+                        aes(x = label, y = 1)) +
+      geom_tile(fill = "grey60") +
+      scale_x_discrete(expand = c(0, 0)) + tum_facet +
+      theme_void(base_size = 10) +
+      theme(strip.text = element_text(face = "bold", size = 9, margin = margin(b = 3)),
+            panel.spacing.x = unit(3, "pt"))
+  } else {
+    p_tum <- p_tum_top <- plot_spacer()
+  }
+
+  # Target-group strip, only when rows are split into groups.
+  p_grp <- if (!is.null(split)) {
+    gd <- tibble(y = pos, group = rows$group)
+    ggplot(gd, aes(x = 1, y = y, fill = group)) +
+      geom_raster(show.legend = FALSE) +
+      # Only groups tall enough to hold their name are labelled in the strip.
+      geom_text(data = gd %>% dplyr::group_by(group) %>%
+                  dplyr::summarise(y = mean(y), n = dplyr::n()) %>%
+                  dplyr::filter(n >= 0.08 * length(pos)),
+                aes(label = paste0(group, " (", n, ")")), angle = 90, size = 2.4,
+                colour = "grey10") +
+      scale_fill_manual(values = grp_cols) +
+      scale_x_continuous(expand = c(0, 0)) + yscale +
+      theme_void()
+  } else plot_spacer()
+
+  p_lab <- ggplot(marks, aes(x = 0, y = y, label = label, fill = group)) +
+    # Invisible tiles only to give the legend rectangular keys.
+    geom_tile(width = 0, height = 0, alpha = 0.45) +
+    ggrepel::geom_label_repel(direction = "y", hjust = 0, nudge_x = 0.25,
+                              xlim = c(0.25, NA), size = 2.4, fontface = "italic",
+                              alpha = 0.45, label.size = 0, colour = NA,
+                              label.padding = unit(0.12, "lines"),
+                              segment.colour = "grey60", segment.size = 0.25,
+                              min.segment.length = 0, box.padding = 0.05,
+                              max.overlaps = Inf, seed = 1, show.legend = FALSE) +
+    # Opaque text on top of the translucent boxes (same positions via same seed).
+    ggrepel::geom_label_repel(direction = "y", hjust = 0, nudge_x = 0.25,
+                              xlim = c(0.25, NA), size = 2.4, fontface = "italic",
+                              fill = NA, label.size = 0, colour = "grey10",
+                              label.padding = unit(0.12, "lines"),
+                              segment.colour = NA, min.segment.length = 0,
+                              box.padding = 0.05, max.overlaps = Inf, seed = 1,
+                              show.legend = FALSE) +
+    scale_fill_manual(values = hr_cols, name = "TOP20") +
+    scale_x_continuous(limits = c(0, 1.6), expand = c(0, 0)) + yscale +
+    theme_void()
+
+  plot_spacer() + plot_spacer() + plot_spacer() + p_cond + p_tum_top + plot_spacer() +
+    p_grp + p_bm + p_hr + p_main + p_tum + p_lab +
+    plot_layout(ncol = 6,
+                widths = c(if (is.null(split)) 0.01 else 0.35, 0.9, 0.3,
+                           if (nx) 13 else 8, if (tumours) 3 else 0.01, 2.4),
+                heights = c(0.35, 12), guides = "collect") +
+    plot_annotation(title = title) &
+    theme(legend.position = "bottom", legend.text = element_text(size = 8),
+          legend.title = element_text(size = 9),
+          legend.key.size = unit(0.8, "lines"),
+          plot.title = element_text(face = "bold", size = 11))
+}
+
+hx_summary <- function(label, set) {
+  ens <- union(top20$Ensembl, set)
+  r   <- hx_resp[ens, , drop = FALSE]
+  tibble(Set = label, genes = length(ens),
+         TOP20_in_set = sum(top20$Ensembl %in% set),
+         Kelly = median(r[, "Kelly"]), `SK-N-AS` = median(r[, "SK-N-AS"]),
+         `SH-SY5Y` = median(r[, "SH-SY5Y"]),
+         rho_SKNAS  = cor(r[, "Kelly"], r[, "SK-N-AS"], method = "spearman"),
+         rho_SHSY5Y = cor(r[, "Kelly"], r[, "SH-SY5Y"], method = "spearman"))
+}
+```
+
+</details>
+
+## 1. TOP20 (log2 Hx vs Nx)
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+hx_heatmap(character(0), title = "CUT&RUN TOP20 HIF1A / HIF2A targets (log2 Hx vs Nx)")
+```
+
+</details>
+
+![](Dive_files/figure-gfm/hx_heatmap_top20-1.png)<!-- -->
+
+All 40 genes are readable. The KO columns confirm the assignment: the
+HIF2A TOP20 lose their induction in the HIF2A KO (median Hx response 0.3
+vs 3.5 log2 in Kelly WT) and keep it in the HIF1A KO (4.1); the HIF1A
+TOP20 behave the other way round (HIF1A KO 0.5, HIF2A KO 4.3, WT 2.0).
+In both cases the remaining HIF compensates with an even stronger
+induction. The ARNT KO reduces both groups (0.8 / 0.4) but does not
+abolish them - CA9, COXFA4L2 and PFKFB3 stay fully induced.
+
+Across the lines the two HIF groups separate sharply: the **HIF1A TOP20
+are largely shared with SH-SY5Y** (median 1.7 - CA9, PFKFB3, COXFA4L2,
+ASCL2, CABP7 and others), and partly with SK-N-AS (0.6). The **HIF2A
+TOP20 are essentially Kelly-specific** (~0 in both baseline lines);
+KCNK13, NTSR1, EPO, PRODH and CFAP43 are the few with a visible response
+elsewhere.
+
+## 2. All HIF1A and HIF2A targets (log2 Hx vs Nx)
+
+All genes of the `Target` column: Hx-induced in Kelly WT (padj \< 0.05,
+log2FC \> 1) and lost in the respective KO (interaction padj \< 0.05,
+log2FC \< -1). Rows are split into HIF1A-only, both and HIF2A-only
+targets (strip on the left: turquoise HIF2A, purple on both lists, red
+HIF1A) and clustered within each group. The thin grey group on top holds
+the four TOP20 genes that are not in `Target` (PLVAP, ALOX12B, EXOC3L2,
+CIMAP1B - CUT&RUN TOP20, but missing the KO criterion).
+
+**HIF targets: Target column vs the counts on the colleague’s slides**
+
+| List | this analysis | of which on both lists | in heatmap | colleague’s slides |
+|:---|---:|---:|---:|---:|
+| HIF1A targets | 365 | 43 | 335 | 367 |
+| HIF2A targets | 1515 | 43 | 1416 | 1333 |
+
+Same definition as on the colleague’s slides (KO negative interaction ∩
+WT-up), and HIF1A matches almost exactly. HIF2A comes out ~180 genes
+larger here. All her counts are lower (WT hypoxia DEGs 6628 vs 8265 here
+with \|log2FC\| \> 1), which points to a different DESeq2 run or an
+extra filter rather than a different target logic. The heatmap holds
+slightly fewer genes, since only genes measured in both experiments can
+be shown.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+hx_heatmap(names(targets), split = targets,
+           title = "All HIF1A and HIF2A targets (log2 Hx vs Nx)")
+```
+
+</details>
+
+![](Dive_files/figure-gfm/hx_heatmap_targets-1.png)<!-- -->
+
+The split makes the difference between the two arms obvious. The HIF2A
+block - three quarters of all targets - is induced in Kelly WT and the
+HIF1A KO, gone in the HIF2A KO, and answers only in patches in SK-N-AS
+and SH-SY5Y. The HIF1A targets mirror this in the KOs and respond in all
+three lines, most clearly in SH-SY5Y. The ARNT KO keeps a weakened
+response in both blocks.
+
+## 3. Top 500 hypoxia-regulated genes (log2 Hx vs Nx)
+
+**Hypoxia-regulated genes (padj \< 0.05, \|log2FC\| \> 1)**
+
+| Line            | genes |
+|:----------------|------:|
+| SK-N-AS         |  2018 |
+| SH-SY5Y         |  1430 |
+| Kelly           |  7619 |
+| any line        |  8728 |
+| all three lines |   435 |
+| shown           |   502 |
+
+All hypoxia-regulated genes together are too many for one heatmap, and
+most come from Kelly alone. Neither a random draw nor the top genes by
+Kelly fold change would show the baseline lines fairly - both would just
+reproduce the Kelly response. The set shown therefore takes the
+**strongest responders of each line in turn** (top 221 per line by
+\|log2 vs Nx\|) up to 500 genes, so every line contributes its own top
+genes. Up- and down-regulated genes are included.
+
+From here on only the Hx samples are drawn in the log2 heatmaps: after
+centering on the Nx mean, the Nx block holds nothing but replicate
+scatter around 0. The **HR** strip next to the expression strip gives
+the clinical hazard ratio per gene (green protective, magenta adverse,
+grey no survival data).
+
+On the right, the same genes in **478 primary neuroblastomas**
+(microarray), condensed into clinical groups: MYCN status, INSS stage
+and outcome. Each column is the mean z-score of the gene across the
+tumours of that group, with the z-score taken per gene over the whole
+cohort. Array intensities cannot be put on the log2-vs-Nx scale of the
+cell lines, so only the difference between groups counts: red = higher
+in this group than in the average tumour.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+hx_rows_500 <- hm_rows(union(highlight$Ensembl, hx500))
+hx_heatmap(hx500, rows = hx_rows_500, tumours = TRUE,
+           title = "Top 500 hypoxia-regulated genes (log2 Hx vs Nx; tumours: mean z per group)")
+```
+
+</details>
+
+![](Dive_files/figure-gfm/hx_heatmap_hx500-1.png)<!-- -->
+
+**Tumour hypoxia score (mean signed z of the shown genes) per clinical
+group**
+
+| panel   | group            | median_score |       p |
+|:--------|:-----------------|-------------:|--------:|
+| MYCN    | not ampl. (408)  |        0.013 | 6.0e-07 |
+| MYCN    | amplified (69)   |       -0.125 |      NA |
+| Stage   | 1-2 (199)        |        0.009 | 1.6e-02 |
+| Stage   | 3 (69)           |        0.005 |      NA |
+| Stage   | 4S (62)          |        0.011 |      NA |
+| Stage   | 4 (148)          |       -0.037 |      NA |
+| Outcome | event-free (323) |        0.007 | 1.9e-02 |
+| Outcome | relapse (64)     |       -0.021 |      NA |
+| Outcome | deceased (91)    |       -0.035 |      NA |
+
+Counter to the expectation that aggressive tumours are more hypoxic, the
+cell-line hypoxia program is slightly *weaker* in MYCN-amplified
+tumours, and to a lesser degree in stage 4 and in fatal cases (the
+latter two overlap largely with MYCN amplification). The effects are
+small: a score of −0.1 means the shown genes sit on average 0.1 SD below
+the cohort mean. Bulk tumour expression has no normoxic reference, so
+this score mixes hypoxia with everything else that differs between the
+groups - above all the MYCN-driven program itself, which shifts many of
+these genes. The heatmap shows that the shift is not uniform: single
+blocks go up in MYCN-amplified tumours while others go down.
+
+With the baseline lines contributing their own top genes, line-specific
+blocks appear: genes induced only in SK-N-AS or only in SH-SY5Y (Kelly
+white), a repressed block shared by all three lines, and the strong
+Kelly block, which the baseline lines follow only partly. The TOP20 lie
+almost all in the Kelly-dominated blocks.
+
+## 4. Top 500 hypoxia-regulated genes (z-score per line)
+
+Same genes and row order as above, but each gene is z-scored within each
+line (mean 0, sd 1 over that line’s samples). Nx is now blue wherever Hx
+goes up, so the contrast looks stronger - but the effect size is lost: a
+small response in SK-N-AS looks as strong as a large one in Kelly. Rows
+without a real response (e.g. Kelly in the baseline-specific blocks)
+turn into noise.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+hx_heatmap(hx500, mat = hm_z, lim = 2, rows = hx_rows_500, fill_name = "z-score",
+           nx = TRUE, tumours = TRUE,
+           title = "Top 500 hypoxia-regulated genes (z-score per line; tumours: mean z per group)")
+```
+
+</details>
+
+![](Dive_files/figure-gfm/hx_heatmap_hx500_z-1.png)<!-- -->
+
+**Median Hx response (log2 vs Nx) per line, and Spearman correlation of
+the per-gene response with Kelly**
+
+| Set | genes | TOP20_in_set | Kelly | SK-N-AS | SH-SY5Y | rho_SKNAS | rho_SHSY5Y |
+|:---|---:|---:|---:|---:|---:|---:|---:|
+| TOP20 | 40 | 40 | 2.71 | 0.43 | 0.89 | 0.09 | 0.25 |
+| TOP20 + HIF targets | 1717 | 36 | 1.08 | 0.28 | 0.28 | 0.23 | 0.37 |
+| TOP20 + hypoxia-regulated | 519 | 23 | 2.50 | 1.35 | 1.64 | -0.14 | 0.23 |
 
 # Hypoxia-induced genes: protective or adverse?
 
