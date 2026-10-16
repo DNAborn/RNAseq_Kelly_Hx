@@ -1389,20 +1389,23 @@ the per-gene response with Kelly**
 ## 6. UMAP of all hypoxia-regulated genes
 
 All hypoxia-regulated genes (DEG in at least one of the three lines)
-with survival and tumour data, one point per gene. Unlike the heatmap
-clustering, *every* data type goes into the embedding, as four blocks:
+with survival data, one point per gene. Unlike the heatmap clustering,
+the embedding uses the HR and expression level as well, as three blocks:
 
 - **log2 Hx vs Nx** in the six panels (three lines, three KOs)
 - **log2 HR**
 - **log10 baseMean** in the three lines
-- **tumours**, as three contrasts of the mean z: MYCN amplified − not,
-  non-amp MYCN high − low, deceased − event-free (the seven group means
-  are largely redundant)
+
+The tumour data are left out: their contrasts are almost the same
+variable as the HR (the HR comes from the same cohort, Spearman 0.86 -
+0.95), so they would let the clinical axis enter several times. MYCN
+amplification is shown as a colour only.
 
 Every column is scaled, and every block is divided by √(number of
 columns), so each block weighs the same regardless of how many columns
 it has. The panels show the same embedding, coloured by one variable
-each.
+each; the KO panels show the difference of the Hx response between the
+KO and Kelly WT.
 
 <details>
 
@@ -1421,13 +1424,11 @@ tum_contrast <- cbind(
   `deceased - event-free` = tum_grp_mean[, "deceased (91)"]      - tum_grp_mean[, "event-free (323)"])
 log2_hr <- setNames(log2(hr_vals$HR), hr_vals$Ensembl)
 bm_mat  <- base_means %>% tibble::column_to_rownames("Ensembl") %>% as.matrix()
-umap_ens <- Reduce(intersect, list(umap_ens, rownames(tum_contrast),
-                                   names(log2_hr)[!is.na(log2_hr)]))
+umap_ens <- intersect(umap_ens, names(log2_hr)[!is.na(log2_hr)])
 
 umap_blocks <- list(log2     = hx_resp_all[umap_ens, ],
                     HR       = cbind(log2HR = log2_hr[umap_ens]),
-                    baseMean = log10(bm_mat[umap_ens, ] + 1),
-                    tumours  = tum_contrast[umap_ens, ])
+                    baseMean = log10(bm_mat[umap_ens, ] + 1))
 umap_x <- do.call(cbind, lapply(umap_blocks, function(b) scale(b) / sqrt(ncol(b))))
 set.seed(1)
 umap_xy <- uwot::umap(umap_x, n_neighbors = 30, min_dist = 0.3)
@@ -1436,11 +1437,11 @@ ud <- tibble(Ensembl = umap_ens, U1 = umap_xy[, 1], U2 = umap_xy[, 2],
              target   = ifelse(umap_ens %in% names(targets), targets[umap_ens], "none"),
              pattern  = hx_pattern(umap_ens),
              kelly    = hx_resp_all[umap_ens, "Kelly"],
+             hif1a_ko = hx_resp_all[umap_ens, "HIF1A KO"] - hx_resp_all[umap_ens, "Kelly"],
              hif2a_ko = hx_resp_all[umap_ens, "HIF2A KO"] - hx_resp_all[umap_ens, "Kelly"],
              bm       = log10(bm_mat[umap_ens, "Kelly"] + 1),
              hr       = log2_hr[umap_ens],
-             amp      = tum_contrast[umap_ens, 1],
-             outcome  = tum_contrast[umap_ens, 3])
+             amp      = tum_contrast[match(umap_ens, rownames(tum_contrast)), 1])
 
 umap_theme <- list(theme_void(base_size = 11), coord_equal(),
                    theme(legend.position = "bottom", plot.background = element_rect(fill = "white", colour = NA),
@@ -1457,7 +1458,8 @@ umap_num <- function(col, lim, title, name, low = "#2166AC", high = "#B2182B") {
   ggplot(ud %>% dplyr::arrange(abs(.data[[col]])), aes(U1, U2, colour = .data[[col]])) +
     geom_point(size = 0.35) +
     scale_colour_gradient2(low = low, mid = "grey90", high = high, limits = c(-lim, lim),
-                           breaks = brk, oob = scales::squish, name = name, guide = hm_guide) +
+                           breaks = brk, oob = scales::squish, name = name, guide = hm_guide,
+                           na.value = "grey97") +
     ggtitle(title) + umap_theme
 }
 
@@ -1465,13 +1467,13 @@ umap_cat("target", c(grp_cols[c("HIF1A", "both", "HIF2A")], none = "grey85"), "H
   umap_cat("pattern", c(`all 3 lines` = "#E41A1C", `Kelly + 1 line` = "#FF7F00",
                         `Kelly only` = "#377EB8", `SK/SH only` = "#4DAF4A"), "Responding lines") +
   umap_num("kelly", 3, "Hypoxia response in Kelly", "log2 Hx vs Nx") +
+  umap_num("hif1a_ko", 2, "HIF1A KO vs Kelly WT", "log2 difference") +
   umap_num("hif2a_ko", 2, "HIF2A KO vs Kelly WT", "log2 difference") +
   (ggplot(ud %>% dplyr::arrange(bm), aes(U1, U2, colour = bm)) + geom_point(size = 0.35) +
      scale_colour_gradient(low = "#EFEDF5", high = "#3F007D", name = "log10 baseMean", guide = hm_guide) +
      ggtitle("Expression in Kelly") + umap_theme) +
   umap_num("hr", 1, "Hazard ratio", "log2 HR", low = "#4DAC26", high = "#D01C8B") +
-  umap_num("amp", 0.8, "Tumours: MYCN amp - not", "mean z") +
-  umap_num("outcome", 0.5, "Tumours: deceased - event-free", "mean z") +
+  umap_num("amp", 0.8, "Tumours: MYCN amp - not (colour only)", "mean z") +
   patchwork::plot_layout(nrow = 2)
 ```
 
@@ -1479,43 +1481,36 @@ umap_cat("target", c(grp_cols[c("HIF1A", "both", "HIF2A")], none = "grey85"), "H
 
 ![](Dive_files/figure-gfm/hx_umap-1.png)<!-- -->
 
-**Spearman correlation between the UMAP inputs (5938 genes)**
+**Spearman correlation between response, HR, expression and the tumour
+contrasts (5941 genes)**
 
 | feature | Kelly | log2HR | baseMean | MYCN amp - not | MYCN high - low | deceased - event-free |
 |:---|---:|---:|---:|---:|---:|---:|
 | Kelly | 1.00 | -0.25 | -0.05 | -0.23 | -0.09 | -0.24 |
-| log2HR | -0.25 | 1.00 | 0.08 | 0.86 | -0.06 | 0.95 |
-| baseMean | -0.05 | 0.08 | 1.00 | 0.08 | 0.23 | 0.06 |
+| log2HR | -0.25 | 1.00 | 0.07 | 0.86 | -0.06 | 0.95 |
+| baseMean | -0.05 | 0.07 | 1.00 | 0.08 | 0.23 | 0.06 |
 | MYCN amp - not | -0.23 | 0.86 | 0.08 | 1.00 | 0.02 | 0.88 |
 | MYCN high - low | -0.09 | -0.06 | 0.23 | 0.02 | 1.00 | -0.13 |
 | deceased - event-free | -0.24 | 0.95 | 0.06 | 0.88 | -0.13 | 1.00 |
 
 What the embedding shows:
 
-- **Two islands = direction of the hypoxia response.** Left the induced
-  genes, right the repressed ones. Nearly all HIF targets sit in the
-  left island, and the genes induced in all three lines form a small
-  dense tip at its top.
-- **Within each island the main axis is clinical**, running from
-  protective (green HR, lower in MYCN-amplified and fatal tumours) to
-  adverse (magenta, higher there). HR, MYCN amp − not and deceased −
-  event-free are almost the same variable (Spearman 0.86 - 0.95, table
-  above): the hazard ratios come from the same tumour cohort, and MYCN
-  amplification dominates the fatal cases. So this axis effectively
-  enters three times, which is why it shapes the map so strongly.
-- **The hypoxia response is nearly independent of it** (Spearman with HR
-  −0.25): strongly induced genes occur at both ends, with a mild tilt
-  toward protective. The repressed island carries the adverse,
-  MYCN-amp-high genes seen in the heatmaps.
-- **Expression level** runs top (high) to bottom (low) within the
-  induced island, a separate third axis; the “Kelly only” genes collect
-  at the low-expression bottom.
-- **HIF2A KO vs WT**: induced genes lose their response (blue),
-  repressed genes lose their repression (red) - the KO flattens both
-  directions.
-
-If the clinical axis should not dominate, keep only one of HR / tumour
-contrasts in the input.
+- **Two islands = direction of the hypoxia response.** Left the
+  repressed genes, right the induced ones, with nearly all HIF targets.
+  Within the induced island the response gets stronger toward the bottom
+  right, where the genes induced in all three lines collect; “Kelly
+  only” genes fill the weaker top part.
+- **HIF1A vs HIF2A KO.** The HIF2A KO flattens the response broadly:
+  induced genes lose their induction (blue) and repressed genes their
+  repression (red). The HIF1A KO acts much more locally, mainly on the
+  strongly induced shared genes at the bottom right.
+- **The HR splits the repressed island** into an adverse upper part
+  (highly expressed, high in MYCN-amplified tumours) and a protective
+  lower part. In the induced island the HR is scattered: adverse and
+  protective genes sit side by side and are not separated by their
+  hypoxia response.
+- The MYCN-amp colour, not used for the embedding, follows the HR
+  closely.
 
 # Hypoxia-induced genes: protective or adverse?
 
