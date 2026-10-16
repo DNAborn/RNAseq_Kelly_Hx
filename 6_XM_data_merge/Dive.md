@@ -768,11 +768,10 @@ if (file.exists(tum_cache)) {
   saveRDS(tum, tum_cache)
 }
 
-# Clinical annotation of the tumours, condensed into two group columns:
-# MYCN expression (three levels by the actual array expression, regardless of
-# amplification) and outcome. The amplification status (Nmyc gain counts as
-# not amplified) is kept only for the histogram. Matched to the array columns
-# by scan name.
+# Clinical annotation of the tumours, condensed into two group columns: MYCN
+# (amplified, and the non-amplified tumours in thirds by their array
+# expression) and outcome. Nmyc gain counts as not amplified. Matched to the
+# array columns by scan name.
 tum_meta <- read.csv(here::here("6_XM_data_merge", "Primary_NB_Microarray_meta",
                                 "metadata_nb.csv"), check.names = FALSE)[, -1] %>%
   dplyr::transmute(
@@ -787,13 +786,15 @@ tum_meta <- read.csv(here::here("6_XM_data_merge", "Primary_NB_Microarray_meta",
                             deceased = "deceased"),
     mycn_expr = tum$mycn[sample]) %>%
   dplyr::filter(sample %in% colnames(tum$z))
-# Cutoffs between the groups, set by eye from the histogram (low <= 12.4,
-# medium 12.6 - 14.8, high > 15); the boundaries sit in the middle of the gaps.
-mycn_cuts <- c(12.5, 14.9)
+# The non-amplified tumours have no gap to cut at (one broad peak), so they
+# are split into thirds instead of at fixed values.
+mycn_cuts <- quantile(tum_meta$mycn_expr[tum_meta$MYCN %in% "not ampl."], c(1, 2) / 3)
 tum_meta <- tum_meta %>%
-  dplyr::mutate(`MYCN expr.` = as.character(cut(mycn_expr, c(-Inf, mycn_cuts, Inf),
-                                                labels = c("low", "medium", "high"))))
-tum_levels <- list(`MYCN expr.` = c("low", "medium", "high"),
+  dplyr::mutate(`MYCN expr.` = dplyr::case_when(
+    MYCN %in% "amplified" ~ "amplified",
+    MYCN %in% "not ampl." ~ as.character(cut(mycn_expr, c(-Inf, mycn_cuts, Inf),
+                                             labels = c("non-amp low", "non-amp mid", "non-amp high")))))
+tum_levels <- list(`MYCN expr.` = c("non-amp low", "non-amp mid", "non-amp high", "amplified"),
                    Outcome      = c("event-free", "relapse", "deceased"))
 tum_groups <- purrr::imap_dfr(tum_levels, function(lv, panel) {
   tum_meta %>%
@@ -1179,11 +1180,13 @@ lines, so only the difference between groups counts: red = higher in
 this group than in the average tumour.
 
 MYCN expression on the array is bimodal (Figure 5): the amplified
-tumours form a separate peak at high expression. The **MYCN expr.**
-columns group the tumours by the measured expression alone, with cutoffs
-at log2 12.5 and 14.9 (dashed lines): **low**, **medium** and **high**.
-High is almost entirely the amplified peak, low and medium split the
-non-amplified tumours.
+tumours form a separate peak at high expression, the non-amplified ones
+one broad peak without a natural gap (a closer look at log2 12 - 13
+found none). The **MYCN expr.** columns therefore keep the amplified
+tumours as one group and split the non-amplified ones into thirds by
+their expression (cutoffs at log2 12.44 and 13.12, dashed lines). The
+lowest third asks whether tumours with hardly any MYCN differ from the
+rest.
 
 <details>
 
@@ -1194,23 +1197,21 @@ Code
 
 ``` r
 mycn_n <- table(factor(tum_meta$`MYCN expr.`, levels = tum_levels$`MYCN expr.`))
-ggplot(tum_meta, aes(x = mycn_expr, fill = MYCN)) +
-  geom_histogram(binwidth = 0.25) +
+ggplot(tum_meta, aes(x = mycn_expr,
+                     fill = factor(`MYCN expr.`, levels = names(mycn_n),
+                                   labels = paste0(names(mycn_n), " (", mycn_n, ")")))) +
+  geom_histogram(binwidth = 0.25, boundary = 0) +
   geom_vline(xintercept = mycn_cuts, linetype = 2, linewidth = 0.4) +
-  annotate("text", x = c(mycn_cuts[1] - 0.15, mean(mycn_cuts), mycn_cuts[2] + 0.15), y = Inf,
-           vjust = 1.3, hjust = c(1, 0.5, 0), size = 3,
-           label = paste0(names(mycn_n), " (", mycn_n, ")")) +
-  scale_fill_manual(values = c(amplified = "#C03A3E", `not ampl.` = "grey60"),
-                    na.value = "grey85", name = "MYCN") +
-  scale_y_continuous(expand = expansion(mult = c(0.02, 0.15))) +
+  scale_fill_manual(values = c("#C6DBEF", "#6BAED6", "#2171B5", "#C03A3E"),
+                    na.value = "grey85", name = "MYCN expr.") +
   labs(x = "MYCN expression (log2 array intensity)", y = "tumours") +
   theme_minimal(base_size = 10)
 ```
 
 </details>
 
-**Figure 5. MYCN expression in the primary tumours, with the cutoffs of
-the three MYCN expr. groups**
+**Figure 5. MYCN expression in the primary tumours, coloured by the four
+MYCN expr. groups**
 
 <img src="Dive_files/figure-gfm/tumour_mycn_hist-1.png" width="60%" />
 
@@ -1236,25 +1237,32 @@ hx_heatmap(hx500, rows = hx_rows_500, tumours = TRUE,
 **Tumour hypoxia score (median of the mean signed z of the shown genes)
 per clinical group; p for the overall score**
 
-| panel      | group            |  score | score_up | score_down | p       |
-|:-----------|:-----------------|-------:|---------:|-----------:|:--------|
-| MYCN expr. | low (154)        |  0.084 |    0.088 |     -0.039 | 5.3e-16 |
-| MYCN expr. | medium (258)     | -0.031 |   -0.034 |      0.145 |         |
-| MYCN expr. | high (66)        | -0.127 |   -0.116 |     -0.384 |         |
-| Outcome    | event-free (323) |  0.007 |    0.005 |      0.108 | 1.9e-02 |
-| Outcome    | relapse (64)     | -0.021 |   -0.023 |     -0.076 |         |
-| Outcome    | deceased (91)    | -0.035 |   -0.022 |     -0.180 |         |
+| panel      | group              |  score | score_up | score_down | p       |
+|:-----------|:-------------------|-------:|---------:|-----------:|:--------|
+| MYCN expr. | non-amp low (136)  |  0.093 |    0.089 |     -0.059 | 3.6e-18 |
+| MYCN expr. | non-amp mid (136)  |  0.031 |    0.022 |      0.101 |         |
+| MYCN expr. | non-amp high (136) | -0.073 |   -0.080 |      0.200 |         |
+| MYCN expr. | amplified (69)     | -0.125 |   -0.107 |     -0.410 |         |
+| Outcome    | event-free (323)   |  0.007 |    0.005 |      0.108 | 1.9e-02 |
+| Outcome    | relapse (64)       | -0.021 |   -0.023 |     -0.076 |         |
+| Outcome    | deceased (91)      | -0.035 |   -0.022 |     -0.180 |         |
 
 Counter to the expectation that aggressive tumours are more hypoxic, the
-cell-line hypoxia program gets *weaker* step by step with rising MYCN
-expression (low \> medium \> high), and to a lesser degree in fatal
-cases (which overlap largely with the MYCN-high tumours). The effects
-are small: a score of −0.1 means the shown genes sit on average 0.1 SD
-below the cohort mean. Bulk tumour expression has no normoxic reference,
-so this score mixes hypoxia with everything else that differs between
-the groups - above all the MYCN-driven program itself, which shifts many
-of these genes. The heatmap shows that the shift is not uniform: single
-blocks go up in MYCN-high tumours while others go down.
+cell-line hypoxia program gets *weaker* step by step with rising MYCN:
+from the lowest non-amplified third (score +0.09) over the middle and
+upper third to the amplified tumours (−0.13). The tumours with hardly
+any MYCN carry the strongest hypoxia signature. Over the three
+non-amplified thirds this comes from the induced genes (`score_up`
+falls, `score_down` even rises); in the amplified tumours both parts
+drop, above all the repressed genes (−0.41). Fatal cases score lower
+too, but less (they overlap largely with MYCN amplification). The
+effects are small: a score of −0.1 means the shown genes sit on average
+0.1 SD below the cohort mean. Bulk tumour expression has no normoxic
+reference, so this score mixes hypoxia with everything else that differs
+between the groups - above all the MYCN-driven program itself, which
+shifts many of these genes. The heatmap shows that the shift is not
+uniform: single blocks go up in MYCN-amplified tumours while others go
+down.
 
 With the baseline lines contributing their own top genes, line-specific
 blocks appear: genes induced only in SK-N-AS or only in SH-SY5Y (Kelly
@@ -1424,25 +1432,26 @@ hx_pair(
 **Tumour hypoxia score for the top 100 (70 up / 30 down) per clinical
 group**
 
-| panel      | group            |  score | score_up | score_down | p       |
-|:-----------|:-----------------|-------:|---------:|-----------:|:--------|
-| MYCN expr. | low (154)        |  0.070 |    0.092 |      0.014 | 1.1e-09 |
-| MYCN expr. | medium (258)     | -0.010 |   -0.061 |      0.089 |         |
-| MYCN expr. | high (66)        | -0.106 |   -0.021 |     -0.282 |         |
-| Outcome    | event-free (323) |  0.007 |   -0.007 |      0.075 | 7.8e-02 |
-| Outcome    | relapse (64)     | -0.038 |   -0.028 |      0.002 |         |
-| Outcome    | deceased (91)    | -0.016 |    0.049 |     -0.170 |         |
+| panel      | group              |  score | score_up | score_down | p       |
+|:-----------|:-------------------|-------:|---------:|-----------:|:--------|
+| MYCN expr. | non-amp low (136)  |  0.072 |    0.074 |     -0.002 | 8.4e-09 |
+| MYCN expr. | non-amp mid (136)  |  0.029 |    0.011 |      0.087 |         |
+| MYCN expr. | non-amp high (136) | -0.028 |   -0.122 |      0.093 |         |
+| MYCN expr. | amplified (69)     | -0.097 |   -0.011 |     -0.282 |         |
+| Outcome    | event-free (323)   |  0.007 |   -0.007 |      0.075 | 7.8e-02 |
+| Outcome    | relapse (64)       | -0.038 |   -0.028 |      0.002 |         |
+| Outcome    | deceased (91)      | -0.016 |    0.049 |     -0.170 |         |
 
-The split score shows where the MYCN difference of the top 500 comes
-from: the hypoxia-*induced* genes hardly differ between the clinical
-groups (`score_up` near 0), but the hypoxia-*repressed* genes are
-clearly higher in MYCN-high tumours (`score_down` −0.28, i.e. they do
-*not* follow the hypoxic repression) and, more weakly, in fatal cases.
+The top 100 show the same split more sharply: in the non-amplified
+thirds the *induced* genes carry the trend (`score_up` +0.07 in the
+lowest, −0.12 in the highest third), while the amplified tumours differ
+almost only by the hypoxia-*repressed* genes (`score_down` −0.28,
+i.e. they do *not* follow the hypoxic repression; `score_up` near 0).
 Many of these repressed genes carry an adverse HR (magenta in the HR
-strip). So MYCN-high tumours do not look less hypoxic by their induced
-genes - they keep genes high that hypoxia shuts off in the cell lines,
-plausibly MYCN-driven genes such as proliferation and biosynthesis
-genes.
+strip). So MYCN-amplified tumours do not look less hypoxic by their
+induced genes - they keep genes high that hypoxia shuts off in the cell
+lines, plausibly MYCN-driven genes such as proliferation and
+biosynthesis genes.
 
 **Median Hx response (log2 vs Nx) per line, and Spearman correlation of
 the per-gene response with Kelly**
@@ -1487,8 +1496,8 @@ tum_grp_mean <- sapply(split(tum_groups$sample, tum_groups$label),
                        function(s) rowMeans(tum$z[, s, drop = FALSE]))
 grp_col <- function(g) tum_grp_mean[, grep(paste0("^", g, " \\("), colnames(tum_grp_mean))]
 tum_contrast <- cbind(
-  `MYCN high - low`       = grp_col("high")     - grp_col("low"),
-  `MYCN medium - low`     = grp_col("medium")   - grp_col("low"),
+  `MYCN amp - non-amp low`      = grp_col("amplified")    - grp_col("non-amp low"),
+  `MYCN non-amp high - low`     = grp_col("non-amp high") - grp_col("non-amp low"),
   `deceased - event-free` = grp_col("deceased") - grp_col("event-free"))
 log2_hr <- setNames(log2(hr_vals$HR), hr_vals$Ensembl)
 bm_mat  <- base_means %>% tibble::column_to_rownames("Ensembl") %>% as.matrix()
@@ -1570,26 +1579,26 @@ umap_cat("pattern", c(`all 3 lines` = "#E41A1C", `Kelly + 1 line` = "#FF7F00",
 **Spearman correlation between response, HR, expression and the tumour
 contrasts (5941 genes)**
 
-| feature | Kelly | log2HR | baseMean | MYCN high - low | MYCN medium - low | deceased - event-free |
+| feature | Kelly | log2HR | baseMean | MYCN amp - non-amp low | MYCN non-amp high - low | deceased - event-free |
 |:---|---:|---:|---:|---:|---:|---:|
-| Kelly | 1.00 | -0.25 | -0.05 | -0.24 | -0.08 | -0.24 |
-| log2HR | -0.25 | 1.00 | 0.07 | 0.79 | -0.05 | 0.95 |
+| Kelly | 1.00 | -0.25 | -0.05 | -0.24 | -0.10 | -0.24 |
+| log2HR | -0.25 | 1.00 | 0.07 | 0.80 | -0.01 | 0.95 |
 | baseMean | -0.05 | 0.07 | 1.00 | 0.13 | 0.22 | 0.06 |
-| MYCN high - low | -0.24 | 0.79 | 0.13 | 1.00 | 0.29 | 0.80 |
-| MYCN medium - low | -0.08 | -0.05 | 0.22 | 0.29 | 1.00 | -0.11 |
-| deceased - event-free | -0.24 | 0.95 | 0.06 | 0.80 | -0.11 | 1.00 |
+| MYCN amp - non-amp low | -0.24 | 0.80 | 0.13 | 1.00 | 0.31 | 0.80 |
+| MYCN non-amp high - low | -0.10 | -0.01 | 0.22 | 0.31 | 1.00 | -0.07 |
+| deceased - event-free | -0.24 | 0.95 | 0.06 | 0.80 | -0.07 | 1.00 |
 
 **Leiden clusters: medians per cluster (log2 Hx vs Nx per line, HIF1A vs
 2A = signed dependence, positive = HIF1A)**
 
-| cluster | genes | % up | Kelly | SK-N-AS | SH-SY5Y | % all 3 lines | % Kelly only | % HIF1A tgt | % HIF2A tgt | HIF1A vs 2A | baseMean | HR | MYCN high - low |
+| cluster | genes | % up | Kelly | SK-N-AS | SH-SY5Y | % all 3 lines | % Kelly only | % HIF1A tgt | % HIF2A tgt | HIF1A vs 2A | baseMean | HR | MYCN amp - low |
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 1520 | 98 | 1.45 | 0.58 | 0.57 | 15 | 52 | 10 | 24 | -0.42 | 995 | 0.89 | -0.23 |
-| 2 | 946 | 96 | 0.81 | 0.68 | 0.47 | 8 | 49 | 5 | 29 | -0.82 | 38 | 0.97 | -0.18 |
-| 3 | 1160 | 84 | 0.33 | 0.06 | 0.08 | 0 | 82 | 3 | 17 | -0.75 | 3 | 1.01 | -0.05 |
-| 4 | 512 | 79 | 0.21 | 0.24 | -0.03 | 1 | 48 | 2 | 12 | -0.68 | 2 | 0.95 | -0.30 |
-| 5 | 1164 | 3 | -1.09 | -0.37 | -0.54 | 2 | 66 | 0 | 0 | -0.44 | 476 | 0.93 | -0.20 |
-| 6 | 639 | 0 | -1.27 | -0.67 | -0.60 | 4 | 73 | 0 | 0 | -0.84 | 2261 | 2.69 | 1.12 |
+| 1 | 1520 | 98 | 1.45 | 0.58 | 0.57 | 15 | 52 | 10 | 24 | -0.42 | 995 | 0.89 | -0.21 |
+| 2 | 946 | 96 | 0.81 | 0.68 | 0.47 | 8 | 49 | 5 | 29 | -0.82 | 38 | 0.97 | -0.14 |
+| 3 | 1160 | 84 | 0.33 | 0.06 | 0.08 | 0 | 82 | 3 | 17 | -0.75 | 3 | 1.01 | -0.03 |
+| 4 | 512 | 79 | 0.21 | 0.24 | -0.03 | 1 | 48 | 2 | 12 | -0.68 | 2 | 0.95 | -0.27 |
+| 5 | 1164 | 3 | -1.09 | -0.37 | -0.54 | 2 | 66 | 0 | 0 | -0.44 | 476 | 0.93 | -0.19 |
+| 6 | 639 | 0 | -1.27 | -0.67 | -0.60 | 4 | 73 | 0 | 0 | -0.84 | 2261 | 2.69 | 1.07 |
 
 What the embedding shows:
 
@@ -1609,7 +1618,7 @@ What the embedding shows:
   - **3** - weak, Kelly-only induction of barely expressed genes.
   - **4** - weak induction, low expression, partly SK-N-AS-driven.
 - **Repressed genes (clusters 5-6)** split by the HR: cluster **6** is
-  highly expressed, adverse (median HR 2.7) and high in MYCN-high
+  highly expressed, adverse (median HR 2.7) and high in MYCN-amplified
   tumours - the MYCN-like genes that hypoxia shuts off in the cell
   lines. Cluster **5** is neutral.
 - **HIF dependence**: every cluster leans HIF2A (negative “HIF1A vs

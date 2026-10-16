@@ -708,11 +708,10 @@ if (file.exists(tum_cache)) {
   saveRDS(tum, tum_cache)
 }
 
-# Clinical annotation of the tumours, condensed into two group columns:
-# MYCN expression (three levels by the actual array expression, regardless of
-# amplification) and outcome. The amplification status (Nmyc gain counts as
-# not amplified) is kept only for the histogram. Matched to the array columns
-# by scan name.
+# Clinical annotation of the tumours, condensed into two group columns: MYCN
+# (amplified, and the non-amplified tumours in thirds by their array
+# expression) and outcome. Nmyc gain counts as not amplified. Matched to the
+# array columns by scan name.
 tum_meta <- read.csv(here::here("6_XM_data_merge", "Primary_NB_Microarray_meta",
                                 "metadata_nb.csv"), check.names = FALSE)[, -1] %>%
   dplyr::transmute(
@@ -727,13 +726,15 @@ tum_meta <- read.csv(here::here("6_XM_data_merge", "Primary_NB_Microarray_meta",
                             deceased = "deceased"),
     mycn_expr = tum$mycn[sample]) %>%
   dplyr::filter(sample %in% colnames(tum$z))
-# Cutoffs between the groups, set by eye from the histogram (low <= 12.4,
-# medium 12.6 - 14.8, high > 15); the boundaries sit in the middle of the gaps.
-mycn_cuts <- c(12.5, 14.9)
+# The non-amplified tumours have no gap to cut at (one broad peak), so they
+# are split into thirds instead of at fixed values.
+mycn_cuts <- quantile(tum_meta$mycn_expr[tum_meta$MYCN %in% "not ampl."], c(1, 2) / 3)
 tum_meta <- tum_meta %>%
-  dplyr::mutate(`MYCN expr.` = as.character(cut(mycn_expr, c(-Inf, mycn_cuts, Inf),
-                                                labels = c("low", "medium", "high"))))
-tum_levels <- list(`MYCN expr.` = c("low", "medium", "high"),
+  dplyr::mutate(`MYCN expr.` = dplyr::case_when(
+    MYCN %in% "amplified" ~ "amplified",
+    MYCN %in% "not ampl." ~ as.character(cut(mycn_expr, c(-Inf, mycn_cuts, Inf),
+                                             labels = c("non-amp low", "non-amp mid", "non-amp high")))))
+tum_levels <- list(`MYCN expr.` = c("non-amp low", "non-amp mid", "non-amp high", "amplified"),
                    Outcome      = c("event-free", "relapse", "deceased"))
 tum_groups <- purrr::imap_dfr(tum_levels, function(lv, panel) {
   tum_meta %>%
@@ -1090,24 +1091,24 @@ cannot be put on the log2-vs-Nx scale of the cell lines, so only the
 difference between groups counts: red = higher in this group than in the
 average tumour.
 
-MYCN expression on the array is bimodal (Figure `r fig_n + 1`): the amplified tumours form
-a separate peak at high expression. The **MYCN expr.** columns group the
-tumours by the measured expression alone, with cutoffs at log2
-`r mycn_cuts[1]` and `r mycn_cuts[2]` (dashed lines): **low**, **medium**
-and **high**. High is almost entirely the amplified peak, low and medium
-split the non-amplified tumours.
+MYCN expression on the array is bimodal (Figure `r fig_n + 1`): the amplified
+tumours form a separate peak at high expression, the non-amplified ones one
+broad peak without a natural gap (a closer look at log2 12 - 13 found none).
+The **MYCN expr.** columns therefore keep the amplified tumours as one group
+and split the non-amplified ones into thirds by their expression (cutoffs at
+log2 `r round(mycn_cuts[1], 2)` and `r round(mycn_cuts[2], 2)`, dashed
+lines). The lowest third asks whether tumours with hardly any MYCN differ
+from the rest.
 
-```{r tumour_mycn_hist, fig.width=7, fig.height=2.8, out.width="60%", cap="MYCN expression in the primary tumours, with the cutoffs of the three MYCN expr. groups"}
+```{r tumour_mycn_hist, fig.width=8, fig.height=2.8, out.width="60%", cap="MYCN expression in the primary tumours, coloured by the four MYCN expr. groups"}
 mycn_n <- table(factor(tum_meta$`MYCN expr.`, levels = tum_levels$`MYCN expr.`))
-ggplot(tum_meta, aes(x = mycn_expr, fill = MYCN)) +
-  geom_histogram(binwidth = 0.25) +
+ggplot(tum_meta, aes(x = mycn_expr,
+                     fill = factor(`MYCN expr.`, levels = names(mycn_n),
+                                   labels = paste0(names(mycn_n), " (", mycn_n, ")")))) +
+  geom_histogram(binwidth = 0.25, boundary = 0) +
   geom_vline(xintercept = mycn_cuts, linetype = 2, linewidth = 0.4) +
-  annotate("text", x = c(mycn_cuts[1] - 0.15, mean(mycn_cuts), mycn_cuts[2] + 0.15), y = Inf,
-           vjust = 1.3, hjust = c(1, 0.5, 0), size = 3,
-           label = paste0(names(mycn_n), " (", mycn_n, ")")) +
-  scale_fill_manual(values = c(amplified = "#C03A3E", `not ampl.` = "grey60"),
-                    na.value = "grey85", name = "MYCN") +
-  scale_y_continuous(expand = expansion(mult = c(0.02, 0.15))) +
+  scale_fill_manual(values = c("#C6DBEF", "#6BAED6", "#2171B5", "#C03A3E"),
+                    na.value = "grey85", name = "MYCN expr.") +
   labs(x = "MYCN expression (log2 array intensity)", y = "tumours") +
   theme_minimal(base_size = 10)
 ```
@@ -1142,14 +1143,19 @@ tab(tum_score_tab(hx500),
 ```
 
 Counter to the expectation that aggressive tumours are more hypoxic, the
-cell-line hypoxia program gets *weaker* step by step with rising MYCN
-expression (low > medium > high), and to a lesser degree in fatal cases
-(which overlap largely with the MYCN-high tumours). The effects are small: a
+cell-line hypoxia program gets *weaker* step by step with rising MYCN: from
+the lowest non-amplified third (score +0.09) over the middle and upper third
+to the amplified tumours (−0.13). The tumours with hardly any MYCN carry the
+strongest hypoxia signature. Over the three non-amplified thirds this comes
+from the induced genes (`score_up` falls, `score_down` even rises); in the
+amplified tumours both parts drop, above all the repressed genes (−0.41).
+Fatal cases score lower too, but less (they overlap largely with MYCN
+amplification). The effects are small: a
 score of −0.1 means the shown genes sit on average 0.1 SD below the cohort
 mean. Bulk tumour expression has no normoxic reference, so this score mixes
 hypoxia with everything else that differs between the groups - above all the
 MYCN-driven program itself, which shifts many of these genes. The heatmap
-shows that the shift is not uniform: single blocks go up in MYCN-high tumours
+shows that the shift is not uniform: single blocks go up in MYCN-amplified tumours
 while others go down.
 
 With the baseline lines contributing their own top genes, line-specific blocks
@@ -1255,15 +1261,15 @@ tab(tum_score_tab(hx100),
     "Tumour hypoxia score for the top 100 (70 up / 30 down) per clinical group")
 ```
 
-The split score shows where the MYCN difference of the top 500 comes from: the
-hypoxia-*induced* genes hardly differ between the clinical groups
-(`score_up` near 0), but the hypoxia-*repressed* genes are clearly higher in
-MYCN-high tumours (`score_down` −0.28, i.e. they do *not* follow the
-hypoxic repression) and, more weakly, in fatal cases. Many of these repressed
-genes carry an adverse HR (magenta in the HR strip). So MYCN-high tumours
-do not look less hypoxic by their induced genes - they keep genes high that
-hypoxia shuts off in the cell lines, plausibly MYCN-driven genes such as
-proliferation and biosynthesis genes.
+The top 100 show the same split more sharply: in the non-amplified thirds the
+*induced* genes carry the trend (`score_up` +0.07 in the lowest, −0.12 in the
+highest third), while the amplified tumours differ almost only by the
+hypoxia-*repressed* genes (`score_down` −0.28, i.e. they do *not* follow the
+hypoxic repression; `score_up` near 0). Many of these repressed genes carry an
+adverse HR (magenta in the HR strip). So MYCN-amplified tumours do not look
+less hypoxic by their induced genes - they keep genes high that hypoxia shuts
+off in the cell lines, plausibly MYCN-driven genes such as proliferation and
+biosynthesis genes.
 
 ```{r hx_heatmap_summary, echo=FALSE}
 
@@ -1303,8 +1309,8 @@ tum_grp_mean <- sapply(split(tum_groups$sample, tum_groups$label),
                        function(s) rowMeans(tum$z[, s, drop = FALSE]))
 grp_col <- function(g) tum_grp_mean[, grep(paste0("^", g, " \\("), colnames(tum_grp_mean))]
 tum_contrast <- cbind(
-  `MYCN high - low`       = grp_col("high")     - grp_col("low"),
-  `MYCN medium - low`     = grp_col("medium")   - grp_col("low"),
+  `MYCN amp - non-amp low`      = grp_col("amplified")    - grp_col("non-amp low"),
+  `MYCN non-amp high - low`     = grp_col("non-amp high") - grp_col("non-amp low"),
   `deceased - event-free` = grp_col("deceased") - grp_col("event-free"))
 log2_hr <- setNames(log2(hr_vals$HR), hr_vals$Ensembl)
 bm_mat  <- base_means %>% tibble::column_to_rownames("Ensembl") %>% as.matrix()
@@ -1409,7 +1415,7 @@ tab(ud %>%
                        `HIF1A vs 2A` = round(median(hif12, na.rm = TRUE), 2),
                        baseMean = round(10^median(bm) - 1),
                        HR = round(2^median(hr), 2),
-                       `MYCN high - low` = round(median(amp, na.rm = TRUE), 2)),
+                       `MYCN amp - low` = round(median(amp, na.rm = TRUE), 2)),
     "Leiden clusters: medians per cluster (log2 Hx vs Nx per line, HIF1A vs 2A = signed dependence, positive = HIF1A)")
 ```
 
@@ -1430,7 +1436,7 @@ What the embedding shows:
   - **3** - weak, Kelly-only induction of barely expressed genes.
   - **4** - weak induction, low expression, partly SK-N-AS-driven.
 - **Repressed genes (clusters 5-6)** split by the HR: cluster **6** is highly
-  expressed, adverse (median HR 2.7) and high in MYCN-high tumours - the
+  expressed, adverse (median HR 2.7) and high in MYCN-amplified tumours - the
   MYCN-like genes that hypoxia shuts off in the cell lines. Cluster **5** is
   neutral.
 - **HIF dependence**: every cluster leans HIF2A (negative "HIF1A vs 2A"); the
