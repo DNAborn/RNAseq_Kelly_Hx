@@ -642,6 +642,9 @@ top20 <- dplyr::bind_rows(
 # Hypoxia response per gene and line: mean of the Hx samples, i.e. log2 vs Nx.
 hx_resp <- sapply(hm_lines, function(l)
   rowMeans(hm$mat[, hm$cols$line == l & hm$cols$condition == "Hx"]))
+# Same for all six panels (incl. the KOs), for the alternative row clustering.
+hx_resp_all <- sapply(hm_panels, function(l)
+  rowMeans(hm$mat[, hm$cols$line == l & hm$cols$condition == "Hx"]))
 
 # All HIF targets from the Target column, as HIF1A / both / HIF2A row groups.
 in_hm <- master %>%
@@ -694,6 +697,7 @@ hx_top_dir <- function(n, dir) {
 hx100_up   <- hx_top_dir(70, 1)
 hx100_down <- setdiff(hx_top_dir(30, -1), hx100_up)
 hx100      <- c(hx100_up, hx100_down)
+hx1000     <- union(hx_top_dir(700, 1), hx_top_dir(300, -1))
 
 # Per-line z-score: every gene scaled to mean 0 / sd 1 within each line.
 hm_z <- hm$mat
@@ -784,7 +788,7 @@ hr_vals <- in_hm %>% dplyr::select(Ensembl, HR, p_value_HR)
 # would let the 31 Kelly WT and the KO samples decide. Done separately within
 # each group when `split` is given (named vector Ensembl -> group). Returns y
 # positions with a small gap between groups.
-hm_rows <- function(ens, split = NULL) {
+hm_rows <- function(ens, split = NULL, resp = hx_resp) {
   if (is.null(split)) split <- setNames(rep("all", length(ens)), ens)
   grp <- ifelse(ens %in% names(split), split[ens], "other")
   lv  <- intersect(c(names(grp_cols), "all"), unique(grp))
@@ -792,7 +796,7 @@ hm_rows <- function(ens, split = NULL) {
   y <- c(); off <- 0
   for (g in lv) {
     e <- ens[grp == g]
-    if (length(e) > 1) e <- e[hclust(dist(hx_resp[e, , drop = FALSE]), method = "ward.D2")$order]
+    if (length(e) > 1) e <- e[hclust(dist(resp[e, , drop = FALSE]), method = "ward.D2")$order]
     y   <- c(y, setNames(off + seq_along(e), e))
     off <- off + length(e) + gap
   }
@@ -960,11 +964,12 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
     scale_x_continuous(limits = c(0, 1.6), expand = c(0, 0)) + yscale +
     theme_void()
 
-  plot_spacer() + plot_spacer() + plot_spacer() + p_cond + p_tum_top + plot_spacer() +
-    p_grp + p_bm + p_hr + p_main + p_tum + p_lab +
-    plot_layout(ncol = 6,
+  plot_spacer() + plot_spacer() + plot_spacer() + p_cond + plot_spacer() + p_tum_top + plot_spacer() +
+    p_grp + p_bm + p_hr + p_main + plot_spacer() + p_tum + p_lab +
+    plot_layout(ncol = 7,
                 widths = c(if (is.null(split)) 0.01 else 0.35, 0.9, 0.3,
-                           if (nx) 13 else 8, if (tumours) 3 else 0.01, 2.4),
+                           if (nx) 13 else 8, if (tumours) 0.15 else 0.01,
+                           if (tumours) 3 else 0.01, 2.4),
                 heights = c(0.35, 12), guides = "collect") +
     plot_annotation(title = title) &
     theme(legend.position = "bottom", legend.text = element_text(size = 8),
@@ -1002,7 +1007,7 @@ hx_heatmap(character(0), title = "CUT&RUN TOP20 HIF1A / HIF2A targets (log2 Hx v
 
 </details>
 
-![](Dive_files/figure-gfm/hx_heatmap_top20-1.png)<!-- -->
+<img src="Dive_files/figure-gfm/hx_heatmap_top20-1.png" width="40%" />
 
 All 40 genes are readable. The KO columns confirm the assignment: the
 HIF2A TOP20 lose their induction in the HIF2A KO (median Hx response 0.3
@@ -1058,7 +1063,7 @@ hx_heatmap(names(targets), split = targets,
 
 </details>
 
-![](Dive_files/figure-gfm/hx_heatmap_targets-1.png)<!-- -->
+<img src="Dive_files/figure-gfm/hx_heatmap_targets-1.png" width="40%" />
 
 The split makes the difference between the two arms obvious. The HIF2A
 block - three quarters of all targets - is induced in Kelly WT and the
@@ -1117,7 +1122,7 @@ hx_heatmap(hx500, rows = hx_rows_500, tumours = TRUE,
 
 </details>
 
-![](Dive_files/figure-gfm/hx_heatmap_hx500-1.png)<!-- -->
+<img src="Dive_files/figure-gfm/hx_heatmap_hx500-1.png" width="40%" />
 
 **Tumour hypoxia score (median of the mean signed z of the shown genes)
 per clinical group; p for the overall score**
@@ -1175,7 +1180,7 @@ hx_heatmap(hx500, mat = hm_z, lim = 2, rows = hx_rows_500, fill_name = "z-score"
 
 </details>
 
-![](Dive_files/figure-gfm/hx_heatmap_hx500_z-1.png)<!-- -->
+<img src="Dive_files/figure-gfm/hx_heatmap_hx500_z-1.png" width="40%" />
 
 ## 5. Top 100 hypoxia-regulated genes, 70 up / 30 down (log2 Hx vs Nx)
 
@@ -1185,6 +1190,13 @@ selection runs separately for induced and repressed genes: 70 up and 31
 down, roughly the up/down ratio of all hypoxia DEGs. The TOP20 are
 labelled only where they are part of this set.
 
+This set is the basis for the comparisons below: each shows two versions
+side by side, the base version (log2 Hx vs Nx, rows clustered on the
+three cell lines, top 100) always on the left. Click an image to enlarge
+it.
+
+### 5a. Scaling: log2 Hx vs Nx (left) vs z-score per line (right)
+
 <details>
 
 <summary>
@@ -1193,13 +1205,63 @@ Code
 </summary>
 
 ``` r
-hx_heatmap(hx100, rows = hm_rows(hx100), tumours = TRUE,
-           title = "Top 100 hypoxia-regulated genes, 70 up / 30 down (log2 Hx vs Nx; tumours: mean z per group)")
+hx_rows_100 <- hm_rows(hx100)
+hx_heatmap(hx100, rows = hx_rows_100, tumours = TRUE,
+           title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)")
+hx_heatmap(hx100, mat = hm_z, lim = 2, rows = hx_rows_100, fill_name = "z-score",
+           nx = TRUE, tumours = TRUE,
+           title = "Top 100, 70 up / 30 down (z-score per line; clustered on 3 lines)")
 ```
 
 </details>
 
-![](Dive_files/figure-gfm/hx_heatmap_hx100-1.png)<!-- -->
+<img src="Dive_files/figure-gfm/hx_heatmap_hx100-1.png" width="49%" /><img src="Dive_files/figure-gfm/hx_heatmap_hx100-2.png" width="49%" />
+
+### 5b. Row clustering: 3 cell lines (left) vs all 6 panels incl. KOs (right)
+
+Left, rows are clustered on the mean Hx response of SK-N-AS, SH-SY5Y and
+Kelly WT only; right, on all six panels, so the KO responses also shape
+the blocks (genes that lose their response in one KO group together).
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+hx_heatmap(hx100, rows = hx_rows_100, tumours = TRUE,
+           title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)")
+hx_heatmap(hx100, rows = hm_rows(hx100, resp = hx_resp_all), tumours = TRUE,
+           title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on all 6 panels)")
+```
+
+</details>
+
+<img src="Dive_files/figure-gfm/hx_heatmap_hx100_clust-1.png" width="49%" /><img src="Dive_files/figure-gfm/hx_heatmap_hx100_clust-2.png" width="49%" />
+
+### 5c. Gene number: top 100 (left) vs top 1000 (right), both 70 up / 30 down
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+hx_heatmap(hx100, rows = hx_rows_100, tumours = TRUE,
+           title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)")
+hx_heatmap(hx1000, rows = hm_rows(hx1000), tumours = TRUE,
+           title = "Top 1000, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)")
+```
+
+</details>
+
+<img src="Dive_files/figure-gfm/hx_heatmap_hx1000-1.png" width="49%" /><img src="Dive_files/figure-gfm/hx_heatmap_hx1000-2.png" width="49%" />
+
+### Tumour score
 
 **Tumour hypoxia score for the top 100 (70 up / 30 down) per clinical
 group**
@@ -1236,6 +1298,7 @@ the per-gene response with Kelly**
 | TOP20 + HIF targets | 1717 | 36 | 1.08 | 0.28 | 0.28 | 0.23 | 0.37 |
 | TOP20 + hypoxia-regulated | 519 | 23 | 2.50 | 1.35 | 1.64 | -0.14 | 0.23 |
 | TOP20 + top 100 (70 up / 30 down) | 133 | 8 | 2.66 | 0.51 | 1.71 | 0.46 | 0.56 |
+| TOP20 + top 1000 (70 up / 30 down) | 1016 | 25 | 1.07 | 0.56 | 0.60 | 0.42 | 0.62 |
 
 # Hypoxia-induced genes: protective or adverse?
 
