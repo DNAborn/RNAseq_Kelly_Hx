@@ -599,23 +599,24 @@ hm_panels <- c("SK-N-AS", "SH-SY5Y", "Kelly", "HIF1A KO", "HIF2A KO", "ARNT KO")
 
 tab(as.data.frame.matrix(table(factor(hm$cols$line, levels = hm_panels),
                                factor(hm$cols$condition, levels = c("Nx", "Hx")))) %>%
-      tibble::rownames_to_column("line") %>%
-      dplyr::mutate(genes = ifelse(dplyr::row_number() == 1, nrow(hm$mat), NA)),
-    "Samples per line and condition (genes present in both experiments)")
+      tibble::rownames_to_column("line"),
+    paste0("Heatmap input: samples per line and condition (",
+           format(nrow(hm$mat), big.mark = ","), " genes present in both experiments)"))
 ```
 
 </details>
 
-**Samples per line and condition (genes present in both experiments)**
+**Heatmap input: samples per line and condition (57,785 genes present in
+both experiments)**
 
-| line     |  Nx |  Hx | genes |
-|:---------|----:|----:|------:|
-| SK-N-AS  |   3 |   3 | 57785 |
-| SH-SY5Y  |   3 |   3 |    NA |
-| Kelly    |  16 |  15 |    NA |
-| HIF1A KO |   9 |  10 |    NA |
-| HIF2A KO |   8 |   8 |    NA |
-| ARNT KO  |   8 |   6 |    NA |
+| line     |  Nx |  Hx |
+|:---------|----:|----:|
+| SK-N-AS  |   3 |   3 |
+| SH-SY5Y  |   3 |   3 |
+| Kelly    |  16 |  15 |
+| HIF1A KO |   9 |  10 |
+| HIF2A KO |   8 |   8 |
+| ARNT KO  |   8 |   6 |
 
 <details>
 
