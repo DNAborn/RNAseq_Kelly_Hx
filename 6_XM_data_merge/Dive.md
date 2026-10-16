@@ -1472,7 +1472,20 @@ umap_blocks <- list(log2     = hx_resp_all[umap_ens, ],
                     baseMean = log10(bm_mat[umap_ens, ] + 1))
 umap_x <- do.call(cbind, lapply(umap_blocks, function(b) scale(b) / sqrt(ncol(b))))
 set.seed(1)
-umap_xy <- uwot::umap(umap_x, n_neighbors = 30, min_dist = 0.3)
+umap_fit <- uwot::umap(umap_x, n_neighbors = 15, min_dist = 0.05, ret_nn = TRUE)
+umap_xy  <- umap_fit$embedding
+
+# Clusters are found in the input space, not in the 2D picture: Leiden on the
+# same 15-nearest-neighbour graph the UMAP is built from.
+umap_nn <- umap_fit$nn$euclidean$idx
+umap_g  <- igraph::simplify(igraph::graph_from_edgelist(
+  cbind(rep(seq_len(nrow(umap_nn)), ncol(umap_nn) - 1), as.vector(umap_nn[, -1])),
+  directed = FALSE))
+set.seed(1)
+umap_cl <- igraph::cluster_leiden(umap_g, objective_function = "modularity",
+                                  resolution = 0.5, n_iterations = 10)$membership
+# Number the clusters from most induced to most repressed.
+umap_cl <- as.integer(factor(umap_cl, levels = order(-tapply(hx_resp_all[umap_ens, "Kelly"], umap_cl, median))))
 
 ud <- tibble(Ensembl = umap_ens, U1 = umap_xy[, 1], U2 = umap_xy[, 2],
              target   = ifelse(umap_ens %in% names(targets), targets[umap_ens], "none"),
@@ -1481,12 +1494,7 @@ ud <- tibble(Ensembl = umap_ens, U1 = umap_xy[, 1], U2 = umap_xy[, 2],
              bm       = log10(bm_mat[umap_ens, "Kelly"] + 1),
              hr       = log2_hr[umap_ens],
              amp      = tum_contrast[match(umap_ens, rownames(tum_contrast)), 1],
-             # Hx response in the HIF2A KO minus in the HIF1A KO, signed by the
-             # direction of the Kelly response so that it reads the same for
-             # induced and repressed genes: positive = the response survives
-             # without HIF2A but not without HIF1A, i.e. HIF1A-dependent.
-             hif12    = in_hm$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange[match(umap_ens, in_hm$Ensembl)] *
-                        sign(hx_resp_all[umap_ens, "Kelly"]))
+             cluster  = factor(umap_cl))
 
 umap_theme <- list(theme_void(base_size = 11), coord_equal(),
                    theme(legend.position = "bottom", plot.background = element_rect(fill = "white", colour = NA),
@@ -1516,8 +1524,13 @@ umap_cat("pattern", c(`all 3 lines` = "#E41A1C", `Kelly + 1 line` = "#FF7F00",
      scale_colour_gradient(low = "#EFEDF5", high = "#3F007D", name = "log10 baseMean", guide = hm_guide) +
      ggtitle("Expression in Kelly") + umap_theme) +
   umap_num("hr", 1, "Hazard ratio", "log2 HR", low = "#4DAC26", high = "#D01C8B") +
-  umap_num("hif12", 2, "HIF1A- vs HIF2A-dependent", "HIF2A <- -> HIF1A\n(signed log2)",
-           low = unname(grp_cols["HIF2A"]), high = unname(grp_cols["HIF1A"])) +
+  (ggplot(ud, aes(U1, U2, colour = cluster)) + geom_point(size = 0.35) +
+     geom_label(data = ud %>% dplyr::group_by(cluster) %>%
+                  dplyr::summarise(U1 = median(U1), U2 = median(U2)),
+                aes(label = cluster), colour = "grey10", size = 4, label.size = 0,
+                fill = scales::alpha("white", 0.7)) +
+     scale_colour_brewer(palette = "Set2", guide = "none") +
+     ggtitle("Leiden clusters") + umap_theme) +
   patchwork::plot_layout(nrow = 2, ncol = 3)
 ```
 
@@ -1537,24 +1550,43 @@ contrasts (5941 genes)**
 | MYCN high - low | -0.09 | -0.06 | 0.23 | 0.02 | 1.00 | -0.13 |
 | deceased - event-free | -0.24 | 0.95 | 0.06 | 0.88 | -0.13 | 1.00 |
 
+**Leiden clusters: medians per cluster (log2 Hx vs Nx per line, HIF1A vs
+2A = signed dependence, positive = HIF1A)**
+
+| cluster | genes | % up | Kelly | SK-N-AS | SH-SY5Y | % all 3 lines | % Kelly only | % HIF1A tgt | % HIF2A tgt | HIF1A vs 2A | baseMean | HR | MYCN amp - not |
+|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 1520 | 98 | 1.45 | 0.58 | 0.57 | 15 | 52 | 10 | 24 | -0.42 | 995 | 0.89 | -0.17 |
+| 2 | 946 | 96 | 0.81 | 0.68 | 0.47 | 8 | 49 | 5 | 29 | -0.82 | 38 | 0.97 | -0.10 |
+| 3 | 1160 | 84 | 0.33 | 0.06 | 0.08 | 0 | 82 | 3 | 17 | -0.75 | 3 | 1.01 | -0.02 |
+| 4 | 512 | 79 | 0.21 | 0.24 | -0.03 | 1 | 48 | 2 | 12 | -0.68 | 2 | 0.95 | -0.13 |
+| 5 | 1164 | 3 | -1.09 | -0.37 | -0.54 | 2 | 66 | 0 | 0 | -0.44 | 476 | 0.93 | -0.13 |
+| 6 | 639 | 0 | -1.27 | -0.67 | -0.60 | 4 | 73 | 0 | 0 | -0.84 | 2261 | 2.69 | 0.94 |
+
 What the embedding shows:
 
-- **Two islands = direction of the hypoxia response.** Left the
-  repressed genes, right the induced ones, with nearly all HIF targets.
-  Within the induced island the response gets stronger toward the bottom
-  right, where the genes induced in all three lines collect; “Kelly
-  only” genes fill the weaker top part.
-- **HIF1A vs HIF2A dependence** (`Hif2aHxNx.vs.Hif1aHxNx`, signed by the
-  direction of the response, so that red means HIF1A-dependent for
-  induced and repressed genes alike): both islands are mostly
-  HIF2A-dependent, in line with the HIF2A-dominated Target column.
-  HIF1A-dependent genes concentrate at the bottom right of the induced
-  island, among the strongly induced genes shared by all three lines.
-- **The HR splits the repressed island** into an adverse upper part
-  (highly expressed, high in MYCN-amplified tumours) and a protective
-  lower part. In the induced island the HR is scattered: adverse and
-  protective genes sit side by side and are not separated by their
-  hypoxia response.
+- **Apart from up vs down there are no sharply separated groups.** The
+  genes form a continuum; tighter UMAP settings (15 neighbours,
+  `min_dist` 0.05) only pack the points closer. t-SNE gives the same
+  picture, PCA is dominated by a few extreme genes and was not useful.
+  The clusters are therefore cuts through a continuum, but stable ones:
+  Leiden on the input space finds the same six regions in every
+  embedding tried.
+- **Induced genes (clusters 1-4)** split mainly by response strength and
+  expression level:
+  - **1** - the core program: strongest induction, highly expressed,
+    most genes induced in all three lines and the most HIF1A targets.
+  - **2** - moderate induction, medium expression, the highest share of
+    HIF2A targets.
+  - **3** - weak, Kelly-only induction of barely expressed genes.
+  - **4** - weak induction, low expression, partly SK-N-AS-driven.
+- **Repressed genes (clusters 5-6)** split by the HR: cluster **6** is
+  highly expressed, adverse (median HR 2.7) and high in MYCN-amplified
+  tumours - the MYCN-like genes that hypoxia shuts off in the cell
+  lines. Cluster **5** is neutral.
+- **HIF dependence**: every cluster leans HIF2A (negative “HIF1A vs
+  2A”); the core cluster 1 least so, in line with its HIF1A targets.
+- The HR of the induced clusters stays close to 1: adverse and
+  protective induced genes sit side by side.
 
 # Hypoxia-induced genes: protective or adverse?
 
