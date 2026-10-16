@@ -635,6 +635,8 @@ hx_top_dir <- function(n, dir) {
 hx100_up   <- hx_top_dir(70, 1)
 hx100_down <- setdiff(hx_top_dir(30, -1), hx100_up)
 hx100      <- c(hx100_up, hx100_down)
+# Reference set for section 5: the top 100 plus all TOP20 genes.
+hx_ref     <- union(hx100, top20$Ensembl)
 hx1000     <- union(hx_top_dir(700, 1), hx_top_dir(300, -1))
 
 # Fixed row groups by which cell lines respond (DEG in either direction).
@@ -644,7 +646,8 @@ hx_pattern <- function(ens) {
   setNames(dplyr::case_when(d[, "Kelly"] & base == 2 ~ "all 3 lines",
                             d[, "Kelly"] & base == 1 ~ "Kelly + 1 line",
                             d[, "Kelly"]             ~ "Kelly only",
-                            TRUE                     ~ "SK/SH only"), ens)
+                            base > 0                 ~ "SK/SH only",
+                            TRUE                     ~ "no line"), ens)
 }
 
 # Per-line z-score: every gene scaled to mean 0 / sd 1 within each line.
@@ -660,7 +663,8 @@ highlight <- top20 %>% dplyr::select(Ensembl, label, group)
 grp_cols  <- c(HIF1A = unname(hr_cols[1]), both = "#8E7CC3",
                HIF2A = unname(hr_cols[2]), other = "grey80",
                `all 3 lines` = "#636363", `Kelly + 1 line` = "#969696",
-               `Kelly only` = "#BDBDBD", `SK/SH only` = "#E0E0E0")
+               `Kelly only` = "#BDBDBD", `SK/SH only` = "#E0E0E0",
+               `no line` = "#F7F7F7")
 # Shorter legend keys so all legends fit in one row below the plot.
 hm_guide <- guide_colourbar(barwidth = unit(5, "lines"), barheight = unit(0.6, "lines"),
                             title.vjust = 0.9)
@@ -764,7 +768,7 @@ hm_rows <- function(ens, split = NULL, resp = hx_resp) {
 
 hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
                        fill_name = "log2 Hx vs Nx", title = NULL, nx = FALSE,
-                       tumours = FALSE, top20_legend = TRUE) {
+                       tumours = FALSE, top20_legend = TRUE, gene_names = FALSE) {
   ens <- union(highlight$Ensembl, ens)
   if (is.null(rows)) rows <- hm_rows(ens, split)
   pos <- rows$y
@@ -917,19 +921,30 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
       theme_void()
   } else plot_spacer()
 
+  # Optional small name for every row, right next to it; the TOP20 keep their
+  # larger repelled labels further out.
+  lab_x0 <- if (gene_names) 0.75 else 0.25
+  all_names <- if (gene_names) {
+    tibble(Ensembl = names(pos), y = pos) %>%
+      dplyr::filter(!Ensembl %in% marks$Ensembl) %>%
+      dplyr::mutate(label = in_hm$symbol[match(Ensembl, in_hm$Ensembl)],
+                    label = ifelse(is.na(label), Ensembl, label))
+  } else tibble(y = numeric(0), label = character(0))
   p_lab <- ggplot(marks, aes(x = 0, y = y, label = label, fill = group)) +
     # Invisible tiles only to give the legend rectangular keys.
     geom_tile(width = 0, height = 0, alpha = 0.45) +
-    ggrepel::geom_label_repel(direction = "y", hjust = 0, nudge_x = 0.25,
-                              xlim = c(0.25, NA), size = 2.4, fontface = "italic",
+    geom_text(data = all_names, aes(x = 0.03, y = y, label = label), inherit.aes = FALSE,
+              hjust = 0, size = 1.8, fontface = "italic", colour = "grey30") +
+    ggrepel::geom_label_repel(direction = "y", hjust = 0, nudge_x = lab_x0,
+                              xlim = c(lab_x0, NA), size = 2.4, fontface = "italic",
                               alpha = 0.45, label.size = 0, colour = NA,
                               label.padding = unit(0.12, "lines"),
                               segment.colour = "grey60", segment.size = 0.25,
                               min.segment.length = 0, box.padding = 0.05,
                               max.overlaps = Inf, seed = 1, show.legend = FALSE) +
     # Opaque text on top of the translucent boxes (same positions via same seed).
-    ggrepel::geom_label_repel(direction = "y", hjust = 0, nudge_x = 0.25,
-                              xlim = c(0.25, NA), size = 2.4, fontface = "italic",
+    ggrepel::geom_label_repel(direction = "y", hjust = 0, nudge_x = lab_x0,
+                              xlim = c(lab_x0, NA), size = 2.4, fontface = "italic",
                               fill = NA, label.size = 0, colour = "grey10",
                               label.padding = unit(0.12, "lines"),
                               segment.colour = NA, min.segment.length = 0,
@@ -937,7 +952,7 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
                               show.legend = FALSE) +
     scale_fill_manual(values = hr_cols, name = "TOP20",
                       guide = if (top20_legend) "legend" else "none") +
-    scale_x_continuous(limits = c(0, 1.6), expand = c(0, 0)) + yscale +
+    scale_x_continuous(limits = c(0, if (gene_names) 2.1 else 1.6), expand = c(0, 0)) + yscale +
     theme_void()
 
   plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + p_cond + plot_spacer() +
@@ -946,7 +961,7 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
     plot_layout(ncol = 8,
                 widths = c(if (is.null(split)) 0.01 else 0.35, 0.9, 0.3, 0.3,
                            if (nx) 13 else 8, if (tumours) 0.15 else 0.01,
-                           if (tumours) 3 else 0.01, 2.4),
+                           if (tumours) 3 else 0.01, if (gene_names) 3.2 else 2.4),
                 heights = c(0.35, 12), guides = "collect") +
     plot_annotation(title = title) &
     theme(legend.position = "bottom", legend.text = element_text(size = 8),
@@ -1152,55 +1167,73 @@ The strongest hypoxia responses are almost all inductions, so the top 500
 contain only `r sum(rowMeans(hx_resp[hx500, ]) < 0)` repressed genes. Here the
 balanced per-line selection runs separately for induced and repressed genes:
 `r length(hx100_up)` up and `r length(hx100_down)` down, roughly the up/down
-ratio of all hypoxia DEGs. The TOP20 are labelled only where they are part of
-this set.
+ratio of all hypoxia DEGs. All TOP20 genes are added to these 100, so the
+reference set has `r length(hx_ref)` genes; every gene is named in small
+print, the TOP20 additionally with the larger coloured labels.
 
-This set is the basis for the comparisons below: each shows two or three versions side
-by side, the base version (log2 Hx vs Nx, rows clustered on the three cell
-lines, top 100) on the left (in 5a in the middle). Click an image to enlarge it.
+### Reference heatmap
+
+```{r hx_heatmap_ref, fig.width=14, fig.height=13}
+hx_rows_ref <- hm_rows(hx_ref)
+hx_heatmap(hx_ref, rows = hx_rows_ref, tumours = TRUE, gene_names = TRUE,
+           title = "Reference: top 100 (70 up / 30 down) + TOP20 (log2 Hx vs Nx; clustered on 3 lines)")
+```
+
+This set is the basis for the comparisons below: each shows two or three
+versions side by side, the reference (log2 Hx vs Nx, rows clustered on the
+three cell lines) on the left (in 5a in the middle). Click an image to
+enlarge it.
 
 ### 5a. Scaling: log2 with Nx columns (left), log2 Hx only (middle), z-score per line (right)
 
-```{r hx_heatmap_hx100, fig.width=37, fig.height=11}
-hx_rows_100 <- hm_rows(hx100)
+```{r hx_heatmap_hx100, fig.width=39, fig.height=12}
 hx_pair(
-  hx_heatmap(hx100, rows = hx_rows_100, nx = TRUE, tumours = TRUE, top20_legend = FALSE,
-             title = "Top 100, 70 up / 30 down (log2 vs Nx mean, with Nx; clustered on 3 lines)"),
-  hx_heatmap(hx100, rows = hx_rows_100, tumours = TRUE, top20_legend = FALSE,
-             title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)"),
-  hx_heatmap(hx100, mat = hm_z, lim = 2, rows = hx_rows_100, fill_name = "z-score",
-             nx = TRUE, tumours = TRUE, top20_legend = FALSE,
-             title = "Top 100, 70 up / 30 down (z-score per line; clustered on 3 lines)"),
-  widths = c(13, 11, 13))
+  hx_heatmap(hx_ref, rows = hx_rows_ref, nx = TRUE, tumours = TRUE, top20_legend = FALSE,
+             gene_names = TRUE,
+             title = "Reference (log2 vs Nx mean, with Nx; clustered on 3 lines)"),
+  hx_heatmap(hx_ref, rows = hx_rows_ref, tumours = TRUE, top20_legend = FALSE, gene_names = TRUE,
+             title = "Reference (log2 Hx vs Nx; clustered on 3 lines)"),
+  hx_heatmap(hx_ref, mat = hm_z, lim = 2, rows = hx_rows_ref, fill_name = "z-score",
+             nx = TRUE, tumours = TRUE, top20_legend = FALSE, gene_names = TRUE,
+             title = "Reference (z-score per line; clustered on 3 lines)"),
+  widths = c(14, 12, 14))
 ```
 
-### 5b. Fixed row groups: by responding cell lines (left) vs by HIF target (right)
+### 5b. Row order: clustered (left), grouped by responding lines (middle), grouped by HIF target (right)
 
 Instead of one clustering over all rows, the genes are first put into fixed
-groups and clustered only within each group. Left, the groups say in which
-lines the gene is hypoxia-regulated (DEG in either direction): in all three,
-in Kelly and one baseline line, in Kelly only, or only in SK-N-AS and/or SH-SY5Y ("SK/SH only").
-Right, the groups are the HIF targets from the Target column (induced in WT
-Kelly and lost in the KO). Only the cell-line response enters the clustering;
-the HR and the tumour data are read out against it, not used to sort.
+groups and clustered only within each group. In the middle, the groups say in
+which lines the gene is hypoxia-regulated (DEG in either direction): in all
+three, in Kelly and one baseline line, in Kelly only, only in SK-N-AS and/or
+SH-SY5Y ("SK/SH only"), or in none (TOP20 genes below the DEG cutoff, "no
+line"). Right, the groups are the HIF targets from the Target column (induced
+in WT Kelly and lost in the KO). Only the cell-line response enters the
+clustering; the HR and the tumour data are read out against it, not used to
+sort.
 
-```{r hx_heatmap_hx100_groups, fig.width=22, fig.height=11}
-hx_pat_100 <- hx_pattern(hx100)
+```{r hx_heatmap_hx100_groups, fig.width=36, fig.height=12}
+hx_pat_ref <- hx_pattern(hx_ref)
 hx_pair(
-  hx_heatmap(hx100, split = hx_pat_100, rows = hm_rows(hx100, hx_pat_100), tumours = TRUE, top20_legend = FALSE,
-             title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; grouped by responding lines)"),
-  hx_heatmap(hx100, split = targets, rows = hm_rows(hx100, targets), tumours = TRUE, top20_legend = FALSE,
-             title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; grouped by HIF target)"))
+  hx_heatmap(hx_ref, rows = hx_rows_ref, tumours = TRUE, top20_legend = FALSE, gene_names = TRUE,
+             title = "Reference (log2 Hx vs Nx; clustered on 3 lines)"),
+  hx_heatmap(hx_ref, split = hx_pat_ref, rows = hm_rows(hx_ref, hx_pat_ref), tumours = TRUE,
+             top20_legend = FALSE, gene_names = TRUE,
+             title = "Reference (log2 Hx vs Nx; grouped by responding lines)"),
+  hx_heatmap(hx_ref, split = targets, rows = hm_rows(hx_ref, targets), tumours = TRUE,
+             top20_legend = FALSE, gene_names = TRUE,
+             title = "Reference (log2 Hx vs Nx; grouped by HIF target)"))
 ```
 
-### 5c. Gene number: top 100 (left) vs top 1000 (right), both 70 up / 30 down
+### 5c. Gene number: reference (left) vs top 1000 (right), both 70 up / 30 down
 
-```{r hx_heatmap_hx1000, fig.width=22, fig.height=11}
+```{r hx_heatmap_hx1000, fig.width=24, fig.height=12}
 hx_pair(
-  hx_heatmap(hx100, rows = hx_rows_100, tumours = TRUE, top20_legend = FALSE,
-             title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)"),
-  hx_heatmap(hx1000, rows = hm_rows(hx1000), tumours = TRUE, top20_legend = FALSE,
-             title = "Top 1000, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)"))
+  hx_heatmap(hx_ref, rows = hx_rows_ref, tumours = TRUE, top20_legend = FALSE, gene_names = TRUE,
+             title = "Reference (log2 Hx vs Nx; clustered on 3 lines)"),
+  hx_heatmap(hx1000, rows = hm_rows(union(top20$Ensembl, hx1000)), tumours = TRUE,
+             top20_legend = FALSE,
+             title = "Top 1000, 70 up / 30 down + TOP20 (log2 Hx vs Nx; clustered on 3 lines)"),
+  widths = c(13, 11))
 ```
 
 ### Tumour score
@@ -1246,8 +1279,7 @@ embedding uses the HR and expression level as well, as three blocks:
 
 The tumour data are left out: their contrasts are almost the same variable as
 the HR (the HR comes from the same cohort, Spearman 0.86 - 0.95), so they
-would let the clinical axis enter several times. MYCN amplification is shown
-as a colour only.
+would let the clinical axis enter several times.
 
 Every column is scaled, and every block is divided by √(number of columns), so
 each block weighs the same regardless of how many columns it has. The panels
@@ -1279,7 +1311,13 @@ ud <- tibble(Ensembl = umap_ens, U1 = umap_xy[, 1], U2 = umap_xy[, 2],
              kelly    = hx_resp_all[umap_ens, "Kelly"],
              bm       = log10(bm_mat[umap_ens, "Kelly"] + 1),
              hr       = log2_hr[umap_ens],
-             amp      = tum_contrast[match(umap_ens, rownames(tum_contrast)), 1])
+             amp      = tum_contrast[match(umap_ens, rownames(tum_contrast)), 1],
+             # Hx response in the HIF2A KO minus in the HIF1A KO, signed by the
+             # direction of the Kelly response so that it reads the same for
+             # induced and repressed genes: positive = the response survives
+             # without HIF2A but not without HIF1A, i.e. HIF1A-dependent.
+             hif12    = in_hm$Hif2aHxNx.vs.Hif1aHxNx.log2FoldChange[match(umap_ens, in_hm$Ensembl)] *
+                        sign(hx_resp_all[umap_ens, "Kelly"]))
 
 umap_theme <- list(theme_void(base_size = 11), coord_equal(),
                    theme(legend.position = "bottom", plot.background = element_rect(fill = "white", colour = NA),
@@ -1309,7 +1347,8 @@ umap_cat("pattern", c(`all 3 lines` = "#E41A1C", `Kelly + 1 line` = "#FF7F00",
      scale_colour_gradient(low = "#EFEDF5", high = "#3F007D", name = "log10 baseMean", guide = hm_guide) +
      ggtitle("Expression in Kelly") + umap_theme) +
   umap_num("hr", 1, "Hazard ratio", "log2 HR", low = "#4DAC26", high = "#D01C8B") +
-  umap_num("amp", 0.8, "Tumours: MYCN amp - not", "mean z") +
+  umap_num("hif12", 2, "HIF1A- vs HIF2A-dependent", "HIF2A <- -> HIF1A\n(signed log2)",
+           low = unname(grp_cols["HIF2A"]), high = unname(grp_cols["HIF1A"])) +
   patchwork::plot_layout(nrow = 2, ncol = 3)
 ```
 
@@ -1329,11 +1368,16 @@ What the embedding shows:
   induced island the response gets stronger toward the bottom right, where the
   genes induced in all three lines collect; "Kelly only" genes fill the weaker
   top part.
+- **HIF1A vs HIF2A dependence** (`Hif2aHxNx.vs.Hif1aHxNx`, signed by the
+  direction of the response, so that red means HIF1A-dependent for induced
+  and repressed genes alike): both islands are mostly HIF2A-dependent, in
+  line with the HIF2A-dominated Target column. HIF1A-dependent genes
+  concentrate at the bottom right of the induced island, among the strongly
+  induced genes shared by all three lines.
 - **The HR splits the repressed island** into an adverse upper part (highly
   expressed, high in MYCN-amplified tumours) and a protective lower part. In
   the induced island the HR is scattered: adverse and protective genes sit
   side by side and are not separated by their hypoxia response.
-- The MYCN-amp colour, not used for the embedding, follows the HR closely.
 
 # Hypoxia-induced genes: protective or adverse?
 
