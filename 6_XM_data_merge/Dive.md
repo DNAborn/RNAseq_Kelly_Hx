@@ -769,9 +769,8 @@ if (file.exists(tum_cache)) {
 }
 
 # Clinical annotation of the tumours, condensed into two group columns: MYCN
-# (amplified, and the non-amplified tumours in thirds by their array
-# expression) and outcome. Nmyc gain counts as not amplified. Matched to the
-# array columns by scan name.
+# status (Nmyc gain counts as not amplified) and outcome. Matched to the array
+# columns by scan name.
 tum_meta <- read.csv(here::here("6_XM_data_merge", "Primary_NB_Microarray_meta",
                                 "metadata_nb.csv"), check.names = FALSE)[, -1] %>%
   dplyr::transmute(
@@ -786,15 +785,7 @@ tum_meta <- read.csv(here::here("6_XM_data_merge", "Primary_NB_Microarray_meta",
                             deceased = "deceased"),
     mycn_expr = tum$mycn[sample]) %>%
   dplyr::filter(sample %in% colnames(tum$z))
-# The non-amplified tumours have no gap to cut at (one broad peak), so they
-# are split into thirds instead of at fixed values.
-mycn_cuts <- quantile(tum_meta$mycn_expr[tum_meta$MYCN %in% "not ampl."], c(1, 2) / 3)
-tum_meta <- tum_meta %>%
-  dplyr::mutate(`MYCN expr.` = dplyr::case_when(
-    MYCN %in% "amplified" ~ "amplified",
-    MYCN %in% "not ampl." ~ as.character(cut(mycn_expr, c(-Inf, mycn_cuts, Inf),
-                                             labels = c("non-amp low", "non-amp mid", "non-amp high")))))
-tum_levels <- list(`MYCN expr.` = c("non-amp low", "non-amp mid", "non-amp high", "amplified"),
+tum_levels <- list(MYCN         = c("not ampl.", "amplified"),
                    Outcome      = c("event-free", "relapse", "deceased"))
 tum_groups <- purrr::imap_dfr(tum_levels, function(lv, panel) {
   tum_meta %>%
@@ -949,13 +940,20 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
       theme(strip.text = element_blank(), panel.spacing.x = unit(3, "pt"),
             axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7,
                                        margin = margin(t = 2)))
-    p_tum_top <- ggplot(dplyr::distinct(tl, panel, label),
-                        aes(x = label, y = 1)) +
-      geom_tile(fill = "grey60") +
-      scale_x_discrete(expand = c(0, 0)) + tum_facet +
-      theme_void(base_size = 10) +
-      theme(strip.text = element_text(face = "bold", size = 9, margin = margin(b = 3)),
-            panel.spacing.x = unit(3, "pt"))
+    # Header row: "Primary NB tumours" over the whole block, the clinical
+    # panel names below it, each centred over its group columns.
+    tt <- dplyr::distinct(tl, panel, label) %>% dplyr::arrange(panel, label) %>%
+      dplyr::mutate(x = seq_along(label))
+    tp <- tt %>% dplyr::group_by(panel) %>%
+      dplyr::summarise(xmin = min(x) - 0.45, xmax = max(x) + 0.45, x = mean(x))
+    p_tum_top <- ggplot() +
+      annotate("rect", xmin = 0.55, xmax = nrow(tt) + 0.45, ymin = 1.55, ymax = 2.45, fill = "grey35") +
+      annotate("text", x = (nrow(tt) + 1) / 2, y = 2, label = paste0("Primary NB tumours (", ncol(tum$z), ")"),
+               colour = "white", fontface = "bold", size = 3) +
+      geom_rect(data = tp, aes(xmin = xmin, xmax = xmax, ymin = 0.55, ymax = 1.45), fill = "grey75") +
+      geom_text(data = tp, aes(x = x, y = 1, label = panel), fontface = "bold", size = 2.8) +
+      scale_x_continuous(limits = c(0.5, nrow(tt) + 0.5), expand = c(0, 0)) +
+      theme_void(base_size = 10)
   } else {
     p_tum <- p_tum_top <- plot_spacer()
   }
@@ -1032,7 +1030,7 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
                 widths = c(if (is.null(split)) 0.01 else 0.35, 0.9, 0.3, 0.3,
                            if (nx) 13 else 8, if (tumours) 0.15 else 0.01,
                            if (tumours) 3 else 0.01, if (gene_names) 3.2 else 2.4),
-                heights = c(0.35, 12), guides = "collect") +
+                heights = c(0.5, 12), guides = "collect") +
     plot_annotation(title = title) &
     theme(legend.position = "bottom", legend.text = element_text(size = 8),
           legend.title = element_text(size = 9),
@@ -1181,12 +1179,11 @@ this group than in the average tumour.
 
 MYCN expression on the array is bimodal (Figure 5): the amplified
 tumours form a separate peak at high expression, the non-amplified ones
-one broad peak without a natural gap (a closer look at log2 12 - 13
-found none). The **MYCN expr.** columns therefore keep the amplified
-tumours as one group and split the non-amplified ones into thirds by
-their expression (cutoffs at log2 12.44 and 13.12, dashed lines). The
-lowest third asks whether tumours with hardly any MYCN differ from the
-rest.
+one broad peak without a natural gap. A split of the non-amplified
+tumours into thirds by expression was tried: the hypoxia score falls
+step by step with rising MYCN, from the lowest third (+0.09) to the
+amplified tumours (−0.13). For the heatmaps the amplification status is
+kept.
 
 <details>
 
@@ -1196,22 +1193,18 @@ Code
 </summary>
 
 ``` r
-mycn_n <- table(factor(tum_meta$`MYCN expr.`, levels = tum_levels$`MYCN expr.`))
-ggplot(tum_meta, aes(x = mycn_expr,
-                     fill = factor(`MYCN expr.`, levels = names(mycn_n),
-                                   labels = paste0(names(mycn_n), " (", mycn_n, ")")))) +
+ggplot(tum_meta, aes(x = mycn_expr, fill = MYCN)) +
   geom_histogram(binwidth = 0.25, boundary = 0) +
-  geom_vline(xintercept = mycn_cuts, linetype = 2, linewidth = 0.4) +
-  scale_fill_manual(values = c("#C6DBEF", "#6BAED6", "#2171B5", "#C03A3E"),
-                    na.value = "grey85", name = "MYCN expr.") +
+  scale_fill_manual(values = c(amplified = "#C03A3E", `not ampl.` = "grey60"),
+                    na.value = "grey85", name = "MYCN") +
   labs(x = "MYCN expression (log2 array intensity)", y = "tumours") +
   theme_minimal(base_size = 10)
 ```
 
 </details>
 
-**Figure 5. MYCN expression in the primary tumours, coloured by the four
-MYCN expr. groups**
+**Figure 5. MYCN expression in the primary tumours by amplification
+status**
 
 <img src="Dive_files/figure-gfm/tumour_mycn_hist-1.png" width="60%" />
 
@@ -1237,32 +1230,27 @@ hx_heatmap(hx500, rows = hx_rows_500, tumours = TRUE,
 **Tumour hypoxia score (median of the mean signed z of the shown genes)
 per clinical group; p for the overall score**
 
-| panel      | group              |  score | score_up | score_down | p       |
-|:-----------|:-------------------|-------:|---------:|-----------:|:--------|
-| MYCN expr. | non-amp low (136)  |  0.093 |    0.089 |     -0.059 | 3.6e-18 |
-| MYCN expr. | non-amp mid (136)  |  0.031 |    0.022 |      0.101 |         |
-| MYCN expr. | non-amp high (136) | -0.073 |   -0.080 |      0.200 |         |
-| MYCN expr. | amplified (69)     | -0.125 |   -0.107 |     -0.410 |         |
-| Outcome    | event-free (323)   |  0.007 |    0.005 |      0.108 | 1.9e-02 |
-| Outcome    | relapse (64)       | -0.021 |   -0.023 |     -0.076 |         |
-| Outcome    | deceased (91)      | -0.035 |   -0.022 |     -0.180 |         |
+| panel   | group            |  score | score_up | score_down | p       |
+|:--------|:-----------------|-------:|---------:|-----------:|:--------|
+| MYCN    | not ampl. (408)  |  0.013 |    0.012 |      0.094 | 5.8e-07 |
+| MYCN    | amplified (69)   | -0.125 |   -0.107 |     -0.410 |         |
+| Outcome | event-free (323) |  0.007 |    0.005 |      0.108 | 1.9e-02 |
+| Outcome | relapse (64)     | -0.021 |   -0.023 |     -0.076 |         |
+| Outcome | deceased (91)    | -0.035 |   -0.022 |     -0.180 |         |
 
 Counter to the expectation that aggressive tumours are more hypoxic, the
-cell-line hypoxia program gets *weaker* step by step with rising MYCN:
-from the lowest non-amplified third (score +0.09) over the middle and
-upper third to the amplified tumours (−0.13). The tumours with hardly
-any MYCN carry the strongest hypoxia signature. Over the three
-non-amplified thirds this comes from the induced genes (`score_up`
-falls, `score_down` even rises); in the amplified tumours both parts
-drop, above all the repressed genes (−0.41). Fatal cases score lower
-too, but less (they overlap largely with MYCN amplification). The
-effects are small: a score of −0.1 means the shown genes sit on average
-0.1 SD below the cohort mean. Bulk tumour expression has no normoxic
-reference, so this score mixes hypoxia with everything else that differs
-between the groups - above all the MYCN-driven program itself, which
-shifts many of these genes. The heatmap shows that the shift is not
-uniform: single blocks go up in MYCN-amplified tumours while others go
-down.
+cell-line hypoxia program is slightly *weaker* in MYCN-amplified tumours
+(score −0.13 vs +0.01), above all through the repressed genes (−0.41),
+and to a lesser degree in fatal cases (which overlap largely with MYCN
+amplification). Within the non-amplified tumours the score also falls
+with rising MYCN expression (see the thirds above), so the effect
+follows the MYCN level, not only the amplification. The effects are
+small: a score of −0.1 means the shown genes sit on average 0.1 SD below
+the cohort mean. Bulk tumour expression has no normoxic reference, so
+this score mixes hypoxia with everything else that differs between the
+groups - above all the MYCN-driven program itself, which shifts many of
+these genes. The heatmap shows that the shift is not uniform: single
+blocks go up in MYCN-amplified tumours while others go down.
 
 With the baseline lines contributing their own top genes, line-specific
 blocks appear: genes induced only in SK-N-AS or only in SH-SY5Y (Kelly
@@ -1318,9 +1306,10 @@ Code
 </summary>
 
 ``` r
-hx_rows_ref <- hm_rows(hx_ref)
-hx_heatmap(hx_ref, rows = hx_rows_ref, tumours = TRUE, gene_names = TRUE,
-           title = "Reference: top 100 (70 up / 30 down) + TOP20 (log2 Hx vs Nx; clustered on 3 lines)")
+hx_pat_ref  <- hx_pattern(hx_ref)
+hx_rows_ref <- hm_rows(hx_ref, hx_pat_ref)
+hx_heatmap(hx_ref, split = hx_pat_ref, rows = hx_rows_ref, tumours = TRUE, gene_names = TRUE,
+           title = "Reference: top 100 (70 up / 30 down) + TOP20 (log2 Hx vs Nx; grouped by responding lines)")
 ```
 
 </details>
@@ -1329,10 +1318,11 @@ hx_heatmap(hx_ref, rows = hx_rows_ref, tumours = TRUE, gene_names = TRUE,
 
 ![](Dive_files/figure-gfm/hx_heatmap_ref-1.png)<!-- -->
 
-This set is the basis for the comparisons below: each shows two or three
-versions side by side, the reference (log2 Hx vs Nx, rows clustered on
-the three cell lines) on the left (in 5a in the middle). Click an image
-to enlarge it.
+The reference shows log2 Hx vs Nx (Hx samples only) with the rows
+grouped by the responding lines and clustered within each group (see
+5b). It is the basis for the comparisons below, which show two or three
+versions side by side, the reference on the left (in 5a and 5b in the
+middle). Click an image to enlarge it.
 
 ### 5a. Scaling: log2 with Nx columns (left), log2 Hx only (middle), z-score per line (right)
 
@@ -1345,14 +1335,14 @@ Code
 
 ``` r
 hx_pair(
-  hx_heatmap(hx_ref, rows = hx_rows_ref, nx = TRUE, tumours = TRUE, top20_legend = FALSE,
-             gene_names = TRUE,
-             title = "Reference (log2 vs Nx mean, with Nx; clustered on 3 lines)"),
-  hx_heatmap(hx_ref, rows = hx_rows_ref, tumours = TRUE, top20_legend = FALSE, gene_names = TRUE,
-             title = "Reference (log2 Hx vs Nx; clustered on 3 lines)"),
-  hx_heatmap(hx_ref, mat = hm_z, lim = 2, rows = hx_rows_ref, fill_name = "z-score",
+  hx_heatmap(hx_ref, split = hx_pat_ref, rows = hx_rows_ref, nx = TRUE, tumours = TRUE,
+             top20_legend = FALSE, gene_names = TRUE,
+             title = "Reference genes (log2 vs Nx mean, with Nx)"),
+  hx_heatmap(hx_ref, split = hx_pat_ref, rows = hx_rows_ref, tumours = TRUE, top20_legend = FALSE,
+             gene_names = TRUE, title = "Reference (log2 Hx vs Nx)"),
+  hx_heatmap(hx_ref, split = hx_pat_ref, mat = hm_z, lim = 2, rows = hx_rows_ref, fill_name = "z-score",
              nx = TRUE, tumours = TRUE, top20_legend = FALSE, gene_names = TRUE,
-             title = "Reference (z-score per line; clustered on 3 lines)"),
+             title = "Reference genes (z-score per line)"),
   widths = c(14, 12, 14))
 ```
 
@@ -1383,16 +1373,15 @@ Code
 </summary>
 
 ``` r
-hx_pat_ref <- hx_pattern(hx_ref)
 hx_pair(
-  hx_heatmap(hx_ref, rows = hx_rows_ref, tumours = TRUE, top20_legend = FALSE, gene_names = TRUE,
-             title = "Reference (log2 Hx vs Nx; clustered on 3 lines)"),
-  hx_heatmap(hx_ref, split = hx_pat_ref, rows = hm_rows(hx_ref, hx_pat_ref), tumours = TRUE,
+  hx_heatmap(hx_ref, rows = hm_rows(hx_ref), tumours = TRUE, top20_legend = FALSE, gene_names = TRUE,
+             title = "Reference genes (clustered on 3 lines)"),
+  hx_heatmap(hx_ref, split = hx_pat_ref, rows = hx_rows_ref, tumours = TRUE,
              top20_legend = FALSE, gene_names = TRUE,
-             title = "Reference (log2 Hx vs Nx; grouped by responding lines)"),
+             title = "Reference (grouped by responding lines)"),
   hx_heatmap(hx_ref, split = targets, rows = hm_rows(hx_ref, targets), tumours = TRUE,
              top20_legend = FALSE, gene_names = TRUE,
-             title = "Reference (log2 Hx vs Nx; grouped by HIF target)"))
+             title = "Reference genes (grouped by HIF target)"))
 ```
 
 </details>
@@ -1412,12 +1401,14 @@ Code
 </summary>
 
 ``` r
+hx1000_all  <- union(top20$Ensembl, hx1000)
+hx_pat_1000 <- hx_pattern(hx1000_all)
 hx_pair(
-  hx_heatmap(hx_ref, rows = hx_rows_ref, tumours = TRUE, top20_legend = FALSE, gene_names = TRUE,
-             title = "Reference (log2 Hx vs Nx; clustered on 3 lines)"),
-  hx_heatmap(hx1000, rows = hm_rows(union(top20$Ensembl, hx1000)), tumours = TRUE,
+  hx_heatmap(hx_ref, split = hx_pat_ref, rows = hx_rows_ref, tumours = TRUE, top20_legend = FALSE,
+             gene_names = TRUE, title = "Reference (log2 Hx vs Nx; grouped by responding lines)"),
+  hx_heatmap(hx1000_all, split = hx_pat_1000, rows = hm_rows(hx1000_all, hx_pat_1000), tumours = TRUE,
              top20_legend = FALSE,
-             title = "Top 1000, 70 up / 30 down + TOP20 (log2 Hx vs Nx; clustered on 3 lines)"),
+             title = "Top 1000, 70 up / 30 down + TOP20 (log2 Hx vs Nx; grouped by responding lines)"),
   widths = c(13, 11))
 ```
 
@@ -1432,25 +1423,23 @@ hx_pair(
 **Tumour hypoxia score for the top 100 (70 up / 30 down) per clinical
 group**
 
-| panel      | group              |  score | score_up | score_down | p       |
-|:-----------|:-------------------|-------:|---------:|-----------:|:--------|
-| MYCN expr. | non-amp low (136)  |  0.072 |    0.074 |     -0.002 | 8.4e-09 |
-| MYCN expr. | non-amp mid (136)  |  0.029 |    0.011 |      0.087 |         |
-| MYCN expr. | non-amp high (136) | -0.028 |   -0.122 |      0.093 |         |
-| MYCN expr. | amplified (69)     | -0.097 |   -0.011 |     -0.282 |         |
-| Outcome    | event-free (323)   |  0.007 |   -0.007 |      0.075 | 7.8e-02 |
-| Outcome    | relapse (64)       | -0.038 |   -0.028 |      0.002 |         |
-| Outcome    | deceased (91)      | -0.016 |    0.049 |     -0.170 |         |
+| panel   | group            |  score | score_up | score_down | p       |
+|:--------|:-----------------|-------:|---------:|-----------:|:--------|
+| MYCN    | not ampl. (408)  |  0.015 |    0.002 |      0.070 | 1.7e-07 |
+| MYCN    | amplified (69)   | -0.097 |   -0.011 |     -0.282 |         |
+| Outcome | event-free (323) |  0.007 |   -0.007 |      0.075 | 7.8e-02 |
+| Outcome | relapse (64)     | -0.038 |   -0.028 |      0.002 |         |
+| Outcome | deceased (91)    | -0.016 |    0.049 |     -0.170 |         |
 
-The top 100 show the same split more sharply: in the non-amplified
-thirds the *induced* genes carry the trend (`score_up` +0.07 in the
-lowest, −0.12 in the highest third), while the amplified tumours differ
-almost only by the hypoxia-*repressed* genes (`score_down` −0.28,
-i.e. they do *not* follow the hypoxic repression; `score_up` near 0).
-Many of these repressed genes carry an adverse HR (magenta in the HR
-strip). So MYCN-amplified tumours do not look less hypoxic by their
-induced genes - they keep genes high that hypoxia shuts off in the cell
-lines, plausibly MYCN-driven genes such as proliferation and
+The split score shows where the MYCN difference comes from: the
+hypoxia-*induced* genes hardly differ between amplified and
+non-amplified tumours (`score_up` near 0), but the hypoxia-*repressed*
+genes are clearly higher in MYCN-amplified tumours (`score_down` −0.28,
+i.e. they do *not* follow the hypoxic repression) and, more weakly, in
+fatal cases. Many of these repressed genes carry an adverse HR (magenta
+in the HR strip). So MYCN-amplified tumours do not look less hypoxic by
+their induced genes - they keep genes high that hypoxia shuts off in the
+cell lines, plausibly MYCN-driven genes such as proliferation and
 biosynthesis genes.
 
 **Median Hx response (log2 vs Nx) per line, and Spearman correlation of
@@ -1468,9 +1457,16 @@ the per-gene response with Kelly**
 
 All hypoxia-regulated genes (DEG in at least one of the three lines)
 with survival data, one point per gene. Unlike the heatmap clustering,
-the embedding uses the HR and expression level as well, as three blocks:
+the embedding uses the HR and expression level as well, as four blocks:
 
 - **log2 Hx vs Nx** in the six panels (three lines, three KOs)
+- **HIF dependence**: the interaction terms, i.e. the Hx response in
+  each KO minus the response in WT Kelly (HIF1A, HIF2A, ARNT KO), signed
+  by the direction of the Kelly response. The KO responses alone are
+  already in the first block, but there they sit next to five panels
+  that mostly move together with Kelly, so the *difference* between WT
+  and KO - what makes a gene a HIF1A or HIF2A target - carried little
+  weight. As its own block it counts as much as the response itself.
 - **log2 HR**
 - **log10 baseMean** in the three lines
 
@@ -1496,14 +1492,20 @@ tum_grp_mean <- sapply(split(tum_groups$sample, tum_groups$label),
                        function(s) rowMeans(tum$z[, s, drop = FALSE]))
 grp_col <- function(g) tum_grp_mean[, grep(paste0("^", g, " \\("), colnames(tum_grp_mean))]
 tum_contrast <- cbind(
-  `MYCN amp - non-amp low`      = grp_col("amplified")    - grp_col("non-amp low"),
-  `MYCN non-amp high - low`     = grp_col("non-amp high") - grp_col("non-amp low"),
+  `MYCN amp - not`        = grp_col("amplified") - grp_col("not ampl."),
   `deceased - event-free` = grp_col("deceased") - grp_col("event-free"))
 log2_hr <- setNames(log2(hr_vals$HR), hr_vals$Ensembl)
 bm_mat  <- base_means %>% tibble::column_to_rownames("Ensembl") %>% as.matrix()
 umap_ens <- intersect(umap_ens, names(log2_hr)[!is.na(log2_hr)])
 
+# HIF dependence: response in each KO minus the response in WT Kelly (the
+# interaction term, on the VST scale), signed by the direction of the Kelly
+# response, so negative = the KO loses the hypoxia response, for induced and
+# repressed genes alike.
+umap_dep <- (hx_resp_all[umap_ens, c("HIF1A KO", "HIF2A KO", "ARNT KO")] -
+             hx_resp_all[umap_ens, "Kelly"]) * sign(hx_resp_all[umap_ens, "Kelly"])
 umap_blocks <- list(log2     = hx_resp_all[umap_ens, ],
+                    HIF_dep  = umap_dep,
                     HR       = cbind(log2HR = log2_hr[umap_ens]),
                     baseMean = log10(bm_mat[umap_ens, ] + 1))
 umap_x <- do.call(cbind, lapply(umap_blocks, function(b) scale(b) / sqrt(ncol(b))))
@@ -1519,7 +1521,7 @@ umap_g  <- igraph::simplify(igraph::graph_from_edgelist(
   directed = FALSE))
 set.seed(1)
 umap_cl <- igraph::cluster_leiden(umap_g, objective_function = "modularity",
-                                  resolution = 0.5, n_iterations = 10)$membership
+                                  resolution = 0.8, n_iterations = 10)$membership
 # Number the clusters from most induced to most repressed.
 umap_cl <- as.integer(factor(umap_cl, levels = order(-tapply(hx_resp_all[umap_ens, "Kelly"], umap_cl, median))))
 
@@ -1565,7 +1567,7 @@ umap_cat("pattern", c(`all 3 lines` = "#E41A1C", `Kelly + 1 line` = "#FF7F00",
                   dplyr::summarise(U1 = median(U1), U2 = median(U2)),
                 aes(label = cluster), colour = "grey10", size = 4, label.size = 0,
                 fill = scales::alpha("white", 0.7)) +
-     scale_colour_brewer(palette = "Set2", guide = "none") +
+     scale_colour_brewer(palette = "Set1", guide = "none") +
      ggtitle("Leiden clusters") + umap_theme) +
   patchwork::plot_layout(nrow = 2, ncol = 3)
 ```
@@ -1579,50 +1581,59 @@ umap_cat("pattern", c(`all 3 lines` = "#E41A1C", `Kelly + 1 line` = "#FF7F00",
 **Spearman correlation between response, HR, expression and the tumour
 contrasts (5941 genes)**
 
-| feature | Kelly | log2HR | baseMean | MYCN amp - non-amp low | MYCN non-amp high - low | deceased - event-free |
-|:---|---:|---:|---:|---:|---:|---:|
-| Kelly | 1.00 | -0.25 | -0.05 | -0.24 | -0.10 | -0.24 |
-| log2HR | -0.25 | 1.00 | 0.07 | 0.80 | -0.01 | 0.95 |
-| baseMean | -0.05 | 0.07 | 1.00 | 0.13 | 0.22 | 0.06 |
-| MYCN amp - non-amp low | -0.24 | 0.80 | 0.13 | 1.00 | 0.31 | 0.80 |
-| MYCN non-amp high - low | -0.10 | -0.01 | 0.22 | 0.31 | 1.00 | -0.07 |
-| deceased - event-free | -0.24 | 0.95 | 0.06 | 0.80 | -0.07 | 1.00 |
+| feature | Kelly | log2HR | baseMean | MYCN amp - not | deceased - event-free |
+|:---|---:|---:|---:|---:|---:|
+| Kelly | 1.00 | -0.25 | -0.05 | -0.23 | -0.24 |
+| log2HR | -0.25 | 1.00 | 0.07 | 0.86 | 0.95 |
+| baseMean | -0.05 | 0.07 | 1.00 | 0.08 | 0.06 |
+| MYCN amp - not | -0.23 | 0.86 | 0.08 | 1.00 | 0.88 |
+| deceased - event-free | -0.24 | 0.95 | 0.06 | 0.88 | 1.00 |
 
 **Leiden clusters: medians per cluster (log2 Hx vs Nx per line, HIF1A vs
 2A = signed dependence, positive = HIF1A)**
 
-| cluster | genes | % up | Kelly | SK-N-AS | SH-SY5Y | % all 3 lines | % Kelly only | % HIF1A tgt | % HIF2A tgt | HIF1A vs 2A | baseMean | HR | MYCN amp - low |
+| cluster | genes | % up | Kelly | SK-N-AS | SH-SY5Y | % all 3 lines | % Kelly only | % HIF1A tgt | % HIF2A tgt | HIF1A vs 2A | baseMean | HR | MYCN amp - not |
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 1520 | 98 | 1.45 | 0.58 | 0.57 | 15 | 52 | 10 | 24 | -0.42 | 995 | 0.89 | -0.21 |
-| 2 | 946 | 96 | 0.81 | 0.68 | 0.47 | 8 | 49 | 5 | 29 | -0.82 | 38 | 0.97 | -0.14 |
-| 3 | 1160 | 84 | 0.33 | 0.06 | 0.08 | 0 | 82 | 3 | 17 | -0.75 | 3 | 1.01 | -0.03 |
-| 4 | 512 | 79 | 0.21 | 0.24 | -0.03 | 1 | 48 | 2 | 12 | -0.68 | 2 | 0.95 | -0.27 |
-| 5 | 1164 | 3 | -1.09 | -0.37 | -0.54 | 2 | 66 | 0 | 0 | -0.44 | 476 | 0.93 | -0.19 |
-| 6 | 639 | 0 | -1.27 | -0.67 | -0.60 | 4 | 73 | 0 | 0 | -0.84 | 2261 | 2.69 | 1.07 |
+| 1 | 274 | 100 | 2.39 | 0.19 | 0.37 | 7 | 65 | 5 | 74 | -2.35 | 167 | 0.92 | -0.14 |
+| 2 | 895 | 99 | 1.46 | 0.52 | 0.47 | 15 | 61 | 1 | 30 | -0.68 | 1425 | 0.80 | -0.29 |
+| 3 | 550 | 98 | 1.18 | 0.80 | 0.86 | 17 | 32 | 37 | 1 | 1.35 | 348 | 1.02 | 0.00 |
+| 4 | 478 | 96 | 0.86 | 0.46 | 0.27 | 5 | 67 | 1 | 28 | -1.20 | 55 | 0.94 | -0.19 |
+| 5 | 1016 | 90 | 0.43 | 0.68 | 0.37 | 3 | 45 | 1 | 18 | -0.74 | 8 | 0.98 | -0.08 |
+| 6 | 804 | 81 | 0.29 | 0.00 | 0.00 | 0 | 92 | 2 | 14 | -0.67 | 3 | 1.02 | 0.01 |
+| 7 | 44 | 48 | 0.00 | -1.12 | -0.01 | 0 | 7 | 0 | 0 | 0.00 | 0 | 0.98 | -0.05 |
+| 8 | 941 | 6 | -0.97 | -0.39 | -0.54 | 2 | 62 | 0 | 0 | -0.21 | 220 | 0.91 | -0.14 |
+| 9 | 939 | 0 | -1.30 | -0.59 | -0.58 | 3 | 74 | 0 | 0 | -0.90 | 2054 | 2.16 | 0.74 |
 
 What the embedding shows:
 
-- **Apart from up vs down there are no sharply separated groups.** The
-  genes form a continuum; tighter UMAP settings (15 neighbours,
-  `min_dist` 0.05) only pack the points closer. t-SNE gives the same
-  picture, PCA is dominated by a few extreme genes and was not useful.
-  The clusters are therefore cuts through a continuum, but stable ones:
-  Leiden on the input space finds the same six regions in every
-  embedding tried.
-- **Induced genes (clusters 1-4)** split mainly by response strength and
-  expression level:
-  - **1** - the core program: strongest induction, highly expressed,
-    most genes induced in all three lines and the most HIF1A targets.
-  - **2** - moderate induction, medium expression, the highest share of
-    HIF2A targets.
-  - **3** - weak, Kelly-only induction of barely expressed genes.
-  - **4** - weak induction, low expression, partly SK-N-AS-driven.
-- **Repressed genes (clusters 5-6)** split by the HR: cluster **6** is
-  highly expressed, adverse (median HR 2.7) and high in MYCN-amplified
+- **HIF1A and HIF2A targets now separate.** With the interaction block,
+  the HIF1A targets form their own region (cluster 3, left edge), and
+  the HIF2A targets gather along the upper and inner part of the induced
+  side (clusters 1, 2, 4). Without that block they were scattered over
+  the whole induced side. This is partly by construction - the Target
+  column is defined by the same KO interaction - but it shows where in
+  the response the two HIFs act: HIF1A on genes that the baseline lines
+  share, HIF2A mostly on responses specific to Kelly.
+- **Apart from that the genes form a continuum.** UMAP settings change
+  only how tight the points pack, t-SNE gives the same picture, PCA is
+  dominated by a few extreme genes. The clusters are cuts through this
+  continuum (Leiden, resolution 0.8, on the input space).
+- **Induced genes (clusters 1-6)**:
+  - **1** - the strongest, almost purely HIF2A-dependent Kelly response
+    (74% HIF2A targets, Kelly log2 2.4, baseline lines barely respond).
+  - **2** - strong induction of highly expressed genes, partly HIF2A;
+    the most protective cluster (HR 0.80).
+  - **3** - the HIF1A cluster: 37% HIF1A targets, induced in all three
+    lines (SK-N-AS and SH-SY5Y follow Kelly most closely here),
+    HIF1A-dependent.
+  - **4** - moderate, HIF2A-dependent, Kelly-dominated.
+  - **5, 6** - weak induction of barely expressed genes; 6 is
+    Kelly-only.
+- **7** - a small group (44 genes) regulated only in SK-N-AS.
+- **Repressed genes (clusters 8-9)** split by the HR: cluster **9** is
+  highly expressed, adverse (median HR 2.2) and high in MYCN-amplified
   tumours - the MYCN-like genes that hypoxia shuts off in the cell
-  lines. Cluster **5** is neutral.
-- **HIF dependence**: every cluster leans HIF2A (negative “HIF1A vs
-  2A”); the core cluster 1 least so, in line with its HIF1A targets.
+  lines. Cluster **8** is neutral.
 - The HR of the induced clusters stays close to 1: adverse and
   protective induced genes sit side by side.
 
