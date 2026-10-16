@@ -699,6 +699,16 @@ hx100_down <- setdiff(hx_top_dir(30, -1), hx100_up)
 hx100      <- c(hx100_up, hx100_down)
 hx1000     <- union(hx_top_dir(700, 1), hx_top_dir(300, -1))
 
+# Fixed row groups by which cell lines respond (DEG in either direction).
+hx_pattern <- function(ens) {
+  d <- hx_deg[ens, hm_lines, drop = FALSE]
+  base <- rowSums(d[, c("SK-N-AS", "SH-SY5Y"), drop = FALSE])
+  setNames(dplyr::case_when(d[, "Kelly"] & base == 2 ~ "all 3 lines",
+                            d[, "Kelly"] & base == 1 ~ "Kelly + 1 line",
+                            d[, "Kelly"]             ~ "Kelly only",
+                            TRUE                     ~ "SK/SH only"), ens)
+}
+
 # Per-line z-score: every gene scaled to mean 0 / sd 1 within each line.
 hm_z <- hm$mat
 for (l in hm_panels) {
@@ -710,7 +720,9 @@ for (l in hm_panels) {
 
 highlight <- top20 %>% dplyr::select(Ensembl, label, group)
 grp_cols  <- c(HIF1A = unname(hr_cols[1]), both = "#8E7CC3",
-               HIF2A = unname(hr_cols[2]), other = "grey80")
+               HIF2A = unname(hr_cols[2]), other = "grey80",
+               `all 3 lines` = "#636363", `Kelly + 1 line` = "#969696",
+               `Kelly only` = "#BDBDBD", `SK/SH only` = "#E0E0E0")
 # Shorter legend keys so all legends fit in one row below the plot.
 hm_guide <- guide_colourbar(barwidth = unit(5, "lines"), barheight = unit(0.6, "lines"),
                             title.vjust = 0.9)
@@ -745,8 +757,11 @@ if (file.exists(tum_cache)) {
 }
 
 # Clinical annotation of the tumours, condensed into three group columns:
-# MYCN status (Nmyc gain counts as not amplified), INSS stage (1-2 pooled) and
-# outcome. Matched to the array columns by scan name.
+# MYCN status (Nmyc gain counts as not amplified), MYCN expression and outcome.
+# MYCN expression is bimodal: the amplified tumours form their own peak, so a
+# median split over all tumours would mostly re-split by amplification.
+# Instead the non-amplified tumours are split at their own median.
+# Matched to the array columns by scan name.
 tum_meta <- read.csv(here::here("6_XM_data_merge", "Primary_NB_Microarray_meta",
                                 "metadata_nb.csv"), check.names = FALSE)[, -1] %>%
   dplyr::transmute(
@@ -758,11 +773,17 @@ tum_meta <- read.csv(here::here("6_XM_data_merge", "Primary_NB_Microarray_meta",
     Outcome = dplyr::recode(death_of_disease,
                             `alive without event` = "event-free",
                             `alive with relapse/primary tumor` = "relapse",
-                            deceased = "deceased")) %>%
+                            deceased = "deceased"),
+    mycn_expr = tum$mycn[sample]) %>%
   dplyr::filter(sample %in% colnames(tum$z))
-tum_levels <- list(MYCN    = c("not ampl.", "amplified"),
-                   Stage   = c("1-2", "3", "4S", "4"),
-                   Outcome = c("event-free", "relapse", "deceased"))
+mycn_cut <- median(tum_meta$mycn_expr[tum_meta$MYCN %in% "not ampl."])
+tum_meta <- tum_meta %>%
+  dplyr::mutate(`MYCN expr.` = dplyr::case_when(
+    MYCN %in% "not ampl." & mycn_expr <  mycn_cut ~ "non-amp low",
+    MYCN %in% "not ampl." & mycn_expr >= mycn_cut ~ "non-amp high"))
+tum_levels <- list(MYCN         = c("not ampl.", "amplified"),
+                   `MYCN expr.` = c("non-amp low", "non-amp high"),
+                   Outcome      = c("event-free", "relapse", "deceased"))
 tum_groups <- purrr::imap_dfr(tum_levels, function(lv, panel) {
   tum_meta %>%
     dplyr::transmute(sample, panel = panel, group = .data[[panel]]) %>%
@@ -805,7 +826,7 @@ hm_rows <- function(ens, split = NULL, resp = hx_resp) {
 
 hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
                        fill_name = "log2 Hx vs Nx", title = NULL, nx = FALSE,
-                       tumours = FALSE) {
+                       tumours = FALSE, top20_legend = TRUE) {
   ens <- union(highlight$Ensembl, ens)
   if (is.null(rows)) rows <- hm_rows(ens, split)
   pos <- rows$y
@@ -904,7 +925,8 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
       dplyr::reframe(Ensembl = te,
                      value = rowMeans(tum$z[te, sample, drop = FALSE])) %>%
       dplyr::mutate(y = pos[Ensembl])
-    tum_facet <- facet_grid(. ~ panel, scales = "free_x", space = "free_x")
+    tum_facet <- facet_grid(. ~ panel, scales = "free_x", space = "free_x",
+                            labeller = as_labeller(function(x) sub(" ", "\n", x)))
     p_tum <- ggplot(tl, aes(x = label, y = y, fill = value)) +
       geom_raster() +
       scale_fill_gradient2(low = "#4682C4", mid = "white", high = "#C03A3E",
@@ -926,6 +948,20 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
     p_tum <- p_tum_top <- plot_spacer()
   }
 
+  # HIF target (Target column: induced in WT, lost in the KO) for every row.
+  tg <- tibble(Ensembl = names(pos), y = pos,
+               group = factor(ifelse(Ensembl %in% names(targets), targets[Ensembl], "other"),
+                              levels = c("HIF1A", "both", "HIF2A", "other")))
+  p_tgt <- ggplot(tg, aes(x = "Target", y = y, fill = group)) +
+    geom_raster() +
+    scale_fill_manual(values = grp_cols, drop = FALSE, name = "HIF target",
+                      labels = c(HIF1A = "HIF1A", both = "both", HIF2A = "HIF2A",
+                                 other = "none")) +
+    scale_x_discrete(expand = c(0, 0)) + yscale +
+    theme_void(base_size = 10) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7,
+                                     margin = margin(t = 2)))
+
   # Target-group strip, only when rows are split into groups.
   p_grp <- if (!is.null(split)) {
     gd <- tibble(y = pos, group = rows$group)
@@ -934,8 +970,9 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
       # Only groups tall enough to hold their name are labelled in the strip.
       geom_text(data = gd %>% dplyr::group_by(group) %>%
                   dplyr::summarise(y = mean(y), n = dplyr::n()) %>%
-                  dplyr::filter(n >= 0.08 * length(pos)),
-                aes(label = paste0(group, " (", n, ")")), angle = 90, size = 2.4,
+                  dplyr::filter(n >= 0.01 * nchar(as.character(group)) * length(pos)),
+                aes(label = paste0(group, "\n(", n, ")")), angle = 90, size = 2.4,
+                lineheight = 0.85,
                 colour = "grey10") +
       scale_fill_manual(values = grp_cols) +
       scale_x_continuous(expand = c(0, 0)) + yscale +
@@ -960,14 +997,16 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
                               segment.colour = NA, min.segment.length = 0,
                               box.padding = 0.05, max.overlaps = Inf, seed = 1,
                               show.legend = FALSE) +
-    scale_fill_manual(values = hr_cols, name = "TOP20") +
+    scale_fill_manual(values = hr_cols, name = "TOP20",
+                      guide = if (top20_legend) "legend" else "none") +
     scale_x_continuous(limits = c(0, 1.6), expand = c(0, 0)) + yscale +
     theme_void()
 
-  plot_spacer() + plot_spacer() + plot_spacer() + p_cond + plot_spacer() + p_tum_top + plot_spacer() +
-    p_grp + p_bm + p_hr + p_main + plot_spacer() + p_tum + p_lab +
-    plot_layout(ncol = 7,
-                widths = c(if (is.null(split)) 0.01 else 0.35, 0.9, 0.3,
+  plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + p_cond + plot_spacer() +
+    p_tum_top + plot_spacer() +
+    p_grp + p_bm + p_hr + p_tgt + p_main + plot_spacer() + p_tum + p_lab +
+    plot_layout(ncol = 8,
+                widths = c(if (is.null(split)) 0.01 else 0.35, 0.9, 0.3, 0.3,
                            if (nx) 13 else 8, if (tumours) 0.15 else 0.01,
                            if (tumours) 3 else 0.01, 2.4),
                 heights = c(0.35, 12), guides = "collect") +
@@ -976,6 +1015,11 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
           legend.title = element_text(size = 9),
           legend.key.size = unit(0.8, "lines"),
           plot.title = element_text(face = "bold", size = 11))
+}
+
+# Two heatmaps as one figure, so the pair can be enlarged together on GitHub.
+hx_pair <- function(left, right) {
+  patchwork::wrap_elements(full = left) | patchwork::wrap_elements(full = right)
 }
 
 hx_summary <- function(label, set) {
@@ -1107,6 +1151,34 @@ cohort. Array intensities cannot be put on the log2-vs-Nx scale of the
 cell lines, so only the difference between groups counts: red = higher
 in this group than in the average tumour.
 
+MYCN expression on the array is bimodal (below): the amplified tumours
+form a separate peak at high expression. A median split over all tumours
+would therefore largely repeat the amplification status. The **MYCN
+expr.** columns instead split only the non-amplified tumours at their
+own median (dashed line, log2 12.8), which asks whether MYCN level
+matters beyond amplification.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+ggplot(tum_meta, aes(x = mycn_expr, fill = MYCN)) +
+  geom_histogram(binwidth = 0.25) +
+  geom_vline(xintercept = mycn_cut, linetype = 2, linewidth = 0.4) +
+  scale_fill_manual(values = c(amplified = "#C03A3E", `not ampl.` = "grey60"),
+                    na.value = "grey85", name = "MYCN") +
+  labs(x = "MYCN expression (log2 array intensity)", y = "tumours") +
+  theme_minimal(base_size = 10)
+```
+
+</details>
+
+<img src="Dive_files/figure-gfm/tumour_mycn_hist-1.png" width="60%" />
+
 <details>
 
 <summary>
@@ -1127,28 +1199,28 @@ hx_heatmap(hx500, rows = hx_rows_500, tumours = TRUE,
 **Tumour hypoxia score (median of the mean signed z of the shown genes)
 per clinical group; p for the overall score**
 
-| panel   | group            |  score | score_up | score_down |       p |
-|:--------|:-----------------|-------:|---------:|-----------:|--------:|
-| MYCN    | not ampl. (408)  |  0.013 |    0.012 |      0.094 | 6.0e-07 |
-| MYCN    | amplified (69)   | -0.125 |   -0.107 |     -0.410 |      NA |
-| Stage   | 1-2 (199)        |  0.009 |    0.011 |      0.132 | 1.6e-02 |
-| Stage   | 3 (69)           |  0.005 |   -0.008 |     -0.041 |      NA |
-| Stage   | 4S (62)          |  0.011 |    0.005 |     -0.010 |      NA |
-| Stage   | 4 (148)          | -0.037 |   -0.033 |     -0.093 |      NA |
-| Outcome | event-free (323) |  0.007 |    0.005 |      0.108 | 1.9e-02 |
-| Outcome | relapse (64)     | -0.021 |   -0.023 |     -0.076 |      NA |
-| Outcome | deceased (91)    | -0.035 |   -0.022 |     -0.180 |      NA |
+| panel      | group              |  score | score_up | score_down | p       |
+|:-----------|:-------------------|-------:|---------:|-----------:|:--------|
+| MYCN       | not ampl. (408)    |  0.013 |    0.012 |      0.094 | 5.8e-07 |
+| MYCN       | amplified (69)     | -0.125 |   -0.107 |     -0.410 |         |
+| MYCN expr. | non-amp low (204)  |  0.067 |    0.068 |      0.004 | 1.4e-14 |
+| MYCN expr. | non-amp high (204) | -0.048 |   -0.050 |      0.146 |         |
+| Outcome    | event-free (323)   |  0.007 |    0.005 |      0.108 | 1.9e-02 |
+| Outcome    | relapse (64)       | -0.021 |   -0.023 |     -0.076 |         |
+| Outcome    | deceased (91)      | -0.035 |   -0.022 |     -0.180 |         |
 
 Counter to the expectation that aggressive tumours are more hypoxic, the
-cell-line hypoxia program is slightly *weaker* in MYCN-amplified
-tumours, and to a lesser degree in stage 4 and in fatal cases (the
-latter two overlap largely with MYCN amplification). The effects are
-small: a score of −0.1 means the shown genes sit on average 0.1 SD below
-the cohort mean. Bulk tumour expression has no normoxic reference, so
-this score mixes hypoxia with everything else that differs between the
-groups - above all the MYCN-driven program itself, which shifts many of
-these genes. The heatmap shows that the shift is not uniform: single
-blocks go up in MYCN-amplified tumours while others go down.
+cell-line hypoxia program is slightly *weaker* in MYCN-amplified tumours
+and, to a lesser degree, in fatal cases (which overlap largely with MYCN
+amplification). Among the non-amplified tumours, those with higher MYCN
+expression also score lower, so the effect follows the MYCN level, not
+only the amplification. The effects are small: a score of −0.1 means the
+shown genes sit on average 0.1 SD below the cohort mean. Bulk tumour
+expression has no normoxic reference, so this score mixes hypoxia with
+everything else that differs between the groups - above all the
+MYCN-driven program itself, which shifts many of these genes. The
+heatmap shows that the shift is not uniform: single blocks go up in
+MYCN-amplified tumours while others go down.
 
 With the baseline lines contributing their own top genes, line-specific
 blocks appear: genes induced only in SK-N-AS or only in SH-SY5Y (Kelly
@@ -1206,22 +1278,28 @@ Code
 
 ``` r
 hx_rows_100 <- hm_rows(hx100)
-hx_heatmap(hx100, rows = hx_rows_100, tumours = TRUE,
-           title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)")
-hx_heatmap(hx100, mat = hm_z, lim = 2, rows = hx_rows_100, fill_name = "z-score",
-           nx = TRUE, tumours = TRUE,
-           title = "Top 100, 70 up / 30 down (z-score per line; clustered on 3 lines)")
+hx_pair(
+  hx_heatmap(hx100, rows = hx_rows_100, tumours = TRUE, top20_legend = FALSE,
+             title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)"),
+  hx_heatmap(hx100, mat = hm_z, lim = 2, rows = hx_rows_100, fill_name = "z-score",
+             nx = TRUE, tumours = TRUE, top20_legend = FALSE,
+             title = "Top 100, 70 up / 30 down (z-score per line; clustered on 3 lines)"))
 ```
 
 </details>
 
-<img src="Dive_files/figure-gfm/hx_heatmap_hx100-1.png" width="49%" /><img src="Dive_files/figure-gfm/hx_heatmap_hx100-2.png" width="49%" />
+![](Dive_files/figure-gfm/hx_heatmap_hx100-1.png)<!-- -->
 
-### 5b. Row clustering: 3 cell lines (left) vs all 6 panels incl. KOs (right)
+### 5b. Fixed row groups: by responding cell lines (left) vs by HIF target (right)
 
-Left, rows are clustered on the mean Hx response of SK-N-AS, SH-SY5Y and
-Kelly WT only; right, on all six panels, so the KO responses also shape
-the blocks (genes that lose their response in one KO group together).
+Instead of one clustering over all rows, the genes are first put into
+fixed groups and clustered only within each group. Left, the groups say
+in which lines the gene is hypoxia-regulated (DEG in either direction):
+in all three, in Kelly and one baseline line, in Kelly only, or only in
+SK-N-AS and/or SH-SY5Y (“SK/SH only”). Right, the groups are the HIF
+targets from the Target column (induced in WT Kelly and lost in the KO).
+Only the cell-line response enters the clustering; the HR and the tumour
+data are read out against it, not used to sort.
 
 <details>
 
@@ -1231,15 +1309,17 @@ Code
 </summary>
 
 ``` r
-hx_heatmap(hx100, rows = hx_rows_100, tumours = TRUE,
-           title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)")
-hx_heatmap(hx100, rows = hm_rows(hx100, resp = hx_resp_all), tumours = TRUE,
-           title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on all 6 panels)")
+hx_pat_100 <- hx_pattern(hx100)
+hx_pair(
+  hx_heatmap(hx100, split = hx_pat_100, rows = hm_rows(hx100, hx_pat_100), tumours = TRUE, top20_legend = FALSE,
+             title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; grouped by responding lines)"),
+  hx_heatmap(hx100, split = targets, rows = hm_rows(hx100, targets), tumours = TRUE, top20_legend = FALSE,
+             title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; grouped by HIF target)"))
 ```
 
 </details>
 
-<img src="Dive_files/figure-gfm/hx_heatmap_hx100_clust-1.png" width="49%" /><img src="Dive_files/figure-gfm/hx_heatmap_hx100_clust-2.png" width="49%" />
+![](Dive_files/figure-gfm/hx_heatmap_hx100_groups-1.png)<!-- -->
 
 ### 5c. Gene number: top 100 (left) vs top 1000 (right), both 70 up / 30 down
 
@@ -1251,32 +1331,31 @@ Code
 </summary>
 
 ``` r
-hx_heatmap(hx100, rows = hx_rows_100, tumours = TRUE,
-           title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)")
-hx_heatmap(hx1000, rows = hm_rows(hx1000), tumours = TRUE,
-           title = "Top 1000, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)")
+hx_pair(
+  hx_heatmap(hx100, rows = hx_rows_100, tumours = TRUE, top20_legend = FALSE,
+             title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)"),
+  hx_heatmap(hx1000, rows = hm_rows(hx1000), tumours = TRUE, top20_legend = FALSE,
+             title = "Top 1000, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)"))
 ```
 
 </details>
 
-<img src="Dive_files/figure-gfm/hx_heatmap_hx1000-1.png" width="49%" /><img src="Dive_files/figure-gfm/hx_heatmap_hx1000-2.png" width="49%" />
+![](Dive_files/figure-gfm/hx_heatmap_hx1000-1.png)<!-- -->
 
 ### Tumour score
 
 **Tumour hypoxia score for the top 100 (70 up / 30 down) per clinical
 group**
 
-| panel   | group            |  score | score_up | score_down |       p |
-|:--------|:-----------------|-------:|---------:|-----------:|--------:|
-| MYCN    | not ampl. (408)  |  0.015 |    0.002 |      0.070 | 2.0e-07 |
-| MYCN    | amplified (69)   | -0.097 |   -0.011 |     -0.282 |      NA |
-| Stage   | 1-2 (199)        |  0.011 |   -0.007 |      0.083 | 9.6e-01 |
-| Stage   | 3 (69)           | -0.026 |    0.042 |     -0.026 |      NA |
-| Stage   | 4S (62)          |  0.011 |   -0.068 |      0.072 |      NA |
-| Stage   | 4 (148)          | -0.007 |    0.024 |     -0.076 |      NA |
-| Outcome | event-free (323) |  0.007 |   -0.007 |      0.075 | 7.8e-02 |
-| Outcome | relapse (64)     | -0.038 |   -0.028 |      0.002 |      NA |
-| Outcome | deceased (91)    | -0.016 |    0.049 |     -0.170 |      NA |
+| panel      | group              |  score | score_up | score_down | p       |
+|:-----------|:-------------------|-------:|---------:|-----------:|:--------|
+| MYCN       | not ampl. (408)    |  0.015 |    0.002 |      0.070 | 1.7e-07 |
+| MYCN       | amplified (69)     | -0.097 |   -0.011 |     -0.282 |         |
+| MYCN expr. | non-amp low (204)  |  0.070 |    0.087 |      0.029 | 6.4e-06 |
+| MYCN expr. | non-amp high (204) | -0.028 |   -0.101 |      0.089 |         |
+| Outcome    | event-free (323)   |  0.007 |   -0.007 |      0.075 | 7.8e-02 |
+| Outcome    | relapse (64)       | -0.038 |   -0.028 |      0.002 |         |
+| Outcome    | deceased (91)      | -0.016 |    0.049 |     -0.170 |         |
 
 The split score shows where the MYCN difference of the top 500 comes
 from: the hypoxia-*induced* genes hardly differ between the clinical
