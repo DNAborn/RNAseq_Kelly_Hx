@@ -1018,9 +1018,10 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
           plot.title = element_text(face = "bold", size = 11))
 }
 
-# Two heatmaps as one figure, so the pair can be enlarged together on GitHub.
-hx_pair <- function(left, right) {
-  patchwork::wrap_elements(full = left) | patchwork::wrap_elements(full = right)
+# Several heatmaps as one figure, so they can be enlarged together on GitHub.
+hx_pair <- function(..., widths = NULL) {
+  patchwork::wrap_plots(lapply(list(...), function(p) patchwork::wrap_elements(full = p)),
+                        nrow = 1, widths = widths)
 }
 
 hx_summary <- function(label, set) {
@@ -1263,12 +1264,12 @@ selection runs separately for induced and repressed genes: 70 up and 31
 down, roughly the up/down ratio of all hypoxia DEGs. The TOP20 are
 labelled only where they are part of this set.
 
-This set is the basis for the comparisons below: each shows two versions
-side by side, the base version (log2 Hx vs Nx, rows clustered on the
-three cell lines, top 100) always on the left. Click an image to enlarge
-it.
+This set is the basis for the comparisons below: each shows two or three
+versions side by side, the base version (log2 Hx vs Nx, rows clustered
+on the three cell lines, top 100) on the left (in 5a in the middle).
+Click an image to enlarge it.
 
-### 5a. Scaling: log2 Hx vs Nx (left) vs z-score per line (right)
+### 5a. Scaling: log2 with Nx columns (left), log2 Hx only (middle), z-score per line (right)
 
 <details>
 
@@ -1280,11 +1281,14 @@ Code
 ``` r
 hx_rows_100 <- hm_rows(hx100)
 hx_pair(
+  hx_heatmap(hx100, rows = hx_rows_100, nx = TRUE, tumours = TRUE, top20_legend = FALSE,
+             title = "Top 100, 70 up / 30 down (log2 vs Nx mean, with Nx; clustered on 3 lines)"),
   hx_heatmap(hx100, rows = hx_rows_100, tumours = TRUE, top20_legend = FALSE,
              title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)"),
   hx_heatmap(hx100, mat = hm_z, lim = 2, rows = hx_rows_100, fill_name = "z-score",
              nx = TRUE, tumours = TRUE, top20_legend = FALSE,
-             title = "Top 100, 70 up / 30 down (z-score per line; clustered on 3 lines)"))
+             title = "Top 100, 70 up / 30 down (z-score per line; clustered on 3 lines)"),
+  widths = c(13, 11, 13))
 ```
 
 </details>

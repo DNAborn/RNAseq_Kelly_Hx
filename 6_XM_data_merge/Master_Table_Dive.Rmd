@@ -955,9 +955,10 @@ hx_heatmap <- function(ens, mat = hm$mat, lim = 4, split = NULL, rows = NULL,
           plot.title = element_text(face = "bold", size = 11))
 }
 
-# Two heatmaps as one figure, so the pair can be enlarged together on GitHub.
-hx_pair <- function(left, right) {
-  patchwork::wrap_elements(full = left) | patchwork::wrap_elements(full = right)
+# Several heatmaps as one figure, so they can be enlarged together on GitHub.
+hx_pair <- function(..., widths = NULL) {
+  patchwork::wrap_plots(lapply(list(...), function(p) patchwork::wrap_elements(full = p)),
+                        nrow = 1, widths = widths)
 }
 
 hx_summary <- function(label, set) {
@@ -975,7 +976,7 @@ hx_summary <- function(label, set) {
 
 ## 1. TOP20 (log2 Hx vs Nx)
 
-```{r hx_heatmap_top20, fig.width=10, fig.height=7, out.width="40%"}
+```{r hx_heatmap_top20, fig.width=12.5, fig.height=11, out.width="40%"}
 hx_heatmap(character(0), title = "CUT&RUN TOP20 HIF1A / HIF2A targets (log2 Hx vs Nx)")
 ```
 
@@ -1024,7 +1025,7 @@ with |log2FC| > 1), which points to a different DESeq2 run or an extra
 filter rather than a different target logic. The heatmap holds slightly fewer
 genes, since only genes measured in both experiments can be shown.
 
-```{r hx_heatmap_targets, fig.width=10, fig.height=7, out.width="40%"}
+```{r hx_heatmap_targets, fig.width=12.5, fig.height=11, out.width="40%"}
 hx_heatmap(names(targets), split = targets,
            title = "All HIF1A and HIF2A targets (log2 Hx vs Nx)")
 ```
@@ -1083,7 +1084,7 @@ ggplot(tum_meta, aes(x = mycn_expr, fill = MYCN)) +
   theme_minimal(base_size = 10)
 ```
 
-```{r hx_heatmap_hx500, fig.width=11, fig.height=7, out.width="40%"}
+```{r hx_heatmap_hx500, fig.width=13.5, fig.height=12, out.width="40%"}
 hx_rows_500 <- hm_rows(union(highlight$Ensembl, hx500))
 hx_heatmap(hx500, rows = hx_rows_500, tumours = TRUE,
            title = "Top 500 hypoxia-regulated genes (log2 Hx vs Nx; tumours: mean z per group)")
@@ -1139,7 +1140,7 @@ so the contrast looks stronger - but the effect size is lost: a small response
 in SK-N-AS looks as strong as a large one in Kelly. Rows without a real
 response (e.g. Kelly in the baseline-specific blocks) turn into noise.
 
-```{r hx_heatmap_hx500_z, fig.width=11, fig.height=7, out.width="40%"}
+```{r hx_heatmap_hx500_z, fig.width=13.5, fig.height=12, out.width="40%"}
 hx_heatmap(hx500, mat = hm_z, lim = 2, rows = hx_rows_500, fill_name = "z-score",
            nx = TRUE, tumours = TRUE,
            title = "Top 500 hypoxia-regulated genes (z-score per line; tumours: mean z per group)")
@@ -1154,20 +1155,23 @@ balanced per-line selection runs separately for induced and repressed genes:
 ratio of all hypoxia DEGs. The TOP20 are labelled only where they are part of
 this set.
 
-This set is the basis for the comparisons below: each shows two versions side
+This set is the basis for the comparisons below: each shows two or three versions side
 by side, the base version (log2 Hx vs Nx, rows clustered on the three cell
-lines, top 100) always on the left. Click an image to enlarge it.
+lines, top 100) on the left (in 5a in the middle). Click an image to enlarge it.
 
-### 5a. Scaling: log2 Hx vs Nx (left) vs z-score per line (right)
+### 5a. Scaling: log2 with Nx columns (left), log2 Hx only (middle), z-score per line (right)
 
-```{r hx_heatmap_hx100, fig.width=22, fig.height=7}
+```{r hx_heatmap_hx100, fig.width=37, fig.height=11}
 hx_rows_100 <- hm_rows(hx100)
 hx_pair(
+  hx_heatmap(hx100, rows = hx_rows_100, nx = TRUE, tumours = TRUE, top20_legend = FALSE,
+             title = "Top 100, 70 up / 30 down (log2 vs Nx mean, with Nx; clustered on 3 lines)"),
   hx_heatmap(hx100, rows = hx_rows_100, tumours = TRUE, top20_legend = FALSE,
              title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)"),
   hx_heatmap(hx100, mat = hm_z, lim = 2, rows = hx_rows_100, fill_name = "z-score",
              nx = TRUE, tumours = TRUE, top20_legend = FALSE,
-             title = "Top 100, 70 up / 30 down (z-score per line; clustered on 3 lines)"))
+             title = "Top 100, 70 up / 30 down (z-score per line; clustered on 3 lines)"),
+  widths = c(13, 11, 13))
 ```
 
 ### 5b. Fixed row groups: by responding cell lines (left) vs by HIF target (right)
@@ -1180,7 +1184,7 @@ Right, the groups are the HIF targets from the Target column (induced in WT
 Kelly and lost in the KO). Only the cell-line response enters the clustering;
 the HR and the tumour data are read out against it, not used to sort.
 
-```{r hx_heatmap_hx100_groups, fig.width=22, fig.height=7}
+```{r hx_heatmap_hx100_groups, fig.width=22, fig.height=11}
 hx_pat_100 <- hx_pattern(hx100)
 hx_pair(
   hx_heatmap(hx100, split = hx_pat_100, rows = hm_rows(hx100, hx_pat_100), tumours = TRUE, top20_legend = FALSE,
@@ -1191,7 +1195,7 @@ hx_pair(
 
 ### 5c. Gene number: top 100 (left) vs top 1000 (right), both 70 up / 30 down
 
-```{r hx_heatmap_hx1000, fig.width=22, fig.height=7}
+```{r hx_heatmap_hx1000, fig.width=22, fig.height=11}
 hx_pair(
   hx_heatmap(hx100, rows = hx_rows_100, tumours = TRUE, top20_legend = FALSE,
              title = "Top 100, 70 up / 30 down (log2 Hx vs Nx; clustered on 3 lines)"),
