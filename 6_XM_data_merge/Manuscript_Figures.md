@@ -2,21 +2,27 @@ Manuscript figures: HIF1A / HIF2A regulated genes
 ================
 
 - [Input](#input)
-  - [Responding lines](#responding-lines)
   - [Interaction: Kelly vs SK-N-AS /
     SH-SY5Y](#interaction-kelly-vs-sk-n-as--sh-sy5y)
   - [Candidate score](#candidate-score)
 - [Figure 1: Hypoxia response in Kelly vs SK-N-AS /
   SH-SY5Y](#figure-1-hypoxia-response-in-kelly-vs-sk-n-as--sh-sy5y)
-  - [Figure 1: interaction groups (manuscript
-    version)](#figure-1-interaction-groups-manuscript-version)
 - [Figure 2: Protective or harmful?](#figure-2-protective-or-harmful)
   - [Variant 1: four groups](#variant-1-four-groups)
   - [Variant 2: HIF1A+HIF2A as its own
     group](#variant-2-hif1ahif2a-as-its-own-group)
 - [Figure 3: UMAP](#figure-3-umap)
-- [Figure 4: Leiden clusters](#figure-4-leiden-clusters)
+- [Figure 4: Gene clusters](#figure-4-gene-clusters)
+- [Figure 5: The clinical reading](#figure-5-the-clinical-reading)
 - [TOP candidates](#top-candidates)
+- [Appendix: Figure 1 variants](#appendix-figure-1-variants)
+  - [Responding lines (cutoff groups)](#responding-lines-cutoff-groups)
+  - [Figure 4: the remaining clusters](#figure-4-the-remaining-clusters)
+  - [Variant: rows grouped by responding
+    lines](#variant-rows-grouped-by-responding-lines)
+  - [Variant: rows grouped by HIF
+    list](#variant-rows-grouped-by-hif-list)
+- [Export](#export)
 
 Final figures for the manuscript part that follows Xheni’s figures
 (RNA-seq overview, CUT&RUN, overlap of core genes). Every figure here is
@@ -62,8 +68,11 @@ Code
 
 ``` r
 in_dir <- here::here("6_XM_data_merge")
-# DESeq2 objects, read only when the interaction or count caches are rebuilt
-gdrive <- "/Users/simonkelterborn/Library/CloudStorage/GoogleDrive-simon.kelterborn@gmail.com/Meine Ablage/! OneDrive Charité"
+# DESeq2 objects, read only when the interaction or count caches are rebuilt:
+# the first of these folders that exists (workstation, then laptop)
+gdrive <- Filter(dir.exists, c(
+  "/data/charite/kelly_data",
+  "/Users/simonkelterborn/Library/CloudStorage/GoogleDrive-simon.kelterborn@gmail.com/Meine Ablage/! OneDrive Charité"))[1]
 cache  <- function(f) {
   p <- file.path(in_dir, "cache", f)
   if (!file.exists(p)) stop(f, " missing - knit Master_Table_Dive.Rmd once to build it")
@@ -156,118 +165,14 @@ tab(as.data.frame.matrix(table(genes$hif, genes$dir)) %>% tibble::rownames_to_co
 | HIF1A+HIF2A |   47 |   13 |
 | HIF2A       | 1307 |  502 |
 
-## Responding lines
-
-Kelly is MYCN-amplified, SK-N-AS and SH-SY5Y are not. A line *responds*
-when the gene is a hypoxia DEG there (padj \< 0.05, \|log2FC\| \> 1,
-either direction); it is *flat* when \|log2FC\| \<= 0.5. “Only” groups
-require the other lines to be flat, not merely to miss the DEG cutoff:
-
-| Group | Kelly | SK-N-AS / SH-SY5Y |
-|----|----|----|
-| all 3 lines | DEG | both DEG |
-| Kelly + 1 line | DEG | one DEG |
-| Kelly only | DEG | both flat |
-| Kelly, SK/SH unclear | DEG | neither DEG nor both flat (0.5 \< \|log2FC\| \<= 1, or not testable) |
-| other | below the DEG cutoff in the master table |  |
-
-`other` are the few list genes that miss the DEG cutoff in the master
-table’s Kelly contrast (borderline, log2FC from a slightly different
-model). Genes without a log2FC in a line count as neither DEG nor flat -
-not measured is not the same as not responding. The mirror group,
-**SK/SH only** (DEG in SK-N-AS or SH-SY5Y, flat in Kelly), cannot occur
-among the list genes, which are Kelly DEGs by definition; it is built
-from all genes for Figure 1.
-
-<details>
-
-<summary>
-
-Code
-</summary>
-
-``` r
-deg  <- function(l2fc, padj) !is.na(padj) & padj < 0.05 & abs(l2fc) > 1
-flat <- function(l2fc) !is.na(l2fc) & abs(l2fc) <= 0.5
-pat_levels <- c("all 3 lines", "Kelly + 1 line", "Kelly only", "Kelly, SK/SH unclear", "other")
-
-genes <- genes %>%
-  dplyr::mutate(
-    K  = deg(Kelly.Hx.vs.Nx.log2FoldChange, Kelly.Hx.vs.Nx.padj),
-    A  = deg(log2FC_SKNAS, padj_SKNAS),
-    H  = deg(log2FC_SHSY5Y, padj_SHSY5Y),
-    pattern = factor(dplyr::case_when(K & A & H   ~ "all 3 lines",
-                                      K & (A | H) ~ "Kelly + 1 line",
-                                      K & flat(log2FC_SKNAS) & flat(log2FC_SHSY5Y) ~ "Kelly only",
-                                      K           ~ "Kelly, SK/SH unclear",
-                                      TRUE        ~ "other"),
-                     levels = pat_levels)) %>%
-  dplyr::select(-K, -A, -H)
-
-tab(as.data.frame.matrix(table(genes$grp6, genes$pattern)) %>% tibble::rownames_to_column("group"),
-    "Genes per group and responding lines")
-```
-
-</details>
-
-**Genes per group and responding lines**
-
-| group | all 3 lines | Kelly + 1 line | Kelly only | Kelly, SK/SH unclear | other |
-|:---|---:|---:|---:|---:|---:|
-| HIF1A up | 88 | 106 | 15 | 119 | 3 |
-| HIF1A+HIF2A up | 3 | 14 | 2 | 28 | 0 |
-| HIF2A up | 59 | 256 | 215 | 768 | 9 |
-| HIF1A down | 4 | 9 | 9 | 40 | 0 |
-| HIF1A+HIF2A down | 0 | 1 | 1 | 11 | 0 |
-| HIF2A down | 17 | 93 | 99 | 285 | 8 |
-
-**SK/SH only.** From all genes of the master table: hypoxia DEG in
-SK-N-AS or SH-SY5Y (the overlap of the two is small, so one line is
-enough) and flat in Kelly WT (\|log2FC\| \<= 0.5). Direction and
-expression are taken from the line with the stronger response. These
-genes are on none of the HIF lists.
-
-<details>
-
-<summary>
-
-Code
-</summary>
-
-``` r
-sk_all <- master %>% dplyr::distinct(Ensembl, .keep_all = TRUE) %>%
-  dplyr::mutate(A = deg(log2FC_SKNAS, padj_SKNAS), H = deg(log2FC_SHSY5Y, padj_SHSY5Y)) %>%
-  dplyr::filter((A | H) & flat(Kelly.Hx.vs.Nx.log2FoldChange)) %>%
-  dplyr::mutate(use_A = A & (!H | abs(log2FC_SKNAS) >= abs(log2FC_SHSY5Y)),
-                sk_log2FC   = ifelse(use_A, log2FC_SKNAS, log2FC_SHSY5Y),
-                sk_baseMean = ifelse(use_A, baseMean_SKNAS, baseMean_SHSY5Y),
-                line = dplyr::case_when(A & H ~ "both", A ~ "SK-N-AS", TRUE ~ "SH-SY5Y"),
-                dir  = factor(ifelse(sk_log2FC > 0, "up", "down"), levels = c("up", "down")),
-                pattern = factor("SK/SH only"),
-                label = ifelse(is.na(symbol) | grepl("^ENSG", symbol), NA, symbol))
-
-tab(sk_all %>% dplyr::count(line, dir) %>%
-      tidyr::pivot_wider(names_from = dir, values_from = n, values_fill = 0),
-    paste0("SK/SH only: ", nrow(sk_all), " genes, by responding line and direction"))
-```
-
-</details>
-
-**SK/SH only: 459 genes, by responding line and direction**
-
-| line    |  up | down |
-|:--------|----:|-----:|
-| SH-SY5Y |  40 |   73 |
-| SK-N-AS | 244 |   82 |
-| both    |  16 |    4 |
-
 ## Interaction: Kelly vs SK-N-AS / SH-SY5Y
 
-The groups above rest on fixed log2FC cutoffs, and the gap between “DEG”
-(\> 1) and “flat” (\<= 0.5) leaves most genes unclear. An interaction
-term tests the difference directly: does the hypoxia response in Kelly
-differ from the one in SK-N-AS (or SH-SY5Y)? One DESeq2 model on the raw
-counts of the Kelly WT samples (31, three projects) and the 12 SK-N-AS /
+Whether a gene responds in Kelly only or in all three lines can be read
+from fixed log2FC cutoffs (appendix), but the gap between “DEG” (\> 1)
+and “flat” (\<= 0.5) leaves most genes unclear. An interaction term
+tests the difference directly: does the hypoxia response in Kelly differ
+from the one in SK-N-AS (or SH-SY5Y)? One DESeq2 model on the raw counts
+of the Kelly WT samples (31, three projects) and the 12 SK-N-AS /
 SH-SY5Y samples, on the genes of both data sets (at least 10 counts in
 at least 3 samples):
 
@@ -292,7 +197,7 @@ Groups:
 | not testable | Kelly DEG, but no interaction result for one of the lines (gene missing or filtered in one data set) |
 
 Shared and Kelly-specific are list genes; SK/SH-specific are searched
-among all genes, like SK/SH only above.
+among all genes of the master table.
 
 <details>
 
@@ -302,6 +207,9 @@ Code
 </summary>
 
 ``` r
+# Hypoxia DEG: padj < 0.05 and |log2FC| > 1.
+deg <- function(l2fc, padj) !is.na(padj) & padj < 0.05 & abs(l2fc) > 1
+
 int_cache <- file.path(in_dir, "cache", "int_kelly_sksh.rds")
 if (!file.exists(int_cache)) {
   loadNamespace("DESeq2")
@@ -393,31 +301,6 @@ other: list genes; SK/SH-specific: all genes)**
 | not testable   |   65 |   13 |
 | other          |   12 |    8 |
 
-<details>
-
-<summary>
-
-Code
-</summary>
-
-``` r
-tab(as.data.frame.matrix(table(genes$pattern, droplevels(genes$int_group))) %>%
-      tibble::rownames_to_column("cutoff group"),
-    "List genes: cutoff groups (rows) vs interaction groups (columns)")
-```
-
-</details>
-
-**List genes: cutoff groups (rows) vs interaction groups (columns)**
-
-| cutoff group         | shared | Kelly-specific | not testable | other |
-|:---------------------|-------:|---------------:|-------------:|------:|
-| all 3 lines          |    171 |              0 |            0 |     0 |
-| Kelly + 1 line       |    479 |              0 |            0 |     0 |
-| Kelly only           |     89 |            252 |            0 |     0 |
-| Kelly, SK/SH unclear |    723 |            450 |           78 |     0 |
-| other                |      0 |              0 |            0 |    20 |
-
 ## Candidate score
 
 One score ranks the genes wherever a selection is needed: the genes for
@@ -452,14 +335,26 @@ Code
 </summary>
 
 ``` r
+# Weighted mean of percentile ranks; a missing ingredient drops out of the
+# weights instead of counting as zero.
+pct_score <- function(comp, w) {
+  wm <- matrix(w, nrow(comp), length(w), byrow = TRUE) * !is.na(comp)
+  rowSums(comp * wm, na.rm = TRUE) / rowSums(wm)
+}
+# Genes of SK-N-AS / SH-SY5Y (no KOs there): response and expression in the
+# responding line and popularity, 1/3 each.
+line_score <- function(d) pct_score(cbind(dplyr::percent_rank(abs(d$sk_log2FC)),
+                                          dplyr::percent_rank(log10(d$sk_baseMean + 1)),
+                                          dplyr::percent_rank(log10(d$pubmed_total + 1))),
+                                    rep(1/3, 3))
+
 score_w <- c(log2FC = 1/6, KO = 1/6, baseMean = 1/3, popularity = 1/3)
 
 comp <- cbind(log2FC     = dplyr::percent_rank(abs(genes$log2FC)),
               KO         = dplyr::percent_rank(abs(genes$int_log2FC)),
               baseMean   = dplyr::percent_rank(log10(genes$baseMean + 1)),
               popularity = dplyr::percent_rank(log10(genes$pubmed_total + 1)))
-w <- matrix(score_w, nrow(comp), length(score_w), byrow = TRUE) * !is.na(comp)
-genes$score <- rowSums(comp * w, na.rm = TRUE) / rowSums(w)
+genes$score <- pct_score(comp, score_w)
 
 tab(round(cor(comp, method = "spearman", use = "pairwise.complete.obs"), 2) %>%
       as.data.frame() %>% tibble::rownames_to_column(" "),
@@ -510,29 +405,27 @@ tab(genes %>% dplyr::filter(!is.na(label)) %>% dplyr::slice_max(score, n = 8) %>
 
 # Figure 1: Hypoxia response in Kelly vs SK-N-AS / SH-SY5Y
 
-**Manuscript version: rows grouped by the interaction groups (section
-*Figure 1: interaction groups* below).** The grouping by responding
-lines described first is kept as a variant; heatmap layout, strips,
-named and example genes are the same in both.
-
 The heatmap from section 5 of the Dive, now for the HIF-regulated genes:
 log2 Hx vs Nx (Hx samples only, every line centered on its own
-normoxia), rows grouped by responding lines. No HR strip, no primary
-tumours.
+normoxia), rows grouped by the interaction groups (section
+*Interaction*), top to bottom: **Kelly-specific**, **shared** (Kelly
+stronger included) and **SK/SH-specific**; `not testable` and `other`
+are left out. No HR strip, no primary tumours. Two variants, grouped by
+the cutoff groups and by HIF list, are in the appendix.
 
-**Row order.** Groups from top to bottom: Kelly only, Kelly + 1 line,
-all 3 lines, SK/SH only. Within each group the rows are split into
-*clusters* by direction (induced on top, repressed below, separated by a
-small gap), and within a cluster clustered (Ward) on the mean Hx
-response of all six panels. The HIF lists are not pre-sorted: the KO
-columns separate HIF1A from HIF2A genes by themselves, so the HIF strip
-still reads as bands. Clustering on the three lines alone (as in the
-Dive) mixes them, because their Hx response in Kelly WT looks alike -
-the HIFs are told apart only by the KOs.
+**Row order.** Within each group the rows are split into *clusters* by
+direction (induced on top, repressed below, separated by a small gap),
+and within a cluster clustered (Ward) on the mean Hx response of all six
+panels. The HIF lists are not pre-sorted: the KO columns separate HIF1A
+from HIF2A genes by themselves, so the HIF strip still reads as bands.
+Clustering on the three lines alone (as in the Dive) mixes them, because
+their Hx response in Kelly WT looks alike - the HIFs are told apart only
+by the KOs.
 
-**Left strips.** baseMean per line, and whether the gene is a hypoxia
-DEG in that line (padj \< 0.05, \|log2FC\| \> 1; up / down / not / no
-log2FC), from the master table.
+**Left strips.** The group strip in the line colours (Kelly-specific in
+Kelly’s colour, SK/SH-specific in the baseline lines’ hue); baseMean per
+line, and whether the gene is a hypoxia DEG in that line (padj \< 0.05,
+\|log2FC\| \> 1; up / down / not / no log2FC), from the master table.
 
 **Example genes.** For each cluster with at least 10 genes the most
 typical named gene is shown on the right as normalized counts, Nx
@@ -543,27 +436,24 @@ SH-SY5Y and of the Kelly lines come from two DESeq2 data sets, each
 normalized on its own (median of ratios); the levels are comparable in
 order of magnitude, not exactly.
 
-**Gene set.** The heatmap shows the list genes of the three clear groups
-(all 3 lines, Kelly + 1 line, Kelly only); `Kelly, SK/SH unclear` and
-`other` are left out. If these are more than 1000, the top 1000 by
-candidate score are taken - per group (HIF and direction) in proportion
-to its size. Below them, the top 50 **SK/SH only** genes, ranked by an
-analogous score: percentile ranks of \|log2FC\| and baseMean in the
-responding line and of the popularity, 1/3 each (no KO term - there are
-no SK-N-AS / SH-SY5Y KOs). Their HIF strip is grey: they are on no list.
+**Gene set.** At most 1000 rows, taken from every group (and HIF list
+and direction) in proportion to its size: list genes by candidate score,
+SK/SH-specific genes by the line score (percentile ranks of \|log2FC\|
+and baseMean in the responding line and of the popularity, 1/3 each; no
+KO term - there are no SK-N-AS / SH-SY5Y KOs). Their HIF strip is grey:
+they are on no list.
 
 **Named genes.** 50 genes are named, chosen as *typical* for their
-responding-lines group: allocated across the groups by the square root
-of their size (large groups get more names, small ones are not left
-empty), and within a group ranked half by candidate score and half by
-how clearly the gene shows the group’s pattern in the VST response:
+group: allocated across the groups by the square root of their size
+(large groups get more names, small ones are not left empty), and within
+a group ranked half by candidate score and half by how clearly the gene
+shows the group’s pattern in the VST response:
 
 | Group | Typical = |
 |----|----|
-| all 3 lines | weakest of the three responses is still large (same direction as Kelly) |
-| Kelly + 1 line | Kelly and the responding line strong, the third line flat |
-| Kelly only | Kelly strong, both baseline lines flat |
-| SK/SH only | the stronger baseline line strong, Kelly flat |
+| shared | Kelly and the stronger baseline line both strong (same direction) |
+| Kelly-specific | Kelly strong, both baseline lines flat |
+| SK/SH-specific | the stronger baseline line strong, Kelly flat |
 
 Within each group up- and down-regulated genes are named in proportion.
 The label colour marks the HIF.
@@ -591,54 +481,26 @@ line_cols <- c(`SK-N-AS` = "#3F5566", `SH-SY5Y` = "#8DA3B5", Kelly = "#B57BB5",
 line_names <- c(Kelly = "Kelly WT", setNames(hm_panels[-3], hm_panels[-3]))
 hif_cols <- c(HIF1A = "#F8766D", `HIF1A+HIF2A` = "#8E7CC3", HIF2A = "#00BFC4")
 hif_cols_hm <- c(hif_cols, `no HIF list` = "grey80")
-hm_levels <- c("Kelly only", "Kelly + 1 line", "all 3 lines", "SK/SH only")
-pat_greys <- c(`Kelly only` = "#636363", `Kelly + 1 line` = "#969696",
-               `all 3 lines` = "#BDBDBD", `SK/SH only` = "#D9D9D9")
-grp6_cols <- c(`HIF1A up` = "#F8766D", `HIF1A+HIF2A up` = "#8E7CC3", `HIF2A up` = "#00BFC4",
-               `HIF1A down` = "#FCC5C0", `HIF1A+HIF2A down` = "#D2C9E6", `HIF2A down` = "#A6E6E8")
 strip_short <- c(`Kelly + 1 line` = "Kelly + 1", `SK/SH only` = "SK/SH\nonly",
+                 `SK/SH-specific` = "SK/SH-\nspecific",
                  `HIF1A+HIF2A up` = "both up", `HIF1A+HIF2A down` = "both down")
 hm_title <- "Hypoxic response in MYCN-amplified versus non-amplified neuroblastoma cell lines"
 hm_guide <- guide_colourbar(barwidth = unit(6, "lines"), barheight = unit(0.7, "lines"),
                             title.vjust = 0.9)
 
-g_hm <- genes %>% dplyr::filter(Ensembl %in% rownames(hm$mat), pattern %in% hm_levels)
-
-# At most 1000 list genes: the best-scoring share of every group.
-n_top <- min(1000, nrow(g_hm))
-hm_list <- g_hm %>%
-  dplyr::group_by(grp6) %>%
-  dplyr::filter(rank(-score, ties.method = "first") <= round(dplyr::n() * n_top / nrow(g_hm))) %>%
-  dplyr::ungroup()
-
-# SK/SH only: top 50 by their own score (response and expression in the
-# responding line, popularity; NA renormalised as above).
-sk_w <- c(log2FC = 1/3, baseMean = 1/3, popularity = 1/3)
-sk_hm <- sk_all %>% dplyr::filter(Ensembl %in% rownames(hm$mat))
-sk_comp <- cbind(dplyr::percent_rank(abs(sk_hm$sk_log2FC)),
-                 dplyr::percent_rank(log10(sk_hm$sk_baseMean + 1)),
-                 dplyr::percent_rank(log10(sk_hm$pubmed_total + 1)))
-sk_wm <- matrix(sk_w, nrow(sk_comp), 3, byrow = TRUE) * !is.na(sk_comp)
-sk_hm$score <- rowSums(sk_comp * sk_wm, na.rm = TRUE) / rowSums(sk_wm)
-sk_top <- sk_hm %>% dplyr::slice_max(score, n = 50, with_ties = FALSE)
-
-# Heatmap gene set: list genes plus SK/SH only (no HIF, no grp6).
-hm_set <- dplyr::bind_rows(
-  hm_list %>% dplyr::mutate(pattern = as.character(pattern), hif_lab = as.character(hif),
-                            grp6 = as.character(grp6)),
-  sk_top %>% dplyr::transmute(Ensembl, label, dir, score, pattern = "SK/SH only",
-                              hif_lab = "no HIF list", grp6 = "SK/SH only")) %>%
-  dplyr::mutate(pattern = factor(pattern, levels = hm_levels))
-
-# Typicality of each gene for its responding-lines group (VST response).
-r  <- hx_resp[hm_set$Ensembl, ]
-aK <- abs(r[, "Kelly"]); aA <- abs(r[, "SK-N-AS"]); aH <- abs(r[, "SH-SY5Y"])
-sA <- sign(r[, "SK-N-AS"]) == sign(r[, "Kelly"]); sH <- sign(r[, "SH-SY5Y"]) == sign(r[, "Kelly"])
-hm_set$typical <- dplyr::case_when(
-  hm_set$pattern == "all 3 lines"    ~ pmin(aK, aA * sA, aH * sH),
-  hm_set$pattern == "Kelly + 1 line" ~ pmin(aK, pmax(aA * sA, aH * sH)) - pmin(aA, aH),
-  hm_set$pattern == "Kelly only"     ~ aK - pmax(aA, aH),
-  hm_set$pattern == "SK/SH only"     ~ pmax(aA, aH) - aK)
+# How clearly a gene shows the pattern of its group (VST response), for the
+# interaction groups and the cutoff groups of the appendix.
+typicality <- function(ens, group) {
+  r  <- hx_resp[ens, , drop = FALSE]
+  aK <- abs(r[, "Kelly"]); aA <- abs(r[, "SK-N-AS"]); aH <- abs(r[, "SH-SY5Y"])
+  sA <- sign(r[, "SK-N-AS"]) == sign(r[, "Kelly"]); sH <- sign(r[, "SH-SY5Y"]) == sign(r[, "Kelly"])
+  dplyr::case_when(
+    group == "shared"                            ~ pmin(aK, pmax(aA * sA, aH * sH)),
+    group == "all 3 lines"                       ~ pmin(aK, aA * sA, aH * sH),
+    group == "Kelly + 1 line"                    ~ pmin(aK, pmax(aA * sA, aH * sH)) - pmin(aA, aH),
+    group %in% c("Kelly-specific", "Kelly only") ~ aK - pmax(aA, aH),
+    group %in% c("SK/SH-specific", "SK/SH only") ~ pmax(aA, aH) - aK)
+}
 
 # Split n names over groups by sqrt(group size), largest remainder rounding.
 alloc <- function(sizes, n) {
@@ -661,42 +523,25 @@ pick_typical <- function(d, n) {
       cp %>% dplyr::filter(dir == dx) %>% dplyr::slice_max(rank, n = kx, with_ties = FALSE))
   })
 }
-top50 <- pick_typical(hm_set, 50)
 
-# One example per cluster (responding lines x direction, at least 10 genes):
-# the best-ranked named gene of the cluster.
-examples <- top50 %>%
-  dplyr::add_count(pattern, dir, name = "n_named") %>%
-  dplyr::inner_join(hm_set %>% dplyr::count(pattern, dir, name = "n_cluster"),
-                    by = c("pattern", "dir")) %>%
-  dplyr::filter(n_cluster >= 10) %>%
-  dplyr::group_by(pattern, dir) %>% dplyr::slice_max(rank, n = 1, with_ties = FALSE) %>%
-  dplyr::ungroup() %>%
-  dplyr::mutate(subtitle = paste0(dplyr::coalesce(strip_short[as.character(pattern)],
-                                                  as.character(pattern)) %>% sub("\n", " ", .),
-                                  ", ", dir, " - ", hif_lab))
-
-tab(hm_set %>% dplyr::count(pattern, dir) %>%
-      tidyr::pivot_wider(names_from = dir, values_from = n, values_fill = 0) %>%
-      dplyr::left_join(top50 %>% dplyr::count(pattern, name = "named"), by = "pattern"),
-    paste0("Heatmap genes (", nrow(hm_set), ") by responding lines and direction, and how many are named"))
+# One example per cluster (group x direction, at least 10 genes): the
+# best-ranked named gene of the cluster.
+pick_examples <- function(top, set) {
+  top %>%
+    dplyr::inner_join(set %>% dplyr::count(pattern, dir, name = "n_cluster"), by = c("pattern", "dir")) %>%
+    dplyr::filter(n_cluster >= 10) %>%
+    dplyr::group_by(pattern, dir) %>% dplyr::slice_max(rank, n = 1, with_ties = FALSE) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(subtitle = paste0(gsub("\n", " ", gsub("-\n", "-", dplyr::coalesce(
+                                      strip_short[as.character(pattern)], as.character(pattern)))),
+                                    ", ", dir, " - ", hif_lab))
+}
 ```
 
 </details>
 
-**Heatmap genes (1041) by responding lines and direction, and how many
-are named**
-
-| pattern        |  up | down | named |
-|:---------------|----:|-----:|------:|
-| Kelly only     | 232 |  109 |    15 |
-| Kelly + 1 line | 376 |  103 |    18 |
-| all 3 lines    | 150 |   21 |    11 |
-| SK/SH only     |  40 |   10 |     6 |
-
 Normalized counts for the example genes come from the two DESeq2 objects
-on Google Drive; the counts of all listed genes are cached like the VST
-matrix.
+(`gdrive`); the counts are cached like the VST matrix.
 
 <details>
 
@@ -707,23 +552,26 @@ Code
 
 ``` r
 cnt_cache <- file.path(in_dir, "cache", "hx_counts.rds")
-cnt <- if (file.exists(cnt_cache)) readRDS(cnt_cache)
-cnt_genes <- Reduce(union, list(genes$Ensembl, sk_all$Ensembl, sksh_spec$Ensembl))
-if (is.null(cnt) || !all(cnt_genes %in% rownames(cnt$mat))) {
+# Cached; rebuilt for the old plus the new genes when a requested gene is missing.
+load_counts <- function(ens) {
+  cnt <- if (file.exists(cnt_cache)) readRDS(cnt_cache)
+  if (!is.null(cnt) && all(ens %in% rownames(cnt$mat))) return(cnt)
+  ens <- union(rownames(cnt$mat), ens)
   loadNamespace("DESeq2")
   dds_k <- readRDS(file.path(gdrive, "dds_filtered_with_metadata.rds"))
   e <- new.env()
   load(file.path(gdrive, "SKNAS_SHSY5Y.dds"), envir = e)
   norm <- function(d) DESeq2::counts(DESeq2::estimateSizeFactors(d), normalized = TRUE)
   n_k <- norm(dds_k); n_b <- norm(e$dds)
-  ens <- cnt_genes
   pad <- function(m) {   # genes missing from one data set stay NA, not 0
     out <- matrix(NA_real_, length(ens), ncol(m), dimnames = list(ens, colnames(m)))
     i <- intersect(ens, rownames(m)); out[i, ] <- m[i, ]; out
   }
   cnt <- list(mat = cbind(pad(n_k), pad(n_b)))
   saveRDS(cnt, cnt_cache)
+  cnt
 }
+cnt <- load_counts(union(genes$Ensembl, sksh_spec$Ensembl))
 # Same samples as the heatmap (batches with a normoxia reference).
 cnt_cols <- hm$cols %>% dplyr::filter(sample %in% colnames(cnt$mat)) %>%
   dplyr::mutate(line = factor(line, levels = hm_panels),
@@ -762,7 +610,7 @@ deg_states <- master %>% dplyr::distinct(Ensembl, .keep_all = TRUE) %>%
 # per direction (up on top), Ward clustering inside each cluster on the mean
 # Hx response of all six panels.
 # Gap between groups, half a gap between the two clusters of a group.
-hm_rows <- function(ens, split, levels, set = hm_set) {
+hm_rows <- function(ens, split, levels, set) {
   grp <- split[ens]
   g   <- set[match(ens, set$Ensembl), ]
   gap <- max(1, round(length(ens) / 100))
@@ -820,7 +668,7 @@ count_panel <- function(e, title, subtitle, x_axis = FALSE, lim = 4) {
 }
 
 hx_heatmap <- function(ens, split, levels, strip_cols, marks, title = NULL, subtitle = NULL, lim = 4,
-                       examples = NULL, set = hm_set) {
+                       examples = NULL, set) {
   rows <- hm_rows(ens, split, levels, set)
   pos  <- rows$y
   n    <- max(pos)
@@ -961,89 +809,9 @@ hx_pair <- function(..., widths = NULL) {
   patchwork::wrap_plots(lapply(list(...), function(p) patchwork::wrap_elements(full = p)),
                         nrow = 1, widths = widths)
 }
-
-split_pat  <- setNames(as.character(hm_set$pattern), hm_set$Ensembl)
-split_grp6 <- setNames(as.character(hm_set$grp6), hm_set$Ensembl)
 ```
 
 </details>
-
-<details>
-
-<summary>
-
-Code
-</summary>
-
-``` r
-hx_heatmap(hm_set$Ensembl, split_pat, hm_levels, pat_greys, top50, examples = examples,
-           title = hm_title, subtitle = paste0(nrow(hm_list), " HIF-regulated genes + ", nrow(sk_top), " SK/SH only (log2 Hx vs Nx; grouped by responding lines)"))
-```
-
-</details>
-
-**Figure 1, variant: grouped by responding lines**
-
-![](Manuscript_Figures_files/figure-gfm/fig1-1.png)<!-- -->
-
-**Heatmap genes per responding-lines group: composition and median
-absolute response per line**
-
-| pattern | genes | % up | % HIF1A | % HIF2A | Kelly \|log2\| | SK-N-AS \|log2\| | SH-SY5Y \|log2\| |
-|:---|---:|---:|---:|---:|---:|---:|---:|
-| Kelly only | 341 | 68 | 7 | 92 | 1.15 | 0.18 | 0.20 |
-| Kelly + 1 line | 479 | 78 | 24 | 73 | 1.45 | 0.81 | 0.99 |
-| all 3 lines | 171 | 88 | 54 | 44 | 1.96 | 1.50 | 1.64 |
-| SK/SH only | 50 | 80 | 0 | 0 | 0.09 | 1.67 | 0.47 |
-
-### Variant for the meeting: rows grouped by HIF list
-
-Same genes, same names, but the rows grouped by HIF and direction
-instead of responding lines (the analogue of 5b, right). This puts the
-HIF1A / HIF2A contrast first and leaves the MYCN context to be read from
-the SK-N-AS and SH-SY5Y columns.
-
-<details>
-
-<summary>
-
-Code
-</summary>
-
-``` r
-hx_pair(
-  hx_heatmap(hm_set$Ensembl, split_pat, hm_levels, pat_greys, top50,
-             title = "Grouped by responding lines"),
-  hx_heatmap(hm_set$Ensembl, split_grp6, c(grp6_levels, "SK/SH only"),
-             c(grp6_cols, `SK/SH only` = "#D9D9D9"), top50,
-             title = "Grouped by HIF list"))
-```
-
-</details>
-
-**Figure 1, variant: responding lines (left) vs HIF list (right)**
-
-![](Manuscript_Figures_files/figure-gfm/fig1_variant-1.png)<!-- -->
-
-## Figure 1: interaction groups (manuscript version)
-
-The same heatmap, rows grouped by the interaction groups (section
-*Interaction*), top to bottom: **Kelly-specific**, **shared** (Kelly
-stronger included) and **SK/SH-specific**; `not testable` and `other`
-are left out. At most 1000 rows, taken from every group (and HIF list
-and direction) in proportion to its size: list genes by candidate score,
-SK/SH-specific genes by their own score (\|log2FC\| and baseMean in the
-responding line, popularity; 1/3 each, as for SK/SH only). Named and
-example genes are chosen as in Figure 1; *typical* is
-
-| Group | Typical = |
-|----|----|
-| shared | Kelly and the stronger baseline line both strong (same direction) |
-| Kelly-specific | Kelly strong, both baseline lines flat |
-| SK/SH-specific | the stronger baseline line strong, Kelly flat |
-
-The group strip uses the line colours: Kelly-specific in Kelly’s colour,
-SK/SH-specific in the baseline lines’ hue.
 
 <details>
 
@@ -1056,13 +824,8 @@ Code
 int_hm_levels <- c("Kelly-specific", "shared", "SK/SH-specific")
 int_cols <- c(shared = "#969696", `Kelly-specific` = unname(line_cols["Kelly"]),
               `SK/SH-specific` = "#5F7A8F")
-strip_short <- c(strip_short, `SK/SH-specific` = "SK/SH-\nspecific")
 
-ss_comp <- cbind(dplyr::percent_rank(abs(sksh_spec$sk_log2FC)),
-                 dplyr::percent_rank(log10(sksh_spec$sk_baseMean + 1)),
-                 dplyr::percent_rank(log10(sksh_spec$pubmed_total + 1)))
-ss_wm <- matrix(sk_w, nrow(ss_comp), 3, byrow = TRUE) * !is.na(ss_comp)
-sksh_spec$score <- rowSums(ss_comp * ss_wm, na.rm = TRUE) / rowSums(ss_wm)
+sksh_spec$score <- line_score(sksh_spec)
 
 int_all <- dplyr::bind_rows(
   genes %>% dplyr::filter(int_group %in% int_hm_levels) %>%
@@ -1080,22 +843,10 @@ int_set <- int_all %>%
   # pick_typical() and the examples work on `pattern`
   dplyr::mutate(pattern = factor(int_group, levels = int_hm_levels))
 
-r  <- hx_resp[int_set$Ensembl, ]
-aK <- abs(r[, "Kelly"]); aA <- abs(r[, "SK-N-AS"]); aH <- abs(r[, "SH-SY5Y"])
-sA <- sign(r[, "SK-N-AS"]) == sign(r[, "Kelly"]); sH <- sign(r[, "SH-SY5Y"]) == sign(r[, "Kelly"])
-int_set$typical <- dplyr::case_when(
-  int_set$pattern == "shared"         ~ pmin(aK, pmax(aA * sA, aH * sH)),
-  int_set$pattern == "Kelly-specific" ~ aK - pmax(aA, aH),
-  int_set$pattern == "SK/SH-specific" ~ pmax(aA, aH) - aK)
+int_set$typical <- typicality(int_set$Ensembl, int_set$pattern)
 
 int_top50 <- pick_typical(int_set, 50)
-int_examples <- int_top50 %>%
-  dplyr::inner_join(int_set %>% dplyr::count(pattern, dir, name = "n_cluster"),
-                    by = c("pattern", "dir")) %>%
-  dplyr::filter(n_cluster >= 10) %>%
-  dplyr::group_by(pattern, dir) %>% dplyr::slice_max(rank, n = 1, with_ties = FALSE) %>%
-  dplyr::ungroup() %>%
-  dplyr::mutate(subtitle = paste0(pattern, ", ", dir, " - ", hif_lab))
+int_examples <- pick_examples(int_top50, int_set)
 split_int <- setNames(as.character(int_set$pattern), int_set$Ensembl)
 
 tab(int_set %>% dplyr::count(pattern, dir) %>%
@@ -1572,29 +1323,36 @@ and HIF dependence (negative = KO loses the response)**
 | 7 | 336 | 0 | -1.34 | -0.11 | -0.50 | 0.02 | -1.00 | 14 | 83 | 38 | 61 | 0.99 | 15 | 14 |
 | 8 | 117 | 1 | -1.48 | -0.65 | -0.60 | 0.31 | -1.14 | 2 | 98 | 22 | 76 | 3.07 | 100 | 0 |
 
-# Figure 4: Leiden clusters
+# Figure 4: Gene clusters
 
-One block per Leiden cluster of Figure 3, three panels each:
+The Leiden clusters of Figure 3, each introduced by what it does and
+what it means clinically. Clusters 1 and 6 lie next to each other in the
+UMAP and enrich for the same programs, so they are shown as one block;
+clusters 4, 5 and 7 carry no clear program and are in the appendix. Per
+block:
 
-- **UMAP zoom**: the cluster in colour on all genes in grey; the
-  subtitle summarises HIF target, direction, interaction group and
-  survival risk.
+- **Hallmark heading**: the best MSigDB hallmark sets (50 curated
+  programs) - a coarse but interpretable name for the cluster.
+- **UMAP zoom**: the cluster in colour on all genes in grey.
 - **response vs risk**: the scatter of Figure 2A with only the cluster’s
   genes (colour = HIF target, grey = HR not significant, shape =
-  interaction group); the five genes with the highest candidate score
-  are named.
-- **GO biological process**: over-representation (clusterProfiler
-  `enricher`, gene sets of 10-500 genes) against the Kelly-expressed
-  genes with survival data (the background of Figure 2C). Terms with at
-  least 3 genes and p \< 0.01, redundant terms (Jaccard \> 0.5 on the
-  genes behind them) dropped greedily from the top; the five best
-  remaining terms are shown. Full colour: padj \< 0.05; light: nominal
-  only. Clusters 3-6 have no term with padj \< 0.05, so their terms are
-  suggestive at best.
+  interaction group). Axes are the same in every block (97.5% of all
+  genes fit); genes outside sit on the border with a small arrow.
+- **fingerprint**: four tracks summarising the cluster - direction of
+  the hypoxic response, hazard ratio (median and interquartile range),
+  HIF target and interaction group. Colours as in the panels beside
+  them.
+- **GO biological process**: over-representation against the
+  Kelly-expressed genes with survival data (the background of Figure
+  2C), terms with at least 3 genes and p \< 0.01, redundant terms
+  (Jaccard \> 0.5) dropped greedily from the top; the five best
+  remaining are shown, the term written on its bar with the number of
+  cluster genes in brackets. Full colour: padj \< 0.05.
 
 GO annotation: `go_bp_all` (propagated to parent terms) from the
-org.Hs.eg.db sqlite, read directly, joined to Ensembl IDs; term names
-from GO.db. Cached in `cache/`.
+org.Hs.eg.db sqlite, joined to Ensembl IDs; term names from GO.db.
+Hallmark sets are the MSigDB gene symbol GMT, matched on symbols. Both
+cached in `cache/`.
 
 <details>
 
@@ -1604,11 +1362,17 @@ Code
 </summary>
 
 ``` r
+# Blocks of Figure 4: 1 and 6 together, the rest of the clusters on their own.
+f4_main <- list(`1 + 6` = c("1", "6"), `2` = "2", `3` = "3", `8` = "8")
+f4_app  <- list(`4` = "4", `5` = "5", `7` = "7")
+f4_groups <- c(f4_main, f4_app)
+cl_sets <- lapply(f4_groups, function(k) ud$Ensembl[ud$cluster %in% k])
+go_univ <- bg$Ensembl
+
+# GO biological process, propagated, from the org.Hs.eg.db sqlite.
 go_file <- here::here("6_XM_data_merge", "cache", "go_bp_ensembl.rds")
 if (!file.exists(go_file)) {
-  go_db <- if (requireNamespace("org.Hs.eg.db", quietly = TRUE)) org.Hs.eg.db::org.Hs.eg_dbfile() else
-    path.expand("~/Library/R/arm64/4.6/library/org.Hs.eg.db/extdata/org.Hs.eg.sqlite")
-  con <- DBI::dbConnect(RSQLite::SQLite(), go_db, flags = RSQLite::SQLITE_RO)
+  con <- DBI::dbConnect(RSQLite::SQLite(), org.Hs.eg.db::org.Hs.eg_dbfile(), flags = RSQLite::SQLITE_RO)
   t2g <- DBI::dbGetQuery(con, "SELECT DISTINCT g.go_id AS term, e.ensembl_id AS gene
                                FROM go_bp_all g JOIN ensembl e ON g._id = e._id")
   DBI::dbDisconnect(con)
@@ -1618,19 +1382,29 @@ if (!file.exists(go_file)) {
 }
 go_map <- readRDS(go_file)
 
-# Enrichment per cluster; recomputed only when the clusters or the universe change.
-cl_sets  <- split(ud$Ensembl, ud$cluster)
-go_univ  <- bg$Ensembl
+# MSigDB hallmark sets (gene symbols), downloaded once.
+hm_file <- here::here("6_XM_data_merge", "cache", "h.all.v2024.1.Hs.symbols.gmt")
+if (!file.exists(hm_file))
+  download.file(paste0("https://data.broadinstitute.org/gsea-msigdb/msigdb/release/",
+                       "2024.1.Hs/h.all.v2024.1.Hs.symbols.gmt"), hm_file, quiet = TRUE)
+hall_t2g <- do.call(rbind, lapply(strsplit(readLines(hm_file), "\t"), function(x)
+  tibble(term = sub("^HALLMARK_", "", x[1]), gene = x[-(1:2)])))
+ens2sym <- master %>% dplyr::distinct(Ensembl, .keep_all = TRUE) %>% dplyr::select(Ensembl, symbol)
+to_sym  <- function(ens) unique(na.omit(ens2sym$symbol[match(ens, ens2sym$Ensembl)]))
+hall_univ <- to_sym(go_univ)
+
+# Both enrichments per block; recomputed only when the blocks or the universe change.
 enr_file <- here::here("6_XM_data_merge", "cache", "go_clusters.rds")
 enr <- if (file.exists(enr_file)) readRDS(enr_file) else NULL
+res_tab <- function(r) if (is.null(r)) tibble() else tibble::as_tibble(r@result)
 if (is.null(enr) || !identical(enr$sets, cl_sets) || !identical(enr$univ, go_univ)) {
   enr <- list(sets = cl_sets, univ = go_univ,
-              res = lapply(cl_sets, function(g) {
-                r <- clusterProfiler::enricher(g, universe = go_univ, TERM2GENE = go_map$t2g,
-                                               TERM2NAME = go_map$t2n, minGSSize = 10,
-                                               maxGSSize = 500, pvalueCutoff = 1, qvalueCutoff = 1)
-                if (is.null(r)) tibble() else tibble::as_tibble(r@result)
-              }))
+              go = lapply(cl_sets, function(g) res_tab(clusterProfiler::enricher(
+                     g, universe = go_univ, TERM2GENE = go_map$t2g, TERM2NAME = go_map$t2n,
+                     minGSSize = 10, maxGSSize = 500, pvalueCutoff = 1, qvalueCutoff = 1))),
+              hall = lapply(cl_sets, function(g) res_tab(clusterProfiler::enricher(
+                     to_sym(g), universe = hall_univ, TERM2GENE = hall_t2g,
+                     minGSSize = 10, pvalueCutoff = 1, qvalueCutoff = 1))))
   saveRDS(enr, enr_file)
 }
 
@@ -1646,61 +1420,39 @@ go_top <- function(r, n = 5, jac = 0.5) {
   }
   r[keep, ]
 }
-go_sel <- purrr::imap_dfr(enr$res, ~ go_top(.x) %>% dplyr::mutate(cluster = .y))
+go_sel   <- purrr::imap_dfr(enr$go, ~ go_top(.x) %>% dplyr::mutate(block = .y))
+hall_sel <- purrr::imap_dfr(enr$hall, ~ .x %>% dplyr::filter(p.adjust < 0.05) %>%
+                              dplyr::arrange(pvalue) %>% head(3) %>% dplyr::mutate(block = .y))
 
-tab(go_sel %>% dplyr::transmute(cluster, term = Description, genes = Count,
-                                 GeneRatio, BgRatio, p = sprintf("%.1e", pvalue),
-                                 padj = sprintf("%.1e", p.adjust)),
-    "Top 5 non-redundant GO terms per cluster (at least 3 genes, p < 0.01)")
+# Hallmark names read as prose; keep the acronyms upper case.
+acr <- c("TNFA","NFKB","MYC","E2F","G2M","IL2","IL6","STAT5","STAT3","JAK","KRAS","MTORC1",
+         "DNA","UV","ROS","PI3K","AKT","TGF","WNT","P53","IFN","EMT","APC")
+nice_term <- function(x) vapply(strsplit(tolower(gsub("_", " ", x)), " "), function(w) {
+  up <- toupper(w) %in% acr
+  w[up] <- toupper(w[up]); w[!up & seq_along(w) == 1] <- sub("^(.)", "\\U\\1", w[!up & seq_along(w) == 1], perl = TRUE)
+  paste(w, collapse = " ") }, "")
+
+tab(hall_sel %>% dplyr::transmute(block, hallmark = nice_term(ID), genes = Count,
+                                  p = sprintf("%.1e", pvalue), padj = sprintf("%.1e", p.adjust)),
+    "Hallmark sets per block (padj < 0.05, top 3)")
 ```
 
 </details>
 
-**Top 5 non-redundant GO terms per cluster (at least 3 genes, p \<
-0.01)**
+**Hallmark sets per block (padj \< 0.05, top 3)**
 
-| cluster | term | genes | GeneRatio | BgRatio | p | padj |
-|:---|:---|---:|:---|:---|:---|:---|
-| 1 | blood vessel development | 28 | 28/237 | 419/12534 | 6.1e-09 | 1.6e-05 |
-| 1 | G protein-coupled receptor signaling pathway | 28 | 28/237 | 466/12534 | 6.0e-08 | 3.4e-05 |
-| 1 | positive regulation of MAPK cascade | 21 | 21/237 | 276/12534 | 6.1e-08 | 3.4e-05 |
-| 1 | animal organ morphogenesis | 26 | 26/237 | 429/12534 | 1.6e-07 | 7.2e-05 |
-| 1 | behavior | 19 | 19/237 | 291/12534 | 2.7e-06 | 8.3e-04 |
-| 2 | response to hypoxia | 15 | 15/190 | 218/12534 | 1.1e-06 | 2.0e-03 |
-| 2 | G protein-coupled receptor signaling pathway | 20 | 20/190 | 466/12534 | 2.7e-05 | 1.5e-02 |
-| 2 | ribonucleoside diphosphate catabolic process | 7 | 7/190 | 72/12534 | 1.1e-04 | 3.3e-02 |
-| 2 | G protein-coupled receptor signaling pathway, coupled to cyclic nucleotide second messenger | 4 | 4/190 | 18/12534 | 1.3e-04 | 3.4e-02 |
-| 2 | cell-cell adhesion mediated by integrin | 4 | 4/190 | 19/12534 | 1.7e-04 | 3.8e-02 |
-| 3 | nucleosome assembly | 5 | 5/78 | 79/12534 | 1.3e-04 | 9.0e-02 |
-| 3 | innate immune response in mucosa | 3 | 3/78 | 18/12534 | 1.8e-04 | 9.0e-02 |
-| 3 | positive regulation of morphogenesis of an epithelium | 3 | 3/78 | 24/12534 | 4.3e-04 | 9.0e-02 |
-| 3 | defense response to Gram-positive bacterium | 3 | 3/78 | 38/12534 | 1.7e-03 | 1.7e-01 |
-| 3 | cilium movement | 5 | 5/78 | 153/12534 | 2.6e-03 | 1.9e-01 |
-| 4 | regulation of transmembrane transport | 11 | 11/148 | 255/12534 | 2.2e-04 | 1.2e-01 |
-| 4 | positive regulation of macrophage activation | 3 | 3/148 | 11/12534 | 2.5e-04 | 1.2e-01 |
-| 4 | homophilic cell adhesion via plasma membrane adhesion molecules | 8 | 8/148 | 141/12534 | 2.6e-04 | 1.2e-01 |
-| 4 | heterophilic cell-cell adhesion via plasma membrane cell adhesion molecules | 4 | 4/148 | 28/12534 | 3.1e-04 | 1.2e-01 |
-| 4 | regulation of inflammatory response | 10 | 10/148 | 224/12534 | 3.2e-04 | 1.2e-01 |
-| 5 | sensory perception | 8 | 8/71 | 247/12534 | 7.4e-05 | 9.1e-02 |
-| 5 | hindbrain development | 4 | 4/71 | 68/12534 | 5.9e-04 | 3.6e-01 |
-| 5 | muscle tissue development | 6 | 6/71 | 205/12534 | 1.1e-03 | 3.7e-01 |
-| 5 | aminoglycan metabolic process | 3 | 3/71 | 45/12534 | 2.1e-03 | 3.7e-01 |
-| 5 | vasculature development | 8 | 8/71 | 433/12534 | 3.0e-03 | 3.7e-01 |
-| 6 | extracellular matrix organization | 9 | 9/136 | 187/12534 | 2.0e-04 | 1.0e-01 |
-| 6 | protein activation cascade | 3 | 3/136 | 13/12534 | 3.3e-04 | 1.2e-01 |
-| 6 | skin development | 6 | 6/136 | 104/12534 | 9.3e-04 | 2.1e-01 |
-| 6 | protein processing | 7 | 7/136 | 143/12534 | 9.3e-04 | 2.1e-01 |
-| 6 | acute inflammatory response | 4 | 4/136 | 41/12534 | 9.8e-04 | 2.1e-01 |
-| 7 | animal organ morphogenesis | 27 | 27/276 | 429/12534 | 9.1e-07 | 1.4e-03 |
-| 7 | morphogenesis of a branching epithelium | 9 | 9/276 | 53/12534 | 2.0e-06 | 1.8e-03 |
-| 7 | regionalization | 15 | 15/276 | 162/12534 | 2.8e-06 | 1.8e-03 |
-| 7 | embryonic morphogenesis | 19 | 19/276 | 257/12534 | 4.1e-06 | 2.0e-03 |
-| 7 | renal system development | 15 | 15/276 | 173/12534 | 6.4e-06 | 2.2e-03 |
-| 8 | DNA-templated DNA replication | 14 | 14/103 | 157/12534 | 3.4e-11 | 4.2e-08 |
-| 8 | double-strand break repair via break-induced replication | 6 | 6/103 | 11/12534 | 1.2e-10 | 7.3e-08 |
-| 8 | mitotic DNA replication | 6 | 6/103 | 16/12534 | 2.0e-09 | 7.1e-07 |
-| 8 | ribosome biogenesis | 14 | 14/103 | 321/12534 | 3.5e-07 | 4.8e-05 |
-| 8 | maturation of SSU-rRNA | 7 | 7/103 | 73/12534 | 2.2e-06 | 2.2e-04 |
+| block | hallmark                          | genes | p       | padj    |
+|:------|:----------------------------------|------:|:--------|:--------|
+| 1 + 6 | Epithelial mesenchymal transition |    20 | 6.6e-08 | 2.7e-06 |
+| 1 + 6 | Estrogen response late            |    15 | 8.5e-05 | 1.7e-03 |
+| 1 + 6 | Angiogenesis                      |     6 | 1.9e-04 | 2.6e-03 |
+| 2     | Hypoxia                           |    26 | 7.6e-18 | 2.6e-16 |
+| 2     | Glycolysis                        |    15 | 1.1e-06 | 1.8e-05 |
+| 2     | Myogenesis                        |    10 | 5.8e-04 | 6.6e-03 |
+| 8     | MYC targets v2                    |    10 | 4.6e-10 | 1.0e-08 |
+| 8     | E2F targets                       |    13 | 1.5e-07 | 1.7e-06 |
+| 8     | MYC targets v1                    |    12 | 1.1e-06 | 7.3e-06 |
+| 4     | Coagulation                       |     5 | 1.2e-03 | 2.9e-02 |
 
 <details>
 
@@ -1710,84 +1462,228 @@ Code
 </summary>
 
 ``` r
+tab(go_sel %>% dplyr::transmute(block, term = Description, genes = Count,
+                                p = sprintf("%.1e", pvalue), padj = sprintf("%.1e", p.adjust)),
+    "Top 5 non-redundant GO terms per block (at least 3 genes, p < 0.01)")
+```
+
+</details>
+
+**Top 5 non-redundant GO terms per block (at least 3 genes, p \< 0.01)**
+
+| block | term | genes | p | padj |
+|:---|:---|---:|:---|:---|
+| 1 + 6 | blood vessel development | 38 | 8.3e-10 | 2.5e-06 |
+| 1 + 6 | G protein-coupled receptor signaling pathway | 39 | 4.9e-09 | 4.9e-06 |
+| 1 + 6 | animal organ morphogenesis | 33 | 5.7e-07 | 2.2e-04 |
+| 1 + 6 | neuropeptide signaling pathway | 11 | 6.3e-07 | 2.2e-04 |
+| 1 + 6 | extracellular matrix organization | 20 | 7.4e-07 | 2.2e-04 |
+| 2 | response to hypoxia | 15 | 1.1e-06 | 2.0e-03 |
+| 2 | G protein-coupled receptor signaling pathway | 20 | 2.7e-05 | 1.5e-02 |
+| 2 | ribonucleoside diphosphate catabolic process | 7 | 1.1e-04 | 3.3e-02 |
+| 2 | G protein-coupled receptor signaling pathway, coupled to cyclic nucleotide second messenger | 4 | 1.3e-04 | 3.4e-02 |
+| 2 | cell-cell adhesion mediated by integrin | 4 | 1.7e-04 | 3.8e-02 |
+| 3 | nucleosome assembly | 5 | 1.3e-04 | 9.0e-02 |
+| 3 | innate immune response in mucosa | 3 | 1.8e-04 | 9.0e-02 |
+| 3 | positive regulation of morphogenesis of an epithelium | 3 | 4.3e-04 | 9.0e-02 |
+| 3 | defense response to Gram-positive bacterium | 3 | 1.7e-03 | 1.7e-01 |
+| 3 | cilium movement | 5 | 2.6e-03 | 1.9e-01 |
+| 8 | DNA-templated DNA replication | 14 | 3.4e-11 | 4.2e-08 |
+| 8 | double-strand break repair via break-induced replication | 6 | 1.2e-10 | 7.3e-08 |
+| 8 | mitotic DNA replication | 6 | 2.0e-09 | 7.1e-07 |
+| 8 | ribosome biogenesis | 14 | 3.5e-07 | 4.8e-05 |
+| 8 | maturation of SSU-rRNA | 7 | 2.2e-06 | 2.2e-04 |
+| 4 | regulation of transmembrane transport | 11 | 2.2e-04 | 1.2e-01 |
+| 4 | positive regulation of macrophage activation | 3 | 2.5e-04 | 1.2e-01 |
+| 4 | homophilic cell adhesion via plasma membrane adhesion molecules | 8 | 2.6e-04 | 1.2e-01 |
+| 4 | heterophilic cell-cell adhesion via plasma membrane cell adhesion molecules | 4 | 3.1e-04 | 1.2e-01 |
+| 4 | regulation of inflammatory response | 10 | 3.2e-04 | 1.2e-01 |
+| 5 | sensory perception | 8 | 7.4e-05 | 9.1e-02 |
+| 5 | hindbrain development | 4 | 5.9e-04 | 3.6e-01 |
+| 5 | muscle tissue development | 6 | 1.1e-03 | 3.7e-01 |
+| 5 | aminoglycan metabolic process | 3 | 2.1e-03 | 3.7e-01 |
+| 5 | vasculature development | 8 | 3.0e-03 | 3.7e-01 |
+| 7 | animal organ morphogenesis | 27 | 9.1e-07 | 1.4e-03 |
+| 7 | morphogenesis of a branching epithelium | 9 | 2.0e-06 | 1.8e-03 |
+| 7 | regionalization | 15 | 2.8e-06 | 1.8e-03 |
+| 7 | embryonic morphogenesis | 19 | 4.1e-06 | 2.0e-03 |
+| 7 | renal system development | 15 | 6.4e-06 | 2.2e-03 |
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+# Drawn at print size (A4 portrait), so font sizes are real points.
+a4 <- c(w = 8.27, h = 11.69)
 int3_shapes <- c(`Kelly-specific` = 17, shared = 16, `not classified` = 1)
-f4_x <- c(-1, 1) * max(abs(ud$log2HR)) * 1.02
-f4_y <- range(ud$log2FC)
+f4_base <- 8.5
+f4_xlim <- c(-2, 2.5); f4_ylim <- c(-4, 10)   # 97.5% of the genes
 
-cluster_block <- function(k, legend = FALSE) {
-  d <- ud %>% dplyr::filter(cluster == k)
-  col <- cl_cols[[k]]
+# Four tracks in a shared 0..1 coordinate system: direction, hazard ratio,
+# HIF target, interaction group.
+fingerprint <- function(d) {
+  hr_lim <- 2                                     # HR track spans 2^-2 .. 2^2
+  sh <- 0.17                                      # half track height
+  pc  <- function(x) 100 * mean(x)
+  net <- (pc(d$dir == "up") - pc(d$dir == "down")) / 100
+  hr  <- pmin(pmax(quantile(d$log2HR, c(.25, .5, .75)) / (2 * hr_lim) + 0.5, 0.01), 0.99)
+  stack <- function(v, levs, y) {
+    p <- sapply(levs, function(l) mean(v == l))
+    tibble(y = y, lvl = levs, xmin = c(0, head(cumsum(p), -1)), xmax = cumsum(p))
+  }
+  bars <- dplyr::bind_rows(
+    tibble(y = 4, lvl = ifelse(net > 0, "up", "down"),
+           xmin = pmin(0.5, 0.5 + net / 2), xmax = pmax(0.5, 0.5 + net / 2)),
+    stack(as.character(d$hif), names(hif_cols), 2),
+    stack(as.character(d$int3), names(int3_cols), 1))
+  fills <- c(up = "#C03A3E", down = "#4682C4", hif_cols, int3_cols)
+  labs4 <- tibble(y = 4:1,
+                  lab = c("hypoxia", "hazard ratio", "HIF target", "Kelly-specific"),
+                  val = c(sprintf("%.0f%% up", pc(d$dir == "up")),
+                          sprintf("HR %.2f", 2^median(d$log2HR)),
+                          sprintf("%.0f%% HIF2A", pc(d$hif == "HIF2A")),
+                          sprintf("%.0f%%", pc(d$int3 == "Kelly-specific"))))
+  ggplot() +
+    geom_rect(data = tibble(y = 4:1), aes(xmin = 0, xmax = 1, ymin = y - sh, ymax = y + sh),
+              fill = "grey93") +
+    geom_rect(data = bars, aes(xmin = xmin, xmax = xmax, ymin = y - sh, ymax = y + sh, fill = lvl),
+              show.legend = FALSE) +
+    # zero / reference marks on the two centred tracks
+    geom_segment(data = tibble(y = c(4, 3)), aes(x = 0.5, xend = 0.5, y = y - sh, yend = y + sh),
+                 colour = "grey40", linewidth = 0.3) +
+    geom_segment(data = tibble(x1 = hr[[1]], x2 = hr[[3]]), aes(x = x1, xend = x2, y = 3, yend = 3),
+                 colour = "grey25", linewidth = 0.5) +
+    geom_point(data = tibble(x = hr[[2]]), aes(x, 3), size = 1.6, colour = "grey10") +
+    geom_text(data = labs4, aes(0, y + sh + 0.1, label = lab), hjust = 0, vjust = 0,
+              size = 2.45, colour = "grey35") +
+    geom_text(data = labs4, aes(1, y + sh + 0.1, label = val), hjust = 1, vjust = 0,
+              size = 2.45, colour = "grey10", fontface = "bold") +
+    scale_fill_manual(values = fills) +
+    scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+    scale_y_continuous(limits = c(0.75, 4.75), expand = c(0, 0)) +
+    theme_void()
+}
 
-  # 1. UMAP zoom: square window around the central 98% of the cluster
-  ctr  <- c(mean(quantile(d$U1, c(.01, .99))), mean(quantile(d$U2, c(.01, .99))))
-  half <- max(diff(quantile(d$U1, c(.01, .99))), diff(quantile(d$U2, c(.01, .99)))) / 2 * 1.25
-  pc <- function(x) paste0(round(100 * mean(x)), "%")
-  sub <- paste0(nrow(d), " genes  ·  ", pc(d$dir == "up"), " up\n",
-                "HIF1A ", pc(d$hif == "HIF1A"), "  ·  both ", pc(d$hif == "HIF1A+HIF2A"),
-                "  ·  HIF2A ", pc(d$hif == "HIF2A"), "\n",
-                "Kelly-specific ", pc(d$int3 == "Kelly-specific"), "  ·  shared ", pc(d$int3 == "shared"), "\n",
-                "HR ", sprintf("%.2f", 2^median(d$log2HR)), "  ·  harmful ", pc(d$risk == "harmful"),
-                "  ·  protective ", pc(d$risk == "protective"))
+cluster_block <- function(nm, legend = FALSE) {
+  d   <- ud %>% dplyr::filter(cluster %in% f4_groups[[nm]])
+  col <- cl_cols[[f4_groups[[nm]][1]]]
+
+  # 0. Header: block name and hallmark sets
+  hl <- hall_sel %>% dplyr::filter(block == nm)
+  p0 <- ggplot() + theme_void(base_size = f4_base) +
+    labs(title = paste0("Cluster ", nm, "  ·  ", nrow(d), " genes"),
+         subtitle = if (nrow(hl)) stringr::str_wrap(paste(nice_term(head(hl$ID, 2)),
+                                                          collapse = "  ·  "), 40) else
+                      "no hallmark set enriched") +
+    theme(plot.title = element_text(face = "bold", size = 11.5, colour = col, margin = margin(b = 1)),
+          plot.subtitle = element_text(size = 8.5, colour = "grey20", face = "bold", lineheight = 1.05))
+
+  # 1. UMAP zoom: square window around the central 98% of the block
+  q1 <- quantile(d$U1, c(.01, .99)); q2 <- quantile(d$U2, c(.01, .99))
+  half <- max(diff(q1), diff(q2)) / 2 * 1.2
   p1 <- ggplot(ud, aes(U1, U2)) +
-    geom_point(colour = "grey88", size = 0.4) +
-    geom_point(data = d, colour = col, size = 0.9) +
-    coord_equal(xlim = ctr[1] + c(-half, half), ylim = ctr[2] + c(-half, half)) +
-    labs(title = paste("Cluster", k), subtitle = sub) +
-    theme_void(base_size = 10) +
-    theme(plot.title = element_text(face = "bold", size = 15, colour = col),
-          plot.subtitle = element_text(size = 9, colour = "grey25", lineheight = 1.1),
-          panel.border = element_rect(fill = NA, colour = "grey70"))
+    geom_point(colour = "grey85", size = 0.5) +
+    geom_point(data = d, colour = col, size = 1.0) +
+    coord_equal(xlim = mean(q1) + c(-half, half), ylim = mean(q2) + c(-half, half)) +
+    theme_void(base_size = f4_base) +
+    theme(panel.border = element_rect(fill = NA, colour = "grey70", linewidth = 0.3))
 
-  # 2. Response vs risk, as in Figure 2A
-  d2 <- d %>% dplyr::mutate(pt = factor(ifelse(risk == "ns", "ns", as.character(hif)),
-                                        levels = c("ns", rev(names(hif_cols))))) %>%
+  # 2. Response vs risk, fixed axes; genes outside sit on the border with an arrow
+  d2 <- d %>%
+    dplyr::mutate(pt = factor(ifelse(risk == "ns", "ns", as.character(hif)),
+                              levels = c("ns", rev(names(hif_cols)))),
+                  cx = pmin(pmax(log2HR, f4_xlim[1]), f4_xlim[2]),
+                  cy = pmin(pmax(log2FC, f4_ylim[1]), f4_ylim[2]),
+                  oob = cx != log2HR | cy != log2FC) %>%
     dplyr::arrange(pt)
-  lab <- d %>% dplyr::filter(!is.na(label)) %>% dplyr::slice_max(score, n = 5, with_ties = FALSE)
-  # invisible point per colour x shape, so every block has the same legend and patchwork merges them
-  dummy <- tidyr::expand_grid(pt = factor(levels(d2$pt), levels = levels(d2$pt)), int3 = factor(levels(d$int3), levels = levels(d$int3))) %>%
-    dplyr::mutate(log2HR = 0, log2FC = 0)
-  p2 <- ggplot(d2, aes(log2HR, log2FC)) +
-    annotate("rect", xmin = log2(1.5), xmax = Inf, ymin = -Inf, ymax = Inf, fill = "#C03A3E", alpha = .05) +
-    annotate("rect", xmin = -Inf, xmax = log2(1/1.5), ymin = -Inf, ymax = Inf, fill = "#4682C4", alpha = .05) +
-    geom_hline(yintercept = 0, colour = "grey30", linewidth = 0.4) +
-    geom_vline(xintercept = 0, colour = "grey30", linewidth = 0.4) +
+  arr <- d2 %>% dplyr::filter(oob) %>%
+    dplyr::mutate(ax = cx - sign(log2HR - cx) * 0.05 * diff(f4_xlim),
+                  ay = cy - sign(log2FC - cy) * 0.05 * diff(f4_ylim))
+  lab <- d %>% dplyr::filter(!is.na(label)) %>% dplyr::slice_max(score, n = 5, with_ties = FALSE) %>%
+    dplyr::mutate(cx = pmin(pmax(log2HR, f4_xlim[1]), f4_xlim[2]),
+                  cy = pmin(pmax(log2FC, f4_ylim[1]), f4_ylim[2]))
+  dummy <- tidyr::expand_grid(pt = factor(levels(d2$pt), levels = levels(d2$pt)),
+                              int3 = factor(levels(d$int3), levels = levels(d$int3))) %>%
+    dplyr::mutate(cx = 0, cy = 0)
+  p2 <- ggplot(d2, aes(cx, cy)) +
+    annotate("rect", xmin = log2(1.5), xmax = Inf, ymin = -Inf, ymax = Inf, fill = "#C03A3E", alpha = .06) +
+    annotate("rect", xmin = -Inf, xmax = log2(1/1.5), ymin = -Inf, ymax = Inf, fill = "#4682C4", alpha = .06) +
+    geom_hline(yintercept = 0, colour = "grey40", linewidth = 0.3) +
+    geom_vline(xintercept = 0, colour = "grey40", linewidth = 0.3) +
     geom_point(data = dummy, aes(colour = pt, shape = int3), alpha = 0) +
-    geom_point(aes(colour = pt, shape = int3), size = 1.8, alpha = 0.75) +
-    ggrepel::geom_text_repel(data = lab, aes(label = label), size = 3.3, fontface = "bold.italic",
-                             max.overlaps = Inf, min.segment.length = 0, segment.size = 0.3,
-                             box.padding = 0.5, bg.color = "white", bg.r = 0.12, seed = 1) +
-    scale_colour_manual(values = c(hif_cols, ns = "grey75"), breaks = c(names(hif_cols), "ns"),
+    geom_segment(data = arr, aes(x = ax, y = ay, xend = cx, yend = cy, colour = pt),
+                 linewidth = 0.3, show.legend = FALSE,
+                 arrow = arrow(length = unit(0.045, "in"), type = "closed")) +
+    geom_point(aes(colour = pt, shape = int3), size = 1.9, alpha = 0.8, stroke = 0.5) +
+    ggrepel::geom_text_repel(data = lab, aes(label = label), size = 2.9, fontface = "bold.italic",
+                             max.overlaps = Inf, min.segment.length = 0, segment.size = 0.25,
+                             box.padding = 0.35, bg.color = "white", bg.r = 0.12, seed = 1,
+                             xlim = f4_xlim + c(0.1, -0.1), ylim = f4_ylim + c(0.3, -0.3)) +
+    scale_colour_manual(values = c(hif_cols, ns = "grey70"), breaks = c(names(hif_cols), "ns"),
                         labels = c(names(hif_cols), "HR not significant"), name = NULL, drop = FALSE) +
     scale_shape_manual(values = int3_shapes, name = NULL, drop = FALSE) +
-    coord_cartesian(xlim = f4_x, ylim = f4_y) +
+    coord_cartesian(xlim = f4_xlim, ylim = f4_ylim, expand = FALSE, clip = "on") +
     guides(colour = guide_legend(override.aes = list(size = 3, alpha = 1, shape = 16), order = 1),
-           shape = guide_legend(override.aes = list(size = 3, stroke = 1, alpha = 1, colour = "grey30"), order = 2)) +
-    labs(x = "log2 hazard ratio", y = "log2 FC Hx/Nx (Kelly)") +
-    theme_minimal(base_size = 10) +
-    theme(panel.grid.minor = element_blank(), axis.title = element_text(face = "bold"))
-  # patchwork does not merge the legends of nested blocks, so only the first block draws it
+           shape = guide_legend(override.aes = list(size = 3, stroke = 0.8, alpha = 1, colour = "grey30"),
+                                order = 2)) +
+    labs(x = "log2 hazard ratio", y = "log2 FC Hx/Nx") +
+    theme_minimal(base_size = f4_base) +
+    theme(panel.grid.minor = element_blank(), panel.grid.major = element_line(linewidth = 0.2),
+          axis.title = element_text(face = "bold", size = 8), axis.text = element_text(size = 7.5),
+          plot.margin = margin(1, 3, 1, 1))
+  # patchwork does not merge the legends of nested blocks, so only one block draws it
   if (!legend) p2 <- p2 + guides(colour = "none", shape = "none")
 
-  # 3. GO terms
-  g <- go_sel %>% dplyr::filter(cluster == k) %>%
-    dplyr::mutate(term = stringr::str_wrap(Description, 34),
+  # 3. GO terms, name written on the bar, genes in brackets
+  g <- go_sel %>% dplyr::filter(block == nm) %>%
+    dplyr::mutate(term = paste0(stringr::str_trunc(Description, 34), " (", Count, ")"),
                   term = factor(term, levels = rev(term)))
   p3 <- if (nrow(g) == 0) {
-    ggplot() + annotate("text", 0, 0, label = "no GO term\n(p < 0.01)",
-                        colour = "grey50", size = 3.6) + theme_void()
+    ggplot() + annotate("text", 0, 0, label = "no GO term (p < 0.01)", colour = "grey50", size = 2.9) +
+      theme_void()
   } else {
     ggplot(g, aes(-log10(pvalue), term)) +
-      geom_col(aes(alpha = p.adjust < 0.05), fill = col, width = 0.7) +
-      scale_alpha_manual(values = c(`TRUE` = 0.9, `FALSE` = 0.3), guide = "none") +
-      geom_text(aes(label = Count), hjust = -0.25, size = 3.2, colour = "grey20") +
-      scale_x_continuous(expand = expansion(c(0, 0.18))) +
-      labs(x = "-log10 p", y = NULL) +
-      theme_minimal(base_size = 10) +
-      theme(panel.grid.major.y = element_blank(), panel.grid.minor = element_blank(),
-            axis.text.y = element_text(size = 9, lineheight = 0.9, colour = "grey10"),
-            axis.title = element_text(face = "bold"))
+      geom_col(aes(alpha = p.adjust < 0.05), fill = col, width = 0.85) +
+      geom_text(aes(x = 0, label = term), hjust = 0, nudge_x = 0.04 * max(-log10(g$pvalue)),
+                size = 2.7, colour = "grey10") +
+      scale_alpha_manual(values = c(`TRUE` = 0.45, `FALSE` = 0.15), guide = "none") +
+      scale_x_continuous(expand = expansion(c(0, 0.02))) +
+      labs(x = "GO biological process, -log10 p", y = NULL) +
+      theme_minimal(base_size = f4_base) +
+      theme(panel.grid = element_blank(), axis.text.y = element_blank(),
+            axis.line.x = element_line(linewidth = 0.3, colour = "grey40"),
+            axis.ticks.x = element_line(linewidth = 0.3, colour = "grey40"),
+            axis.title.x = element_text(size = 8), axis.text.x = element_text(size = 7.5))
   }
-  p1 + p2 + p3 + plot_layout(widths = c(1, 1.15, 1.25))
+  p0 + p1 + p2 + fingerprint(d) + p3 +
+    plot_layout(design = "AAA\nBCC\nDEE", widths = c(0.8, 0.35, 1.3), heights = c(0.012, 1, 0.8))
+}
+
+fig4_plot <- function(blocks, first_legend) {
+  wrap_plots(lapply(blocks, function(k) cluster_block(k, legend = k == first_legend)), ncol = 2) +
+    plot_layout(guides = "collect") &
+    theme(legend.position = "bottom", legend.text = element_text(size = 9),
+          legend.key.size = unit(1, "lines"), plot.margin = margin(3, 5, 3, 5))
+}
+f4_title <- function(sub) plot_annotation(
+  title = "Gene clusters of the hypoxic response", subtitle = sub,
+  theme = theme(plot.title = element_text(face = "bold", size = 13),
+                plot.subtitle = element_text(size = 9, colour = "grey30", margin = margin(t = 1, b = 4))))
+
+# Too large for the IDE plot pane: interactively saved as a PNG in cache/ (not
+# committed) and opened in an editor tab; browseURL() fails over SSH.
+show_a4 <- function(p, name) {
+  if (interactive() && !isTRUE(getOption("knitr.in.progress"))) {
+    f <- file.path(in_dir, "cache", paste0(name, "_preview.png"))
+    ggsave(f, p, width = a4[["w"]], height = a4[["h"]], dpi = 200, bg = "white")
+    if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable())
+      rstudioapi::navigateToFile(f) else message(name, " saved to ", f)
+    invisible(NULL)
+  } else p
 }
 ```
 
@@ -1801,28 +1697,268 @@ Code
 </summary>
 
 ``` r
-fig4 <- wrap_plots(lapply(levels(ud$cluster), function(k) cluster_block(k, legend = k == "1")), ncol = 2) +
-  plot_layout(guides = "collect") +
-  plot_annotation(title = "Gene clusters of the hypoxic response",
-                  subtitle = paste0("Leiden clusters of Figure 3: location in the UMAP, response vs ",
-                                    "survival risk (top 5 candidate genes named) and GO biological processes ",
-                                    "(numbers: genes per term; light bars: padj >= 0.05)"),
-                  theme = fig_title_theme) &
-  theme(legend.position = "bottom", legend.text = element_text(size = 11))
-
-# Too large for the IDE plot pane: run interactively, it opens as a PNG instead.
-if (interactive() && !isTRUE(getOption("knitr.in.progress"))) {
-  f4_png <- tempfile("fig4_", fileext = ".png")
-  ggsave(f4_png, fig4, width = 26, height = 24, dpi = 100, bg = "white")
-  browseURL(f4_png)
-} else fig4
+show_a4(fig4_plot(names(f4_main), "1 + 6") +
+          f4_title(paste0("Leiden clusters of Figure 3: hallmark programs, location in the UMAP, ",
+                          "response vs survival risk (top 5 candidates named),\ncluster fingerprint ",
+                          "and GO biological processes (light bars: padj >= 0.05)")),
+        "fig4")
 ```
 
 </details>
 
-**Figure 4. The eight Leiden clusters**
+**Figure 4. The gene clusters of the hypoxic response**
 
 ![](Manuscript_Figures_files/figure-gfm/fig4-1.png)<!-- -->
+
+# Figure 5: The clinical reading
+
+Figures 2-4 say which HIF-regulated genes carry a survival association.
+This figure turns that around and asks what a drug would do. The thought
+experiment: a compound stabilises HIF1A or HIF2A, every gene on that
+HIF’s lists moves in its hypoxic direction - up-list genes up, down-list
+genes down. A move is **beneficial** when it pushes a protective gene up
+or a harmful gene down, and **adverse** the other way round:
+
+|                               | protective gene | harmful gene |
+|-------------------------------|-----------------|--------------|
+| gene is induced (up list)     | beneficial      | adverse      |
+| gene is repressed (down list) | adverse         | beneficial   |
+
+Genes without a survival association (`ns`) are left out of the count.
+As in Figure 2, variant 1: a gene on two lists counts in both.
+
+**This is a correlation argument, not a causal one.** The hazard ratio
+comes from expression differences between tumours, so it measures how a
+gene behaves in the disease, not what happens when the gene is moved by
+a drug. A gene can mark an aggressive tumour without driving it. The
+figure ranks hypotheses to test, nothing more. Two further limits: the
+HIF lists come from one cell line (Kelly, MYCN-amplified), and a drug
+stabilising a HIF does not reproduce the hypoxic response exactly -
+hypoxia moves much else besides.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+f5 <- g_hr4 %>%
+  dplyr::mutate(hif = sub(" .*", "", group), dir = sub(".* ", "", group),
+                effect = factor(dplyr::case_when(
+                  risk == "ns"                            ~ "no association",
+                  (dir == "up") == (risk == "protective") ~ "beneficial",
+                  TRUE                                    ~ "adverse"),
+                  levels = c("beneficial", "adverse", "no association")))
+f5_cols <- c(beneficial = "#2E8B57", adverse = "#C03A3E", `no association` = "grey80")
+
+bal <- f5 %>% dplyr::filter(effect != "no association") %>% dplyr::count(hif, effect)
+bal_stat <- bal %>% tidyr::pivot_wider(names_from = effect, values_from = n) %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(ratio = round(beneficial / adverse, 2),
+                p = binom.test(beneficial, beneficial + adverse)$p.value) %>%
+  dplyr::ungroup()
+tab(bal_stat %>% dplyr::mutate(p = sprintf("%.1e", p)),
+    "Gene moves under HIF stabilisation (binomial test beneficial vs adverse)")
+```
+
+</details>
+
+**Gene moves under HIF stabilisation (binomial test beneficial vs
+adverse)**
+
+| hif   | beneficial | adverse | ratio | p       |
+|:------|-----------:|--------:|------:|:--------|
+| HIF1A |         43 |      40 |  1.07 | 8.3e-01 |
+| HIF2A |        315 |     138 |  2.28 | 5.4e-17 |
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+# Hallmark enrichment of the four quadrants, to show which program carries the
+# balance. Same universe as Figure 4.
+quad_sets <- f5 %>% dplyr::filter(effect != "no association") %>%
+  dplyr::mutate(q = paste0(hif, " | ", dir, ", ", risk)) %>%
+  split(., .$q) %>% lapply(function(x) to_sym(x$Ensembl))
+quad_hall <- purrr::imap_dfr(quad_sets, function(g, nm) {
+  r <- clusterProfiler::enricher(g, universe = hall_univ, TERM2GENE = hall_t2g,
+                                 minGSSize = 10, pvalueCutoff = 1, qvalueCutoff = 1)
+  if (is.null(r)) tibble() else tibble::as_tibble(r@result) %>% dplyr::mutate(quad = nm)
+})
+quad_keep <- quad_hall %>% dplyr::filter(p.adjust < 0.05) %>% dplyr::pull(ID) %>% unique()
+tab(quad_hall %>% dplyr::filter(ID %in% quad_keep) %>%
+      dplyr::transmute(quadrant = quad, hallmark = nice_term(ID), genes = Count,
+                       padj = sprintf("%.1e", p.adjust)) %>%
+      dplyr::arrange(quadrant, padj),
+    "Hallmark sets enriched in at least one quadrant (padj < 0.05)")
+```
+
+</details>
+
+**Hallmark sets enriched in at least one quadrant (padj \< 0.05)**
+
+| quadrant                  | hallmark         | genes | padj    |
+|:--------------------------|:-----------------|------:|:--------|
+| HIF1A \| up, harmful      | Glycolysis       |     5 | 3.2e-04 |
+| HIF1A \| up, harmful      | MYC targets v1   |     1 | 4.4e-01 |
+| HIF1A \| up, harmful      | MTORC1 signaling |     3 | 4.7e-02 |
+| HIF1A \| up, harmful      | Hypoxia          |     8 | 9.5e-09 |
+| HIF1A \| up, protective   | MTORC1 signaling |     3 | 1.7e-01 |
+| HIF1A \| up, protective   | Glycolysis       |     2 | 3.1e-01 |
+| HIF1A \| up, protective   | Hypoxia          |     6 | 3.3e-04 |
+| HIF2A \| down, harmful    | MYC targets v2   |    11 | 2.2e-08 |
+| HIF2A \| down, harmful    | G2M checkpoint   |    12 | 3.5e-04 |
+| HIF2A \| down, harmful    | MTORC1 signaling |     6 | 4.4e-01 |
+| HIF2A \| down, harmful    | MYC targets v1   |    13 | 8.3e-05 |
+| HIF2A \| down, harmful    | E2F targets      |    13 | 8.3e-05 |
+| HIF2A \| down, harmful    | Glycolysis       |     3 | 9.0e-01 |
+| HIF2A \| down, protective | Coagulation      |     2 | 2.0e-01 |
+| HIF2A \| down, protective | Glycolysis       |     2 | 2.2e-01 |
+| HIF2A \| up, harmful      | Hypoxia          |     1 | 6.2e-01 |
+| HIF2A \| up, harmful      | E2F targets      |     1 | 6.6e-01 |
+| HIF2A \| up, protective   | Coagulation      |     5 | 1.9e-02 |
+| HIF2A \| up, protective   | Hypoxia          |     1 | 8.5e-01 |
+| HIF2A \| up, protective   | Glycolysis       |     1 | 8.5e-01 |
+| HIF2A \| up, protective   | MTORC1 signaling |     1 | 8.5e-01 |
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+# A: balance of beneficial and adverse moves per HIF
+pA <- ggplot(bal %>% dplyr::mutate(x = ifelse(effect == "adverse", -n, n)),
+             aes(x, forcats::fct_rev(hif), fill = effect)) +
+  geom_col(width = 0.6) +
+  geom_vline(xintercept = 0, colour = "grey30", linewidth = 0.4) +
+  geom_text(aes(label = n, hjust = ifelse(effect == "adverse", 1.3, -0.3)), size = 3.4,
+            fontface = "bold", colour = "grey20") +
+  geom_text(data = bal_stat, aes(x = 0, y = forcats::fct_rev(hif),
+                                 label = sprintf("%.1fx", ratio)), inherit.aes = FALSE,
+            vjust = -2.2, size = 3.2, colour = "grey30", fontface = "bold") +
+  scale_fill_manual(values = f5_cols, name = NULL) +
+  scale_x_continuous(labels = abs, expand = expansion(mult = 0.18)) +
+  labs(title = "A", subtitle = "Gene moves if this HIF is stabilised",
+       x = "genes with a survival association", y = NULL) +
+  theme_minimal(base_size = 11) +
+  theme(panel.grid.major.y = element_blank(), panel.grid.minor = element_blank(),
+        legend.position = "top", axis.text.y = element_text(face = "bold", size = 11))
+
+# B: which hallmark program sits behind each quadrant
+pB <- ggplot(quad_hall %>% dplyr::filter(ID %in% quad_keep) %>%
+               dplyr::mutate(term = nice_term(ID), hif = sub(" .*", "", quad),
+                             q2 = sub(".*\\| ", "", quad)),
+             aes(q2, forcats::fct_rev(factor(term)), size = Count, colour = -log10(p.adjust))) +
+  geom_point() +
+  facet_grid(. ~ hif, scales = "free_x", space = "free_x") +
+  scale_colour_gradient(low = "grey85", high = "#3F007D", name = "-log10 padj") +
+  scale_size_area(max_size = 7, name = "genes") +
+  labs(title = "B", subtitle = "Hallmark programs per quadrant", x = NULL, y = NULL) +
+  theme_minimal(base_size = 11) +
+  theme(panel.grid.major = element_line(linewidth = 0.2), legend.position = "right",
+        legend.box = "vertical", strip.text = element_text(face = "bold", size = 10),
+        axis.text.x = element_text(size = 8.5, angle = 30, hjust = 1))
+
+# C: the HIF2A genes with a survival association; beneficial quadrants green
+f5c <- f5 %>% dplyr::filter(hif == "HIF2A", effect != "no association")
+cand5 <- f5c %>% dplyr::filter(!is.na(label)) %>%
+  dplyr::group_by(dir, risk) %>% dplyr::slice_max(score, n = 6, with_ties = FALSE) %>% dplyr::ungroup()
+xr <- max(abs(f5c$log2HR)) * 1.02
+yr <- range(f5c$log2FC)
+pC <- ggplot(f5c, aes(log2HR, log2FC)) +
+  annotate("rect", xmin = -Inf, xmax = 0, ymin = 0, ymax = Inf, fill = f5_cols[["beneficial"]], alpha = .07) +
+  annotate("rect", xmin = 0, xmax = Inf, ymin = -Inf, ymax = 0, fill = f5_cols[["beneficial"]], alpha = .07) +
+  annotate("rect", xmin = 0, xmax = Inf, ymin = 0, ymax = Inf, fill = f5_cols[["adverse"]], alpha = .07) +
+  annotate("rect", xmin = -Inf, xmax = 0, ymin = -Inf, ymax = 0, fill = f5_cols[["adverse"]], alpha = .07) +
+  geom_hline(yintercept = 0, colour = "grey30", linewidth = 0.4) +
+  geom_vline(xintercept = 0, colour = "grey30", linewidth = 0.4) +
+  geom_point(aes(colour = effect), size = 1.9, alpha = 0.65, stroke = 0) +
+  ggrepel::geom_text_repel(data = cand5, aes(label = label, colour = effect), size = 3.2,
+                           fontface = "bold.italic", show.legend = FALSE, max.overlaps = Inf,
+                           min.segment.length = 0, segment.size = 0.3, box.padding = 0.45,
+                           bg.color = "white", bg.r = 0.12, seed = 1,
+                           ylim = yr + c(0.11, -0.11) * diff(yr)) +
+  annotate("text", x = c(-xr, xr, -xr, xr), y = c(Inf, Inf, -Inf, -Inf), hjust = c(0, 1, 0, 1),
+           vjust = c(1.4, 1.4, -0.8, -0.8), size = 3.1, fontface = "bold",
+           colour = f5_cols[c("beneficial", "adverse", "adverse", "beneficial")],
+           label = c("induced & protective\nbeneficial", "induced & harmful\nadverse",
+                     "repressed & protective\nadverse", "repressed & harmful\nbeneficial")) +
+  scale_colour_manual(values = f5_cols, name = NULL) +
+  scale_x_continuous(limits = c(-xr, xr)) +
+  guides(colour = guide_legend(override.aes = list(size = 3, alpha = 1))) +
+  labs(title = "C", subtitle = "HIF2A genes with a survival association",
+       x = "Survival risk (log2 hazard ratio)", y = "Hypoxic response (log2 FC Hx/Nx, Kelly WT)") +
+  theme_minimal(base_size = 11) +
+  theme(panel.grid.minor = element_blank(), legend.position = "top")
+
+(pA / pB + plot_layout(heights = c(1, 1.5)) | pC) +
+  plot_layout(widths = c(1, 1.25)) +
+  plot_annotation(title = "If a drug stabilised HIF1A or HIF2A, which way would the prognostic genes move?",
+                  subtitle = paste0("Beneficial = a protective gene induced or a harmful gene repressed. ",
+                                    "Hazard ratio from the high-risk microarray cohort; association, not causation."),
+                  theme = fig_title_theme) &
+  theme(plot.title = element_text(face = "bold"),
+        plot.subtitle = element_text(size = 10, colour = "grey30"))
+```
+
+</details>
+
+**Figure 5. What HIF stabilisation would move**
+
+![](Manuscript_Figures_files/figure-gfm/fig5-1.png)<!-- -->
+
+**Top 5 candidates per HIF, direction and risk class**
+
+| HIF | move | risk | effect | gene | log2FC | HR | baseMean | pubmed_total | score |
+|:---|:---|:---|:---|:---|---:|---:|---:|---:|---:|
+| HIF1A | down | protective | adverse | EDNRA | -4.4 | 0.63 | 139 | 255 | 0.71 |
+| HIF1A | down | protective | adverse | DAB1 | -1.9 | 0.59 | 349 | 152 | 0.68 |
+| HIF1A | down | protective | adverse | LAMA4 | -3.1 | 0.55 | 368 | 141 | 0.64 |
+| HIF1A | down | protective | adverse | PLPP3 | -2.6 | 0.60 | 55 | 75 | 0.58 |
+| HIF1A | down | protective | adverse | SYT13 | -1.1 | 0.66 | 81 | 37 | 0.47 |
+| HIF1A | down | harmful | beneficial | TAF9B | -1.4 | 1.69 | 2102 | 62 | 0.64 |
+| HIF1A | down | harmful | beneficial | FLVCR1-DT | -1.4 | 1.76 | 88 | 10 | 0.32 |
+| HIF1A | down | harmful | beneficial | C20orf144 | -2.1 | 4.58 | 4 | 3 | 0.25 |
+| HIF1A | down | harmful | beneficial | LRRC8D-DT | -1.8 | 1.51 | 16 | 0 | 0.20 |
+| HIF1A | up | protective | beneficial | BHLHE41 | 4.6 | 0.62 | 572 | 111 | 0.80 |
+| HIF1A | up | protective | beneficial | BCAM | 8.3 | 0.37 | 423 | 98 | 0.80 |
+| HIF1A | up | protective | beneficial | GBE1 | 2.9 | 0.55 | 3518 | 116 | 0.78 |
+| HIF1A | up | protective | beneficial | P4HA2 | 3.2 | 0.65 | 2251 | 106 | 0.77 |
+| HIF1A | up | protective | beneficial | ANKZF1 | 3.0 | 0.33 | 3806 | 54 | 0.75 |
+| HIF1A | up | harmful | adverse | CHRNA4 | 11.3 | 2.47 | 1624 | 218 | 0.91 |
+| HIF1A | up | harmful | adverse | PGK1 | 2.4 | 4.39 | 65124 | 461 | 0.86 |
+| HIF1A | up | harmful | adverse | ENO1 | 1.4 | 3.30 | 176362 | 754 | 0.82 |
+| HIF1A | up | harmful | adverse | PDK1 | 2.4 | 2.39 | 12051 | 165 | 0.79 |
+| HIF1A | up | harmful | adverse | FAM162A | 2.7 | 1.70 | 11823 | 53 | 0.79 |
+| HIF2A | down | protective | adverse | NRP2 | -2.5 | 0.61 | 3096 | 170 | 0.80 |
+| HIF2A | down | protective | adverse | MAP3K5 | -3.2 | 0.52 | 219 | 611 | 0.76 |
+| HIF2A | down | protective | adverse | CD44 | -3.6 | 0.65 | 266 | 3514 | 0.74 |
+| HIF2A | down | protective | adverse | LFNG | -2.9 | 0.63 | 928 | 65 | 0.73 |
+| HIF2A | down | protective | adverse | ATP1A1 | -1.6 | 0.40 | 23958 | 553 | 0.71 |
+| HIF2A | down | harmful | beneficial | SULF2 | -6.1 | 2.03 | 4224 | 131 | 0.89 |
+| HIF2A | down | harmful | beneficial | CHGA | -1.9 | 1.70 | 168357 | 776 | 0.83 |
+| HIF2A | down | harmful | beneficial | CAD | -2.3 | 4.77 | 7924 | 309 | 0.78 |
+| HIF2A | down | harmful | beneficial | LSM2 | -3.5 | 4.67 | 834 | 109 | 0.78 |
+| HIF2A | down | harmful | beneficial | MTHFD1 | -2.0 | 4.04 | 8297 | 454 | 0.77 |
+| HIF2A | up | protective | beneficial | ARHGEF6 | 7.2 | 0.66 | 4085 | 101 | 0.89 |
+| HIF2A | up | protective | beneficial | HEY1 | 4.0 | 0.66 | 7742 | 208 | 0.87 |
+| HIF2A | up | protective | beneficial | TNFAIP3 | 6.5 | 0.65 | 132 | 935 | 0.83 |
+| HIF2A | up | protective | beneficial | ACHE | 5.4 | 0.41 | 203 | 375 | 0.83 |
+| HIF2A | up | protective | beneficial | SGK1 | 4.2 | 0.58 | 369 | 308 | 0.82 |
+| HIF2A | up | harmful | adverse | ADM | 7.7 | 1.74 | 1109 | 453 | 0.78 |
+| HIF2A | up | harmful | adverse | SPNS2 | 6.5 | 1.79 | 1478 | 41 | 0.77 |
+| HIF2A | up | harmful | adverse | VGF | 3.4 | 1.54 | 4255 | 98 | 0.76 |
+| HIF2A | up | harmful | adverse | PTGER2 | 1.7 | 1.67 | 770 | 436 | 0.74 |
+| HIF2A | up | harmful | adverse | H1-2 | 3.0 | 2.04 | 3694 | 282 | 0.74 |
 
 # TOP candidates
 
@@ -1875,6 +2011,289 @@ appear in both). The full scored table is exported as
 | HIF2A down | CAD | HIF2A | shared | -2.3 | 1.4 | 7924 | 309 | 4.77 | harmful | 0.78 |
 | HIF2A down | LSM2 | HIF2A | shared | -3.5 | 2.6 | 834 | 109 | 4.67 | harmful | 0.78 |
 
+# Appendix: Figure 1 variants
+
+Earlier versions of Figure 1, kept for comparison: rows grouped by fixed
+log2FC cutoffs (“responding lines”) instead of the interaction term, and
+by HIF list.
+
+## Responding lines (cutoff groups)
+
+Kelly is MYCN-amplified, SK-N-AS and SH-SY5Y are not. A line *responds*
+when the gene is a hypoxia DEG there (padj \< 0.05, \|log2FC\| \> 1,
+either direction); it is *flat* when \|log2FC\| \<= 0.5. “Only” groups
+require the other lines to be flat, not merely to miss the DEG cutoff:
+
+| Group | Kelly | SK-N-AS / SH-SY5Y |
+|----|----|----|
+| all 3 lines | DEG | both DEG |
+| Kelly + 1 line | DEG | one DEG |
+| Kelly only | DEG | both flat |
+| Kelly, SK/SH unclear | DEG | neither DEG nor both flat (0.5 \< \|log2FC\| \<= 1, or not testable) |
+| other | below the DEG cutoff in the master table |  |
+
+`other` are the few list genes that miss the DEG cutoff in the master
+table’s Kelly contrast (borderline, log2FC from a slightly different
+model). Genes without a log2FC in a line count as neither DEG nor flat -
+not measured is not the same as not responding. The mirror group,
+**SK/SH only** (DEG in SK-N-AS or SH-SY5Y, flat in Kelly), cannot occur
+among the list genes, which are Kelly DEGs by definition; it is built
+from all genes for the variant heatmap.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+flat <- function(l2fc) !is.na(l2fc) & abs(l2fc) <= 0.5
+pat_levels <- c("all 3 lines", "Kelly + 1 line", "Kelly only", "Kelly, SK/SH unclear", "other")
+
+genes <- genes %>%
+  dplyr::mutate(
+    K  = deg(Kelly.Hx.vs.Nx.log2FoldChange, Kelly.Hx.vs.Nx.padj),
+    A  = deg(log2FC_SKNAS, padj_SKNAS),
+    H  = deg(log2FC_SHSY5Y, padj_SHSY5Y),
+    pattern = factor(dplyr::case_when(K & A & H   ~ "all 3 lines",
+                                      K & (A | H) ~ "Kelly + 1 line",
+                                      K & flat(log2FC_SKNAS) & flat(log2FC_SHSY5Y) ~ "Kelly only",
+                                      K           ~ "Kelly, SK/SH unclear",
+                                      TRUE        ~ "other"),
+                     levels = pat_levels)) %>%
+  dplyr::select(-K, -A, -H)
+
+tab(as.data.frame.matrix(table(genes$grp6, genes$pattern)) %>% tibble::rownames_to_column("group"),
+    "Genes per group and responding lines")
+```
+
+</details>
+
+**Genes per group and responding lines**
+
+| group | all 3 lines | Kelly + 1 line | Kelly only | Kelly, SK/SH unclear | other |
+|:---|---:|---:|---:|---:|---:|
+| HIF1A up | 88 | 106 | 15 | 119 | 3 |
+| HIF1A+HIF2A up | 3 | 14 | 2 | 28 | 0 |
+| HIF2A up | 59 | 256 | 215 | 768 | 9 |
+| HIF1A down | 4 | 9 | 9 | 40 | 0 |
+| HIF1A+HIF2A down | 0 | 1 | 1 | 11 | 0 |
+| HIF2A down | 17 | 93 | 99 | 285 | 8 |
+
+**SK/SH only.** From all genes of the master table: hypoxia DEG in
+SK-N-AS or SH-SY5Y (the overlap of the two is small, so one line is
+enough) and flat in Kelly WT (\|log2FC\| \<= 0.5). Direction and
+expression are taken from the line with the stronger response. These
+genes are on none of the HIF lists.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+sk_all <- master %>% dplyr::distinct(Ensembl, .keep_all = TRUE) %>%
+  dplyr::mutate(A = deg(log2FC_SKNAS, padj_SKNAS), H = deg(log2FC_SHSY5Y, padj_SHSY5Y)) %>%
+  dplyr::filter((A | H) & flat(Kelly.Hx.vs.Nx.log2FoldChange)) %>%
+  dplyr::mutate(use_A = A & (!H | abs(log2FC_SKNAS) >= abs(log2FC_SHSY5Y)),
+                sk_log2FC   = ifelse(use_A, log2FC_SKNAS, log2FC_SHSY5Y),
+                sk_baseMean = ifelse(use_A, baseMean_SKNAS, baseMean_SHSY5Y),
+                line = dplyr::case_when(A & H ~ "both", A ~ "SK-N-AS", TRUE ~ "SH-SY5Y"),
+                dir  = factor(ifelse(sk_log2FC > 0, "up", "down"), levels = c("up", "down")),
+                pattern = factor("SK/SH only"),
+                label = ifelse(is.na(symbol) | grepl("^ENSG", symbol), NA, symbol))
+
+tab(sk_all %>% dplyr::count(line, dir) %>%
+      tidyr::pivot_wider(names_from = dir, values_from = n, values_fill = 0),
+    paste0("SK/SH only: ", nrow(sk_all), " genes, by responding line and direction"))
+```
+
+</details>
+
+**SK/SH only: 459 genes, by responding line and direction**
+
+| line    |  up | down |
+|:--------|----:|-----:|
+| SH-SY5Y |  40 |   73 |
+| SK-N-AS | 244 |   82 |
+| both    |  16 |    4 |
+
+**List genes: cutoff groups (rows) vs interaction groups (columns)**
+
+| cutoff group         | shared | Kelly-specific | not testable | other |
+|:---------------------|-------:|---------------:|-------------:|------:|
+| all 3 lines          |    171 |              0 |            0 |     0 |
+| Kelly + 1 line       |    479 |              0 |            0 |     0 |
+| Kelly only           |     89 |            252 |            0 |     0 |
+| Kelly, SK/SH unclear |    723 |            450 |           78 |     0 |
+| other                |      0 |              0 |            0 |    20 |
+
+## Figure 4: the remaining clusters
+
+Clusters 4, 5 and 7 carry no clear program - only cluster 4 reaches padj
+\< 0.05 for a single hallmark set (coagulation) - so they are not in
+Figure 4. Same layout.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+show_a4(fig4_plot(names(f4_app), "4") +
+          f4_title("Clusters 4, 5 and 7: no or only weak hallmark enrichment"),
+        "fig4_rest")
+```
+
+</details>
+
+**Figure 4, appendix: clusters without a clear program**
+
+![](Manuscript_Figures_files/figure-gfm/fig4_rest-1.png)<!-- -->
+
+## Variant: rows grouped by responding lines
+
+The heatmap of Figure 1 with rows grouped by the cutoff groups, top to
+bottom: Kelly only, Kelly + 1 line, all 3 lines, SK/SH only.
+`Kelly, SK/SH unclear` and `other` are left out. Gene set: the list
+genes of the three clear groups, at most 1000, by candidate score per
+HIF and direction in proportion to group size; below them the top 50
+**SK/SH only** genes by the line score. Named and example genes as in
+Figure 1, with *typical* =
+
+| Group | Typical = |
+|----|----|
+| all 3 lines | weakest of the three responses is still large (same direction as Kelly) |
+| Kelly + 1 line | Kelly and the responding line strong, the third line flat |
+| Kelly only | Kelly strong, both baseline lines flat |
+| SK/SH only | the stronger baseline line strong, Kelly flat |
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+hm_levels <- c("Kelly only", "Kelly + 1 line", "all 3 lines", "SK/SH only")
+pat_greys <- c(`Kelly only` = "#636363", `Kelly + 1 line` = "#969696",
+               `all 3 lines` = "#BDBDBD", `SK/SH only` = "#D9D9D9")
+grp6_cols <- c(`HIF1A up` = "#F8766D", `HIF1A+HIF2A up` = "#8E7CC3", `HIF2A up` = "#00BFC4",
+               `HIF1A down` = "#FCC5C0", `HIF1A+HIF2A down` = "#D2C9E6", `HIF2A down` = "#A6E6E8")
+
+g_hm <- genes %>% dplyr::filter(Ensembl %in% rownames(hm$mat), pattern %in% hm_levels)
+
+# At most 1000 list genes: the best-scoring share of every group.
+n_top <- min(1000, nrow(g_hm))
+hm_list <- g_hm %>%
+  dplyr::group_by(grp6) %>%
+  dplyr::filter(rank(-score, ties.method = "first") <= round(dplyr::n() * n_top / nrow(g_hm))) %>%
+  dplyr::ungroup()
+
+# SK/SH only: top 50 by their own score (response and expression in the
+# responding line, popularity; NA renormalised as above).
+sk_hm <- sk_all %>% dplyr::filter(Ensembl %in% rownames(hm$mat))
+sk_hm$score <- line_score(sk_hm)
+sk_top <- sk_hm %>% dplyr::slice_max(score, n = 50, with_ties = FALSE)
+
+# Heatmap gene set: list genes plus SK/SH only (no HIF, no grp6).
+hm_set <- dplyr::bind_rows(
+  hm_list %>% dplyr::mutate(pattern = as.character(pattern), hif_lab = as.character(hif),
+                            grp6 = as.character(grp6)),
+  sk_top %>% dplyr::transmute(Ensembl, label, dir, score, pattern = "SK/SH only",
+                              hif_lab = "no HIF list", grp6 = "SK/SH only")) %>%
+  dplyr::mutate(pattern = factor(pattern, levels = hm_levels))
+
+hm_set$typical <- typicality(hm_set$Ensembl, hm_set$pattern)
+top50    <- pick_typical(hm_set, 50)
+examples <- pick_examples(top50, hm_set)
+split_pat  <- setNames(as.character(hm_set$pattern), hm_set$Ensembl)
+split_grp6 <- setNames(as.character(hm_set$grp6), hm_set$Ensembl)
+cnt <- load_counts(examples$Ensembl)
+
+tab(hm_set %>% dplyr::count(pattern, dir) %>%
+      tidyr::pivot_wider(names_from = dir, values_from = n, values_fill = 0) %>%
+      dplyr::left_join(top50 %>% dplyr::count(pattern, name = "named"), by = "pattern"),
+    paste0("Heatmap genes (", nrow(hm_set), ") by responding lines and direction, and how many are named"))
+```
+
+</details>
+
+**Heatmap genes (1041) by responding lines and direction, and how many
+are named**
+
+| pattern        |  up | down | named |
+|:---------------|----:|-----:|------:|
+| Kelly only     | 232 |  109 |    15 |
+| Kelly + 1 line | 376 |  103 |    18 |
+| all 3 lines    | 150 |   21 |    11 |
+| SK/SH only     |  40 |   10 |     6 |
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+hx_heatmap(hm_set$Ensembl, split_pat, hm_levels, pat_greys, top50, examples = examples, set = hm_set,
+           title = hm_title, subtitle = paste0(nrow(hm_list), " HIF-regulated genes + ", nrow(sk_top), " SK/SH only (log2 Hx vs Nx; grouped by responding lines)"))
+```
+
+</details>
+
+**Figure 1, variant: grouped by responding lines**
+
+![](Manuscript_Figures_files/figure-gfm/fig1-1.png)<!-- -->
+
+**Heatmap genes per responding-lines group: composition and median
+absolute response per line**
+
+| pattern | genes | % up | % HIF1A | % HIF2A | Kelly \|log2\| | SK-N-AS \|log2\| | SH-SY5Y \|log2\| |
+|:---|---:|---:|---:|---:|---:|---:|---:|
+| Kelly only | 341 | 68 | 7 | 92 | 1.15 | 0.18 | 0.20 |
+| Kelly + 1 line | 479 | 78 | 24 | 73 | 1.45 | 0.81 | 0.99 |
+| all 3 lines | 171 | 88 | 54 | 44 | 1.96 | 1.50 | 1.64 |
+| SK/SH only | 50 | 80 | 0 | 0 | 0.09 | 1.67 | 0.47 |
+
+## Variant: rows grouped by HIF list
+
+Same genes, same names, but the rows grouped by HIF and direction
+instead of responding lines (the analogue of 5b in the Dive, right).
+This puts the HIF1A / HIF2A contrast first and leaves the MYCN context
+to be read from the SK-N-AS and SH-SY5Y columns.
+
+<details>
+
+<summary>
+
+Code
+</summary>
+
+``` r
+hx_pair(
+  hx_heatmap(hm_set$Ensembl, split_pat, hm_levels, pat_greys, top50, set = hm_set,
+             title = "Grouped by responding lines"),
+  hx_heatmap(hm_set$Ensembl, split_grp6, c(grp6_levels, "SK/SH only"),
+             c(grp6_cols, `SK/SH only` = "#D9D9D9"), top50, set = hm_set,
+             title = "Grouped by HIF list"))
+```
+
+</details>
+
+**Figure 1, variant: responding lines (left) vs HIF list (right)**
+
+![](Manuscript_Figures_files/figure-gfm/fig1_variant-1.png)<!-- -->
+
+# Export
+
 <details>
 
 <summary>
@@ -1887,9 +2306,10 @@ openxlsx::write.xlsx(
   genes %>%
     dplyr::left_join(lists %>% dplyr::group_by(Ensembl) %>%
                        dplyr::summarise(lists = paste(list, collapse = ", ")), by = "Ensembl") %>%
-    dplyr::mutate(in_heatmap = Ensembl %in% hm_set$Ensembl,
-                  named_fig1 = Ensembl %in% top50$Ensembl,
-                  in_heatmap_int = Ensembl %in% int_set$Ensembl,
+    dplyr::mutate(in_heatmap_fig1 = Ensembl %in% int_set$Ensembl,
+                  named_fig1      = Ensembl %in% int_top50$Ensembl,
+                  in_heatmap_variant = Ensembl %in% hm_set$Ensembl,
+                  named_variant      = Ensembl %in% top50$Ensembl,
                   umap_cluster = ud$cluster[match(Ensembl, ud$Ensembl)]) %>%
     dplyr::arrange(dplyr::desc(score)),
   here::here("6_XM_data_merge", "manuscript_gene_scores.xlsx"), overwrite = TRUE)
