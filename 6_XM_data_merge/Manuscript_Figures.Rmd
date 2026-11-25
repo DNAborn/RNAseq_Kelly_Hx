@@ -110,6 +110,7 @@ its own group in the manuscript is still open (Figure 2 shows both versions).
 
 hif_levels <- c("HIF1A", "HIF1A+HIF2A", "HIF2A")
 grp6_levels <- c(paste(hif_levels, "up"), paste(hif_levels, "down"))
+hif_cols <- c(HIF1A = "#F8766D", `HIF1A+HIF2A` = "#8E7CC3", HIF2A = "#00BFC4")
 
 genes <- lists %>%
   dplyr::group_by(Ensembl) %>%
@@ -309,6 +310,93 @@ tab(genes %>% dplyr::filter(!is.na(label)) %>% dplyr::slice_max(score, n = 8) %>
     "Highest-scoring genes overall")
 ```
 
+# Figure 0: How the three data sets meet
+
+One figure for the whole study: every HIF-regulated gene runs from left to
+right through what each data set says about it. The ribbons are coloured by
+HIF target, so a group can be followed across all four axes. The coloured bar
+on top names the data set behind each axis:
+
+| Data set | Samples | What it contributes |
+|---|---|---|
+| Kelly RNA-seq, WT and KOs | Kelly WT 31, HIF1A KO 19, HIF2A KO 16, ARNT KO 14 | which HIF drives the gene (interaction term in the KO), and the direction of the hypoxic response |
+| SK-N-AS and SH-SY5Y | 12 | whether the response is Kelly-specific or shared with the MYCN-non-amplified lines (interaction term across lines) |
+| Primary tumour microarray | high-risk neuroblastoma cohort | hazard ratio: does high expression go with better or worse survival |
+
+Shown are all `r nrow(genes)` genes of the four lists, each once. `not
+classified` collects `not testable` and `other` (section *Interaction*);
+`no survival data` are the genes missing from the microarray cohort.
+
+```{r fig0, fig.width=11, fig.height=7.5, dpi=300, cap="Figure 0. The three data sets, gene by gene"}
+
+ov <- genes %>%
+  dplyr::mutate(
+    int4 = factor(ifelse(int_group %in% c("Kelly-specific", "shared"),
+                         as.character(int_group), "not classified"),
+                  levels = c("Kelly-specific", "shared", "not classified")),
+    prog = factor(dplyr::case_when(is.na(HR)                 ~ "no survival data",
+                                   HR_risk == "protective"   ~ "protective",
+                                   HR_risk == "adverse"      ~ "harmful",
+                                   TRUE                      ~ "ns"),
+                  levels = c("protective", "ns", "harmful", "no survival data"))) %>%
+  dplyr::count(hif, dir, int4, prog)
+
+n_tot <- sum(ov$n)
+# Data set bar on top: axes 1-2 are the Kelly RNA-seq, axis 3 the baseline
+# lines, axis 4 the tumour cohort.
+ds <- tibble(xmin = c(0.6, 2.6, 3.6), xmax = c(2.4, 3.4, 4.4),
+             lab = c("Kelly RNA-seq (WT + HIF1A / HIF2A / ARNT KO)",
+                     "SK-N-AS / SH-SY5Y", "Primary tumour microarray"),
+             fill = c("#B57BB5", "#5F7A8F", "#C03A3E"))
+
+ggplot(ov, aes(y = n, axis1 = hif, axis2 = dir, axis3 = int4, axis4 = prog)) +
+  # geom_flow (not geom_alluvium): ribbons are merged at every axis, so the
+  # picture stays readable; the colour still carries the HIF target across.
+  ggalluvial::geom_flow(aes(fill = hif), width = 0.3, alpha = 0.55,
+                        curve_type = "sigmoid", aes.bind = "flows", decreasing = NA) +
+  ggalluvial::geom_stratum(width = 0.3, fill = "grey97", colour = "grey45",
+                           linewidth = 0.3, decreasing = NA) +
+  # thin strata get a one-line label, so it does not spill out of the box
+  geom_text(stat = ggalluvial::StatStratum, decreasing = NA, size = 3.1, lineheight = 0.95,
+            aes(label = ifelse(after_stat(count) / n_tot > 0.07,
+                               paste0(after_stat(stratum), "\n", after_stat(count)),
+                               paste0(after_stat(stratum), "  ", after_stat(count))))) +
+  geom_rect(data = ds, inherit.aes = FALSE,
+            aes(xmin = xmin, xmax = xmax, ymin = n_tot * 1.05, ymax = n_tot * 1.13, fill = lab),
+            show.legend = FALSE) +
+  geom_text(data = ds, inherit.aes = FALSE, aes(x = (xmin + xmax) / 2, y = n_tot * 1.09, label = lab),
+            colour = "white", fontface = "bold", size = 3.2) +
+  scale_fill_manual(values = c(hif_cols, setNames(ds$fill, ds$lab)),
+                    breaks = names(hif_cols), name = "HIF target") +
+  scale_x_continuous(breaks = 1:4, expand = expansion(mult = 0.06),
+                     labels = c("HIF target", "hypoxic response", "cell line context", "survival")) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.02))) +
+  coord_cartesian(clip = "off") +
+  labs(title = "Every HIF-regulated gene through the three data sets",
+       subtitle = paste0(n_tot, " genes from the four HIF lists; ribbon width = number of genes, ",
+                         "colour = HIF target"),
+       x = NULL, y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid = element_blank(), axis.text.y = element_blank(),
+        axis.text.x = element_text(face = "bold", size = 11.5, colour = "grey15"),
+        legend.position = "bottom",
+        plot.title = element_text(face = "bold", size = 15),
+        plot.subtitle = element_text(size = 11, colour = "grey30", margin = margin(t = 2, b = 14)))
+```
+
+```{r fig0_tab, echo=FALSE}
+tab(genes %>%
+      dplyr::mutate(int4 = ifelse(int_group %in% c("Kelly-specific", "shared"),
+                                  as.character(int_group), "not classified")) %>%
+      dplyr::filter(!is.na(HR)) %>%
+      dplyr::group_by(int4) %>%
+      dplyr::summarise(genes = dplyr::n(),
+                       `% protective` = round(100 * mean(HR_risk == "protective")),
+                       `% ns` = round(100 * mean(HR_risk == "ns")),
+                       `% harmful` = round(100 * mean(HR_risk == "adverse"))),
+    "Survival association does not follow the cell line context (genes with survival data)")
+```
+
 # Figure 1: Hypoxia response in Kelly vs SK-N-AS / SH-SY5Y
 
 The heatmap from section 5 of the Dive, now for the HIF-regulated genes:
@@ -377,7 +465,6 @@ hx_resp <- hx_resp_all[, hm_lines]
 line_cols <- c(`SK-N-AS` = "#3F5566", `SH-SY5Y` = "#8DA3B5", Kelly = "#B57BB5",
                `HIF1A KO` = "#4C4FB8", `HIF2A KO` = "#4DAF4A", `ARNT KO` = "#C8922E")
 line_names <- c(Kelly = "Kelly WT", setNames(hm_panels[-3], hm_panels[-3]))
-hif_cols <- c(HIF1A = "#F8766D", `HIF1A+HIF2A` = "#8E7CC3", HIF2A = "#00BFC4")
 hif_cols_hm <- c(hif_cols, `no HIF list` = "grey80")
 strip_short <- c(`Kelly + 1 line` = "Kelly + 1", `SK/SH only` = "SK/SH\nonly",
                  `SK/SH-specific` = "SK/SH-\nspecific",
